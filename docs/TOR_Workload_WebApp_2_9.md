@@ -234,7 +234,7 @@ Which maintenance systems a device is counted under, and with what quantity:
 - `quantity_maintained` is stored once per (object, device_type, system_type) triple. It drives all workload calculations.
 - A device can be assigned to multiple system types at the same object. Each assignment uses `quantity_maintained` independently with its own R1/R2 normatives and visit frequency. The physical quantity is not divided — it is reused across all system assignments.
 - `quantity_maintained` may legitimately equal `quantity_physical` even when assigned to multiple systems (e.g., 1 physical Galaxy 512 box maintained under both ОС and ПС — `quantity_maintained = 1` in the ОС assignment AND `quantity_maintained = 1` in the ПС assignment). This reflects that the same hardware requires maintenance time counted separately under each system's schedule. This is intentional and not an error.
-- `quantity_maintained` cannot exceed `quantity_physical` per individual assignment, but the sum of all `quantity_maintained` values across assignments for the same device at the same object can exceed `quantity_physical`. The UI shows a non-blocking informational warning when a single `quantity_maintained` value exceeds `quantity_physical` for that device at that object.
+- `quantity_maintained` should not exceed `quantity_physical` per individual assignment, but the sum of all `quantity_maintained` values across assignments for the same device at the same object can exceed `quantity_physical`. The UI shows a non-blocking informational warning when a single `quantity_maintained` value exceeds `quantity_physical` for that device at that object.
 - Only device types with a valid `device_system_contexts` row for the chosen system type may be assigned to that system. This is enforced at UI, API, and DB levels.
 - A device must first appear in the Physical Inventory (Section A of the Equipment tab) before it can be assigned to a system (Section B). The workflow is always: add to inventory → assign to systems.
 
@@ -664,13 +664,16 @@ division_id      UUID          FK → divisions.id NULL
 home_division_id UUID          FK → divisions.id NULL
                                -- display/filter home for engineers; no access restriction
 capacity_fte          DECIMAL(4,2)  NOT NULL DEFAULT 1.0
-                                    -- meaningful only for role='engineer'; ignored for others
+                                     -- meaningful only for role='engineer'; ignored for others
+                                     CHECK (capacity_fte > 0)
 employee_id           VARCHAR(100)  NULL     -- optional HR identifier
 is_active             BOOLEAN       NOT NULL DEFAULT TRUE
-                                    -- FALSE = deactivated (hidden from dropdowns, historical data preserved)
+                                     -- FALSE = deactivated (hidden from dropdowns, historical data preserved)
 requires_activation   BOOLEAN       NOT NULL DEFAULT FALSE
-                                    -- TRUE = placeholder account created by import; needs admin activation
+                                     -- TRUE = placeholder account created by import; needs admin activation
 password_hash         VARCHAR(255)
+failed_login_count    INTEGER       NOT NULL DEFAULT 0     -- MVP: brute-force protection (§21.3)
+locked_until          TIMESTAMP     NULL                   -- MVP: account lockout expiry (§21.3)
 created_at            TIMESTAMP
 updated_at            TIMESTAMP
 ```
@@ -767,8 +770,10 @@ CREATE INDEX idx_obj_engineers_engineer  ON object_engineers(engineer_id);
 -- Summaries (СВОД page, aggregation queries)
 CREATE INDEX idx_summaries_object        ON summaries(object_id);
 CREATE INDEX idx_summaries_stale         ON summaries(is_stale) WHERE is_stale = 'TRUE';
+CREATE INDEX idx_summaries_processing    ON summaries(is_stale) WHERE is_stale = 'PROCESSING';  -- watchdog (§17.7)
 CREATE INDEX idx_eng_summaries_engineer  ON engineer_summaries(engineer_id);
 CREATE INDEX idx_eng_summaries_stale     ON engineer_summaries(is_stale) WHERE is_stale = 'TRUE';
+CREATE INDEX idx_eng_summaries_processing ON engineer_summaries(is_stale) WHERE is_stale = 'PROCESSING';
 
 -- Aggregation (§16 — live SUM over summaries joined to org hierarchy)
 CREATE INDEX idx_branches_division       ON branches(division_id);
@@ -1781,7 +1786,7 @@ PUT    /catalog/repairs/:id            Update (triggers bulk recalc for affected
 DELETE /catalog/repairs/:id            Delete (blocked if active object_repairs; returns 409)
 ```
 
-> **Known limitation (future fix):** The definition of "active" `object_repairs` that block repair-type deletion needs clarification. Currently, any `object_repairs` row referencing this `repair_type_id` — including rows with `count = 0` — blocks deletion. A future update should define whether only rows with `count > 0` block deletion, and whether rows in non-active periods should be considered. See §13 for post-MVP scope.
+> **(HIGH-7) Known limitation (future fix):** The definition of "active" `object_repairs` that block repair-type deletion needs clarification. Currently, any `object_repairs` row referencing this `repair_type_id` — including rows with `count = 0` — blocks deletion. A future update should define whether only rows with `count > 0` block deletion, and whether rows in non-active periods should be considered. See §13 for post-MVP scope.
 
 #### СВОД & Summary
 
@@ -1916,9 +1921,10 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
       "branch": "...",
       "name": "...",
       "engineer_name": "Александр Н Соловей",
-      "equipment": {
-        "<device_type_name>": { "system": "OS|PS|VIDEO", "quantity": 5 },
-      },
+      "equipment": [
+        { "device": "<device_type_name>", "system": "OS", "quantity": 5 },
+        { "device": "<device_type_name>", "system": "PS", "quantity": 3 }
+      ],
       "records": {
         "access": 0,
         "monitoring": 0,
@@ -1927,7 +1933,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
         "admin": 0,
       },
       "repairs": { "<repair_type_name>": 2 },
-      "travel": { "round_trip_min": 20 },
+      "travel": { "one_way_time_min": 10 },
     },
   ],
 }
@@ -1988,25 +1994,25 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 
 ## 12. Roles & Permissions
 
-| Permission                             | Admin | Editor       | Viewer | Engineer           |
-| -------------------------------------- | ----- | ------------ | ------ | ------------------ |
-| View all objects / СВОД                | ✅    | ✅           | ✅     | Own objects only   |
-| Edit object metadata                   | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Edit equipment / assignments           | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Edit records / repairs (active period) | ✅    | ✅ (own div) | ❌     | ✅ (own objects)   |
-| Edit travel data                       | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Create / delete objects                | ✅    | ❌           | ❌     | ❌                 |
-| Manage device catalog                  | ✅    | ❌           | ❌     | ❌                 |
-| Manage repair type catalog             | ✅    | ❌           | ❌     | ❌                 |
-| Edit app configuration constants       | ✅    | ❌           | ❌     | ❌                 |
-| Import data (JSON / text)              | ✅    | ❌           | ❌     | ❌                 |
-| Export XLSX / PDF                      | ✅    | ✅           | ✅     | ✅ (own objects)   |
-| Trigger bulk recalculation             | ✅    | ❌           | ❌     | ❌                 |
-| View audit log                         | ✅    | ❌           | ❌     | ❌                 |
-| Manage users / engineers               | ✅    | ❌           | ❌     | ❌                 |
-| View own workload dashboard            | ✅    | ✅           | ✅     | ✅                 |
-| Assign / remove engineers to objects   | ✅    | ✅ (own div) | ❌     | ❌                 |
-| View engineer list and load ratios     | ✅    | ✅           | ✅     | ✅ (own data only) |
+| Permission                             | Admin | Editor      | Viewer | Engineer          |
+| -------------------------------------- | ----- | ----------- | ------ | ----------------- |
+| View all objects / СВОД                | ✅     | ✅           | ✅      | Own objects only  |
+| Edit object metadata                   | ✅     | ✅ (own div) | ❌      | ❌                 |
+| Edit equipment / assignments           | ✅     | ✅ (own div) | ❌      | ❌                 |
+| Edit records / repairs (active period) | ✅     | ✅ (own div) | ❌      | ✅ (own objects)   |
+| Edit travel data                       | ✅     | ✅ (own div) | ❌      | ❌                 |
+| Create / delete objects                | ✅     | ❌           | ❌      | ❌                 |
+| Manage device catalog                  | ✅     | ❌           | ❌      | ❌                 |
+| Manage repair type catalog             | ✅     | ❌           | ❌      | ❌                 |
+| Edit app configuration constants       | ✅     | ❌           | ❌      | ❌                 |
+| Import data (JSON / text)              | ✅     | ❌           | ❌      | ❌                 |
+| Export XLSX / PDF                      | ✅     | ✅           | ✅      | ✅ (own objects)   |
+| Trigger bulk recalculation             | ✅     | ❌           | ❌      | ❌                 |
+| View audit log                         | ✅     | ❌           | ❌      | ❌                 |
+| Manage users / engineers               | ✅     | ❌           | ❌      | ❌                 |
+| View own workload dashboard            | ✅     | ✅           | ✅      | ✅                 |
+| Assign / remove engineers to objects   | ✅     | ✅ (own div) | ❌      | ❌                 |
+| View engineer list and load ratios     | ✅     | ✅           | ✅      | ✅ (own data only) |
 
 **Editor scope:** `division_id` restricts all write operations to objects in their assigned division. Enforced at the API level.  
 **Engineer scope:** Engineers can only view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' dashboards or unassigned objects.  
@@ -2343,13 +2349,11 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 
 Each simplification is labelled, explained, and marked with its reversal milestone.
 
-**S-01: Flat equipment model — no physical inventory layer**
+**~~S-01: Flat equipment model — no physical inventory layer~~ (REMOVED in v2.9)**
 
-Full TOR: two layers — `object_devices` (physical qty) + `object_system_assignments` (maintained qty).
+The PoC now uses the full MVP two-layer equipment model (`object_devices` + `object_system_assignments`) from the start. This eliminates a costly data migration at MVP transition and allows the PoC to validate the two-layer UI and API directly. Physical qty defaults to equal maintained qty at data entry time; editors can adjust `quantity_physical` independently.
 
-PoC: one table `equipment_entries` — `(object_id, device_type_id, system_type, quantity)`. Physical qty is implicitly equal to maintained qty.
-
-_Reversed in:_ M-03 (MVP)
+_No longer a simplification — M-03 removed from migration path._
 
 **S-02: Synchronous recalculation on save — no staleness tracking**
 
@@ -2421,30 +2425,32 @@ Simplified schema — replaces the full §5 schema for PoC only. Designed as a s
 
 ```sql
 -- Org structure
-divisions  (id, name)
-branches   (id, division_id, name)
-objects    (id, branch_id, name, responsible_engineer_text VARCHAR, import_seq_no)
--- Note: responsible_engineer_text is a display-only label for PoC.
--- Replaced by object_engineers join table in MVP (S-04 reversal).
+divisions  (id, name, created_at, updated_at)
+branches   (id, division_id, name, created_at, updated_at)
+objects    (id, branch_id, name, import_seq_no, created_at, updated_at)
 
 -- Device catalog — seed data, read-only in PoC
-device_types            (id, name)
-device_system_contexts  (id, device_type_id, system_type, r1_minutes, r2_minutes)
-repair_types            (id, name, time_minutes)
+device_types            (id, name, description TEXT, created_at, updated_at)
+device_system_contexts  (id, device_type_id, system_type, r1_minutes, r2_minutes, created_at, updated_at)
+repair_types            (id, name, time_minutes, created_at, updated_at)
 
--- Equipment — flat model (S-01)
-equipment_entries  (id, object_id, device_type_id, system_type, quantity DECIMAL(10,2))
+-- Equipment — full two-layer model (S-01 removed in v2.9)
+object_devices  (id, object_id, device_type_id, quantity_physical DECIMAL(10,2), updated_at)
+UNIQUE(object_id, device_type_id)
+
+object_system_assignments  (id, object_id, device_type_id, system_type, quantity_maintained DECIMAL(10,2),
+                            context_id UUID FK → device_system_contexts.id, updated_at)
 UNIQUE(object_id, device_type_id, system_type)
 
 -- Operational data — no period FK (S-05)
 records_tasks  (id, object_id, access_requests, monitoring_requests,
-                footage_requests, backup_control, security_admin)
+                footage_requests, backup_control, security_admin, updated_at)
 UNIQUE(object_id)
 
-object_repairs  (id, object_id, repair_type_id, count INTEGER)
+object_repairs  (id, object_id, repair_type_id, count INTEGER, updated_at)
 UNIQUE(object_id, repair_type_id)
 
-travel  (id, object_id, transport_type, distance_km, one_way_time_min)
+travel  (id, object_id, transport_type, distance_km, one_way_time_min, updated_at)
 UNIQUE(object_id)
 
 -- Computed cache — synchronous, no is_stale (S-02)
@@ -2473,13 +2479,16 @@ users  (id, email, name, password_hash,
         -- 'admin' | 'editor' | 'viewer' | 'engineer'
         -- PoC: role column present for engineer identification;
         -- no access control enforcement (all users can read/write all data)
-        capacity_fte DECIMAL(4,2) DEFAULT 1.0,
-        home_division_id UUID FK → divisions.id,
+        division_id UUID FK → divisions.id NULL,
+        -- access-control scope for editors; NULL = all divisions
+        home_division_id UUID FK → divisions.id NULL,
+        capacity_fte DECIMAL(4,2) DEFAULT 1.0 CHECK (capacity_fte > 0),
+        employee_id VARCHAR(100) NULL,
         is_active BOOLEAN DEFAULT TRUE,
         requires_activation BOOLEAN DEFAULT FALSE,
-        created_at)
+        created_at, updated_at)
 
-object_engineers  (id, object_id, engineer_id, assigned_at)
+object_engineers  (id, object_id, engineer_id, assigned_at, assigned_by UUID NULL)
 UNIQUE(object_id, engineer_id)
 
 engineer_summaries  (id, engineer_id,
@@ -2489,26 +2498,28 @@ engineer_summaries  (id, engineer_id,
                      computed_at)
 UNIQUE(engineer_id)
 
--- Config constants — hardcoded in application for PoC (S-03)
--- Moved to app_config table in MVP (M-10)
+-- Config constants — defined in application.yml for PoC (S-03)
+-- Read via @ConfigurationProperties class (e.g. WorkloadConfigProperties)
+-- under namespace: workload.config.*
+-- Moved to app_config table with admin UI in MVP (M-10)
 ```
 
 ---
 
 ### 15.5 PoC UI Routes
 
-| Route               | View                                                                   |
-| ------------------- | ---------------------------------------------------------------------- |
-| `/login`            | Login page                                                             |
-| `/`                 | Dashboard — required FTE by division, top 10 objects, coverage gaps    |
-| `/objects`          | Object list — searchable, filterable, shows ИТОГО Числ                 |
-| `/objects/new`      | Create object                                                          |
-| `/objects/:id`      | Object detail — 5 tabs: Оборудование, Записи, Ремонт, Дорога, Инженеры |
-| `/objects/:id/svod` | СВОД tab (computed summary, read-only)                                 |
-| `/engineers`        | Engineer list — load ratio, status, object count                       |
-| `/engineers/:id`    | Engineer detail — workload dashboard                                   |
-| `/svod`             | Full СВОД table — paginated, filterable                                |
-| `/svod/export`      | Trigger XLSX export                                                    |
+| Route               | View                                                                         |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `/login`            | Login page                                                                   |
+| `/`                 | Dashboard — required FTE by division, top 10 objects, coverage gaps          |
+| `/objects`          | Object list — searchable, filterable, shows ИТОГО Числ                       |
+| `/objects/new`      | Create object                                                                |
+| `/objects/:id`      | Object detail — 6 tabs: Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД |
+| `/objects/:id/svod` | СВОД tab (computed summary, read-only)                                       |
+| `/engineers`        | Engineer list — load ratio, status, object count                             |
+| `/engineers/:id`    | Engineer detail — workload dashboard                                         |
+| `/svod`             | Full СВОД table — paginated, filterable                                      |
+| `/svod/export`      | Trigger XLSX export                                                          |
 
 No catalog management pages, no admin pages, no periods page.
 
@@ -2526,7 +2537,7 @@ No catalog management pages, no admin pages, no periods page.
 | **PAC-06** | Unauthenticated requests to any route redirect to `/login`.                                                                                                              |
 | **PAC-07** | When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032327 / 2 = 0.016163 ±0.000001`.                                 |
 | **PAC-08** | Division dashboard shows correct required FTE total = SUM of `itogo_chislo_with_travel` for all objects in that division.                                                |
-| **PAC-09** | Health endpoint `GET /actuator/health` returns HTTP 200 with `{"status": "UP"}` (Spring Boot Actuator default) and includes database and Redis connectivity checks.      |
+| **PAC-09** | Health endpoint `GET /actuator/health` returns HTTP 200 with `{"status": "UP"}` (Spring Boot Actuator default) and includes database connectivity check.                 |
 
 ---
 
@@ -2534,19 +2545,19 @@ No catalog management pages, no admin pages, no periods page.
 
 Items are ordered by dependency. M-01 is the highest priority because manual entry of 2,935 objects is not viable for production use.
 
-| ID   | Item                                         | Depends on | Notes                                                                                        |
-| ---- | -------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| M-01 | XLSX import (FR bulk)                        | —          | Highest priority. Resolves S-06. Includes engineer name resolution and placeholder accounts. |
-| M-02 | RBAC — admin, editor, engineer, viewer roles | M-01       | Resolves S-04. Division scoping for editors.                                                 |
-| M-03 | Physical inventory layer (`object_devices`)  | —          | Resolves S-01. Split equipment UI into two sections.                                         |
-| M-04 | Device catalog management UI                 | M-02       | Resolves S-03 (devices). Admin-only.                                                         |
-| M-05 | Repair type catalog management UI            | M-02       | Resolves S-03 (repairs). Admin-only.                                                         |
-| M-06 | Staleness tracking + on-demand recalculation | M-02       | Resolves S-02. Background worker, `is_stale`, admin trigger.                                 |
-| M-07 | Planning periods (FR-12)                     | M-01, M-06 | Resolves S-05. Period selector in UI, period lock.                                           |
-| M-08 | Audit log                                    | M-02       | Resolves S-07.                                                                               |
-| M-09 | Concurrency / optimistic locking             | M-06       | Resolves S-09. `updated_at` version check on writes.                                         |
-| M-10 | `app_config` table with admin UI             | M-02       | Move hardcoded constants to DB.                                                              |
-| M-11 | PDF export                                   | —          | Resolves S-08. Post-MVP.                                                                     |
+| ID       | Item                                            | Depends on | Notes                                                                                        |
+| -------- | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| M-01     | XLSX import (FR bulk)                           | —          | Highest priority. Resolves S-06. Includes engineer name resolution and placeholder accounts. |
+| M-02     | RBAC — admin, editor, engineer, viewer roles    | M-01       | Resolves S-04. Division scoping for editors.                                                 |
+| ~~M-03~~ | ~~Physical inventory layer (`object_devices`)~~ | —          | ~~Resolves S-01.~~ Moved into PoC scope (v2.9). No migration needed.                         |
+| M-04     | Device catalog management UI                    | M-02       | Resolves S-03 (devices). Admin-only.                                                         |
+| M-05     | Repair type catalog management UI               | M-02       | Resolves S-03 (repairs). Admin-only.                                                         |
+| M-06     | Staleness tracking + on-demand recalculation    | M-02       | Resolves S-02. Background worker, `is_stale`, admin trigger.                                 |
+| M-07     | Planning periods (FR-12)                        | M-01, M-06 | Resolves S-05. Period selector in UI, period lock.                                           |
+| M-08     | Audit log                                       | M-02       | Resolves S-07.                                                                               |
+| M-09     | Concurrency / optimistic locking                | M-06       | Resolves S-09. `updated_at` version check on writes.                                         |
+| M-10     | `app_config` table with admin UI                | M-02       | Move hardcoded constants to DB.                                                              |
+| M-11     | PDF export                                      | —          | Resolves S-08. Post-MVP.                                                                     |
 
 ---
 
@@ -2563,10 +2574,11 @@ The PoC uses the **full production stack** defined in §9.1 — no throwaway sta
 | Liquibase                 | `v1.0.0-initial-schema.xml` + seed data changeset | PoC schema + all seed normatives in one migration                            |
 | Spring Security + JWT     | Single role, no refresh tokens                    | Refresh tokens added in M-02 (MVP RBAC)                                      |
 | Apache POI                | XLSX export only                                  | Import (POI read) added in M-01 (MVP)                                        |
-| Redis                     | Job queue for recalculation                       | Even synchronous PoC recalc uses Redis queue stub for forward-compatibility  |
 | log4j2                    | JSON layout from day one                          | Structured logging is non-negotiable even in PoC                             |
 | Spring Actuator           | `/actuator/health` exposed                        | Used for Docker Compose healthcheck; `/actuator/metrics` enabled for Datadog |
 | Bucket4j                  | Basic rate limiting on `/api/**`                  | Prevents accidental hammering during demo                                    |
+
+> **Note:** Redis is **not** used in PoC. The PoC recalculation is synchronous (S-02), so no job queue is needed. Redis is introduced in MVP with M-06 (staleness + background worker).
 
 #### Frontend — PoC Configuration
 
@@ -2586,12 +2598,11 @@ services:
   backend: # Spring Boot JAR, port 8080
   frontend: # Nginx serving Vite build, port 3000
   postgres: # PostgreSQL 15, port 5432
-  redis: # Redis 7, port 6379
   nginx: # Reverse proxy: / → frontend, /api → backend
     # TLS termination with self-signed cert for PoC
 ```
 
-**Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) defines a strict subset of the full MVP schema. MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
+**Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema (with the exception of MVP-only columns explicitly marked in §5.2). MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
 
 ### 15.9 Architecture: Monolith for PoC and MVP
 
@@ -2749,6 +2760,8 @@ Response shape for division:
 }
 ```
 
+> **Note:** The `breakdown` components intentionally sum to less than `required_fte` because PZV (20 min) and round-trip travel overhead are unattributed object-level constants — see C-39. `required_fte` is the authoritative total.
+
 ---
 
 ### 16.8 PoC vs MVP Scope for Aggregation
@@ -2815,16 +2828,16 @@ No automatic merge is attempted. The user must reload to get the latest state an
 
 | Table                                          | `updated_at` column | Locking applied                                              |
 | ---------------------------------------------- | ------------------- | ------------------------------------------------------------ |
-| `objects`                                      | ✅                  | On metadata updates                                          |
-| `object_devices` / `object_system_assignments` | ✅                  | On quantity changes                                          |
-| `records_tasks`                                | ✅                  | On task count updates                                        |
-| `object_repairs`                               | ✅                  | On repair count updates                                      |
-| `travel`                                       | ✅                  | On travel data updates                                       |
-| `object_engineers`                             | ✅                  | On assignment changes                                        |
-| `device_system_contexts`                       | ✅                  | On normative edits (admin only)                              |
-| `repair_types`                                 | ✅                  | On time_minutes edits (admin only)                           |
-| `app_config`                                   | ✅                  | On constant changes (admin only)                             |
-| `summaries` / `engineer_summaries`             | ❌                  | Written only by background worker; no concurrent user writes |
+| `objects`                                      | ✅                   | On metadata updates                                          |
+| `object_devices` / `object_system_assignments` | ✅                   | On quantity changes                                          |
+| `records_tasks`                                | ✅                   | On task count updates                                        |
+| `object_repairs`                               | ✅                   | On repair count updates                                      |
+| `travel`                                       | ✅                   | On travel data updates                                       |
+| `object_engineers`                             | ✅                   | On assignment changes                                        |
+| `device_system_contexts`                       | ✅                   | On normative edits (admin only)                              |
+| `repair_types`                                 | ✅                   | On time_minutes edits (admin only)                           |
+| `app_config`                                   | ✅                   | On constant changes (admin only)                             |
+| `summaries` / `engineer_summaries`             | ❌                   | Written only by background worker; no concurrent user writes |
 
 ---
 
@@ -2859,8 +2872,12 @@ The recalculation worker (MVP) reads `summaries.is_stale = 'TRUE'` rows and upda
 -- Worker claims a batch atomically
 UPDATE summaries
 SET    is_stale = 'PROCESSING'
-WHERE  is_stale = 'TRUE'
-LIMIT  100
+WHERE  id IN (
+    SELECT id FROM summaries
+    WHERE  is_stale = 'TRUE'
+    LIMIT  100
+    FOR UPDATE SKIP LOCKED
+)
 RETURNING id, object_id;
 ```
 
@@ -3053,13 +3070,13 @@ This enables distributed tracing if a second service is added (e.g., a notificat
 
 Minimal operational runbook for PoC deployment:
 
-| Scenario                          | Action                                                                                        |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| Application not responding        | `docker compose restart api` — check `/health`                                                |
-| Database connection errors        | Check PostgreSQL container logs; verify connection pool settings                              |
-| Calculation produces wrong values | Check seed normative data via `/admin/config`; compare with source XLSX values in §4.2        |
-| XLSX export fails                 | Check Datadog logs for `ApachePOI` or `XSSFWorkbook` exception; verify column mapping in §7.9 |
-| All summaries show stale          | Trigger `POST /svod/recalculate` as admin; monitor job logs                                   |
+| Scenario                          | Action                                                                                                           |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Application not responding        | `docker compose restart api` — check `/health`                                                                   |
+| Database connection errors        | Check PostgreSQL container logs; verify connection pool settings                                                 |
+| Calculation produces wrong values | Check seed normative data via `/admin/config`; compare with source XLSX values in §4.2                           |
+| XLSX export fails                 | Check Datadog logs for `ApachePOI` or `XSSFWorkbook` exception; verify column mapping in §7.9                    |
+| All summaries show stale (MVP)    | Trigger `POST /svod/recalculate` as admin; monitor job logs. _Not applicable to PoC (S-02: synchronous recalc)._ |
 
 ## 19. Testing Strategy
 
@@ -3728,4 +3745,4 @@ For PoC (demo environment, no production data):
 
 ---
 
-_End of Technical Specification — Version 2.8_
+_End of Technical Specification — Version 2.9_
