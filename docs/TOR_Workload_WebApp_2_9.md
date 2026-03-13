@@ -2,9 +2,9 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.9  
-**Based on:** Шаблон*нагрузки*з_v_4_00.xlsx  
-**Date:** 2026-03-09  
+**Version:** 2.10
+**Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
+**Date:** 2026-03-13
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
 **Changelog v2.1:** Incorporated three architectural decisions: (1) Option C two-layer quantity model (physical + maintained); (2) System type restriction enforced at UI/API/DB levels; (3) Normatives managed per (device, system) pair. Updated §4.2, §4.3, §6.4, §7.3, §7.4, added C-17–C-20, added AC-11–AC-13.  
 **Changelog v2.2:** Added Engineers Module — engineers as first-class entities, object-engineer assignments with equal workload split, engineer capacity tracking, overload detection, engineer dashboard, and coverage gap reporting. Updated §2, §3, §4 (FR-10, FR-11), §5, §6 (§6.12–6.14), §7, §9, §10, §12, §13 (C-21–C-25), §14 (AC-14–AC-18).  
@@ -14,6 +14,7 @@
 **Changelog v2.6:** Corrected repair calculation engine. К-во ремонтов = COUNT of distinct repair types with non-zero counts (not SUM of quantities). repair_travel and repair_pzv use 3-tier threshold formula (≤5→0, ≤10→kvo×rate, >10→10×rate). Verified against all non-zero repair rows in source XLSX: zero mismatches. Updated §4.5, §6.6, §6.11 (new config keys), §13 (C-36, C-37), §14 (AC-22).  
 **Changelog v2.7:** Dependency sweep after v2.6 repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5; (3) §6.10 DELETE trigger; (4) C-03 rewrite; (5) C-13 rewrite; (6) AC-07 clarification; (7) AC-22 moved into §14; (8) §19.2 RepairCalculationTest.  
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC. repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded with kvo and effective_trips; (3) §6.10 — DELETE added to object_repairs invalidation trigger; (4) C-03 rewritten — was wrong SUM definition, now correct COUNT definition with cross-ref to C-36; (5) C-13 rewritten — old flat formula replaced with threshold-aware description; (6) AC-07 — total_repairs definition clarified; (7) AC-22 moved from orphaned position after §20 into §14 with 3-band structure; (8) §19.2 — RepairCalculationTest added with 8 boundary cases covering all threshold bands.  
+**Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-13, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 
 ---
@@ -1200,6 +1201,65 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 
 All constants are stored in `app_config`, editable by admins at `/admin/config`. Never hardcoded in application logic.
 
+### 6.11.1 Configuration Validation Rules
+
+All `app_config` values are validated **on application startup** and **on every admin save** (`PUT /admin/config`). A failed validation must prevent the save and return HTTP 422 with the violated rule identifier. A missing required key on startup must prevent the application from starting (fail-fast).
+
+#### Per-key constraints
+
+| Key | Constraint | Violation code | Reason |
+| --- | ---------- | -------------- | ------ |
+| `MONTHLY_HOURS_FUND` | `> 0` | `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE` | Divisor in itogo formula — zero causes divide-by-zero |
+| `ABSENCE_COEFFICIENT` | `> 0` | `CONFIG_ABSENCE_COEFFICIENT_NONPOSITIVE` | Multiplier in itogo formula — zero produces zero FTE for any workload |
+| `PZV_MINUTES` | `>= 0` | `CONFIG_PZV_MINUTES_NEGATIVE` | May legitimately be 0; negative is physically impossible |
+| `OS_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_OS_R1_VISITS_ZERO` | Used as multiplier — zero eliminates all ОС routine maintenance |
+| `OS_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_OS_R2_VISITS_ZERO` | Same |
+| `PS_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_PS_R1_VISITS_ZERO` | Same |
+| `PS_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_PS_R2_VISITS_ZERO` | Same |
+| `VIDEO_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R1_VISITS_ZERO` | Same |
+| `VIDEO_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R2_VISITS_ZERO` | Same |
+| `REPAIR_PLANNING_MONTHS` | `>= 1` | `CONFIG_REPAIR_PLANNING_MONTHS_ZERO` | Repair period length — must be positive |
+| `REPAIR_PRODUCTIVE_MONTHS` | `>= 1` | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO` | Divisor in repair monthly formula — zero causes divide-by-zero |
+| `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0` | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE` | kvo threshold — negative is meaningless |
+| `REPAIR_TRAVEL_CAP` | `>= 1` | `CONFIG_REPAIR_TRAVEL_CAP_ZERO` | Cap on effective_trips — zero would eliminate all repair travel overhead |
+| `ENGINEER_WARNING_THRESHOLD` | `> 0 AND <= 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold above 1.0 means "warning" never fires before overload |
+| `RECORDS_ACCESS_MINUTES` | `>= 0` | `CONFIG_RECORDS_ACCESS_MINUTES_NEGATIVE` | Normative time — negative is physically impossible |
+| `RECORDS_MONITORING_MINUTES` | `>= 0` | `CONFIG_RECORDS_MONITORING_MINUTES_NEGATIVE` | Same |
+| `RECORDS_FOOTAGE_MINUTES` | `>= 0` | `CONFIG_RECORDS_FOOTAGE_MINUTES_NEGATIVE` | Same |
+| `RECORDS_BACKUP_MINUTES` | `>= 0` | `CONFIG_RECORDS_BACKUP_MINUTES_NEGATIVE` | Same |
+| `RECORDS_ADMIN_MINUTES` | `>= 0` | `CONFIG_RECORDS_ADMIN_MINUTES_NEGATIVE` | Same |
+
+#### Cross-key constraints
+
+| Rule | Constraint | Violation code | Reason |
+| ---- | ---------- | -------------- | ------ |
+| Repair threshold ordering | `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP` | `CONFIG_REPAIR_THRESHOLDS_INVERTED` | If ZERO_THRESHOLD ≥ CAP the three-band logic inverts: band 2 never fires; effective_trips jump from 0 to cap |
+| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= REPAIR_PLANNING_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from |
+
+#### Startup behaviour
+
+On application startup, `AppConfigValidator` must:
+1. Verify that **all 19 required keys** are present in `app_config`. Missing keys → log `FATAL: missing config key [KEY]` → abort startup.
+2. Evaluate all per-key and cross-key constraints above. Any failure → log `FATAL: config constraint violated [CODE]` → abort startup.
+3. On success, log `INFO: app_config validated — all 19 keys present and valid`.
+
+#### Save behaviour
+
+`PUT /admin/config` must run the same validation before writing. On constraint violation return:
+
+```json
+{
+  "status": 422,
+  "code": "CONFIG_CONSTRAINT_VIOLATED",
+  "violations": [
+    { "key": "REPAIR_TRAVEL_CAP", "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
+      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)" }
+  ]
+}
+```
+
+All violations in a single save are reported together (not fail-fast per key).
+
 ### 6.12 Engineer Workload Calculation
 
 Engineer workload is computed from cached `summaries` rows. It is recalculated whenever:
@@ -2314,6 +2374,19 @@ All three threshold bands must be verified in the integration test suite (`Calcu
 - `effective_trips = 10` (capped)
 - `repair_travel_6months = 10 × 20 = 200`
 - `repair_pzv_6months    = 10 × 20 = 200`
+
+### AC-23: Config Validation — Startup and Save Enforcement
+
+All 19 `app_config` keys must be present in the seed migration and must satisfy the per-key and cross-key constraints defined in §6.11.1.
+
+**Startup test:** If any key is deleted from `app_config` and the application is restarted, it must refuse to start with a `FATAL` log entry identifying the missing key. Verified by integration test `AppConfigValidatorTest.missingKey`.
+
+**Save rejection test:** `PUT /admin/config` with `REPAIR_TRAVEL_ZERO_THRESHOLD = 10` and `REPAIR_TRAVEL_CAP = 5` must return HTTP 422 with code `CONFIG_REPAIR_THRESHOLDS_INVERTED`. Verified by `AppConfigValidatorTest.invertedThresholds`.
+
+**Boundary value tests:**
+- `MONTHLY_HOURS_FUND = 0` → HTTP 422 `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE`
+- `ENGINEER_WARNING_THRESHOLD = 1.1` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE`
+- `REPAIR_PRODUCTIVE_MONTHS = 7` when `REPAIR_PLANNING_MONTHS = 6` → HTTP 422 `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING`
 
 ## 15. PoC Scope
 
