@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.10
+**Version:** 2.11
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-13
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -14,8 +14,9 @@
 **Changelog v2.6:** Corrected repair calculation engine. К-во ремонтов = COUNT of distinct repair types with non-zero counts (not SUM of quantities). repair_travel and repair_pzv use 3-tier threshold formula (≤5→0, ≤10→kvo×rate, >10→10×rate). Verified against all non-zero repair rows in source XLSX: zero mismatches. Updated §4.5, §6.6, §6.11 (new config keys), §13 (C-36, C-37), §14 (AC-22).  
 **Changelog v2.7:** Dependency sweep after v2.6 repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5; (3) §6.10 DELETE trigger; (4) C-03 rewrite; (5) C-13 rewrite; (6) AC-07 clarification; (7) AC-22 moved into §14; (8) §19.2 RepairCalculationTest.  
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC. repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded with kvo and effective_trips; (3) §6.10 — DELETE added to object_repairs invalidation trigger; (4) C-03 rewritten — was wrong SUM definition, now correct COUNT definition with cross-ref to C-36; (5) C-13 rewritten — old flat formula replaced with threshold-aware description; (6) AC-07 — total_repairs definition clarified; (7) AC-22 moved from orphaned position after §20 into §14 with 3-band structure; (8) §19.2 — RepairCalculationTest added with 8 boundary cases covering all threshold bands.  
-**Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-13, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
+**Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[REPAIR_PLANNING_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
 
 ---
 
@@ -253,7 +254,7 @@ Quantities of service requests/tasks per object per 6-month planning period:
 
 Records normatives are fixed constants, not device-system contexts. They have no R2 and no system type.
 
-Records tasks are **irregular events** — they do not occur on a fixed schedule. Quantities are entered for a specific 6-month planning period (see FR-12). The monthly average `records_monthly = records_6months / 6` represents a smoothed load estimate, not a guaranteed monthly occurrence.
+Records tasks are **irregular events** — they do not occur on a fixed schedule. Quantities are entered for a specific 6-month planning period (see FR-12). The monthly average `records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]` represents a smoothed load estimate, not a guaranteed monthly occurrence.
 
 ### 4.5 Repair Type Catalog & Object Repairs (FR-05) — "Ремонт"
 
@@ -849,7 +850,7 @@ Stage 4 — Monthly average per system
   monthly_avg[S] = (R1_annual[S] + R2_annual[S]) / 12
 
 Stage 5 — Records and repairs (§6.5, §6.6)
-  records_monthly = records_6months / 6  (§6.5)
+  records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]  (§6.5)
 
   For repairs (§6.6):
     repair_work_6months = SUM(count × time_minutes)
@@ -971,8 +972,10 @@ across assignments is 2, but this is expected and does not trigger any alert.
 
 ```
 records_6months = SUM(task_quantity[j] × records_normative[j])  for all j
-records_monthly = records_6months / 6
+records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]
 ```
+
+> **Note:** `records_6months` aggregates counts over a 6-month planning period. The divisor `config[REPAIR_PLANNING_MONTHS]` (default 6) converts the 6-month total to a monthly average. Using the config key rather than a hardcoded `6` ensures this divisor remains consistent with the period length if ever adjusted.
 
 ### 6.6 Repair Monthly Averages
 
@@ -1172,6 +1175,7 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 | `app_config` UPDATE (any calculation key)            | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
 | `periods.is_active` changed (period switch)          | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
 | Any `summaries.is_stale` set to `'TRUE'`             | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                               |
+| `users.home_division_id` UPDATE for engineer E        | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40. |
 
 **Recalculation trigger:** Admin clicks "Пересчитать" in the UI or calls `POST /svod/recalculate`. The background worker then processes all stale summaries in dependency order: object summaries first, then engineer summaries.
 
@@ -1188,7 +1192,7 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 | `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year                           |
 | `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year                                 |
 | `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year                        |
-| `REPAIR_PLANNING_MONTHS`       | 6       | Repair planning horizon (months)                          |
+| `REPAIR_PLANNING_MONTHS`       | 6       | Planning horizon (months); used to convert 6-month totals (records and repairs) to monthly averages in `records_monthly` (§6.5) and as the upper bound in the cross-key constraint for `REPAIR_PRODUCTIVE_MONTHS` |
 | `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging                      |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel and PZV overhead for repairs     |
 | `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips at this value        |
@@ -1201,7 +1205,9 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 
 All constants are stored in `app_config`, editable by admins at `/admin/config`. Never hardcoded in application logic.
 
-### 6.11.1 Configuration Validation Rules
+### 6.11.1 Configuration Validation Rules *(MVP — requires M-10)*
+
+> **Scope: MVP.** This section requires the `app_config` database table (introduced in M-10). In PoC, configuration constants live in `application.yml` and are validated at startup by Spring's `@ConfigurationProperties` binding — missing or type-invalid values prevent startup but no HTTP 422 save endpoint exists.
 
 All `app_config` values are validated **on application startup** and **on every admin save** (`PUT /admin/config`). A failed validation must prevent the save and return HTTP 422 with the violated rule identifier. A missing required key on startup must prevent the application from starting (fail-fast).
 
@@ -1222,7 +1228,7 @@ All `app_config` values are validated **on application startup** and **on every 
 | `REPAIR_PRODUCTIVE_MONTHS` | `>= 1` | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO` | Divisor in repair monthly formula — zero causes divide-by-zero |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0` | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE` | kvo threshold — negative is meaningless |
 | `REPAIR_TRAVEL_CAP` | `>= 1` | `CONFIG_REPAIR_TRAVEL_CAP_ZERO` | Cap on effective_trips — zero would eliminate all repair travel overhead |
-| `ENGINEER_WARNING_THRESHOLD` | `> 0 AND <= 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold above 1.0 means "warning" never fires before overload |
+| `ENGINEER_WARNING_THRESHOLD` | `> 0 AND < 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold at 1.0 or above means the warning band collapses to zero width and the "warning" state becomes unreachable before "overloaded" |
 | `RECORDS_ACCESS_MINUTES` | `>= 0` | `CONFIG_RECORDS_ACCESS_MINUTES_NEGATIVE` | Normative time — negative is physically impossible |
 | `RECORDS_MONITORING_MINUTES` | `>= 0` | `CONFIG_RECORDS_MONITORING_MINUTES_NEGATIVE` | Same |
 | `RECORDS_FOOTAGE_MINUTES` | `>= 0` | `CONFIG_RECORDS_FOOTAGE_MINUTES_NEGATIVE` | Same |
@@ -1964,7 +1970,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 
 ```jsonc
 {
-  "device_types": [{ "name": "...", "system": "OS|PS|VIDEO" }],
+  "device_types": [{ "name": "...", "description": "..." }],
   "device_system_contexts": [
     {
       "device_type_name": "...",
@@ -2039,10 +2045,11 @@ Use **Liquibase** for all schema versioning. Changelogs live in `src/main/resour
 db/changelog/
   db.changelog-master.xml        ← root changelog, includes all others
   changes/
-    v1.0.0-initial-schema.xml    ← PoC schema (divisions, objects, summaries, …)
-    v1.1.0-periods.xml           ← MVP: planning periods
-    v1.2.0-rbac.xml              ← MVP: roles, division scoping
-    v1.3.0-physical-inventory.xml← MVP: object_devices table
+    v1.0.0-initial-schema.xml    ← PoC schema (divisions, branches, objects, device catalog,
+                                     object_devices, object_system_assignments, summaries, …)
+    v1.1.0-periods.xml           ← MVP: planning periods (FR-12)
+    v1.2.0-rbac.xml              ← MVP: roles, division scoping (M-02)
+    v1.3.0-app-config.xml        ← MVP: app_config table and admin UI (M-10)
     …
 ```
 
@@ -2212,6 +2219,18 @@ When an engineer name from the `Ответственные ТО` column does not
 
 The original Excel free-text field is replaced by `object_engineers` join rows. After import, the text is resolved to user accounts (or placeholders). No VARCHAR field is retained on the `objects` table. The СВОД export populates the "Ответственные ТО" column by joining `users.name` through `object_engineers`.
 
+### C-33: Aggregations Are Never Cached in the Database
+
+Branch, division, and company-wide required FTE values are computed by live SQL aggregation over `summaries` at query time. No `branch_summaries`, `division_summaries`, or `company_summary` tables exist. With ~2,935 objects, a SUM over `summaries.itogo_chislo_with_travel` grouped by `division_id` completes in milliseconds with a proper index. Caching these aggregations would add invalidation complexity with no meaningful performance benefit.
+
+### C-34: Staffing Need Is Required FTE Only — No Capacity Comparison at Branch/Division Level
+
+`branch_load` and `division_load` express how many full-time engineers are theoretically required to cover all objects. They do not compare against available engineer capacity. Capacity comparison (load ratio, overload status) is defined only at the individual engineer level (§6.13). Division managers see required FTE and must use their own knowledge of assigned headcount to assess adequacy.
+
+### C-35: Import Is the Highest-Priority MVP Item
+
+The PoC requires manual data entry. With 2,935 objects, manual entry is a demo-only shortcut — not a viable production workflow. XLSX import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
+
 ### C-36: К-во ремонтов Is COUNT of Distinct Repair Types, Not SUM of Quantities
 
 `К-во ремонтов` (total repair count) = `COUNT(object_repairs rows WHERE count > 0)` for the current period. It counts how many distinct repair types were performed at least once — not the total number of individual repair operations. An object with "Замена аккумулятора × 3" and "Замена извещателя × 5" has `kvo = 2`, not 8. This is the value used in the repair travel/PZV threshold formula. The field is always computed; it is never user-entered. Verified against the Ремонт Расчет sheet: object "Архив г.Брест" has 8 distinct repair types → `kvo = 8`.
@@ -2226,18 +2245,6 @@ Both `repair_travel_6months` and `repair_pzv_6months` apply the same threshold l
 
 The two formulas differ only in the rate used: travel uses `round_trip_min`, PZV uses `config[PZV_MINUTES]`. Neither uses the raw sum of repair quantities. The threshold values (5 and 10) are stored in `app_config` as `REPAIR_TRAVEL_ZERO_THRESHOLD` and `REPAIR_TRAVEL_CAP`. Verified across all non-zero repair rows in source XLSX: zero mismatches.
 
-### C-33: Aggregations Are Never Cached in the Database
-
-Branch, division, and company-wide required FTE values are computed by live SQL aggregation over `summaries` at query time. No `branch_summaries`, `division_summaries`, or `company_summary` tables exist. With ~2,935 objects, a SUM over `summaries.itogo_chislo_with_travel` grouped by `division_id` completes in milliseconds with a proper index. Caching these aggregations would add invalidation complexity with no meaningful performance benefit.
-
-### C-34: Staffing Need Is Required FTE Only — No Capacity Comparison at Branch/Division Level
-
-`branch_load` and `division_load` express how many full-time engineers are theoretically required to cover all objects. They do not compare against available engineer capacity. Capacity comparison (load ratio, overload status) is defined only at the individual engineer level (§6.13). Division managers see required FTE and must use their own knowledge of assigned headcount to assess adequacy.
-
-### C-35: Import Is the Highest-Priority MVP Item
-
-The PoC requires manual data entry. With 2,935 objects, manual entry is a demo-only shortcut — not a viable production workflow. XLSX import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
-
 ### C-38: Partial-Period / Mid-Year Object Addition Policy
 
 If a new object is added mid-period (e.g., a new branch opens in April during the H1 January–June period), its repair counts and records tasks for that period are entered based on what **actually occurred** from the activation date to the period end. No pro-rata adjustment is applied to the normative calculation itself — `itogo_chislo_with_travel` represents the full 6-month expected workload for the object regardless of when it was added. The logic is: normatives define the _annual maintenance requirement_ for a fully operational object; the period's actual counts (Записи/Ремонт) reflect what was done; the combination produces the correct load estimate. If an object was non-operational for part of the period, editors enter zero counts for the inactive portion — the system does not track activation dates or apply temporal weighting. This decision keeps the calculation engine stateless with respect to object lifecycle.
@@ -2247,6 +2254,17 @@ If a new object is added mid-period (e.g., a new branch opens in April during th
 **Zero guard.** The source XLSX uses an IF-based zero guard when computing `itogo_chislo_with_travel` (and the no-travel variant): if the sum of actual work components (`os_monthly_avg + ps_monthly_avg + video_monthly_avg + records_monthly + repair_with_travel_monthly`) equals zero, the result is **0** — not the value that the PZV + travel overhead alone would produce. This prevents phantom FTE headcount on objects that have no real maintenance workload. The implementation must replicate this guard (see §6.8).
 
 **Component gap.** The per-system component breakdown (§6.12.2) decomposes an engineer's total load into `os_load`, `ps_load`, `video_load`, `records_load`, and `repair_load`. These five components sum to **less than** `itogo_chislo_with_travel` because PZV (fixed 20 min per visit) and `round_trip_min` (travel time) are object-level constants that are not attributable to any single system type. **When at least one work component is non-zero,** the unattributed gap equals `(pzv + round_trip_min) / 60 / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT`. For the reference object "Архив г. Брест" this is `(20+20) / 60 / 142.8 × 1.12 = 0.005226`, which is 16% of the total `0.032327`. When all work components are zero, the zero guard (§6.8) forces `itogo_chislo_with_travel = 0`, so the gap is also 0 — PZV and travel overhead cannot produce FTE on their own. The UI must display the component breakdown as informational context alongside the authoritative `total_load` value. The five component bars in the engineer dashboard (§7.6 Section 2) should be labelled with a footnote: _"Не включает ПЗВ и дорогу — см. ИТОГО"_. The aggregation response shape (§16.7) `breakdown` object similarly excludes PZV and travel; `required_fte` is the authoritative total.
+
+### C-40: Travel Review Trigger on Engineer Home Division Change
+
+When `users.home_division_id` is updated for an engineer, object summaries are **not** automatically marked stale — the stored travel values in the `travel` table have not changed. However, travel time data is defined relative to the responsible engineer's home division (C-27), so the stored values may no longer be accurate.
+
+The system responds to a `home_division_id` change as follows:
+1. **UI warning:** The engineer's profile/edit page displays a persistent banner: _"Домашнее подразделение изменено — проверьте и обновите данные о маршруте для всех объектов этого инженера."_
+2. **No auto-stale:** Summaries retain their current values until an editor manually reviews and updates the `travel.one_way_time_min` on affected objects.
+3. **Stale on travel update:** When an editor updates `travel.one_way_time_min` for an object, the object's summary is marked stale normally (§6.10), and recalculation reflects the corrected travel time.
+
+This approach avoids mass invalidation on what may be a routine administrative change, while ensuring the discrepancy is surfaced to editors.
 
 ### C-20: New System Types Cannot Be Added Without Developer Involvement
 
@@ -2282,7 +2300,9 @@ UI "Assign to system" dropdown shows only system types with a valid `device_syst
 
 ### AC-07: Computed Fields Are Read-Only
 
-API ignores or rejects attempts to set `total_repairs`, `round_trip_min`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted. Note: `total_repairs` is the stored snapshot of `kvo` (COUNT of distinct repair types with count > 0) at the time of last calculation — it is a computed output, not an input.
+API ignores or rejects attempts to set `round_trip_min`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
+
+> **PoC note:** `total_repairs` is computed in-memory during PoC calculation and is **not** stored in the PoC `summaries` schema (§15.4) — there is no field to protect. In MVP, when `total_repairs` is added as a persisted column in `summaries`, it must also become a read-only field (computed output, not an input).
 
 ### AC-08: Role Enforcement
 
@@ -2375,7 +2395,9 @@ All three threshold bands must be verified in the integration test suite (`Calcu
 - `repair_travel_6months = 10 × 20 = 200`
 - `repair_pzv_6months    = 10 × 20 = 200`
 
-### AC-23: Config Validation — Startup and Save Enforcement
+### AC-23: Config Validation — Startup and Save Enforcement *(MVP)*
+
+> **Scope: MVP (M-10).** This criterion requires the `app_config` table. For PoC, the equivalent criterion is: the application starts without error when all `application.yml` config values are valid, and fails to start (Spring binding exception) when a required property is missing or invalid.
 
 All 19 `app_config` keys must be present in the seed migration and must satisfy the per-key and cross-key constraints defined in §6.11.1.
 
@@ -2385,6 +2407,7 @@ All 19 `app_config` keys must be present in the seed migration and must satisfy 
 
 **Boundary value tests:**
 - `MONTHLY_HOURS_FUND = 0` → HTTP 422 `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE`
+- `ENGINEER_WARNING_THRESHOLD = 1.0` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` (threshold at exactly 1.0 collapses warning band to zero)
 - `ENGINEER_WARNING_THRESHOLD = 1.1` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE`
 - `REPAIR_PRODUCTIVE_MONTHS = 7` when `REPAIR_PLANNING_MONTHS = 6` → HTTP 422 `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING`
 
@@ -2560,6 +2583,9 @@ users  (id, email, name, password_hash,
         is_active BOOLEAN DEFAULT TRUE,
         requires_activation BOOLEAN DEFAULT FALSE,
         created_at, updated_at)
+        -- NOTE: failed_login_count and locked_until are NOT in PoC schema.
+        -- They are added in MVP when account lockout is implemented (§21.3, M-02).
+        -- The v1.0.0 Liquibase migration must NOT include these columns.
 
 object_engineers  (id, object_id, engineer_id, assigned_at, assigned_by UUID NULL)
 UNIQUE(object_id, engineer_id)
@@ -2675,7 +2701,16 @@ services:
     # TLS termination with self-signed cert for PoC
 ```
 
-**Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema (with the exception of MVP-only columns explicitly marked in §5.2). MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
+**Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema, **with the following explicit exceptions** — these MVP-only columns are added in later migrations and must not appear in `v1.0.0`:
+
+| Column | Table | Added in |
+|--------|-------|----------|
+| `failed_login_count` | `users` | M-02 (account lockout, §21.3) |
+| `locked_until` | `users` | M-02 (account lockout, §21.3) |
+| `period_id` | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12) |
+| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking) |
+
+MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
 
 ### 15.9 Architecture: Monolith for PoC and MVP
 
@@ -2730,7 +2765,18 @@ All three levels are derived from the same `summaries` table. The chain is consi
 
 ### 16.3 System-Component Breakdown at Each Level
 
-The aggregation chain applies identically to each system component:
+**Authoritative total — always aggregate `itogo_chislo_with_travel` directly:**
+
+```
+branch_load   = SUM(summaries.itogo_chislo_with_travel)
+                for all objects WHERE objects.branch_id = branch.id
+```
+
+`itogo_chislo_with_travel` already includes ОС, ПС, Видео, Записи, Ремонт, PZV, and travel for each individual object. Because travel time is stored per-object (not per-branch or per-division), the per-object value is the correct unit of aggregation. There is no separate "branch-level PZV + travel contribution" term — that cost is already embedded in each object's `itogo_chislo_with_travel`.
+
+**Component breakdown — informational only:**
+
+For display purposes (e.g. a stacked bar chart in the division dashboard), each system component can be aggregated separately:
 
 ```
 branch_os_load      = SUM(summaries.os_monthly_avg / 60 / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT)
@@ -2738,13 +2784,22 @@ branch_ps_load      = SUM(summaries.ps_monthly_avg / 60 / MONTHLY_HOURS_FUND × 
 branch_video_load   = SUM(summaries.video_monthly_avg / 60 / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT)
 branch_records_load = SUM(summaries.records_monthly / 60 / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT)
 branch_repair_load  = SUM(summaries.repair_with_travel_monthly / 60 / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT)
-
-branch_load = branch_os_load + branch_ps_load + branch_video_load
-            + branch_records_load + branch_repair_load
-            + SUM(pzv + round_trip) contribution
 ```
 
-In practice it is simpler and equivalent to aggregate `itogo_chislo_with_travel` directly and decompose using the component ratios from individual summaries for display purposes.
+**These five components do not sum to `branch_load`.** The gap equals the aggregated PZV + travel overhead across all objects in the branch:
+
+```
+branch_pzv_travel_load = branch_load
+                         - (branch_os_load + branch_ps_load + branch_video_load
+                            + branch_records_load + branch_repair_load)
+                       = SUM((pzv_minutes + round_trip_min) / 60
+                             / MONTHLY_HOURS_FUND × ABSENCE_COEFFICIENT)
+                         for objects with at least one non-zero work component
+                         (zero guard: objects with all-zero work components
+                          contribute 0 to both branch_load and branch_pzv_travel_load)
+```
+
+The component breakdown is labelled as informational in the API response (see §16.7). `required_fte` (= `branch_load`) is always the authoritative figure. The same applies at division and company level.
 
 ---
 
@@ -3012,8 +3067,9 @@ GET /actuator/health
 Auto-configured `HealthIndicators` check:
 
 - PostgreSQL datasource connectivity (`DataSourceHealthIndicator`)
-- Redis connectivity (`RedisHealthIndicator`)
 - Disk space (`DiskSpaceHealthIndicator`)
+
+> **Note:** `RedisHealthIndicator` is **not** enabled in PoC — Redis is not used (§15.8). It will be auto-configured in MVP when Redis is introduced (M-06).
 
 Returns HTTP 200 `{"status": "UP"}` when all healthy; HTTP 503 when any component is DOWN.
 
@@ -3468,14 +3524,14 @@ Storage: passwords are stored as `bcrypt` hashes with a minimum cost factor of 1
 
 ---
 
-### 21.2 JWT Strategy (PoC)
+### 21.2 JWT Strategy
 
 #### Token Types
 
-| Token         | Lifetime                      | Storage                                           |
-| ------------- | ----------------------------- | ------------------------------------------------- |
-| Access token  | 15 minutes                    | In-memory (JavaScript variable, not localStorage) |
-| Refresh token | 7 days (PoC) / 24 hours (MVP) | HttpOnly, Secure, SameSite=Strict cookie          |
+| Token         | Lifetime      | Storage                                           | Scope     |
+| ------------- | ------------- | ------------------------------------------------- | --------- |
+| Access token  | 15 minutes    | In-memory (JavaScript variable, not localStorage) | PoC + MVP |
+| Refresh token | 24 hours      | HttpOnly, Secure, SameSite=Strict cookie          | MVP only  |
 
 #### Token Contents (access token payload)
 
@@ -3496,7 +3552,7 @@ Storage: passwords are stored as `bcrypt` hashes with a minimum cost factor of 1
 
 Algorithm: `HS256` with a 256-bit secret key stored in environment variable `JWT_SECRET`. In MVP, migrate to `RS256` (asymmetric) to allow token verification without sharing the signing key.
 
-#### Refresh Flow (PoC)
+#### Refresh Flow (MVP)
 
 ```
 1. Client sends POST /auth/refresh with HttpOnly cookie
@@ -3506,6 +3562,8 @@ Algorithm: `HS256` with a 256-bit secret key stored in environment variable `JWT
 ```
 
 Refresh token rotation prevents replay attacks — a stolen refresh token can only be used once.
+
+**PoC:** Refresh tokens are not implemented. The access token (15 min) is the only authentication mechanism. On expiry the user is redirected to `/login`. This simplification avoids the need for token rotation state management in PoC.
 
 #### Token Revocation (MVP)
 
@@ -3818,4 +3876,4 @@ For PoC (demo environment, no production data):
 
 ---
 
-_End of Technical Specification — Version 2.9_
+_End of Technical Specification — Version 2.11_
