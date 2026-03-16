@@ -376,7 +376,7 @@ Stage 4 — Monthly average per system
   monthly_avg[S] = (R1_annual[S] + R2_annual[S]) / 12
 
 Stage 5 — Records and repairs
-  records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]
+  records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]
   For repairs: kvo, effective_trips → threshold formula
 
 Stage 6 — СВОД aggregation and final headcount
@@ -424,7 +424,7 @@ monthly_avg  = 488.2 / 12 = 40.683 min  ✓
 
 ```
 records_6months = SUM(task_quantity[j] × records_normative[j])  for all j
-records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]
+records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]
 ```
 
 ### 5.5 Repair Monthly Averages
@@ -517,7 +517,7 @@ itogo_chislo_no_travel = (same zero-guard pattern with no_travel variant)
 | `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year       |
 | `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year             |
 | `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year    |
-| `REPAIR_PLANNING_MONTHS`       | 6       | Planning horizon (months)             |
+| `PLANNING_PERIOD_MONTHS`       | 6       | Planning horizon (months)             |
 | `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging  |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel overhead     |
 | `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips  |
@@ -534,7 +534,7 @@ itogo_chislo_no_travel = (same zero-guard pattern with no_travel variant)
 
 **Cross-key constraints:**
 - `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP` — prevents inverted threshold logic
-- `REPAIR_PRODUCTIVE_MONTHS <= REPAIR_PLANNING_MONTHS` — productive months cannot exceed planning horizon
+- `REPAIR_PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` — productive months cannot exceed planning horizon
 
 All violations must be reported together (not fail-fast per key).
 

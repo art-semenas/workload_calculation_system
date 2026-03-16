@@ -53,7 +53,7 @@
 - **Action / Required Resolution:** In §20.7, add a clear note (e.g., `> [!NOTE]`) that the Redis service and its `depends_on` block should be omitted/optional when running the PoC, OR explicitly provide a `docker-compose.poc.yml` outline in §15.8.
 - **Done Criteria:** A developer building the PoC knows exactly how to handle the Redis compose dependency.
 
-### [ ] C-05. `records_monthly` Divisor Naming
+### [x] C-05. `records_monthly` Divisor Naming
 *Source: Review Item 2*
 - **Priority:** Medium
 - **Problem:** §6.5 calculates `records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]`. However, §6.11 clarifies this setting is used for both records and repairs calculations. The key name `REPAIR_PLANNING_MONTHS` is misleading when used to divide records.

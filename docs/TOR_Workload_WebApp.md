@@ -16,7 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC. repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded with kvo and effective_trips; (3) §6.10 — DELETE added to object_repairs invalidation trigger; (4) C-03 rewritten — was wrong SUM definition, now correct COUNT definition with cross-ref to C-36; (5) C-13 rewritten — old flat formula replaced with threshold-aware description; (6) AC-07 — total_repairs definition clarified; (7) AC-22 moved from orphaned position after §20 into §14 with 3-band structure; (8) §19.2 — RepairCalculationTest added with 8 boundary cases covering all threshold bands.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-13, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
-**Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[REPAIR_PLANNING_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
+**Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[PLANNING_PERIOD_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
 
 ---
 
@@ -254,7 +254,7 @@ Quantities of service requests/tasks per object per 6-month planning period:
 
 Records normatives are fixed constants, not device-system contexts. They have no R2 and no system type.
 
-Records tasks are **irregular events** — they do not occur on a fixed schedule. Quantities are entered for a specific 6-month planning period (see FR-12). The monthly average `records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]` represents a smoothed load estimate, not a guaranteed monthly occurrence.
+Records tasks are **irregular events** — they do not occur on a fixed schedule. Quantities are entered for a specific 6-month planning period (see FR-12). The monthly average `records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]` represents a smoothed load estimate, not a guaranteed monthly occurrence.
 
 ### 4.5 Repair Type Catalog & Object Repairs (FR-05) — "Ремонт"
 
@@ -850,7 +850,7 @@ Stage 4 — Monthly average per system
   monthly_avg[S] = (R1_annual[S] + R2_annual[S]) / 12
 
 Stage 5 — Records and repairs (§6.5, §6.6)
-  records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]  (§6.5)
+  records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]  (§6.5)
 
   For repairs (§6.6):
     repair_work_6months = SUM(count × time_minutes)
@@ -972,10 +972,10 @@ across assignments is 2, but this is expected and does not trigger any alert.
 
 ```
 records_6months = SUM(task_quantity[j] × records_normative[j])  for all j
-records_monthly = records_6months / config[REPAIR_PLANNING_MONTHS]
+records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]
 ```
 
-> **Note:** `records_6months` aggregates counts over a 6-month planning period. The divisor `config[REPAIR_PLANNING_MONTHS]` (default 6) converts the 6-month total to a monthly average. Using the config key rather than a hardcoded `6` ensures this divisor remains consistent with the period length if ever adjusted.
+> **Note:** `records_6months` aggregates counts over a 6-month planning period. The divisor `config[PLANNING_PERIOD_MONTHS]` (default 6) converts the 6-month total to a monthly average. Using the config key rather than a hardcoded `6` ensures this divisor remains consistent with the period length if ever adjusted.
 
 ### 6.6 Repair Monthly Averages
 
@@ -1192,7 +1192,7 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 | `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year                           |
 | `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year                                 |
 | `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year                        |
-| `REPAIR_PLANNING_MONTHS`       | 6       | Planning horizon (months); used to convert 6-month totals (records and repairs) to monthly averages in `records_monthly` (§6.5) and as the upper bound in the cross-key constraint for `REPAIR_PRODUCTIVE_MONTHS` |
+| `PLANNING_PERIOD_MONTHS`       | 6       | Planning horizon (months); used to convert 6-month totals (records and repairs) to monthly averages in `records_monthly` (§6.5) and as the upper bound in the cross-key constraint for `REPAIR_PRODUCTIVE_MONTHS` |
 | `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging                      |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel and PZV overhead for repairs     |
 | `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips at this value        |
@@ -1224,7 +1224,7 @@ All `app_config` values are validated **on application startup** and **on every 
 | `PS_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_PS_R2_VISITS_ZERO` | Same |
 | `VIDEO_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R1_VISITS_ZERO` | Same |
 | `VIDEO_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R2_VISITS_ZERO` | Same |
-| `REPAIR_PLANNING_MONTHS` | `>= 1` | `CONFIG_REPAIR_PLANNING_MONTHS_ZERO` | Repair period length — must be positive |
+| `PLANNING_PERIOD_MONTHS` | `>= 1` | `CONFIG_PLANNING_PERIOD_MONTHS_ZERO` | Planning period length (months) — divisor for both records and repairs monthly averaging; must be positive |
 | `REPAIR_PRODUCTIVE_MONTHS` | `>= 1` | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO` | Divisor in repair monthly formula — zero causes divide-by-zero |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0` | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE` | kvo threshold — negative is meaningless |
 | `REPAIR_TRAVEL_CAP` | `>= 1` | `CONFIG_REPAIR_TRAVEL_CAP_ZERO` | Cap on effective_trips — zero would eliminate all repair travel overhead |
@@ -1240,7 +1240,7 @@ All `app_config` values are validated **on application startup** and **on every 
 | Rule | Constraint | Violation code | Reason |
 | ---- | ---------- | -------------- | ------ |
 | Repair threshold ordering | `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP` | `CONFIG_REPAIR_THRESHOLDS_INVERTED` | If ZERO_THRESHOLD ≥ CAP the three-band logic inverts: band 2 never fires; effective_trips jump from 0 to cap |
-| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= REPAIR_PLANNING_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from |
+| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from |
 
 #### Startup behaviour
 
@@ -2452,7 +2452,7 @@ All 19 `app_config` keys must be present in the seed migration and must satisfy 
 - `MONTHLY_HOURS_FUND = 0` → HTTP 422 `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE`
 - `ENGINEER_WARNING_THRESHOLD = 1.0` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` (threshold at exactly 1.0 collapses warning band to zero)
 - `ENGINEER_WARNING_THRESHOLD = 1.1` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE`
-- `REPAIR_PRODUCTIVE_MONTHS = 7` when `REPAIR_PLANNING_MONTHS = 6` → HTTP 422 `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING`
+- `REPAIR_PRODUCTIVE_MONTHS = 7` when `PLANNING_PERIOD_MONTHS = 6` → HTTP 422 `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING`
 
 ## 15. PoC Scope
 
