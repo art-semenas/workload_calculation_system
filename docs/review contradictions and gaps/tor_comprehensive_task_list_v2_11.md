@@ -137,7 +137,7 @@
 - **Action / Required Resolution:** Update the M-01 label in §15.7 from "XLSX import (FR bulk)" to "JSON bulk import (FR bulk)".
 - **Done Criteria:** Epic labels accurately reflect payload structure logic constraints.
 
-### [ ] G-09. Engineer `is_active = FALSE` vs S-04 Rule
+### [x] G-09. Engineer `is_active = FALSE` vs S-04 Rule
 *Source: Review Item 14*
 - **Priority:** Low
 - **Problem:** Simplification S-04 states no access control is enforced in PoC. Yet, AD-13 specifies filtering inactive accounts (`is_active = FALSE`) from assignment dropdowns. Need to classify this filtering boundary clearly.

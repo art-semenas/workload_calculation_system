@@ -2655,6 +2655,8 @@ PoC: the `role` column exists on `users` and is set correctly (e.g., `'engineer'
 
 _Reversed in:_ M-02 (MVP) — adds division scoping for editors, read-only enforcement for viewers, and field-level restrictions for engineers.
 
+> **Note on `is_active` filtering (AD-13):** Filtering `is_active = FALSE` engineers from assignment dropdowns is **not** an RBAC feature and is **not** covered by this simplification. It is a UI data-filtering concern — ensuring only active engineers appear as selectable options in assignment dropdowns — and **must** be implemented in PoC. See AD-13 and C-24.
+
 > **New division/branch endpoints and S-04:** The write endpoints `POST /divisions`, `POST /divisions/:id/branches`, `PUT /divisions/:id`, and `PUT /branches/:id` are unenforced in PoC — any authenticated user may call them. The read endpoints `GET /divisions`, `GET /divisions/:id`, `GET /divisions/:id/branches`, and `GET /branches/:id` follow the same rule as all other GETs in PoC: any authenticated user may read freely. The `DELETE /divisions/:id` and `DELETE /branches/:id` endpoints are not available in PoC. Admin-only restriction and editor division-scoping apply from M-02.
 
 **S-05: No planning periods**
