@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.14
+**Version:** 2.15
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-16
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.15:** R-03 — Aligned Redis scope with PoC model in §9.1 tech stack table. Added "MVP only — not used in PoC (see §15.8)" annotation to Cache + Queue (Redis) and Job integration (Spring Data Redis / Redisson) rows. Changed Docker Compose container count from "5 containers" to "MVP: 5 containers / PoC: 4 containers (no Redis)" to prevent ambiguity for PoC developers reading §9.1 without cross-referencing §15.8 or AD-13.
 **Changelog v2.14:** R-02 — Unified stale vs processing UI wording. Fixed §7.6 Section 5 (engineer stale indicator used "Данные пересчитываются..." for `is_stale = 'TRUE'` — wrong state). Applied canonical two-state rule from §7.10 to all three sections (§7.6, §7.9, §7.10): `TRUE` → "Данные устарели — нажмите Пересчитать"; `PROCESSING` → "Пересчитывается...". Added PoC scope note to all three sections: stale banners are MVP-only (PoC recalculates synchronously on save, no `is_stale`, per S-02/R-01 resolution). No interference with R-01 — R-02 depends on R-01 canonical model and now references it explicitly.
 **Changelog v2.13:** R-01 — Resolved PoC recalculation model contradiction. Canonical model: PoC uses synchronous recalculation on save (S-02), no `is_stale`, no background worker, no Redis; MVP uses on-demand recalculation with staleness tracking, background worker, and admin trigger. Updated AD-10 to scope on-demand model to MVP only. Updated AD-13 to state Redis is MVP-only (introduced with M-06). Rewrote C-28 to explicitly split PoC vs MVP behaviour.
 **Changelog v2.12:** Fixed G-01 — defined object hard-delete cascade contract. Added `ON DELETE CASCADE` annotations to all child tables referencing `objects.id` (§5.2: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Added `objects` DELETE row to §6.10 cache invalidation table (read engineers → cascade-delete → mark `engineer_summaries` stale, all in one transaction). Added cascade statement to §8.4 Data Integrity rules with application-layer ordering note. Annotated `DELETE /objects/:id` in §10.2 API with cascade and stale-marking behaviour.
@@ -1715,10 +1716,10 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 #### Caching & Async Processing
 
-| Component       | Choice                       | Notes                                                                                                   |
-| --------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Cache + Queue   | Redis                        | Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-13 for scope. |
-| Job integration | Spring Data Redis / Redisson | Redis-backed queue; Spring `@Async` or Redisson `RQueue` for job dispatch                               |
+| Component       | Choice                       | Notes                                                                                                                                                  |
+| --------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cache + Queue   | Redis                        | **MVP only — not used in PoC (see §15.8).** Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-13 for scope.    |
+| Job integration | Spring Data Redis / Redisson | **MVP only — not used in PoC (see §15.8).** Redis-backed queue; Spring `@Async` or Redisson `RQueue` for job dispatch                                  |
 
 #### Frontend
 
@@ -1749,7 +1750,7 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 | Component           | Choice         | Notes                                                                       |
 | ------------------- | -------------- | --------------------------------------------------------------------------- |
 | Containerisation    | Docker         | One image per service                                                       |
-| Local orchestration | Docker Compose | 5 containers: backend, frontend, PostgreSQL, Redis, Nginx                   |
+| Local orchestration | Docker Compose | MVP: 5 containers (backend, frontend, PostgreSQL, Redis, Nginx). PoC: 4 containers (no Redis — see §15.8) |
 | Reverse proxy       | Nginx          | TLS termination, static frontend serving, API proxy                         |
 | CI/CD               | GitHub Actions | See §20                                                                     |
 | APM / Monitoring    | Datadog        | See §18                                                                     |

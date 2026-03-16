@@ -22,7 +22,7 @@
 | ---- | -------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
 | R-01 | Critical | Resolve PoC recalculation model contradiction  | The TOR still defines two incompatible PoC calculation behaviours       |
 | R-02 | ~~High~~ | ~~Unify stale vs processing UI wording~~       | ✅ Resolved in v2.14 — canonical two-state rule applied to §7.6, §7.9, §7.10; PoC scope notes added |
-| R-03 | High     | Align Redis scope with PoC recalculation model | Architecture and PoC deployment sections still disagree                 |
+| R-03 | ~~High~~ | ~~Align Redis scope with PoC recalculation model~~ | ✅ Resolved in v2.15 — AD-13 and §15.8 scoped to MVP/PoC in v2.13; §9.1 tech stack table annotated MVP-only for Redis rows; container count clarified PoC=4/MVP=5 |
 | R-04 | Medium   | Finish JSON import terminology cleanup         | MVP import is still described as both JSON and XLSX in different places |
 
 ---
