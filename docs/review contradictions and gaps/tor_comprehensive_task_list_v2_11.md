@@ -85,7 +85,7 @@
 - **Concrete Document Changes:** Rewrite JSON examples to match canonical names. Add validation rules for system-type normalization/rejection upon import.
 - **Done Criteria:** Payload examples, validation rules, and the core data model align perfectly on field name and value constraints.
 
-### [ ] G-03. Clarify Engineer Visibility Rules
+### [x] G-03. Clarify Engineer Visibility Rules
 *Merges: Task T-06 & Review Item 11*
 - **Priority:** Medium
 - **Problem:** RBAC model dictates engineers can only see their own data, but UI section outlines a general `/engineers` list page showing all engineers and their comparative load ratios.

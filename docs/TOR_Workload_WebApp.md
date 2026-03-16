@@ -1383,7 +1383,7 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 | `/admin/users`         | Users            | User management (admin only)                                 |
 | `/import`              | Import           | JSON / text-list import wizard                               |
 | `/export`              | Export           | Export options                                               |
-| `/engineers`           | Engineer List    | All engineers with load ratio and status                     |
+| `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves) |
 | `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                          |
 | `/engineers/:id/edit`  | Engineer Edit    | Edit name, capacity, home division                           |
 
@@ -1457,6 +1457,8 @@ Shows all engineers assigned to this object and their workload share:
 - **Travel review prompt:** When a new engineer is assigned to an object (or the last engineer is removed and a new one added), the UI displays a non-blocking banner: **"Проверьте данные о маршруте — время в пути может отличаться для нового инженера"**. Travel time is stored per object and reflects the distance from the assigned engineer's home division office. When the responsible engineer changes, travel data should be reviewed and updated manually.
 
 ### 7.5 Engineer List Page (`/engineers`)
+
+**Role visibility:** Admin, Editor, and Viewer see the full list. An Engineer role accesses this route but the API returns only their own row — effectively a redirect to their personal dashboard data. The frontend renders the same table component; for engineers it displays a single row.
 
 A table of all engineers with sortable columns:
 
@@ -1939,7 +1941,7 @@ GET    /svod/recalculate/status        Check background job status {total_stale,
 #### Engineers
 
 ```
-GET    /engineers                         List all engineers (paginated, filterable)
+GET    /engineers                         List all engineers (paginated, filterable); when caller role = 'engineer', returns exactly one row (the calling user's own record)
 POST   /engineers                         Create engineer (admin only)
 GET    /engineers/:id                     Get engineer with summary
 PUT    /engineers/:id                     Update name, capacity_fte, home_division (admin only)
@@ -2131,7 +2133,7 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 | View engineer list and load ratios     | ✅     | ✅           | ✅      | ✅ (own data only) |
 
 **Editor scope:** `division_id` restricts all write operations to objects in their assigned division. Enforced at the API level.  
-**Engineer scope:** Engineers can only view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' dashboards or unassigned objects.  
+**Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
 **Period lock:** Записи and Ремонт data is read-only for all roles once a period is deactivated. Only admin can create and activate a new period to enable data entry again.
 
 ---
@@ -3709,7 +3711,7 @@ In MVP, field-level access rules are:
 | -------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- |
 | admin    | All divisions, all objects, all engineers                               | Everything                                                    |
 | editor   | Own division only (objects, branches, engineers in their `division_id`) | Own division objects and assignments                          |
-| engineer | All objects they are assigned to + own engineer profile                 | Записи and Ремонт for their own objects in active period only |
+| engineer | All objects they are assigned to + own engineer profile; `GET /engineers` returns own row only | Записи and Ремонт for their own objects in active period only |
 | viewer   | All divisions, all objects (read-only)                                  | Nothing                                                       |
 
 An engineer cannot see objects in other divisions that they are not assigned to. The `GET /objects` endpoint filters by the calling user's assignments when `role = 'engineer'`. Admin and editor see the full object list (filtered by their division for editors).
