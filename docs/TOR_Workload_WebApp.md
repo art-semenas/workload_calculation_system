@@ -1638,7 +1638,7 @@ Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — н
 ### 8.4 Data Integrity
 
 - `ON DELETE RESTRICT` on `object_system_assignments.context_id → device_system_contexts.id`.
-- `ON DELETE RESTRICT` on `object_repairs.repair_type_id → repair_types.id`.
+- `ON DELETE RESTRICT` on `object_repairs.repair_type_id → repair_types.id`. Application-level deletion logic: (1) if any `object_repairs` row for this type has `count > 0` (in any period), return HTTP 409 `REPAIR_TYPE_IN_USE`; (2) otherwise, delete all referencing `object_repairs` rows with `count = 0` in the same transaction, then delete the `repair_types` row. This satisfies the DB RESTRICT constraint.
 - `ON DELETE CASCADE` applies to all child tables referencing `objects.id`: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`. Object hard-delete removes all dependent rows atomically. The application layer must read assigned engineers from `object_engineers` **before** issuing the DELETE and mark their `engineer_summaries.is_stale = 'TRUE'` in the same transaction (DB cascade fires after the application read).
 - Deleting a `device_type` that has `object_devices` rows is blocked (application-level guard + DB constraint).
 - Deleting a `users` record with role `engineer` that has active `object_engineers` rows is blocked until all assignments are removed.
@@ -1985,10 +1985,10 @@ DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments
 GET    /catalog/repairs                List all repair types
 POST   /catalog/repairs                Create {name, time_minutes}
 PUT    /catalog/repairs/:id            Update (marks stale for affected objects)
-DELETE /catalog/repairs/:id            Delete (blocked if active object_repairs; returns 409)
+DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row with count > 0 references this type; returns 409)
 ```
 
-> **(HIGH-7) Known limitation (future fix):** The definition of "active" `object_repairs` that block repair-type deletion needs clarification. Currently, any `object_repairs` row referencing this `repair_type_id` — including rows with `count = 0` — blocks deletion. A future update should define whether only rows with `count > 0` block deletion, and whether rows in non-active periods should be considered. See §13 for post-MVP scope.
+> **Deletion rule:** A repair type may be deleted only when no `object_repairs` row references it with `count > 0` in any period (past or active). Rows with `count = 0` do not block deletion. The API returns HTTP 409 with `{ "code": "REPAIR_TYPE_IN_USE", "message": "Cannot delete: repair type has recorded usage" }` when blocked.
 
 #### СВОД & Summary
 

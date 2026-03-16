@@ -95,7 +95,7 @@
 - **Concrete Document Changes:** Update roles matrix in §12, define `GET /engineers` filtering by role, clarify route visibility in UI role constraints.
 - **Done Criteria:** Route access and API filtering match clearly for the engineer role.
 
-### [ ] G-04. Define Manual Division and Branch Creation Path
+### [x] G-04. Define Manual Division and Branch Creation Path
 *Merges: Task T-07 & Review Item 9*
 - **Priority:** Medium
 - **Problem:** UI allows manual object creation, which requires a `division` and `branch`. However, there are no endpoints, CRUD UI forms, or instructions detailing how divisions and branches are seeded or created natively.
@@ -105,7 +105,7 @@
 - **Concrete Document Changes:** Add missing endpoints mapping (e.g. `GET /divisions`) to fetch list nodes for UI select dropdowns. Append notes restricting creating them manually.
 - **Done Criteria:** Manual object creation workflow is unambiguous. Frontend knows division/branch are selection-only arrays.
 
-### [ ] G-05. Delete Semantics for `repair_types`
+### [x] G-05. Delete Semantics for `repair_types`
 *Source: Review Item 7*
 - **Priority:** Medium
 - **Problem:** §10.2 API table notes a pending, unresolved decision regarding whether inactive `object_repairs` should block the deletion of `repair_types`.
