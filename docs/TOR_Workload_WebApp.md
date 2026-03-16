@@ -123,6 +123,7 @@ The Excel template is large (2,935 rows × up to 47 columns per sheet), manual t
 - Each object must have: `division`, `branch`, `name/address`.
 - Responsible engineers are managed via the `object_engineers` join table (§4.10), not as a free-text field on the object.
 - Objects are organized in a two-level hierarchy: **Division → Branch → Objects**.
+- Divisions and branches can be created manually via the UI (admin in MVP; any authenticated user in PoC per S-04). Division is the top-level unit; branches belong to exactly one division; objects belong to exactly one branch. Manual creation follows the hierarchy: create division → create branch under it → create object under the branch.
 - Support bulk import from structured JSON / text lists (see §11).
 - Deleted objects are **permanently removed** (hard delete) for PoC. Soft-archive / decommission status is a post-MVP consideration (see §13 C-30).
 
@@ -1367,8 +1368,9 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 | Route                  | View             | Description                                                  |
 | ---------------------- | ---------------- | ------------------------------------------------------------ |
 | `/`                    | Dashboard        | Headcount cards by division; top objects by workload         |
-| `/divisions`           | Division List    | List/search divisions                                        |
-| `/divisions/:id`       | Division Detail  | Objects with СВОД subtotals                                  |
+| `/divisions`           | Division List    | List/search divisions + "Добавить подразделение" button (admin in MVP; any auth user in PoC) |
+| `/divisions/:id`       | Division Detail  | СВОД subtotals + branch list + "Добавить филиал" button (admin in MVP; any auth user in PoC) |
+| `/branches/:id`        | Branch Detail    | Object list with СВОД per object + "Добавить объект" button (admin/editor in MVP; any auth user in PoC) |
 | `/objects`             | Object List      | Searchable, filterable table                                 |
 | `/objects/new`         | Object Create    | Create new object                                            |
 | `/objects/:id`         | Object Detail    | Tabbed detail view                                           |
@@ -1792,6 +1794,133 @@ Deactivated engineers (e.g., left the organisation) must not be hard-deleted if 
 ```
 
 ### 10.2 Endpoints
+
+#### Divisions
+
+```
+GET    /divisions                     List all divisions
+POST   /divisions                     Create division — admin only (MVP); any auth (PoC)
+GET    /divisions/:id                 Get division + branch list
+PUT    /divisions/:id                 Rename division — admin only (MVP); any auth (PoC)
+DELETE /divisions/:id                 Delete division — admin only (MVP); blocked with 409 if branches exist; not available in PoC
+```
+
+**`GET /divisions`** — HTTP 200
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Брестское областное управление №100",
+      "branch_count": 12,
+      "object_count": 245
+    }
+  ],
+  "meta": { "total": 7 },
+  "error": null
+}
+```
+
+**`POST /divisions`** — request: `{ "name": "Брестское областное управление №100" }` — HTTP 201
+```json
+{ "data": { "id": "uuid", "name": "Брестское областное управление №100", "created_at": "2026-03-16T12:00:00Z" }, "meta": null, "error": null }
+```
+HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
+
+**`GET /divisions/:id`** — HTTP 200
+```json
+{
+  "data": {
+    "id": "uuid",
+    "name": "Брестское областное управление №100",
+    "branch_count": 12,
+    "object_count": 245,
+    "branches": [
+      { "id": "uuid", "name": "Брест ЦО", "object_count": 20 }
+    ]
+  },
+  "meta": null,
+  "error": null
+}
+```
+
+**`PUT /divisions/:id`** — request: `{ "name": "Новое название" }` — HTTP 200
+```json
+{ "data": { "id": "uuid", "name": "Новое название", "updated_at": "2026-03-16T12:05:00Z" }, "meta": null, "error": null }
+```
+HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
+
+**`DELETE /divisions/:id`** — HTTP 204 on success. HTTP 409 when blocked:
+```json
+{ "data": null, "error": { "code": "DIVISION_HAS_BRANCHES", "message": "Cannot delete: division has 12 branches" } }
+```
+
+> **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Division not found" } }` (applies to `GET /divisions/:id`, `PUT /divisions/:id`, `DELETE /divisions/:id`)
+
+> **RBAC by phase:** See §15.3 S-04. In PoC: `POST` and `PUT` endpoints are accessible to any authenticated user; `DELETE` endpoints are not available. In MVP: `POST`, `PUT`, `DELETE` are admin-only; `GET` endpoints are accessible to all authenticated users (editors scoped to own division; viewers see all read-only).
+
+#### Branches
+
+```
+GET    /divisions/:id/branches        List branches for a division
+POST   /divisions/:id/branches        Create branch — admin only (MVP); any auth (PoC)
+GET    /branches/:id                  Get branch + paginated object list
+PUT    /branches/:id                  Rename branch — admin only (MVP); any auth (PoC)
+DELETE /branches/:id                  Delete branch — admin only (MVP); blocked with 409 if objects exist; not available in PoC
+```
+
+**`GET /divisions/:id/branches`** — HTTP 200
+```json
+{
+  "data": [
+    { "id": "uuid", "name": "Брест ЦО", "object_count": 20 }
+  ],
+  "meta": { "total": 12 },
+  "error": null
+}
+```
+
+**`POST /divisions/:id/branches`** — request: `{ "name": "Брест ЦО" }` — HTTP 201
+```json
+{ "data": { "id": "uuid", "name": "Брест ЦО", "division_id": "uuid", "created_at": "2026-03-16T12:00:00Z" }, "meta": null, "error": null }
+```
+HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
+
+**`GET /branches/:id`** — HTTP 200 (pagination: `?page=1&size=50`; defaults: page 1, size 50)
+```json
+{
+  "data": {
+    "id": "uuid",
+    "name": "Брест ЦО",
+    "division_id": "uuid",
+    "division_name": "Брестское областное управление №100",
+    "objects": {
+      "data": [
+        { "id": "uuid", "name": "ул. Московская 202Д", "itogo_chislo_with_travel": 0.032327, "engineer_count": 1 }
+      ],
+      "meta": { "total": 20, "page": 1, "size": 50 }
+    }
+  },
+  "meta": null,
+  "error": null
+}
+```
+Empty state: `objects.data` is `[]`, `objects.meta.total` is `0`.
+
+**`PUT /branches/:id`** — request: `{ "name": "Новое название" }` — HTTP 200
+```json
+{ "data": { "id": "uuid", "name": "Новое название", "division_id": "uuid", "updated_at": "2026-03-16T12:05:00Z" }, "meta": null, "error": null }
+```
+HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
+
+**`DELETE /branches/:id`** — HTTP 204 on success. HTTP 409 when blocked:
+```json
+{ "data": null, "error": { "code": "BRANCH_HAS_OBJECTS", "message": "Cannot delete: branch has 20 objects" } }
+```
+
+> **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Branch not found" } }` (applies to `GET /branches/:id`, `PUT /branches/:id`, `DELETE /branches/:id`)
+
+> **RBAC by phase:** See §15.3 S-04. In PoC: `POST` and `PUT` endpoints are accessible to any authenticated user; `DELETE` endpoints are not available. In MVP: `POST`, `PUT`, `DELETE` are admin-only; `GET` endpoints are accessible to all authenticated users (editors scoped to own division; viewers see all read-only).
 
 #### Objects
 
@@ -2526,6 +2655,8 @@ PoC: the `role` column exists on `users` and is set correctly (e.g., `'engineer'
 
 _Reversed in:_ M-02 (MVP) — adds division scoping for editors, read-only enforcement for viewers, and field-level restrictions for engineers.
 
+> **New division/branch endpoints and S-04:** The write endpoints `POST /divisions`, `POST /divisions/:id/branches`, `PUT /divisions/:id`, and `PUT /branches/:id` are unenforced in PoC — any authenticated user may call them. The read endpoints `GET /divisions`, `GET /divisions/:id`, `GET /divisions/:id/branches`, and `GET /branches/:id` follow the same rule as all other GETs in PoC: any authenticated user may read freely. The `DELETE /divisions/:id` and `DELETE /branches/:id` endpoints are not available in PoC. Admin-only restriction and editor division-scoping apply from M-02.
+
 **S-05: No planning periods**
 
 Full TOR: `periods` table; repairs and records are period-scoped.
@@ -2670,8 +2801,11 @@ UNIQUE(engineer_id)
 | `/engineers/:id`    | Engineer detail — workload dashboard                                         |
 | `/svod`             | Full СВОД table — paginated, filterable                                      |
 | `/svod/export`      | Trigger XLSX export                                                          |
+| `/divisions`        | Division list — name, branch count, object count; create button              |
+| `/divisions/:id`    | Division detail — СВОД + branch list; create branch button                   |
+| `/branches/:id`     | Branch detail — object list with СВОД; create object button                  |
 
-No catalog management pages, no admin pages, no periods page.
+No catalog management pages, no periods page.
 
 ---
 
