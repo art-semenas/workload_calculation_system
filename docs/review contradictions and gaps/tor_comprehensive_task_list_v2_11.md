@@ -35,7 +35,7 @@
 - **Concrete Document Changes:** Update API endpoint list and Request/Response body shapes in §10.2. Ensure the validation section uses the exact same endpoint. Align AC-23.
 - **Done Criteria:** One authoritative endpoint contract exists. Frontend can implement admin form without guessing request shape. AC and API sections reference the same endpoint name.
 
-### [ ] C-03. Fix PoC to MVP Milestone Mapping
+### [x] C-03. Fix PoC to MVP Milestone Mapping
 *Merges: Task T-04 & Review Item 3*
 - **Priority:** High
 - **Problem:** Simplification sections S-08 (PDF export) and S-09 (concurrency/locking) disagree with the Migration Milestones table (§15.7). S-08 says "Reversed in: M-09" but table says M-11 is PDF export. S-09 says "Reversed in: M-11" but table says M-09 is Concurrency. 
@@ -45,7 +45,7 @@
 - **Concrete Document Changes:** Fix `_Reversed in:_` references for S-08 and S-09 to point to the correct migration item.
 - **Done Criteria:** Every S-item points to the correct migration item without contradiction. Milestone numbering is consistent.
 
-### [ ] C-04. Docker Compose Redis Dependency
+### [x] C-04. Docker Compose Redis Dependency
 *Source: Review Item 1*
 - **Priority:** Medium
 - **Problem:** §15.8 lists 4 containers for PoC (`backend`, `frontend`, `postgres`, `nginx`) with no Redis. But §20.7 shows the production `docker-compose.yml` with a Redis healthcheck dependency on the backend.

@@ -2546,7 +2546,7 @@ _Reversed in:_ M-08 (MVP)
 
 PoC exports СВОД to XLSX only.
 
-_Reversed in:_ M-09 (post-MVP)
+_Reversed in:_ M-11 (post-MVP)
 
 **S-09: No concurrency/locking**
 
@@ -2554,7 +2554,7 @@ Full TOR: optimistic locking with `updated_at` version check (§17).
 
 PoC: last-write-wins. Acceptable with 1–2 demo users.
 
-_Reversed in:_ M-11 (MVP)
+_Reversed in:_ M-09 (MVP)
 
 ---
 
@@ -2735,13 +2735,63 @@ The PoC uses the **full production stack** defined in §9.1 — no throwaway sta
 
 #### Infrastructure — PoC Docker Compose
 
+The PoC runs four containers. Save the file as **`docker-compose.poc.yml`** and start with `docker compose -f docker-compose.poc.yml up`.
+
+> **Redis is absent from the PoC compose file.** Recalculation is synchronous in the PoC (S-02), so no job queue is needed. Redis and its `depends_on` block are introduced in MVP with M-06. See §20.7 for the production compose that adds `redis` and `datadog-agent`.
+
 ```yaml
+# docker-compose.poc.yml
+# PoC only — 4 services, no Redis, no Datadog agent.
+# For production compose (with Redis + Datadog) see §20.7.
+version: "3.9"
 services:
-  backend: # Spring Boot JAR, port 8080
-  frontend: # Nginx serving Vite build, port 3000
-  postgres: # PostgreSQL 15, port 5432
-  nginx: # Reverse proxy: / → frontend, /api → backend
-    # TLS termination with self-signed cert for PoC
+
+  backend:
+    build: ./backend                      # or image: workload-backend:poc
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workload
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # SPRING_REDIS_HOST is NOT set — Redis disabled in PoC
+    depends_on:
+      postgres: { condition: service_healthy }
+      # redis intentionally omitted
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend                     # Nginx serving Vite production build
+    depends_on: [backend]
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: workload
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    ports: ["443:443", "80:80"]
+    volumes:
+      - ./nginx.poc.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro          # self-signed cert for PoC
+    depends_on: [backend, frontend]
+
+  # redis — OMITTED in PoC. Add in MVP (M-06). See §20.7.
+  # datadog-agent — OMITTED in PoC. Add in MVP. See §20.7.
+
+volumes:
+  pgdata:
 ```
 
 **Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema, **with the following explicit exceptions** — these MVP-only columns are added in later migrations and must not appear in `v1.0.0`:
@@ -2941,7 +2991,7 @@ All aggregation rules defined in this section are **in scope for PoC**. Aggregat
 
 ## 17. Concurrency & Locking
 
-**Scope: MVP.** The PoC uses last-write-wins (S-09). This section defines the strategy that replaces S-09 in M-11.
+**Scope: MVP.** The PoC uses last-write-wins (S-09). This section defines the strategy that replaces S-09 in M-09.
 
 ---
 
