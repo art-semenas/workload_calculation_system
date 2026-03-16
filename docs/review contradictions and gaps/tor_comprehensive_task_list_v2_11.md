@@ -176,17 +176,17 @@
 
 ## 🟢 Minor Issues / Nits
 
-### [ ] M-01. Changelog v2.8 Text Duplication
+### [x] M-01. Changelog v2.8 Text Duplication
 *Source: Review Item 19*
 - **Problem:** Changelog entry for v2.8 mistakenly duplicated a closing line from the v2.7 changelog.
 - **Action / Required Resolution:** Remove the trailing phrase *"repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded..."* from the v2.8 section.
 
-### [ ] M-02. AD Numbering Gap
+### [x] M-02. AD Numbering Gap
 *Source: Review Item 20*
 - **Problem:** Architectural Decisions jump sporadically from AD-09 to AD-14, followed by 10, 11, etc.
 - **Action / Required Resolution:** Renumber all ADs sequentially in §9.2.
 
-### [ ] M-03. C-20 Placement Out of Sequence
+### [x] M-03. C-20 Placement Out of Sequence
 *Source: Review Item 21*
 - **Problem:** Clarification C-20 appears errantly after C-40.
 - **Action / Required Resolution:** Relocate C-20 block cleanly between C-19 and C-21.

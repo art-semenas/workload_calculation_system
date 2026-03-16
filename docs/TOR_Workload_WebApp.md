@@ -10,11 +10,11 @@
 **Changelog v2.2:** Added Engineers Module — engineers as first-class entities, object-engineer assignments with equal workload split, engineer capacity tracking, overload detection, engineer dashboard, and coverage gap reporting. Updated §2, §3, §4 (FR-10, FR-11), §5, §6 (§6.12–6.14), §7, §9, §10, §12, §13 (C-21–C-25), §14 (AC-14–AC-18).  
 **Changelog v2.3:** Resolved 22 open questions. Key changes: (1) R2-includes-R1 clarification; (2) planning periods; (3) on-demand recalculation; (4) home division = travel reference; (5) placeholder accounts on import; (6) engineer data entry rights; (7) hard delete for PoC; (8) СВОД export scope. Updated §4 (FR-12), §5, §7, §9, §10, §11, §12, §13 (C-26–C-32), §14 (AC-19–AC-21).  
 **Changelog v2.4:** Resolved 22 open questions. Key changes: (1) R2-includes-R1 clarification — Excel uses additive model, TOR calculation confirmed correct; (2) planning periods as tracked entities for repairs and records; (3) recalculation is on-demand only; (4) home division = travel reference point for engineer; (5) import creates placeholder accounts; (6) engineers can edit own objects; (7) object deletion is soft-archive for PoC; (8) СВОД export scope clarified. Updated §4 (FR-12 Periods), §5, §7, §9, §10, §11, §12, §13 (C-26–C-32), §14 (AC-19–AC-21).  
-**Changelog v2.5:** Technology stack finalised. Updated §9.1 (Java/Spring Boot), §15.8 (PoC stack), §18 (Datadog/log4j2/Actuator). Added §19 Testing Strategy, §20 CI/CD Pipeline. Introduced Redis scope (AD-17), DTO layer constraint (AD-18), rate limiting (§8.3), Liquibase migration structure (§11.3), Jacoco coverage thresholds.  
+**Changelog v2.5:** Technology stack finalised. Updated §9.1 (Java/Spring Boot), §15.8 (PoC stack), §18 (Datadog/log4j2/Actuator). Added §19 Testing Strategy, §20 CI/CD Pipeline. Introduced Redis scope (AD-13), DTO layer constraint (AD-14), rate limiting (§8.3), Liquibase migration structure (§11.3), Jacoco coverage thresholds.  
 **Changelog v2.6:** Corrected repair calculation engine. К-во ремонтов = COUNT of distinct repair types with non-zero counts (not SUM of quantities). repair_travel and repair_pzv use 3-tier threshold formula (≤5→0, ≤10→kvo×rate, >10→10×rate). Verified against all non-zero repair rows in source XLSX: zero mismatches. Updated §4.5, §6.6, §6.11 (new config keys), §13 (C-36, C-37), §14 (AC-22).  
 **Changelog v2.7:** Dependency sweep after v2.6 repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5; (3) §6.10 DELETE trigger; (4) C-03 rewrite; (5) C-13 rewrite; (6) AC-07 clarification; (7) AC-22 moved into §14; (8) §19.2 RepairCalculationTest.  
-**Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC. repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded with kvo and effective_trips; (3) §6.10 — DELETE added to object_repairs invalidation trigger; (4) C-03 rewritten — was wrong SUM definition, now correct COUNT definition with cross-ref to C-36; (5) C-13 rewritten — old flat formula replaced with threshold-aware description; (6) AC-07 — total_repairs definition clarified; (7) AC-22 moved from orphaned position after §20 into §14 with 3-band structure; (8) §19.2 — RepairCalculationTest added with 8 boundary cases covering all threshold bands.  
-**Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-13, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
+**Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
+**Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
 **Changelog v2.12:** Fixed G-01 — defined object hard-delete cascade contract. Added `ON DELETE CASCADE` annotations to all child tables referencing `objects.id` (§5.2: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Added `objects` DELETE row to §6.10 cache invalidation table (read engineers → cascade-delete → mark `engineer_summaries` stale, all in one transaction). Added cascade statement to §8.4 Data Integrity rules with application-layer ordering note. Annotated `DELETE /objects/:id` in §10.2 API with cascade and stale-marking behaviour.
 **Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[PLANNING_PERIOD_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
@@ -684,7 +684,7 @@ updated_at            TIMESTAMP
 
 > **Note:** `division_id` is the **access-control** scope used by editors.  
 > `home_division_id` is the **display** home for engineers — they can be assigned to objects in any division regardless of this value.
-> `is_active` controls soft-delete for engineers (AD-13). Inactive engineers are hidden from assignment dropdowns but their historical data is preserved (C-24).
+> `is_active` controls soft-delete for engineers (AD-18). Inactive engineers are hidden from assignment dropdowns but their historical data is preserved (C-24).
 > `requires_activation` flags placeholder accounts created during import (C-31). Admins activate them by setting a password.
 
 #### `object_engineers` — Object-Engineer Assignments
@@ -1705,7 +1705,7 @@ Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — н
 
 | Component       | Choice                       | Notes                                                                                                   |
 | --------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Cache + Queue   | Redis                        | Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-17 for scope. |
+| Cache + Queue   | Redis                        | Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-13 for scope. |
 | Job integration | Spring Data Redis / Redisson | Redis-backed queue; Spring `@Async` or Redisson `RQueue` for job dispatch                               |
 
 #### Frontend
@@ -1772,31 +1772,31 @@ The frontend never computes workload values. It reads exclusively from `summarie
 **AD-09: All calculation constants are read from `app_config` at compute time.**
 The calculation service must reload config values for each recalculation batch, not cache them for the process lifetime. This ensures admin changes to constants take effect immediately in the next triggered recalculation.
 
-**AD-14: Recalculation is on-demand, not event-driven.**
+**AD-10: Recalculation is on-demand, not event-driven.**
 The system marks summaries stale automatically on data change, but does not auto-trigger recalculation. Recalculation runs only when an admin explicitly triggers it. This is the correct model for PoC — it avoids cascading background load during bulk data entry and gives operators control over when they see updated numbers. Post-MVP may move to automatic triggers.
 
-**AD-15: Period is the unit of data versioning for operational data.**
+**AD-11: Period is the unit of data versioning for operational data.**
 `object_repairs` and `records_tasks` are period-scoped. All other data (equipment, travel, assignments) is current-state only — no period versioning. This means СВОД can be computed for any historical period by using that period's repair/records rows with current equipment and normatives. Historical equipment states are not tracked in PoC.
 
-**AD-16: Travel time is per-object, set by whoever enters data.**
+**AD-12: Travel time is per-object, set by whoever enters data.**
 Travel data reflects the distance from the responsible engineer's home division base to the object. It is a manually entered field — the system does not compute it. When engineer assignment changes, the travel field must be manually reviewed. The home division of the engineer is the reference, but no automatic distance calculation is implemented.
 
-**AD-17: Redis scope is job queue first, cache second.**
+**AD-13: Redis scope is job queue first, cache second.**
 Redis serves two purposes. Primary: the recalculation job queue — stale summary IDs are pushed to a Redis list; the background worker pops and processes them. Secondary (MVP only): response caching for aggregation endpoints (§16.7) if query latency becomes measurable under load. For PoC, Redis is used for the job queue only. Aggregation queries run live against PostgreSQL (on-the-fly per §16 decision). No business data is stored in Redis — it is a transient layer only. If Redis is unavailable, the system degrades gracefully: recalculation is blocked but all read/write operations against PostgreSQL continue.
 
-**AD-18: All API responses go through DTOs — never raw JPA entities.**
+**AD-14: All API responses go through DTOs — never raw JPA entities.**
 MapStruct compile-time mappers translate between JPA entities and DTOs for all request/response cycles. JPA entities are never serialised directly to JSON. This prevents accidental exposure of lazy-loaded relations, internal fields (`password_hash`, `is_stale` internals), and database-level annotations leaking into the API contract. The DTO layer is the API contract. Changing internal entity structure does not break the API as long as mappers are updated.
 
-**AD-10: Engineers are users, not a separate entity.**
+**AD-15: Engineers are users, not a separate entity.**
 An engineer is a `users` row with `role = 'engineer'`. There is no separate `engineers` table. `capacity_fte`, `home_division_id`, and `employee_id` are columns on `users`. This keeps authentication, role management, and engineer data in one place. The distinction between `division_id` (editor access scope) and `home_division_id` (engineer display home) must be explicitly maintained — they serve different purposes.
 
-**AD-11: Engineer workload split ratio is always computed, never stored.**
+**AD-16: Engineer workload split ratio is always computed, never stored.**
 `engineer_count` per object is a live COUNT query. Storing it would require updating it on every assignment change. Because the split is equal and the count is cheap to compute from `object_engineers`, it is calculated at summary computation time and not persisted.
 
-**AD-12: Engineer summaries have a strict computation dependency on object summaries.**
+**AD-17: Engineer summaries have a strict computation dependency on object summaries.**
 The background worker must process stale object summaries before processing stale engineer summaries. An engineer summary computed from a stale object summary would silently propagate incorrect values. The worker queue must enforce this ordering — either via separate queues with priority, or by checking `summaries.is_stale = FALSE` for all assigned objects before computing an engineer summary.
 
-**AD-13: Soft delete for engineers.**
+**AD-18: Soft delete for engineers.**
 Deactivated engineers (e.g., left the organisation) must not be hard-deleted if they have historical `object_engineers` assignments. Add `is_active BOOLEAN DEFAULT TRUE` to `users`. Inactive engineers are hidden from assignment dropdowns but their historical data is preserved. Their load still counts in division totals unless explicitly reassigned.
 
 ---
@@ -2366,6 +2366,10 @@ The system must prevent `object_system_assignments` rows from existing without a
 
 `quantity_maintained` is the only user-editable field on `object_system_assignments`. There is no per-assignment override of R1/R2. Normatives are always read from `device_system_contexts` at calculation time. This ensures global consistency — changing a normative cascades to all objects using that context.
 
+### C-20: New System Types Cannot Be Added Without Developer Involvement
+
+The set of system types (ОС, ПС, Видео) is currently fixed. Visit frequency config keys, СВОД column structure, and calculation stages are all keyed to these three types. Adding a 4th system type (e.g., "СКУД" — access control) would require new `app_config` keys, a new СВОД column, and a new calculation stage. This is a developer task, not an admin task, and is out of scope for v1.
+
 ### C-21: Engineer Identity Is Unified with User Account
 
 An engineer's login account and their professional data (capacity, home division) are the same record in `users`. There is no separate `engineers` table. Admins create an engineer by creating a user with `role = 'engineer'`. This means email, password, and engineer metadata are managed in one place.
@@ -2461,10 +2465,6 @@ The system responds to a `home_division_id` change as follows:
 3. **Stale on travel update:** When an editor updates `travel.one_way_time_min` for an object, the object's summary is marked stale normally (§6.10), and recalculation reflects the corrected travel time.
 
 This approach avoids mass invalidation on what may be a routine administrative change, while ensuring the discrepancy is surfaced to editors.
-
-### C-20: New System Types Cannot Be Added Without Developer Involvement
-
-The set of system types (ОС, ПС, Видео) is currently fixed. Visit frequency config keys, СВОД column structure, and calculation stages are all keyed to these three types. Adding a 4th system type (e.g., "СКУД" — access control) would require new `app_config` keys, a new СВОД column, and a new calculation stage. This is a developer task, not an admin task, and is out of scope for v1.
 
 ---
 
@@ -2671,7 +2671,7 @@ PoC: the `role` column exists on `users` and is set correctly (e.g., `'engineer'
 
 _Reversed in:_ M-02 (MVP) — adds division scoping for editors, read-only enforcement for viewers, and field-level restrictions for engineers.
 
-> **Note on `is_active` filtering (AD-13):** Filtering `is_active = FALSE` engineers from assignment dropdowns is **not** an RBAC feature and is **not** covered by this simplification. It is a UI data-filtering concern — ensuring only active engineers appear as selectable options in assignment dropdowns — and **must** be implemented in PoC. See AD-13 and C-24.
+> **Note on `is_active` filtering (AD-18):** Filtering `is_active = FALSE` engineers from assignment dropdowns is **not** an RBAC feature and is **not** covered by this simplification. It is a UI data-filtering concern — ensuring only active engineers appear as selectable options in assignment dropdowns — and **must** be implemented in PoC. See AD-18 and C-24.
 
 > **New division/branch endpoints and S-04:** The write endpoints `POST /divisions`, `POST /divisions/:id/branches`, `PUT /divisions/:id`, and `PUT /branches/:id` are unenforced in PoC — any authenticated user may call them. The read endpoints `GET /divisions`, `GET /divisions/:id`, `GET /divisions/:id/branches`, and `GET /branches/:id` follow the same rule as all other GETs in PoC: any authenticated user may read freely. The `DELETE /divisions/:id` and `DELETE /branches/:id` endpoints are not available in PoC. Admin-only restriction and editor division-scoping apply from M-02.
 
