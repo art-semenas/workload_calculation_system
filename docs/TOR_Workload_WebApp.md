@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.11
+**Version:** 2.12
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-13
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC. repair formula corrections. Fixed 8 locations: (1) §5 summaries column comments; (2) §6.1 pipeline Stage 5 expanded with kvo and effective_trips; (3) §6.10 — DELETE added to object_repairs invalidation trigger; (4) C-03 rewritten — was wrong SUM definition, now correct COUNT definition with cross-ref to C-36; (5) C-13 rewritten — old flat formula replaced with threshold-aware description; (6) AC-07 — total_repairs definition clarified; (7) AC-22 moved from orphaned position after §20 into §14 with 3-band structure; (8) §19.2 — RepairCalculationTest added with 8 boundary cases covering all threshold bands.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-13, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.12:** Fixed G-01 — defined object hard-delete cascade contract. Added `ON DELETE CASCADE` annotations to all child tables referencing `objects.id` (§5.2: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Added `objects` DELETE row to §6.10 cache invalidation table (read engineers → cascade-delete → mark `engineer_summaries` stale, all in one transaction). Added cascade statement to §8.4 Data Integrity rules with application-layer ordering note. Annotated `DELETE /objects/:id` in §10.2 API with cascade and stale-marking behaviour.
 **Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[PLANNING_PERIOD_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
 
 ---
@@ -92,7 +93,7 @@ The Excel template is large (2,935 rows × up to 47 columns per sheet), manual t
 | Записи                       | Video archive records and administration tasks                                           |
 | Ремонт                       | Repairs — replacement of equipment components                                            |
 | Дорога                       | Travel — distance and time to reach a facility                                           |
-| Тип системы (System Type)    | One of: ОС, ПС, Видео — the maintenance schedule context                                 |
+| Тип системы (System Type)    | One of: `OS`, `PS`, `Video` — the maintenance schedule context. Canonical English values used in DB, API, and import payloads. Localized display labels are post-MVP. |
 | Тип устройства (Device Type) | A named device in the admin-managed catalog                                              |
 | Контекст устройства          | A (device type + system type) pair that carries R1/R2 normatives                         |
 | Р1                           | Minutes per unit for routine inspection — system-context-specific                        |
@@ -147,7 +148,7 @@ A context record defines that a device is valid within a specific system type an
 | Field         | Description                                  |
 | ------------- | -------------------------------------------- |
 | `device_type` | Reference to the device type                 |
-| `system_type` | ОС, ПС, or Видео                             |
+| `system_type` | `OS`, `PS`, or `Video`                       |
 | `r1_minutes`  | Minutes per unit for routine inspection (Р1) |
 | `r2_minutes`  | Minutes per unit for full maintenance (Р2)   |
 
@@ -471,7 +472,7 @@ One row per named device. "Galaxy 512 (контроллер АСПС и СО)" a
 ```sql
 id             UUID          PK
 device_type_id UUID          FK → device_types.id NOT NULL
-system_type    VARCHAR(10)   NOT NULL   -- 'ОС' | 'ПС' | 'Видео'
+system_type    VARCHAR(10)   NOT NULL   -- 'OS' | 'PS' | 'Video'
 r1_minutes     DECIMAL(10,4) NOT NULL
 r2_minutes     DECIMAL(10,4) NOT NULL
 created_at     TIMESTAMP
@@ -487,7 +488,7 @@ This table is the normatives store. A (device, system_type) pair without a row h
 
 ```sql
 id                UUID          PK
-object_id         UUID          FK → objects.id NOT NULL
+object_id         UUID          FK → objects.id NOT NULL  -- ON DELETE CASCADE
 device_type_id    UUID          FK → device_types.id NOT NULL
 quantity_physical DECIMAL(10,2) NOT NULL DEFAULT 0
 updated_at        TIMESTAMP
@@ -498,9 +499,9 @@ UNIQUE(object_id, device_type_id)
 
 ```sql
 id                  UUID          PK
-object_id           UUID          FK → objects.id NOT NULL
+object_id           UUID          FK → objects.id NOT NULL  -- ON DELETE CASCADE
 device_type_id      UUID          FK → device_types.id NOT NULL
-system_type         VARCHAR(10)   NOT NULL   -- 'ОС' | 'ПС' | 'Видео'
+system_type         VARCHAR(10)   NOT NULL   -- 'OS' | 'PS' | 'Video'
 quantity_maintained DECIMAL(10,2) NOT NULL DEFAULT 0
 context_id          UUID          FK → device_system_contexts.id NOT NULL
                                   -- ON DELETE RESTRICT
@@ -516,7 +517,7 @@ UNIQUE(object_id, device_type_id, system_type)
 
 ```sql
 id                  UUID          PK
-object_id           UUID          FK → objects.id NOT NULL
+object_id           UUID          FK → objects.id NOT NULL  -- ON DELETE CASCADE
 period_id           UUID          FK → periods.id NOT NULL
 access_requests     DECIMAL(10,2) NOT NULL DEFAULT 0
 monitoring_requests DECIMAL(10,2) NOT NULL DEFAULT 0
@@ -545,7 +546,7 @@ Admin-managed catalog. New entries added via UI without schema changes.
 
 ```sql
 id             UUID    PK
-object_id      UUID    FK → objects.id NOT NULL
+object_id      UUID    FK → objects.id NOT NULL  -- ON DELETE CASCADE
 repair_type_id UUID    FK → repair_types.id NOT NULL
                         -- ON DELETE RESTRICT
 period_id      UUID    FK → periods.id NOT NULL
@@ -560,7 +561,7 @@ One row per (object, repair_type, period). Past-period rows are read-only once t
 
 ```sql
 id               UUID          PK
-object_id        UUID          FK → objects.id UNIQUE NOT NULL
+object_id        UUID          FK → objects.id UNIQUE NOT NULL  -- ON DELETE CASCADE
 transport_type   VARCHAR(100)
 distance_km      DECIMAL(8,2)  NOT NULL DEFAULT 0
 one_way_time_min DECIMAL(8,2)  NOT NULL DEFAULT 0
@@ -607,7 +608,7 @@ All named calculation constants (see §6.12). Changes to any key trigger bulk su
 
 ```sql
 id                         UUID           PK
-object_id                  UUID           FK → objects.id UNIQUE NOT NULL
+object_id                  UUID           FK → objects.id UNIQUE NOT NULL  -- ON DELETE CASCADE
 
 -- Per-system per-visit subtotals (→ СВОД cols R, S)
 os_r1_per_visit            DECIMAL(10,4)
@@ -689,7 +690,7 @@ updated_at            TIMESTAMP
 
 ```sql
 id          UUID      PK
-object_id   UUID      FK → objects.id NOT NULL
+object_id   UUID      FK → objects.id NOT NULL  -- ON DELETE CASCADE
 engineer_id UUID      FK → users.id   NOT NULL  -- must have role = 'engineer'
 assigned_at TIMESTAMP NOT NULL DEFAULT now()
 assigned_by UUID      FK → users.id   NULL       -- who created the assignment
@@ -838,7 +839,7 @@ Stage 1 — Per-assignment contribution
     r2_contrib = quantity_maintained × context.r2_minutes
 
 Stage 2 — Per-system per-visit subtotals
-  For each system S ∈ {ОС, ПС, Видео}:
+  For each system S ∈ {OS, PS, Video}:
     R1_per_visit[S] = SUM(r1_contrib) for all assignments where system_type = S
     R2_per_visit[S] = SUM(r2_contrib) for all assignments where system_type = S
 
@@ -1174,6 +1175,7 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 | `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                   |
 | `app_config` UPDATE (any calculation key)            | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
 | `periods.is_active` changed (period switch)          | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
+| `objects` DELETE                                     | Before cascade: read all engineers assigned to the object from `object_engineers`. Cascade-delete all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Mark those engineers' `engineer_summaries.is_stale = 'TRUE'` — all in the same transaction. |
 | Any `summaries.is_stale` set to `'TRUE'`             | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                               |
 | `users.home_division_id` UPDATE for engineer E        | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40. |
 
@@ -1633,6 +1635,7 @@ Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — н
 
 - `ON DELETE RESTRICT` on `object_system_assignments.context_id → device_system_contexts.id`.
 - `ON DELETE RESTRICT` on `object_repairs.repair_type_id → repair_types.id`.
+- `ON DELETE CASCADE` applies to all child tables referencing `objects.id`: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`. Object hard-delete removes all dependent rows atomically. The application layer must read assigned engineers from `object_engineers` **before** issuing the DELETE and mark their `engineer_summaries.is_stale = 'TRUE'` in the same transaction (DB cascade fires after the application read).
 - Deleting a `device_type` that has `object_devices` rows is blocked (application-level guard + DB constraint).
 - Deleting a `users` record with role `engineer` that has active `object_engineers` rows is blocked until all assignments are removed.
 - `is_stale = 'TRUE'` is set in the **same transaction** as the data change — for both `summaries` and `engineer_summaries`.
@@ -1795,9 +1798,11 @@ GET    /objects                        List (paginated, filterable)
 POST   /objects                        Create
 GET    /objects/:id                    Get metadata
 PUT    /objects/:id                    Update metadata
-DELETE /objects/:id                    Delete
+DELETE /objects/:id                    Hard-delete; cascades all child tables; marks assigned engineers' summaries stale
 GET    /objects/:id/summary            Get computed summary
 ```
+
+> **Object hard-delete behaviour:** `DELETE /objects/:id` permanently removes the object and cascade-deletes all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Before deletion the service reads all engineers assigned to the object and marks their `engineer_summaries.is_stale = 'TRUE'` within the same transaction. Recalculation of affected engineer summaries happens on-demand when `POST /svod/recalculate` is triggered (see §6.10). Returns `204 No Content` on success.
 
 #### Physical Inventory
 
@@ -2017,7 +2022,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
   "device_system_contexts": [
     {
       "device_type_name": "...",
-      "system": "...",
+      "system_type": "OS" | "PS" | "Video",
       "r1_minutes": 0,
       "r2_minutes": 0,
     },
@@ -2031,8 +2036,8 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
       "name": "...",
       "engineer_name": "Александр Н Соловей",
       "equipment": [
-        { "device": "<device_type_name>", "system": "OS", "quantity": 5 },
-        { "device": "<device_type_name>", "system": "PS", "quantity": 3 }
+        { "device": "<device_type_name>", "system_type": "OS", "quantity": 5 },
+        { "device": "<device_type_name>", "system_type": "PS", "quantity": 3 }
       ],
       "records": {
         "access": 0,
@@ -2055,7 +2060,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 3. For each entry in `objects`: create Division → Branch → Object (dedup divisions/branches by name).
 4. For each non-zero equipment entry:
    - Resolve `device_types` by name (create if not found, with warning).
-   - Resolve `device_system_contexts` for (device, system).
+   - Resolve `device_system_contexts` for (device, system_type).
    - Create `object_devices` with `quantity_physical = quantity`.
    - Create `object_system_assignments` with `quantity_maintained = quantity`.
 5. Populate `records_tasks` per object from the `records` map.
@@ -2076,7 +2081,8 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 - `division`, `branch`, `name` must not be empty.
 - Equipment quantities must be non-negative; zero or missing values do not create assignment rows.
 - If a `device_type_name` doesn't match any `device_types` record: create a new device type, log a warning.
-- If R1/R2 for a (device, system) pair already exists in DB and differs from the import payload: keep DB value, log a warning.
+- If R1/R2 for a (device, system_type) pair already exists in DB and differs from the import payload: keep DB value, log a warning.
+- **`system_type` accepted values:** `"OS"`, `"PS"`, `"Video"` (case-sensitive). Any other value — including Cyrillic aliases such as `"ОС"`, `"ПС"`, `"Видео"` — is rejected with HTTP 422 code `INVALID_SYSTEM_TYPE`. No aliasing or normalization is performed. The import producer must emit the canonical English values.
 - Engineer name matching is case-insensitive and trims whitespace. Partial matches (e.g. "А. Соловей" vs "Александр Соловей") are not attempted — only exact full-name matches. Non-matching names create placeholder accounts.
 - Import assigns all repairs and records to the **active period** at the time of import. If no period is active, import is blocked until an admin activates a period.
 
@@ -2365,7 +2371,7 @@ Attempting to `POST /objects/:id/assignments` for a device_type_id that has no c
 
 ### AC-12: Shared Device Multi-System Calculation Is Correct
 
-An object with one Galaxy 512 (контроллер АСПС и СО) assigned to both ОС and ПС with `quantity_maintained = 1` each produces:
+An object with one Galaxy 512 (контроллер АСПС и СО) assigned to both `OS` and `PS` with `quantity_maintained = 1` each produces:
 
 - `os_r1_per_visit` containing the 15 min contribution from this device
 - `ps_r1_per_visit` containing the 15 min contribution from the same device
@@ -2374,11 +2380,11 @@ An object with one Galaxy 512 (контроллер АСПС и СО) assigned t
 
 ### AC-13: System Context Restriction UI Test
 
-In the Equipment tab, for a device that has `device_system_contexts` only for ОС:
+In the Equipment tab, for a device that has `device_system_contexts` only for `OS`:
 
-- "Assign to system" dropdown shows only "ОС"
-- ПС and Видео are not present in the dropdown (not hidden/disabled — absent)
-- Attempting `POST /objects/:id/assignments` with `system_type: "ПС"` returns HTTP 422 `NO_CONTEXT_FOR_SYSTEM`
+- "Assign to system" dropdown shows only "OS"
+- `PS` and `Video` are not present in the dropdown (not hidden/disabled — absent)
+- Attempting `POST /objects/:id/assignments` with `system_type: "PS"` returns HTTP 422 `NO_CONTEXT_FOR_SYSTEM`
 
 ### AC-14: Engineer Workload Equals Sum of Object Shares
 

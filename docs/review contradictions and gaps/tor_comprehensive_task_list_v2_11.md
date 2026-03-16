@@ -65,7 +65,7 @@
 
 ## 🟡 Gaps / Missing Specifications
 
-### [ ] G-01. Define Object Hard-Delete Cascade Contract
+### [x] G-01. Define Object Hard-Delete Cascade Contract
 *Merges: Task T-02, Review Item 8, Review Item 18*
 - **Priority:** Critical
 - **Problem:** The TOR maps deletion to `DELETE /objects/:id` but lacks definitions for child records and dependent caches. Schema foreign keys for `object_engineers` and other tables lack `ON DELETE CASCADE`.
@@ -75,7 +75,7 @@
 - **Concrete Document Changes:** Update FKs in schema sections. Add object deletion behavior to cache invalidation rules and API specifications.
 - **Done Criteria:** Complete deletion behavior is explicitly documented for all DB child tables and caches.
 
-### [ ] G-02. Normalize Import System-Type Contract
+### [x] G-02. Normalize Import System-Type Contract
 *Source: Task T-05*
 - **Priority:** High
 - **Problem:** The JSON import payload examples use field name `system` with string values like `OS` and `PS`. But the canonical database model uses `system_type` with localized values `ОС`, `ПС`, `Видео`.
