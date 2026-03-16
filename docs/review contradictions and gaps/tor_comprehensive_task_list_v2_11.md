@@ -145,7 +145,7 @@
 - **Action / Required Resolution:** In S-04, add an explanatory sentence clarifying that filtering out `is_active = FALSE` engineers on UI assignment dropdowns is considered a "UI data filtering concern", not an RBAC feature, and must still be implemented in the PoC.
 - **Done Criteria:** PoC scope properly delineates soft UI filtering vs hard RBAC validation.
 
-### [ ] G-10. `records_tasks` Normatives Mapping
+### [x] G-10. `records_tasks` Normatives Mapping
 *Source: Review Item 15*
 - **Priority:** Low
 - **Problem:** The formula calculation in §6.5 for `records_6months` does not explicitly link the 5 task columns stored in `records_tasks` to the corresponding 5 `app_config` keys mapped in §6.11.

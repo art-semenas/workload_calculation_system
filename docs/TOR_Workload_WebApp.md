@@ -972,8 +972,24 @@ across assignments is 2, but this is expected and does not trigger any alert.
 
 ### 6.5 Records Monthly Average
 
+Each `records_tasks` column stores the **quantity** (number of times that task was performed in the 6-month period). Each quantity is multiplied by its corresponding normative from `app_config`:
+
+| `records_tasks` column | × | `app_config` key             | Default (min/unit) |
+| ---------------------- | - | ---------------------------- | ------------------ |
+| `access_requests`      | × | `RECORDS_ACCESS_MINUTES`     | 60                 |
+| `monitoring_requests`  | × | `RECORDS_MONITORING_MINUTES` | 180                |
+| `footage_requests`     | × | `RECORDS_FOOTAGE_MINUTES`    | 180                |
+| `backup_control`       | × | `RECORDS_BACKUP_MINUTES`     | 120                |
+| `security_admin`       | × | `RECORDS_ADMIN_MINUTES`      | 60                 |
+
 ```
-records_6months = SUM(task_quantity[j] × records_normative[j])  for all j
+records_6months =
+    access_requests     × config[RECORDS_ACCESS_MINUTES]
+  + monitoring_requests × config[RECORDS_MONITORING_MINUTES]
+  + footage_requests    × config[RECORDS_FOOTAGE_MINUTES]
+  + backup_control      × config[RECORDS_BACKUP_MINUTES]
+  + security_admin      × config[RECORDS_ADMIN_MINUTES]
+
 records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]
 ```
 
