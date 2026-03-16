@@ -2750,7 +2750,7 @@ travel  (id, object_id, transport_type, distance_km, one_way_time_min, updated_a
 UNIQUE(object_id)
 
 -- Computed cache — synchronous, no is_stale (S-02)
--- Note: intermediate repair fields (records_6months, repair_work_6months,
+-- Note: intermediate computed fields (records_6months, repair_work_6months,
 -- repair_travel_6months, repair_pzv_6months, total_repairs) are computed
 -- in-memory during calculation but NOT persisted in PoC. Only the final
 -- monthly outputs are stored. For MVP, these fields are added to summaries

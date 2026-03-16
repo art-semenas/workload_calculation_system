@@ -164,7 +164,7 @@
   3. In AC-23, update the PoC equivalent criterion to reference Docker env vars instead of `application.yml`.
 - **Done Criteria:** Developer can run `docker compose up` with the documented env vars and the application starts with correct normatives; missing or invalid env vars cause a Spring binding exception at startup.
 
-### [ ] G-12. `records_6months` in PoC Summaries Schema
+### [x] G-12. `records_6months` in PoC Summaries Schema
 *Source: Review Item 17*
 - **Priority:** Low
 - **Problem:** §15.4 lists various intermediate metrics missing from the PoC `summaries` schema due to in-memory processing. It forgot to list `records_6months`.
