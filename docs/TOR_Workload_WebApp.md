@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.15
+**Version:** 2.17
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-16
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -16,6 +16,8 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.17:** Verification cleanup after residual-task sweep. Fixed the last leaked PoC recalculation wording in §24 so snapshot/freeze scope no longer says PoC uses on-demand recalculation. Canonical split remains unchanged: PoC = synchronous recalculation on save; MVP = on-demand recalculation with staleness tracking.
+**Changelog v2.16:** R-04 — Completed JSON import terminology cleanup. Removed the remaining stack notes that implied direct server-side XLSX parsing. §9.1 now scopes Apache POI to server-side XLSX export only, and §15.8 clarifies that M-01 adds JSON bulk import while XLSX remains an external conversion source handled outside the application.
 **Changelog v2.15:** R-03 — Aligned Redis scope with PoC model in §9.1 tech stack table. Added "MVP only — not used in PoC (see §15.8)" annotation to Cache + Queue (Redis) and Job integration (Spring Data Redis / Redisson) rows. Changed Docker Compose container count from "5 containers" to "MVP: 5 containers / PoC: 4 containers (no Redis)" to prevent ambiguity for PoC developers reading §9.1 without cross-referencing §15.8 or AD-13.
 **Changelog v2.14:** R-02 — Unified stale vs processing UI wording. Fixed §7.6 Section 5 (engineer stale indicator used "Данные пересчитываются..." for `is_stale = 'TRUE'` — wrong state). Applied canonical two-state rule from §7.10 to all three sections (§7.6, §7.9, §7.10): `TRUE` → "Данные устарели — нажмите Пересчитать"; `PROCESSING` → "Пересчитывается...". Added PoC scope note to all three sections: stale banners are MVP-only (PoC recalculates synchronously on save, no `is_stale`, per S-02/R-01 resolution). No interference with R-01 — R-02 depends on R-01 canonical model and now references it explicitly.
 **Changelog v2.13:** R-01 — Resolved PoC recalculation model contradiction. Canonical model: PoC uses synchronous recalculation on save (S-02), no `is_stale`, no background worker, no Redis; MVP uses on-demand recalculation with staleness tracking, background worker, and admin trigger. Updated AD-10 to scope on-demand model to MVP only. Updated AD-13 to state Redis is MVP-only (introduced with M-06). Rewrote C-28 to explicitly split PoC vs MVP behaviour.
@@ -84,37 +86,37 @@ The Excel template is large (2,935 rows × up to 47 columns per sheet), manual t
 
 ## 3. Glossary
 
-| Term                         | Definition                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| Объект (Object/Facility)     | A physical location (bank branch, archive, garage, infokiosk, etc.)                      |
-| Подразделение                | Regional division (e.g., Брестское областное управление №100)                            |
-| Филиал                       | Branch (sub-unit of a division; may equal the division)                                  |
-| Ответственные ТО             | Responsible maintenance engineer(s) assigned to an object                                |
-| ОС                           | Охранная сигнализация — security alarm system                                            |
-| ПС                           | Пожарная сигнализация — fire alarm system                                                |
-| Видео                        | Video surveillance system                                                                |
-| Записи                       | Video archive records and administration tasks                                           |
-| Ремонт                       | Repairs — replacement of equipment components                                            |
-| Дорога                       | Travel — distance and time to reach a facility                                           |
+| Term                         | Definition                                                                                                                                                            |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Объект (Object/Facility)     | A physical location (bank branch, archive, garage, infokiosk, etc.)                                                                                                   |
+| Подразделение                | Regional division (e.g., Брестское областное управление №100)                                                                                                         |
+| Филиал                       | Branch (sub-unit of a division; may equal the division)                                                                                                               |
+| Ответственные ТО             | Responsible maintenance engineer(s) assigned to an object                                                                                                             |
+| ОС                           | Охранная сигнализация — security alarm system                                                                                                                         |
+| ПС                           | Пожарная сигнализация — fire alarm system                                                                                                                             |
+| Видео                        | Video surveillance system                                                                                                                                             |
+| Записи                       | Video archive records and administration tasks                                                                                                                        |
+| Ремонт                       | Repairs — replacement of equipment components                                                                                                                         |
+| Дорога                       | Travel — distance and time to reach a facility                                                                                                                        |
 | Тип системы (System Type)    | One of: `OS`, `PS`, `Video` — the maintenance schedule context. Canonical English values used in DB, API, and import payloads. Localized display labels are post-MVP. |
-| Тип устройства (Device Type) | A named device in the admin-managed catalog                                              |
-| Контекст устройства          | A (device type + system type) pair that carries R1/R2 normatives                         |
-| Р1                           | Minutes per unit for routine inspection — system-context-specific                        |
-| Р2                           | Minutes per unit for full maintenance — system-context-specific                          |
-| Физическое количество        | Physical quantity: how many units exist on site                                          |
-| Обслуживаемое количество     | Maintained quantity: how many units are counted in a given system's calculation          |
-| СВОД                         | Consolidated summary — aggregated totals per object or division                          |
-| ИТОГО Числ                   | Final headcount coefficient: total monthly minutes converted to FTE                      |
-| ПЗВ                          | Подготовительно-заключительное время — fixed prep/wrap-up time (20 min per visit)        |
-| ТМЦ                          | Товарно-материальные ценности — inventory/material assets                                |
-| Инженер (Engineer)           | A maintenance technician who is also a system user (login account)                       |
-| Нагрузка на инженера         | Workload per engineer — sum of workload shares from all assigned objects                 |
-| Доля объекта                 | An object's itogo_chislo_with_travel divided equally among its assigned engineers        |
-| Мощность (Capacity)          | Maximum FTE capacity of an engineer, set by admin (e.g. 1.0 full-time, 0.5 half-time)    |
-| Коэффициент загрузки         | Load ratio = engineer_total_load / capacity — measure of utilisation                     |
-| Перегрузка (Overload)        | Load ratio ≥ 1.0 — engineer is assigned more work than their capacity                    |
-| Покрытие (Coverage gap)      | An object that has no engineers assigned                                                 |
-| Период (Planning period)     | A 6-month window to which repair counts and records tasks belong (e.g. H1 2025, H2 2025) |
+| Тип устройства (Device Type) | A named device in the admin-managed catalog                                                                                                                           |
+| Контекст устройства          | A (device type + system type) pair that carries R1/R2 normatives                                                                                                      |
+| Р1                           | Minutes per unit for routine inspection — system-context-specific                                                                                                     |
+| Р2                           | Minutes per unit for full maintenance — system-context-specific                                                                                                       |
+| Физическое количество        | Physical quantity: how many units exist on site                                                                                                                       |
+| Обслуживаемое количество     | Maintained quantity: how many units are counted in a given system's calculation                                                                                       |
+| СВОД                         | Consolidated summary — aggregated totals per object or division                                                                                                       |
+| ИТОГО Числ                   | Final headcount coefficient: total monthly minutes converted to FTE                                                                                                   |
+| ПЗВ                          | Подготовительно-заключительное время — fixed prep/wrap-up time (20 min per visit)                                                                                     |
+| ТМЦ                          | Товарно-материальные ценности — inventory/material assets                                                                                                             |
+| Инженер (Engineer)           | A maintenance technician who is also a system user (login account)                                                                                                    |
+| Нагрузка на инженера         | Workload per engineer — sum of workload shares from all assigned objects                                                                                              |
+| Доля объекта                 | An object's itogo_chislo_with_travel divided equally among its assigned engineers                                                                                     |
+| Мощность (Capacity)          | Maximum FTE capacity of an engineer, set by admin (e.g. 1.0 full-time, 0.5 half-time)                                                                                 |
+| Коэффициент загрузки         | Load ratio = engineer_total_load / capacity — measure of utilisation                                                                                                  |
+| Перегрузка (Overload)        | Load ratio ≥ 1.0 — engineer is assigned more work than their capacity                                                                                                 |
+| Покрытие (Coverage gap)      | An object that has no engineers assigned                                                                                                                              |
+| Период (Planning period)     | A 6-month window to which repair counts and records tasks belong (e.g. H1 2025, H2 2025)                                                                              |
 
 ---
 
@@ -977,13 +979,13 @@ across assignments is 2, but this is expected and does not trigger any alert.
 
 Each `records_tasks` column stores the **quantity** (number of times that task was performed in the 6-month period). Each quantity is multiplied by its corresponding normative from `app_config`:
 
-| `records_tasks` column | × | `app_config` key             | Default (min/unit) |
-| ---------------------- | - | ---------------------------- | ------------------ |
-| `access_requests`      | × | `RECORDS_ACCESS_MINUTES`     | 60                 |
-| `monitoring_requests`  | × | `RECORDS_MONITORING_MINUTES` | 180                |
-| `footage_requests`     | × | `RECORDS_FOOTAGE_MINUTES`    | 180                |
-| `backup_control`       | × | `RECORDS_BACKUP_MINUTES`     | 120                |
-| `security_admin`       | × | `RECORDS_ADMIN_MINUTES`      | 60                 |
+| `records_tasks` column | ×   | `app_config` key             | Default (min/unit) |
+| ---------------------- | --- | ---------------------------- | ------------------ |
+| `access_requests`      | ×   | `RECORDS_ACCESS_MINUTES`     | 60                 |
+| `monitoring_requests`  | ×   | `RECORDS_MONITORING_MINUTES` | 180                |
+| `footage_requests`     | ×   | `RECORDS_FOOTAGE_MINUTES`    | 180                |
+| `backup_control`       | ×   | `RECORDS_BACKUP_MINUTES`     | 120                |
+| `security_admin`       | ×   | `RECORDS_ADMIN_MINUTES`      | 60                 |
 
 ```
 records_6months =
@@ -1184,50 +1186,50 @@ division_headcount = SUM(itogo_chislo_with_travel)  for all objects in division
 
 Summaries are marked stale automatically on data change, but **recalculation is triggered on-demand by admins only** — not automatically. The background worker runs only when explicitly triggered via `POST /svod/recalculate` (see §10). This simplifies operations and gives admins control over when calculations are refreshed (e.g. after a bulk data entry session).
 
-| Triggering Event                                     | Staleness Action (immediate, same transaction)                                                                                                   |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `object_system_assignments` INSERT / UPDATE / DELETE | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                 |
-| `object_devices` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                 |
-| `records_tasks` INSERT / UPDATE                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                 |
-| `object_repairs` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'` (any change to repair counts or the set of performed types changes kvo and repair_work_6months) |
-| `travel` UPDATE                                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                 |
-| `device_system_contexts` UPDATE (r1 or r2)           | Mark `is_stale = 'TRUE'` for ALL objects with assignments using this context                                                                     |
-| `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                   |
-| `app_config` UPDATE (any calculation key) (MVP)      | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
-| `periods.is_active` changed (period switch)          | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                           |
+| Triggering Event                                     | Staleness Action (immediate, same transaction)                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `object_system_assignments` INSERT / UPDATE / DELETE | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
+| `object_devices` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
+| `records_tasks` INSERT / UPDATE                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
+| `object_repairs` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'` (any change to repair counts or the set of performed types changes kvo and repair_work_6months)                                                                                                                                                                                            |
+| `travel` UPDATE                                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
+| `device_system_contexts` UPDATE (r1 or r2)           | Mark `is_stale = 'TRUE'` for ALL objects with assignments using this context                                                                                                                                                                                                                                                                |
+| `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                                                                                                                                                                                                              |
+| `app_config` UPDATE (any calculation key) (MVP)      | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
+| `periods.is_active` changed (period switch)          | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
 | `objects` DELETE                                     | Before cascade: read all engineers assigned to the object from `object_engineers`. Cascade-delete all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Mark those engineers' `engineer_summaries.is_stale = 'TRUE'` — all in the same transaction. |
-| Any `summaries.is_stale` set to `'TRUE'`             | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                               |
-| `users.home_division_id` UPDATE for engineer E        | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40. |
+| Any `summaries.is_stale` set to `'TRUE'`             | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                          |
+| `users.home_division_id` UPDATE for engineer E       | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40.                                        |
 
 **Recalculation trigger:** Admin clicks "Пересчитать" in the UI or calls `POST /svod/recalculate`. The background worker then processes all stale summaries in dependency order: object summaries first, then engineer summaries.
 
 ### 6.11 Application Configuration Constants
 
-| Key                            | Default | Description                                               |
-| ------------------------------ | ------- | --------------------------------------------------------- |
-| `MONTHLY_HOURS_FUND`           | 142.8   | Monthly working hours per employee                        |
-| `ABSENCE_COEFFICIENT`          | 1.12    | Absence coefficient (коэффициент невыходов)               |
-| `PZV_MINUTES`                  | 20      | Prep/wrap-up time per visit (minutes)                     |
-| `OS_R1_VISITS_PER_YEAR`        | 10      | ОС routine visits/year                                    |
-| `OS_R2_VISITS_PER_YEAR`        | 2       | ОС full maintenance visits/year                           |
-| `PS_R1_VISITS_PER_YEAR`        | 8       | ПС routine visits/year                                    |
-| `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year                           |
-| `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year                                 |
-| `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year                        |
+| Key                            | Default | Description                                                                                                                                                                                                       |
+| ------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONTHLY_HOURS_FUND`           | 142.8   | Monthly working hours per employee                                                                                                                                                                                |
+| `ABSENCE_COEFFICIENT`          | 1.12    | Absence coefficient (коэффициент невыходов)                                                                                                                                                                       |
+| `PZV_MINUTES`                  | 20      | Prep/wrap-up time per visit (minutes)                                                                                                                                                                             |
+| `OS_R1_VISITS_PER_YEAR`        | 10      | ОС routine visits/year                                                                                                                                                                                            |
+| `OS_R2_VISITS_PER_YEAR`        | 2       | ОС full maintenance visits/year                                                                                                                                                                                   |
+| `PS_R1_VISITS_PER_YEAR`        | 8       | ПС routine visits/year                                                                                                                                                                                            |
+| `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year                                                                                                                                                                                   |
+| `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year                                                                                                                                                                                         |
+| `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year                                                                                                                                                                                |
 | `PLANNING_PERIOD_MONTHS`       | 6       | Planning horizon (months); used to convert 6-month totals (records and repairs) to monthly averages in `records_monthly` (§6.5) and as the upper bound in the cross-key constraint for `REPAIR_PRODUCTIVE_MONTHS` |
-| `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging                      |
-| `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel and PZV overhead for repairs     |
-| `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips at this value        |
-| `ENGINEER_WARNING_THRESHOLD`   | 0.9     | Load ratio at which engineer status becomes "warning"     |
-| `RECORDS_ACCESS_MINUTES`       | 60      | Normative minutes per access/disruption request (Записи)  |
-| `RECORDS_MONITORING_MINUTES`   | 180     | Normative minutes per monitoring records request (Записи) |
-| `RECORDS_FOOTAGE_MINUTES`      | 180     | Normative minutes per video footage request (Записи)      |
-| `RECORDS_BACKUP_MINUTES`       | 120     | Normative minutes per backup control instance (Записи)    |
-| `RECORDS_ADMIN_MINUTES`        | 60      | Normative minutes per security admin instance (Записи)    |
+| `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging                                                                                                                                                                              |
+| `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel and PZV overhead for repairs                                                                                                                                                             |
+| `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips at this value                                                                                                                                                                |
+| `ENGINEER_WARNING_THRESHOLD`   | 0.9     | Load ratio at which engineer status becomes "warning"                                                                                                                                                             |
+| `RECORDS_ACCESS_MINUTES`       | 60      | Normative minutes per access/disruption request (Записи)                                                                                                                                                          |
+| `RECORDS_MONITORING_MINUTES`   | 180     | Normative minutes per monitoring records request (Записи)                                                                                                                                                         |
+| `RECORDS_FOOTAGE_MINUTES`      | 180     | Normative minutes per video footage request (Записи)                                                                                                                                                              |
+| `RECORDS_BACKUP_MINUTES`       | 120     | Normative minutes per backup control instance (Записи)                                                                                                                                                            |
+| `RECORDS_ADMIN_MINUTES`        | 60      | Normative minutes per security admin instance (Записи)                                                                                                                                                            |
 
 All constants are stored in `app_config`, editable by admins at `/admin/config`. Never hardcoded in application logic.
 
-### 6.11.1 Configuration Validation Rules *(MVP — requires M-10)*
+### 6.11.1 Configuration Validation Rules _(MVP — requires M-10)_
 
 > **Scope: MVP.** This section requires the `app_config` database table (introduced in M-10). In PoC, configuration constants are injected as Docker environment variables (bound at startup via Spring's `@ConfigurationProperties(prefix="workload.config")`) — missing or type-invalid values prevent startup but no HTTP 422 save endpoint exists.
 
@@ -1235,38 +1237,39 @@ All `app_config` values are validated **on application startup** and **on every 
 
 #### Per-key constraints
 
-| Key | Constraint | Violation code | Reason |
-| --- | ---------- | -------------- | ------ |
-| `MONTHLY_HOURS_FUND` | `> 0` | `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE` | Divisor in itogo formula — zero causes divide-by-zero |
-| `ABSENCE_COEFFICIENT` | `> 0` | `CONFIG_ABSENCE_COEFFICIENT_NONPOSITIVE` | Multiplier in itogo formula — zero produces zero FTE for any workload |
-| `PZV_MINUTES` | `>= 0` | `CONFIG_PZV_MINUTES_NEGATIVE` | May legitimately be 0; negative is physically impossible |
-| `OS_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_OS_R1_VISITS_ZERO` | Used as multiplier — zero eliminates all ОС routine maintenance |
-| `OS_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_OS_R2_VISITS_ZERO` | Same |
-| `PS_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_PS_R1_VISITS_ZERO` | Same |
-| `PS_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_PS_R2_VISITS_ZERO` | Same |
-| `VIDEO_R1_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R1_VISITS_ZERO` | Same |
-| `VIDEO_R2_VISITS_PER_YEAR` | `>= 1` | `CONFIG_VIDEO_R2_VISITS_ZERO` | Same |
-| `PLANNING_PERIOD_MONTHS` | `>= 1` | `CONFIG_PLANNING_PERIOD_MONTHS_ZERO` | Planning period length (months) — divisor for both records and repairs monthly averaging; must be positive |
-| `REPAIR_PRODUCTIVE_MONTHS` | `>= 1` | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO` | Divisor in repair monthly formula — zero causes divide-by-zero |
-| `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0` | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE` | kvo threshold — negative is meaningless |
-| `REPAIR_TRAVEL_CAP` | `>= 1` | `CONFIG_REPAIR_TRAVEL_CAP_ZERO` | Cap on effective_trips — zero would eliminate all repair travel overhead |
-| `ENGINEER_WARNING_THRESHOLD` | `> 0 AND < 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold at 1.0 or above means the warning band collapses to zero width and the "warning" state becomes unreachable before "overloaded" |
-| `RECORDS_ACCESS_MINUTES` | `>= 0` | `CONFIG_RECORDS_ACCESS_MINUTES_NEGATIVE` | Normative time — negative is physically impossible |
-| `RECORDS_MONITORING_MINUTES` | `>= 0` | `CONFIG_RECORDS_MONITORING_MINUTES_NEGATIVE` | Same |
-| `RECORDS_FOOTAGE_MINUTES` | `>= 0` | `CONFIG_RECORDS_FOOTAGE_MINUTES_NEGATIVE` | Same |
-| `RECORDS_BACKUP_MINUTES` | `>= 0` | `CONFIG_RECORDS_BACKUP_MINUTES_NEGATIVE` | Same |
-| `RECORDS_ADMIN_MINUTES` | `>= 0` | `CONFIG_RECORDS_ADMIN_MINUTES_NEGATIVE` | Same |
+| Key                            | Constraint      | Violation code                                   | Reason                                                                                                                                                                 |
+| ------------------------------ | --------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONTHLY_HOURS_FUND`           | `> 0`           | `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE`          | Divisor in itogo formula — zero causes divide-by-zero                                                                                                                  |
+| `ABSENCE_COEFFICIENT`          | `> 0`           | `CONFIG_ABSENCE_COEFFICIENT_NONPOSITIVE`         | Multiplier in itogo formula — zero produces zero FTE for any workload                                                                                                  |
+| `PZV_MINUTES`                  | `>= 0`          | `CONFIG_PZV_MINUTES_NEGATIVE`                    | May legitimately be 0; negative is physically impossible                                                                                                               |
+| `OS_R1_VISITS_PER_YEAR`        | `>= 1`          | `CONFIG_OS_R1_VISITS_ZERO`                       | Used as multiplier — zero eliminates all ОС routine maintenance                                                                                                        |
+| `OS_R2_VISITS_PER_YEAR`        | `>= 1`          | `CONFIG_OS_R2_VISITS_ZERO`                       | Same                                                                                                                                                                   |
+| `PS_R1_VISITS_PER_YEAR`        | `>= 1`          | `CONFIG_PS_R1_VISITS_ZERO`                       | Same                                                                                                                                                                   |
+| `PS_R2_VISITS_PER_YEAR`        | `>= 1`          | `CONFIG_PS_R2_VISITS_ZERO`                       | Same                                                                                                                                                                   |
+| `VIDEO_R1_VISITS_PER_YEAR`     | `>= 1`          | `CONFIG_VIDEO_R1_VISITS_ZERO`                    | Same                                                                                                                                                                   |
+| `VIDEO_R2_VISITS_PER_YEAR`     | `>= 1`          | `CONFIG_VIDEO_R2_VISITS_ZERO`                    | Same                                                                                                                                                                   |
+| `PLANNING_PERIOD_MONTHS`       | `>= 1`          | `CONFIG_PLANNING_PERIOD_MONTHS_ZERO`             | Planning period length (months) — divisor for both records and repairs monthly averaging; must be positive                                                             |
+| `REPAIR_PRODUCTIVE_MONTHS`     | `>= 1`          | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO`           | Divisor in repair monthly formula — zero causes divide-by-zero                                                                                                         |
+| `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0`          | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE`   | kvo threshold — negative is meaningless                                                                                                                                |
+| `REPAIR_TRAVEL_CAP`            | `>= 1`          | `CONFIG_REPAIR_TRAVEL_CAP_ZERO`                  | Cap on effective_trips — zero would eliminate all repair travel overhead                                                                                               |
+| `ENGINEER_WARNING_THRESHOLD`   | `> 0 AND < 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold at 1.0 or above means the warning band collapses to zero width and the "warning" state becomes unreachable before "overloaded" |
+| `RECORDS_ACCESS_MINUTES`       | `>= 0`          | `CONFIG_RECORDS_ACCESS_MINUTES_NEGATIVE`         | Normative time — negative is physically impossible                                                                                                                     |
+| `RECORDS_MONITORING_MINUTES`   | `>= 0`          | `CONFIG_RECORDS_MONITORING_MINUTES_NEGATIVE`     | Same                                                                                                                                                                   |
+| `RECORDS_FOOTAGE_MINUTES`      | `>= 0`          | `CONFIG_RECORDS_FOOTAGE_MINUTES_NEGATIVE`        | Same                                                                                                                                                                   |
+| `RECORDS_BACKUP_MINUTES`       | `>= 0`          | `CONFIG_RECORDS_BACKUP_MINUTES_NEGATIVE`         | Same                                                                                                                                                                   |
+| `RECORDS_ADMIN_MINUTES`        | `>= 0`          | `CONFIG_RECORDS_ADMIN_MINUTES_NEGATIVE`          | Same                                                                                                                                                                   |
 
 #### Cross-key constraints
 
-| Rule | Constraint | Violation code | Reason |
-| ---- | ---------- | -------------- | ------ |
-| Repair threshold ordering | `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP` | `CONFIG_REPAIR_THRESHOLDS_INVERTED` | If ZERO_THRESHOLD ≥ CAP the three-band logic inverts: band 2 never fires; effective_trips jump from 0 to cap |
-| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from |
+| Rule                      | Constraint                                           | Violation code                              | Reason                                                                                                       |
+| ------------------------- | ---------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Repair threshold ordering | `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP`   | `CONFIG_REPAIR_THRESHOLDS_INVERTED`         | If ZERO_THRESHOLD ≥ CAP the three-band logic inverts: band 2 never fires; effective_trips jump from 0 to cap |
+| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from                                        |
 
 #### Startup behaviour
 
 On application startup, `AppConfigValidator` must:
+
 1. Verify that **all 19 required keys** are present in `app_config`. Missing keys → log `FATAL: missing config key [KEY]` → abort startup.
 2. Evaluate all per-key and cross-key constraints above. Any failure → log `FATAL: config constraint violated [CODE]` → abort startup.
 3. On success, log `INFO: app_config validated — all 19 keys present and valid`.
@@ -1280,8 +1283,11 @@ On application startup, `AppConfigValidator` must:
   "status": 422,
   "code": "CONFIG_CONSTRAINT_VIOLATED",
   "violations": [
-    { "key": "REPAIR_TRAVEL_CAP", "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
-      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)" }
+    {
+      "key": "REPAIR_TRAVEL_CAP",
+      "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
+      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
+    }
   ]
 }
 ```
@@ -1384,29 +1390,29 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 
 ### 7.1 Pages / Views
 
-| Route                  | View             | Description                                                  |
-| ---------------------- | ---------------- | ------------------------------------------------------------ |
-| `/`                    | Dashboard        | Headcount cards by division; top objects by workload         |
-| `/divisions`           | Division List    | List/search divisions + "Добавить подразделение" button (admin in MVP; any auth user in PoC) |
-| `/divisions/:id`       | Division Detail  | СВОД subtotals + branch list + "Добавить филиал" button (admin in MVP; any auth user in PoC) |
+| Route                  | View             | Description                                                                                             |
+| ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `/`                    | Dashboard        | Headcount cards by division; top objects by workload                                                    |
+| `/divisions`           | Division List    | List/search divisions + "Добавить подразделение" button (admin in MVP; any auth user in PoC)            |
+| `/divisions/:id`       | Division Detail  | СВОД subtotals + branch list + "Добавить филиал" button (admin in MVP; any auth user in PoC)            |
 | `/branches/:id`        | Branch Detail    | Object list with СВОД per object + "Добавить объект" button (admin/editor in MVP; any auth user in PoC) |
-| `/objects`             | Object List      | Searchable, filterable table                                 |
-| `/objects/new`         | Object Create    | Create new object                                            |
-| `/objects/:id`         | Object Detail    | Tabbed detail view                                           |
-| `/objects/:id/edit`    | Object Edit      | Edit object metadata                                         |
-| `/svod`                | СВОД             | Full summary table with period selector, filters, and export |
-| `/catalog/devices`     | Device Catalog   | List / create / edit device types and contexts               |
-| `/catalog/devices/new` | New Device       | Create device type and assign system contexts                |
-| `/catalog/devices/:id` | Device Detail    | View/edit device and all system contexts                     |
-| `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog                     |
-| `/admin/config`        | App Config       | View/edit all calculation constants (admin only)             |
-| `/admin/periods`       | Planning Periods | Create / activate / deactivate planning periods (admin only) |
-| `/admin/users`         | Users            | User management (admin only)                                 |
-| `/import`              | Import           | JSON / text-list import wizard                               |
-| `/export`              | Export           | Export options                                               |
-| `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves) |
-| `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                          |
-| `/engineers/:id/edit`  | Engineer Edit    | Edit name, capacity, home division                           |
+| `/objects`             | Object List      | Searchable, filterable table                                                                            |
+| `/objects/new`         | Object Create    | Create new object                                                                                       |
+| `/objects/:id`         | Object Detail    | Tabbed detail view                                                                                      |
+| `/objects/:id/edit`    | Object Edit      | Edit object metadata                                                                                    |
+| `/svod`                | СВОД             | Full summary table with period selector, filters, and export                                            |
+| `/catalog/devices`     | Device Catalog   | List / create / edit device types and contexts                                                          |
+| `/catalog/devices/new` | New Device       | Create device type and assign system contexts                                                           |
+| `/catalog/devices/:id` | Device Detail    | View/edit device and all system contexts                                                                |
+| `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog                                                                |
+| `/admin/config`        | App Config       | View/edit all calculation constants (admin only)                                                        |
+| `/admin/periods`       | Planning Periods | Create / activate / deactivate planning periods (admin only)                                            |
+| `/admin/users`         | Users            | User management (admin only)                                                                            |
+| `/import`              | Import           | JSON / text-list import wizard                                                                          |
+| `/export`              | Export           | Export options                                                                                          |
+| `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves)                                |
+| `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                                                                     |
+| `/engineers/:id/edit`  | Engineer Edit    | Edit name, capacity, home division                                                                      |
 
 ### 7.2 Object Detail Page — Tabs
 
@@ -1536,6 +1542,7 @@ A personal workload dashboard with five sections:
 Button to assign additional objects; remove button per row.
 
 **Section 5 — Stale indicator (MVP only)**
+
 - `is_stale = 'TRUE'` (stale, no job running): banner **"Данные устарели — нажмите Пересчитать"** across the page.
 - `is_stale = 'PROCESSING'` (background job actively running): banner **"Пересчитывается..."** across the page.
 
@@ -1609,6 +1616,7 @@ The UI pre-checks on click and shows: **"Нельзя удалить: 42 объ�
 | 19  | Р2 на объекте всех систем                | `summaries.r2_per_visit_total`                                     |
 
 Stale rows display state-specific indicators in place of numeric values (MVP only):
+
 - `is_stale = 'TRUE'` (stale, no job running): **"Данные устарели — нажмите Пересчитать"**
 - `is_stale = 'PROCESSING'` (background job actively running): **"Пересчитывается..."**
 
@@ -1692,20 +1700,20 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 #### Backend
 
-| Component       | Choice                      | Notes                                                                   |
-| --------------- | --------------------------- | ----------------------------------------------------------------------- |
-| Runtime         | Java 21 (LTS)               | Long-term support; virtual threads available for async if needed        |
-| Framework       | Spring Boot 3.x             | Auto-configuration, production-ready defaults                           |
-| REST            | Spring Web (MVC)            | Standard REST controllers                                               |
-| Persistence     | Spring Data JPA (Hibernate) | ORM over PostgreSQL; DECIMAL precision preserved via `BigDecimal`       |
-| Security        | Spring Security + JWT       | Stateless JWT auth; refresh tokens in MVP                               |
-| Validation      | Spring Validation (Jakarta) | Bean validation on DTOs; Zod mirrors on frontend                        |
-| Metrics         | Spring Boot Actuator        | Exposes `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus` |
-| Build           | Maven                       | Dependency management; multi-module layout for PoC→MVP                  |
-| DTO mapping     | MapStruct                   | Compile-time DTO↔entity mapping; no reflection overhead                 |
-| Boilerplate     | Lombok                      | `@Data`, `@Builder`, `@RequiredArgsConstructor` — optional per class    |
-| Logging         | log4j2                      | JSON layout for structured logging (see §18); SLF4J as facade           |
-| XLSX processing | Apache POI                  | Industry-standard Java XLSX read/write; replaces openpyxl               |
+| Component   | Choice                      | Notes                                                                                            |
+| ----------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Runtime     | Java 21 (LTS)               | Long-term support; virtual threads available for async if needed                                 |
+| Framework   | Spring Boot 3.x             | Auto-configuration, production-ready defaults                                                    |
+| REST        | Spring Web (MVC)            | Standard REST controllers                                                                        |
+| Persistence | Spring Data JPA (Hibernate) | ORM over PostgreSQL; DECIMAL precision preserved via `BigDecimal`                                |
+| Security    | Spring Security + JWT       | Stateless JWT auth; refresh tokens in MVP                                                        |
+| Validation  | Spring Validation (Jakarta) | Bean validation on DTOs; Zod mirrors on frontend                                                 |
+| Metrics     | Spring Boot Actuator        | Exposes `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`                          |
+| Build       | Maven                       | Dependency management; multi-module layout for PoC→MVP                                           |
+| DTO mapping | MapStruct                   | Compile-time DTO↔entity mapping; no reflection overhead                                          |
+| Boilerplate | Lombok                      | `@Data`, `@Builder`, `@RequiredArgsConstructor` — optional per class                             |
+| Logging     | log4j2                      | JSON layout for structured logging (see §18); SLF4J as facade                                    |
+| XLSX export | Apache POI                  | Server-side XLSX export only; legacy workbook conversion to JSON happens outside the application |
 
 #### Database & Migrations
 
@@ -1716,10 +1724,10 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 #### Caching & Async Processing
 
-| Component       | Choice                       | Notes                                                                                                                                                  |
-| --------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Cache + Queue   | Redis                        | **MVP only — not used in PoC (see §15.8).** Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-13 for scope.    |
-| Job integration | Spring Data Redis / Redisson | **MVP only — not used in PoC (see §15.8).** Redis-backed queue; Spring `@Async` or Redisson `RQueue` for job dispatch                                  |
+| Component       | Choice                       | Notes                                                                                                                                               |
+| --------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cache + Queue   | Redis                        | **MVP only — not used in PoC (see §15.8).** Dual use: (1) background job queue for recalculation; (2) optional response cache. See AD-13 for scope. |
+| Job integration | Spring Data Redis / Redisson | **MVP only — not used in PoC (see §15.8).** Redis-backed queue; Spring `@Async` or Redisson `RQueue` for job dispatch                               |
 
 #### Frontend
 
@@ -1747,14 +1755,14 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 #### Infrastructure
 
-| Component           | Choice         | Notes                                                                       |
-| ------------------- | -------------- | --------------------------------------------------------------------------- |
-| Containerisation    | Docker         | One image per service                                                       |
+| Component           | Choice         | Notes                                                                                                     |
+| ------------------- | -------------- | --------------------------------------------------------------------------------------------------------- |
+| Containerisation    | Docker         | One image per service                                                                                     |
 | Local orchestration | Docker Compose | MVP: 5 containers (backend, frontend, PostgreSQL, Redis, Nginx). PoC: 4 containers (no Redis — see §15.8) |
-| Reverse proxy       | Nginx          | TLS termination, static frontend serving, API proxy                         |
-| CI/CD               | GitHub Actions | See §20                                                                     |
-| APM / Monitoring    | Datadog        | See §18                                                                     |
-| Rate limiting       | Bucket4j       | Token-bucket algorithm; applied per-IP and per-user-id at API gateway layer |
+| Reverse proxy       | Nginx          | TLS termination, static frontend serving, API proxy                                                       |
+| CI/CD               | GitHub Actions | See §20                                                                                                   |
+| APM / Monitoring    | Datadog        | See §18                                                                                                   |
+| Rate limiting       | Bucket4j       | Token-bucket algorithm; applied per-IP and per-user-id at API gateway layer                               |
 
 ### 9.2 Architectural Decisions
 
@@ -1835,6 +1843,7 @@ DELETE /divisions/:id                 Delete division — admin only (MVP); bloc
 ```
 
 **`GET /divisions`** — HTTP 200
+
 ```json
 {
   "data": [
@@ -1851,12 +1860,23 @@ DELETE /divisions/:id                 Delete division — admin only (MVP); bloc
 ```
 
 **`POST /divisions`** — request: `{ "name": "Брестское областное управление №100" }` — HTTP 201
+
 ```json
-{ "data": { "id": "uuid", "name": "Брестское областное управление №100", "created_at": "2026-03-16T12:00:00Z" }, "meta": null, "error": null }
+{
+  "data": {
+    "id": "uuid",
+    "name": "Брестское областное управление №100",
+    "created_at": "2026-03-16T12:00:00Z"
+  },
+  "meta": null,
+  "error": null
+}
 ```
+
 HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
 
 **`GET /divisions/:id`** — HTTP 200
+
 ```json
 {
   "data": {
@@ -1864,9 +1884,7 @@ HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT",
     "name": "Брестское областное управление №100",
     "branch_count": 12,
     "object_count": 245,
-    "branches": [
-      { "id": "uuid", "name": "Брест ЦО", "object_count": 20 }
-    ]
+    "branches": [{ "id": "uuid", "name": "Брест ЦО", "object_count": 20 }]
   },
   "meta": null,
   "error": null
@@ -1874,14 +1892,31 @@ HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT",
 ```
 
 **`PUT /divisions/:id`** — request: `{ "name": "Новое название" }` — HTTP 200
+
 ```json
-{ "data": { "id": "uuid", "name": "Новое название", "updated_at": "2026-03-16T12:05:00Z" }, "meta": null, "error": null }
+{
+  "data": {
+    "id": "uuid",
+    "name": "Новое название",
+    "updated_at": "2026-03-16T12:05:00Z"
+  },
+  "meta": null,
+  "error": null
+}
 ```
+
 HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
 
 **`DELETE /divisions/:id`** — HTTP 204 on success. HTTP 409 when blocked:
+
 ```json
-{ "data": null, "error": { "code": "DIVISION_HAS_BRANCHES", "message": "Cannot delete: division has 12 branches" } }
+{
+  "data": null,
+  "error": {
+    "code": "DIVISION_HAS_BRANCHES",
+    "message": "Cannot delete: division has 12 branches"
+  }
+}
 ```
 
 > **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Division not found" } }` (applies to `GET /divisions/:id`, `PUT /divisions/:id`, `DELETE /divisions/:id`)
@@ -1899,23 +1934,34 @@ DELETE /branches/:id                  Delete branch — admin only (MVP); blocke
 ```
 
 **`GET /divisions/:id/branches`** — HTTP 200
+
 ```json
 {
-  "data": [
-    { "id": "uuid", "name": "Брест ЦО", "object_count": 20 }
-  ],
+  "data": [{ "id": "uuid", "name": "Брест ЦО", "object_count": 20 }],
   "meta": { "total": 12 },
   "error": null
 }
 ```
 
 **`POST /divisions/:id/branches`** — request: `{ "name": "Брест ЦО" }` — HTTP 201
+
 ```json
-{ "data": { "id": "uuid", "name": "Брест ЦО", "division_id": "uuid", "created_at": "2026-03-16T12:00:00Z" }, "meta": null, "error": null }
+{
+  "data": {
+    "id": "uuid",
+    "name": "Брест ЦО",
+    "division_id": "uuid",
+    "created_at": "2026-03-16T12:00:00Z"
+  },
+  "meta": null,
+  "error": null
+}
 ```
+
 HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
 
 **`GET /branches/:id`** — HTTP 200 (pagination: `?page=1&size=50`; defaults: page 1, size 50)
+
 ```json
 {
   "data": {
@@ -1925,7 +1971,12 @@ HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": 
     "division_name": "Брестское областное управление №100",
     "objects": {
       "data": [
-        { "id": "uuid", "name": "ул. Московская 202Д", "itogo_chislo_with_travel": 0.032327, "engineer_count": 1 }
+        {
+          "id": "uuid",
+          "name": "ул. Московская 202Д",
+          "itogo_chislo_with_travel": 0.032327,
+          "engineer_count": 1
+        }
       ],
       "meta": { "total": 20, "page": 1, "size": 50 }
     }
@@ -1934,17 +1985,36 @@ HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": 
   "error": null
 }
 ```
+
 Empty state: `objects.data` is `[]`, `objects.meta.total` is `0`.
 
 **`PUT /branches/:id`** — request: `{ "name": "Новое название" }` — HTTP 200
+
 ```json
-{ "data": { "id": "uuid", "name": "Новое название", "division_id": "uuid", "updated_at": "2026-03-16T12:05:00Z" }, "meta": null, "error": null }
+{
+  "data": {
+    "id": "uuid",
+    "name": "Новое название",
+    "division_id": "uuid",
+    "updated_at": "2026-03-16T12:05:00Z"
+  },
+  "meta": null,
+  "error": null
+}
 ```
+
 HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
 
 **`DELETE /branches/:id`** — HTTP 204 on success. HTTP 409 when blocked:
+
 ```json
-{ "data": null, "error": { "code": "BRANCH_HAS_OBJECTS", "message": "Cannot delete: branch has 20 objects" } }
+{
+  "data": null,
+  "error": {
+    "code": "BRANCH_HAS_OBJECTS",
+    "message": "Cannot delete: branch has 20 objects"
+  }
+}
 ```
 
 > **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Branch not found" } }` (applies to `GET /branches/:id`, `PUT /branches/:id`, `DELETE /branches/:id`)
@@ -2054,7 +2124,11 @@ All violations in a single save are reported together (not fail-fast per key). S
 ```json
 {
   "data": {
-    "updated_keys": ["REPAIR_TRAVEL_CAP", "REPAIR_TRAVEL_ZERO_THRESHOLD", "ENGINEER_WARNING_THRESHOLD"],
+    "updated_keys": [
+      "REPAIR_TRAVEL_CAP",
+      "REPAIR_TRAVEL_ZERO_THRESHOLD",
+      "ENGINEER_WARNING_THRESHOLD"
+    ],
     "timestamp": "2026-03-16T14:32:00Z"
   },
   "meta": null,
@@ -2270,25 +2344,25 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 
 ## 12. Roles & Permissions
 
-| Permission                             | Admin | Editor      | Viewer | Engineer          |
-| -------------------------------------- | ----- | ----------- | ------ | ----------------- |
-| View all objects / СВОД                | ✅     | ✅           | ✅      | Own objects only  |
-| Edit object metadata                   | ✅     | ✅ (own div) | ❌      | ❌                 |
-| Edit equipment / assignments           | ✅     | ✅ (own div) | ❌      | ❌                 |
-| Edit records / repairs (active period) | ✅     | ✅ (own div) | ❌      | ✅ (own objects)   |
-| Edit travel data                       | ✅     | ✅ (own div) | ❌      | ❌                 |
-| Create / delete objects                | ✅     | ❌           | ❌      | ❌                 |
-| Manage device catalog                  | ✅     | ❌           | ❌      | ❌                 |
-| Manage repair type catalog             | ✅     | ❌           | ❌      | ❌                 |
-| Edit app configuration constants       | ✅     | ❌           | ❌      | ❌                 |
-| Import data (JSON / text)              | ✅     | ❌           | ❌      | ❌                 |
-| Export XLSX / PDF                      | ✅     | ✅           | ✅      | ✅ (own objects)   |
-| Trigger bulk recalculation             | ✅     | ❌           | ❌      | ❌                 |
-| View audit log                         | ✅     | ❌           | ❌      | ❌                 |
-| Manage users / engineers               | ✅     | ❌           | ❌      | ❌                 |
-| View own workload dashboard            | ✅     | ✅           | ✅      | ✅                 |
-| Assign / remove engineers to objects   | ✅     | ✅ (own div) | ❌      | ❌                 |
-| View engineer list and load ratios     | ✅     | ✅           | ✅      | ✅ (own data only) |
+| Permission                             | Admin | Editor       | Viewer | Engineer           |
+| -------------------------------------- | ----- | ------------ | ------ | ------------------ |
+| View all objects / СВОД                | ✅    | ✅           | ✅     | Own objects only   |
+| Edit object metadata                   | ✅    | ✅ (own div) | ❌     | ❌                 |
+| Edit equipment / assignments           | ✅    | ✅ (own div) | ❌     | ❌                 |
+| Edit records / repairs (active period) | ✅    | ✅ (own div) | ❌     | ✅ (own objects)   |
+| Edit travel data                       | ✅    | ✅ (own div) | ❌     | ❌                 |
+| Create / delete objects                | ✅    | ❌           | ❌     | ❌                 |
+| Manage device catalog                  | ✅    | ❌           | ❌     | ❌                 |
+| Manage repair type catalog             | ✅    | ❌           | ❌     | ❌                 |
+| Edit app configuration constants       | ✅    | ❌           | ❌     | ❌                 |
+| Import data (JSON / text)              | ✅    | ❌           | ❌     | ❌                 |
+| Export XLSX / PDF                      | ✅    | ✅           | ✅     | ✅ (own objects)   |
+| Trigger bulk recalculation             | ✅    | ❌           | ❌     | ❌                 |
+| View audit log                         | ✅    | ❌           | ❌     | ❌                 |
+| Manage users / engineers               | ✅    | ❌           | ❌     | ❌                 |
+| View own workload dashboard            | ✅    | ✅           | ✅     | ✅                 |
+| Assign / remove engineers to objects   | ✅    | ✅ (own div) | ❌     | ❌                 |
+| View engineer list and load ratios     | ✅    | ✅           | ✅     | ✅ (own data only) |
 
 **Editor scope:** `division_id` restricts all write operations to objects in their assigned division. Enforced at the API level.  
 **Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
@@ -2444,7 +2518,7 @@ Branch, division, and company-wide required FTE values are computed by live SQL 
 
 ### C-35: Import Is the Highest-Priority MVP Item
 
-The PoC requires manual data entry. With 2,935 objects, manual entry is a demo-only shortcut — not a viable production workflow. XLSX import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
+The PoC requires manual data entry. With 2,935 objects, manual entry is a demo-only shortcut — not a viable production workflow. JSON bulk import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
 
 ### C-36: К-во ремонтов Is COUNT of Distinct Repair Types, Not SUM of Quantities
 
@@ -2475,6 +2549,7 @@ If a new object is added mid-period (e.g., a new branch opens in April during th
 When `users.home_division_id` is updated for an engineer, object summaries are **not** automatically marked stale — the stored travel values in the `travel` table have not changed. However, travel time data is defined relative to the responsible engineer's home division (C-27), so the stored values may no longer be accurate.
 
 The system responds to a `home_division_id` change as follows:
+
 1. **UI warning:** The engineer's profile/edit page displays a persistent banner: _"Домашнее подразделение изменено — проверьте и обновите данные о маршруте для всех объектов этого инженера."_
 2. **No auto-stale:** Summaries retain their current values until an editor manually reviews and updates the `travel.one_way_time_min` on affected objects.
 3. **Stale on travel update:** When an editor updates `travel.one_way_time_min` for an object, the object's summary is marked stale normally (§6.10), and recalculation reflects the corrected travel time.
@@ -2606,7 +2681,7 @@ All three threshold bands must be verified in the integration test suite (`Calcu
 - `repair_travel_6months = 10 × 20 = 200`
 - `repair_pzv_6months    = 10 × 20 = 200`
 
-### AC-23: Config Validation — Startup and Save Enforcement *(MVP)*
+### AC-23: Config Validation — Startup and Save Enforcement _(MVP)_
 
 > **Scope: MVP (M-10).** This criterion requires the `app_config` table. For PoC, the equivalent criterion is: the application starts without error when all required Docker environment variables (`WORKLOAD_CONFIG_*`) are present and valid, and fails to start (Spring binding exception) when a required variable is missing or type-invalid.
 
@@ -2617,6 +2692,7 @@ All 19 `app_config` keys must be present in the seed migration and must satisfy 
 **Save rejection test:** `PUT /admin/config` with `REPAIR_TRAVEL_ZERO_THRESHOLD = 10` and `REPAIR_TRAVEL_CAP = 5` must return HTTP 422 with code `CONFIG_REPAIR_THRESHOLDS_INVERTED`. Verified by `AppConfigValidatorTest.invertedThresholds`.
 
 **Boundary value tests:**
+
 - `MONTHLY_HOURS_FUND = 0` → HTTP 422 `CONFIG_MONTHLY_HOURS_FUND_NONPOSITIVE`
 - `ENGINEER_WARNING_THRESHOLD = 1.0` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` (threshold at exactly 1.0 collapses warning band to zero)
 - `ENGINEER_WARNING_THRESHOLD = 1.1` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE`
@@ -2698,9 +2774,9 @@ PoC: one `object_repairs` row per (object, repair_type), one `records_tasks` row
 
 _Reversed in:_ M-01 (MVP)
 
-**S-06: XLSX import is manual — import via UI is MVP**
+**S-06: JSON bulk import is manual — import via UI is MVP**
 
-Full TOR: bulk XLSX import of source file.
+Full TOR: JSON bulk import of data converted from the source XLSX workbook.
 
 PoC: all data entered manually through the UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered, not all 2,935. Full import is the first MVP milestone.
 
@@ -2885,16 +2961,16 @@ The PoC uses the **full production stack** defined in §9.1 — no throwaway sta
 
 #### Backend — PoC Configuration
 
-| Component                 | PoC setting                                       | Notes                                                                        |
-| ------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Java 21 + Spring Boot 3.x | Full stack                                        | Same as MVP                                                                  |
-| Spring Data JPA           | PoC simplified schema (§15.4)                     | Entities match PoC tables exactly; MVP entities added incrementally          |
-| Liquibase                 | `v1.0.0-initial-schema.xml` + seed data changeset | PoC schema + all seed normatives in one migration                            |
-| Spring Security + JWT     | Single role, no refresh tokens                    | Refresh tokens added in M-02 (MVP RBAC)                                      |
-| Apache POI                | XLSX export only                                  | Import (POI read) added in M-01 (MVP)                                        |
-| log4j2                    | JSON layout from day one                          | Structured logging is non-negotiable even in PoC                             |
-| Spring Actuator           | `/actuator/health` exposed                        | Used for Docker Compose healthcheck; `/actuator/metrics` enabled for Datadog |
-| Bucket4j                  | Basic rate limiting on `/api/**`                  | Prevents accidental hammering during demo                                    |
+| Component                 | PoC setting                                       | Notes                                                                                  |
+| ------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Java 21 + Spring Boot 3.x | Full stack                                        | Same as MVP                                                                            |
+| Spring Data JPA           | PoC simplified schema (§15.4)                     | Entities match PoC tables exactly; MVP entities added incrementally                    |
+| Liquibase                 | `v1.0.0-initial-schema.xml` + seed data changeset | PoC schema + all seed normatives in one migration                                      |
+| Spring Security + JWT     | Single role, no refresh tokens                    | Refresh tokens added in M-02 (MVP RBAC)                                                |
+| Apache POI                | XLSX export only                                  | M-01 adds JSON bulk import; source XLSX conversion remains external to the application |
+| log4j2                    | JSON layout from day one                          | Structured logging is non-negotiable even in PoC                                       |
+| Spring Actuator           | `/actuator/health` exposed                        | Used for Docker Compose healthcheck; `/actuator/metrics` enabled for Datadog           |
+| Bucket4j                  | Basic rate limiting on `/api/**`                  | Prevents accidental hammering during demo                                              |
 
 > **Note:** Redis is **not** used in PoC. The PoC recalculation is synchronous (S-02), so no job queue is needed. Redis is introduced in MVP with M-06 (staleness + background worker).
 
@@ -2921,9 +2997,8 @@ The PoC runs four containers. Save the file as **`docker-compose.poc.yml`** and 
 # For production compose (with Redis + Datadog) see §20.7.
 version: "3.9"
 services:
-
   backend:
-    build: ./backend                      # or image: workload-backend:poc
+    build: ./backend # or image: workload-backend:poc
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workload
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -2939,7 +3014,7 @@ services:
       retries: 3
 
   frontend:
-    build: ./frontend                     # Nginx serving Vite production build
+    build: ./frontend # Nginx serving Vite production build
     depends_on: [backend]
 
   postgres:
@@ -2960,7 +3035,7 @@ services:
     ports: ["443:443", "80:80"]
     volumes:
       - ./nginx.poc.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro          # self-signed cert for PoC
+      - ./certs:/etc/nginx/certs:ro # self-signed cert for PoC
     depends_on: [backend, frontend]
 
   # redis — OMITTED in PoC. Add in MVP (M-06). See §20.7.
@@ -2972,12 +3047,12 @@ volumes:
 
 **Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema, **with the following explicit exceptions** — these MVP-only columns are added in later migrations and must not appear in `v1.0.0`:
 
-| Column | Table | Added in |
-|--------|-------|----------|
-| `failed_login_count` | `users` | M-02 (account lockout, §21.3) |
-| `locked_until` | `users` | M-02 (account lockout, §21.3) |
-| `period_id` | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12) |
-| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking) |
+| Column                  | Table                             | Added in                       |
+| ----------------------- | --------------------------------- | ------------------------------ |
+| `failed_login_count`    | `users`                           | M-02 (account lockout, §21.3)  |
+| `locked_until`          | `users`                           | M-02 (account lockout, §21.3)  |
+| `period_id`             | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12) |
+| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking)      |
 
 MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
 
@@ -3177,7 +3252,7 @@ With editors across multiple divisions and admins performing bulk operations sim
 
 - Two editors open the same object's equipment tab simultaneously. Both make changes. The second save overwrites the first with no error.
 - An admin updates a normative while a background recalculation job is mid-flight. The job writes a summary computed from the old normative after the new normative is saved.
-- A bulk XLSX import runs while an editor is updating an object that appears in the import. The import overwrites the editor's in-flight change.
+- A JSON bulk import runs while an editor is updating an object that appears in the import. The import overwrites the editor's in-flight change.
 
 ---
 
@@ -3225,16 +3300,16 @@ No automatic merge is attempted. The user must reload to get the latest state an
 
 | Table                                          | `updated_at` column | Locking applied                                              |
 | ---------------------------------------------- | ------------------- | ------------------------------------------------------------ |
-| `objects`                                      | ✅                   | On metadata updates                                          |
-| `object_devices` / `object_system_assignments` | ✅                   | On quantity changes                                          |
-| `records_tasks`                                | ✅                   | On task count updates                                        |
-| `object_repairs`                               | ✅                   | On repair count updates                                      |
-| `travel`                                       | ✅                   | On travel data updates                                       |
-| `object_engineers`                             | ✅                   | On assignment changes                                        |
-| `device_system_contexts`                       | ✅                   | On normative edits (admin only)                              |
-| `repair_types`                                 | ✅                   | On time_minutes edits (admin only)                           |
-| `app_config`                                   | ✅                   | On constant changes (admin only)                             |
-| `summaries` / `engineer_summaries`             | ❌                   | Written only by background worker; no concurrent user writes |
+| `objects`                                      | ✅                  | On metadata updates                                          |
+| `object_devices` / `object_system_assignments` | ✅                  | On quantity changes                                          |
+| `records_tasks`                                | ✅                  | On task count updates                                        |
+| `object_repairs`                               | ✅                  | On repair count updates                                      |
+| `travel`                                       | ✅                  | On travel data updates                                       |
+| `object_engineers`                             | ✅                  | On assignment changes                                        |
+| `device_system_contexts`                       | ✅                  | On normative edits (admin only)                              |
+| `repair_types`                                 | ✅                  | On time_minutes edits (admin only)                           |
+| `app_config`                                   | ✅                  | On constant changes (admin only)                             |
+| `summaries` / `engineer_summaries`             | ❌                  | Written only by background worker; no concurrent user writes |
 
 ---
 
@@ -3248,7 +3323,7 @@ The following operations must execute within a single database transaction:
 | Assign engineer to object       | INSERT object_engineers + mark engineer_summaries stale                                                        |
 | Remove engineer from object     | DELETE object_engineers + mark all co-engineers' summaries stale                                               |
 | Activate a planning period      | UPDATE periods SET is_active=FALSE (all) + UPDATE periods SET is_active=TRUE (new)                             |
-| Bulk XLSX import                | All object/equipment/repair/records INSERTs + summary computation — committed together or rolled back entirely |
+| JSON bulk import                | All object/equipment/repair/records INSERTs + summary computation — committed together or rolled back entirely |
 | Normative update                | UPDATE device_system_contexts + mark all affected summaries stale                                              |
 
 Transactions must not span HTTP requests. Long-running operations (bulk import, bulk recalculation) run inside a single database transaction per batch, not per row.
@@ -3257,7 +3332,7 @@ Transactions must not span HTTP requests. Long-running operations (bulk import, 
 
 ### 17.6 Import Concurrency
 
-The XLSX import (MVP) locks the affected objects for the duration of the import batch using `SELECT ... FOR UPDATE` on the `objects` rows being imported. Any concurrent edit to those objects returns HTTP 409 to the editor attempting the edit. The import holds the lock for a maximum of 30 seconds per batch; if exceeded, the import batch is rolled back and re-queued.
+The JSON bulk import (MVP) locks the affected objects for the duration of the import batch using `SELECT ... FOR UPDATE` on the `objects` rows being imported. Any concurrent edit to those objects returns HTTP 409 to the editor attempting the edit. The import holds the lock for a maximum of 30 seconds per batch; if exceeded, the import batch is rolled back and re-queued.
 
 ---
 
@@ -3797,10 +3872,10 @@ Storage: passwords are stored as `bcrypt` hashes with a minimum cost factor of 1
 
 #### Token Types
 
-| Token         | Lifetime      | Storage                                           | Scope     |
-| ------------- | ------------- | ------------------------------------------------- | --------- |
-| Access token  | 15 minutes    | In-memory (JavaScript variable, not localStorage) | PoC + MVP |
-| Refresh token | 24 hours      | HttpOnly, Secure, SameSite=Strict cookie          | MVP only  |
+| Token         | Lifetime   | Storage                                           | Scope     |
+| ------------- | ---------- | ------------------------------------------------- | --------- |
+| Access token  | 15 minutes | In-memory (JavaScript variable, not localStorage) | PoC + MVP |
+| Refresh token | 24 hours   | HttpOnly, Secure, SameSite=Strict cookie          | MVP only  |
 
 #### Token Contents (access token payload)
 
@@ -3875,12 +3950,12 @@ This is part of the RBAC implementation (M-02). Until MVP RBAC is in place (S-04
 
 In MVP, field-level access rules are:
 
-| Role     | Visible data scope                                                      | Write scope                                                   |
-| -------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- |
-| admin    | All divisions, all objects, all engineers                               | Everything                                                    |
-| editor   | Own division only (objects, branches, engineers in their `division_id`) | Own division objects and assignments                          |
+| Role     | Visible data scope                                                                             | Write scope                                                   |
+| -------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| admin    | All divisions, all objects, all engineers                                                      | Everything                                                    |
+| editor   | Own division only (objects, branches, engineers in their `division_id`)                        | Own division objects and assignments                          |
 | engineer | All objects they are assigned to + own engineer profile; `GET /engineers` returns own row only | Записи and Ремонт for their own objects in active period only |
-| viewer   | All divisions, all objects (read-only)                                  | Nothing                                                       |
+| viewer   | All divisions, all objects (read-only)                                                         | Nothing                                                       |
 
 An engineer cannot see objects in other divisions that they are not assigned to. The `GET /objects` endpoint filters by the calling user's assignments when `role = 'engineer'`. Admin and editor see the full object list (filtered by their division for editors).
 
@@ -4013,7 +4088,7 @@ Admins must confirm before the change is saved. The confirmation is logged in `a
 
 ## 24. Calculation Snapshot & Freeze
 
-**Scope: Post-MVP.** The PoC and MVP use on-demand recalculation with no snapshot or freeze concept. This section defines the target design for when approved staffing plans must be locked against further changes.
+**Scope: Post-MVP.** The PoC and MVP both have no snapshot or freeze concept yet, but their recalculation models differ: PoC recalculates synchronously on save (S-02), while MVP uses on-demand recalculation with staleness tracking (AD-10, C-28). This section defines the target design for when approved staffing plans must be locked against further changes.
 
 ### 24.1 Business Need
 

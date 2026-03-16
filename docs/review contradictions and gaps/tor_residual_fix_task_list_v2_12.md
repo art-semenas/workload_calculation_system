@@ -2,32 +2,35 @@
 
 **Source verification date:** 2026-03-16  
 **Target document:** `docs/TOR_Workload_WebApp.md`  
-**Purpose:** Capture the remaining contradictions and wording drift discovered after verifying the previously completed task list. This document is intended as a precise handoff for a future AI agent so it can apply the remaining TOR fixes without repeating the full review.
+**Purpose:** Historical verification record for the final residual contradictions and wording drift that remained after the previous TOR cleanup. All items listed here are now resolved in the TOR through v2.17.
+
+> **Status:** No open residual TOR fixes remain after the 2026-03-16 verification sweep.
 
 ---
 
 ## How to use this list
 
-- Treat this as a **documentation alignment task**, not an implementation task.
-- Update all referenced TOR sections together; do not patch only one occurrence.
+- Treat this as a **closed verification artifact**.
+- If future TOR edits touch recalculation scope, Redis scope, stale-state UI wording, or import terminology, re-run the verification checklist at the bottom of this file.
 - Prefer one canonical rule over partial exceptions.
-- Preserve the existing document structure unless a renumbering or section merge is required.
 - If one fix changes scope wording, propagate it to architecture, UI, API, PoC, and acceptance criteria sections.
 
 ---
 
 ## Priority Summary
 
-| ID   | Priority | Task                                           | Why it matters                                                          |
-| ---- | -------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| R-01 | Critical | Resolve PoC recalculation model contradiction  | The TOR still defines two incompatible PoC calculation behaviours       |
-| R-02 | ~~High~~ | ~~Unify stale vs processing UI wording~~       | ✅ Resolved in v2.14 — canonical two-state rule applied to §7.6, §7.9, §7.10; PoC scope notes added |
-| R-03 | ~~High~~ | ~~Align Redis scope with PoC recalculation model~~ | ✅ Resolved in v2.15 — AD-13 and §15.8 scoped to MVP/PoC in v2.13; §9.1 tech stack table annotated MVP-only for Redis rows; container count clarified PoC=4/MVP=5 |
-| R-04 | Medium   | Finish JSON import terminology cleanup         | MVP import is still described as both JSON and XLSX in different places |
+| ID   | Priority     | Task                                               | Why it matters                                                                                                                                                                       |
+| ---- | ------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-01 | ~~Critical~~ | ~~Resolve PoC recalculation model contradiction~~  | ✅ Resolved in v2.17 — verification sweep found one remaining leaked PoC wording in §24 and aligned it with the canonical PoC/MVP split                                              |
+| R-02 | ~~High~~     | ~~Unify stale vs processing UI wording~~           | ✅ Resolved in v2.14 — canonical two-state rule applied to §7.6, §7.9, §7.10; PoC scope notes added                                                                                  |
+| R-03 | ~~High~~     | ~~Align Redis scope with PoC recalculation model~~ | ✅ Resolved in v2.15 — AD-13 and §15.8 scoped to MVP/PoC in v2.13; §9.1 tech stack table annotated MVP-only for Redis rows; container count clarified PoC=4/MVP=5                    |
+| R-04 | ~~Medium~~   | ~~Finish JSON import terminology cleanup~~         | ✅ Resolved in v2.16 — all 6 `XLSX import` / `bulk XLSX import` occurrences in §13, §15.3, §17 replaced with `JSON bulk import`; XLSX workbook source context preserved in S-06 body |
 
 ---
 
 ## R-01 Resolve PoC Recalculation Model Contradiction
+
+**Status:** ✅ Resolved in v2.17
 
 **Priority:** Critical
 
@@ -38,7 +41,7 @@ The TOR still contains **two incompatible descriptions** of PoC recalculation be
 - **Model A:** PoC follows the same on-demand recalculation pattern as MVP: writes mark data stale and admin triggers recalculation manually.
 - **Model B:** PoC recalculates synchronously on every save, has no staleness tracking, and has no admin trigger.
 
-Both models are currently present in the document.
+Both models were previously present in the document. A verification sweep on 2026-03-16 found one final leaked statement in §24 that still said PoC used on-demand recalculation; this was corrected in TOR v2.17.
 
 ### Why this matters
 
@@ -81,9 +84,9 @@ If the team instead wants on-demand recalculation already in PoC, then S-02, PoC
 
 ### Done criteria
 
-- The TOR describes exactly one PoC recalculation model.
-- Architecture, PoC scope, UI, and deployment sections all describe the same PoC behaviour.
-- Redis/job-queue assumptions no longer conflict with the recalculation model.
+- The TOR describes exactly one PoC recalculation model. ✅ Verified in v2.17.
+- Architecture, PoC scope, UI, deployment, and later dependency sections all describe the same PoC behaviour. ✅ Verified in v2.17.
+- Redis/job-queue assumptions no longer conflict with the recalculation model. ✅ Verified in v2.17.
 
 ---
 
@@ -225,16 +228,16 @@ Normalize the wording around the server-side feature:
 
 ---
 
-## Suggested Execution Order
+## Resolution Outcome
 
-1. Resolve R-01 first because it drives the correct outcome for R-02 and R-03.
-2. Resolve R-03 immediately after R-01 because Redis scope is a direct dependency.
-3. Resolve R-02 once the final stale/processing state model is known.
-4. Resolve R-04 last because it is terminology cleanup, not an architectural blocker.
+1. R-01 closed in v2.17 after the final leaked PoC wording in §24 was corrected.
+2. R-02 closed in v2.14.
+3. R-03 closed in v2.15.
+4. R-04 closed in v2.16.
 
 ---
 
-## Verification Checklist for the Next Agent
+## Regression Checklist for Future TOR Edits
 
 - Search the TOR for `PoC`, `recalculation`, `stale`, `Пересчитывается`, `Данные устарели`, `Redis`, `XLSX import`, and `JSON bulk import` after edits.
 - Confirm there is only one PoC recalculation model left in the document.
