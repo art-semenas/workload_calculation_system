@@ -2831,7 +2831,7 @@ Items are ordered by dependency. M-01 is the highest priority because manual ent
 
 | ID       | Item                                            | Depends on | Notes                                                                                        |
 | -------- | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| M-01     | XLSX import (FR bulk)                           | —          | Highest priority. Resolves S-06. Includes engineer name resolution and placeholder accounts. |
+| M-01     | JSON bulk import (FR bulk)                      | —          | Highest priority. Resolves S-06. Includes engineer name resolution and placeholder accounts. |
 | M-02     | RBAC — admin, editor, engineer, viewer roles    | M-01       | Resolves S-04. Division scoping for editors.                                                 |
 | ~~M-03~~ | ~~Physical inventory layer (`object_devices`)~~ | —          | ~~Resolves S-01.~~ Moved into PoC scope (v2.9). No migration needed.                         |
 | M-04     | Device catalog management UI                    | M-02       | Resolves S-03 (devices). Admin-only.                                                         |

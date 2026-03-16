@@ -129,7 +129,7 @@
 - **Action / Required Resolution:** In §10.2 API table, add an `(MVP)` annotation next to `POST /auth/refresh`.
 - **Done Criteria:** Endpoint is visibly scoped out of the PoC.
 
-### [ ] G-08. XLSX Import vs JSON Import Wording
+### [x] G-08. XLSX Import vs JSON Import Wording
 *Source: Review Item 13*
 - **Priority:** Low
 - **Problem:** Epic M-01 in the Migration Milestones table is labeled "XLSX import", but section §11.1 confirms the server itself only accepts JSON, expecting an external conversion tool to handle XLSX.
