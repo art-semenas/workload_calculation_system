@@ -121,7 +121,7 @@
 - **Action / Required Resolution:** Append an `(MVP)` annotation to the `app_config` UPDATE trigger row so developers understand this invalidation rule is skipped during PoC implementation.
 - **Done Criteria:** Table row safely flags it is out of PoC scope.
 
-### [ ] G-07. `POST /auth/refresh` API Definition
+### [x] G-07. `POST /auth/refresh` API Definition
 *Source: Review Item 10*
 - **Priority:** Low
 - **Problem:** §10.2 lists `POST /auth/refresh` in the API table, but §21.2 confirms the PoC does not implement refresh token flows.

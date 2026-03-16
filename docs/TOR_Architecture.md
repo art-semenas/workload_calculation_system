@@ -560,7 +560,7 @@ POST   /import/data                     Upload JSON; returns preview
 POST   /import/data/confirm             Execute confirmed import
 POST   /auth/login
 POST   /auth/logout
-POST   /auth/refresh
+POST   /auth/refresh                    (out of PoC scope — refresh token flow not implemented)
 GET    /auth/me
 ```
 
