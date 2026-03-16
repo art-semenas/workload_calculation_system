@@ -1226,7 +1226,7 @@ All constants are stored in `app_config`, editable by admins at `/admin/config`.
 
 ### 6.11.1 Configuration Validation Rules *(MVP — requires M-10)*
 
-> **Scope: MVP.** This section requires the `app_config` database table (introduced in M-10). In PoC, configuration constants live in `application.yml` and are validated at startup by Spring's `@ConfigurationProperties` binding — missing or type-invalid values prevent startup but no HTTP 422 save endpoint exists.
+> **Scope: MVP.** This section requires the `app_config` database table (introduced in M-10). In PoC, configuration constants are injected as Docker environment variables (bound at startup via Spring's `@ConfigurationProperties(prefix="workload.config")`) — missing or type-invalid values prevent startup but no HTTP 422 save endpoint exists.
 
 All `app_config` values are validated **on application startup** and **on every admin save** (`PUT /admin/config`). A failed validation must prevent the save and return HTTP 422 with the violated rule identifier. A missing required key on startup must prevent the application from starting (fail-fast).
 
@@ -2593,7 +2593,7 @@ All three threshold bands must be verified in the integration test suite (`Calcu
 
 ### AC-23: Config Validation — Startup and Save Enforcement *(MVP)*
 
-> **Scope: MVP (M-10).** This criterion requires the `app_config` table. For PoC, the equivalent criterion is: the application starts without error when all `application.yml` config values are valid, and fails to start (Spring binding exception) when a required property is missing or invalid.
+> **Scope: MVP (M-10).** This criterion requires the `app_config` table. For PoC, the equivalent criterion is: the application starts without error when all required Docker environment variables (`WORKLOAD_CONFIG_*`) are present and valid, and fails to start (Spring binding exception) when a required variable is missing or type-invalid.
 
 All 19 `app_config` keys must be present in the seed migration and must satisfy the per-key and cross-key constraints defined in §6.11.1.
 
@@ -2797,9 +2797,10 @@ engineer_summaries  (id, engineer_id,
                      computed_at)
 UNIQUE(engineer_id)
 
--- Config constants — defined in application.yml for PoC (S-03)
--- Read via @ConfigurationProperties class (e.g. WorkloadConfigProperties)
--- under namespace: workload.config.*
+-- Config constants — injected as Docker environment variables for PoC (S-03)
+-- Spring maps WORKLOAD_CONFIG_<KEY> → @ConfigurationProperties(prefix="workload.config")
+-- Naming convention: WORKLOAD_CONFIG_RECORDS_ACCESS_MINUTES=15 (see §6.11 for full key list)
+-- Application fails to start (Spring binding exception) if any required env var is missing or type-invalid
 -- Moved to app_config table with admin UI in MVP (M-10)
 ```
 

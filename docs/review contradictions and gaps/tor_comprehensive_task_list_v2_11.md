@@ -153,13 +153,16 @@
 - **Action / Required Resolution:** Expand the summation formula in §6.5 to explicitly map variable names to `app_config` constants (e.g., `records_6months = access_requests * config[RECORDS_ACCESS_MINUTES] ...`).
 - **Done Criteria:** Logic formula explicitly charts variables, ending any guesswork.
 
-### [ ] G-11. PoC Handling of `application.yml` Config
+### [x] G-11. PoC Handling of Config Constants
 *Source: Review Item 16*
 - **Priority:** Low
-- **Problem:** S-03 and §15.4 state variables are loaded internally from `application.yml` for the PoC, but no format structure is provided.
-- **Affected TOR areas:** S-03 (line ~2466), §15.4 (line ~2600).
-- **Action / Required Resolution:** Add a short YAML code snippet to §15.4 showing the expected property namespace and constant casing (e.g., `workload.config.RECORDS_ACCESS_MINUTES: 15`).
-- **Done Criteria:** Developer can reliably copy/paste the example yaml blocks.
+- **Problem:** §15.4 states config constants are loaded from `application.yml` for PoC, but this couples config values to the image build. For a Docker-based PoC, constants should be injected at container start via environment variables — keeping the image config-free and matching 12-factor principles.
+- **Affected TOR areas:** §15.4 (line ~2800), §6.11.1 (line ~1229), AC-23 (line ~2596).
+- **Action / Required Resolution:** Change the config loading approach from `application.yml` to Docker environment variables:
+  1. In §15.4, update the SQL comment block to state that constants are injected via Docker env vars mapped by Spring's `@ConfigurationProperties(prefix="workload.config")`. Show the naming convention: `WORKLOAD_CONFIG_<CONSTANT_KEY>` (e.g., `WORKLOAD_CONFIG_RECORDS_ACCESS_MINUTES=15`). Reference §6.11 for the full key list.
+  2. In §6.11.1, update the PoC scope note to say constants are provided as Docker environment variables, not `application.yml`.
+  3. In AC-23, update the PoC equivalent criterion to reference Docker env vars instead of `application.yml`.
+- **Done Criteria:** Developer can run `docker compose up` with the documented env vars and the application starts with correct normatives; missing or invalid env vars cause a Spring binding exception at startup.
 
 ### [ ] G-12. `records_6months` in PoC Summaries Schema
 *Source: Review Item 17*
