@@ -12,7 +12,7 @@
 
 ## 🔴 Contradictions
 
-### [ ] C-01. Normalize Recalculation Semantics & Stale UI Indicators
+### [x] C-01. Normalize Recalculation Semantics & Stale UI Indicators
 *Merges: Task T-01 & Review Item 22*
 - **Priority:** Critical
 - **Problem:** The TOR currently mixes two incompatible models: on-demand recalculation only after admin action, and automatic/asynchronous recalculation immediately after save. This contradiction appears in functional requirements, UI copy, API descriptions, and acceptance criteria. Additionally, UI textual copy for stale states uses different phrasing: `"Пересчитывается..."` vs `"Данные устарели — нажмите Пересчитать"`.
@@ -25,7 +25,7 @@
   - Align API endpoint comments and acceptance criteria (AC-03 vs AC-20).
 - **Done Criteria:** One consistent recalculation model is described across FR, UI, API, and architecture. PoC uses synchronous recalc; MVP uses stale tracking. Stale state and processing state have different, consistent UI wording.
 
-### [ ] C-02. Unify Admin Config API Contract
+### [x] C-02. Unify Admin Config API Contract
 *Merges: Task T-03 & Review Item 4*
 - **Priority:** High
 - **Problem:** API section §10.2 defines `PUT /admin/config/:key` for updating single values, but §6.11.1 describes batch validation: "PUT /admin/config must run the same validation before writing... All violations in a single save are reported together."

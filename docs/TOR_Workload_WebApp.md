@@ -68,7 +68,7 @@ The Excel template is large (2,935 rows × up to 47 columns per sheet), manual t
 
 - Replace the multi-sheet Excel model with a centralized, browser-accessible application.
 - Allow engineers and managers to input/update equipment quantities per facility.
-- Automatically recalculate workload metrics on save.
+- Track stale workload metrics automatically on data change, with on-demand recalculation triggered by admin action.
 - Support a **dynamic device catalog** — admins can add new device types and their normatives without code changes.
 - Support import of existing data via structured JSON / text lists and export of results to XLSX/PDF.
 - Provide a СВОД (summary) dashboard per division and per responsible engineer.
@@ -345,7 +345,7 @@ Admins manage engineers through the User Management interface. An engineer is a 
 Admin operations:
 
 - Create / edit / deactivate engineer accounts.
-- Set or update `capacity_fte` at any time — triggers recalculation of that engineer's summary.
+- Set or update `capacity_fte` at any time — marks that engineer's summary stale (recalculation runs on next admin-triggered batch).
 - View all engineers with their current load ratio and status.
 
 ### 4.11 Object-Engineer Assignments (FR-11)
@@ -358,7 +358,7 @@ An object can have zero, one, or many engineers assigned (joint responsibility w
 - There is no system-type constraint on assignments — an engineer assigned to an object is responsible for all maintenance at that object.
 - Assignments record `assigned_at` timestamp for audit purposes.
 - An engineer can be assigned to objects in any division (cross-division allowed).
-- Removing an assignment immediately triggers recalculation of that engineer's workload summary.
+- Removing an assignment immediately marks that engineer's workload summary stale.
 
 **Workload split:** When multiple engineers share an object, the object's `itogo_chislo_with_travel` is divided **equally** among all assigned engineers. The split ratio is `1 / COUNT(assigned engineers at object)` and is recomputed dynamically — not stored.
 
@@ -1427,7 +1427,7 @@ Galaxy 512 (контроллер АСПС и СО)  [Physical qty: 1]
 - **Workflow order:** A device must be added to Section A (Physical Inventory) before it can appear in Section B (System Assignments). The "Assign to system" button in Section B is only available for devices already in the physical inventory.
 - **R1/R2 are read-only in this view.** Values shown per assignment are pulled from `device_system_contexts` and cannot be edited here. A "Edit normatives →" link navigates to the Device Catalog page for that device.
 - **System type dropdown** in "Assign to system" shows **only** system types for which a `device_system_contexts` row exists for that device. System types with no context are hidden entirely — not grayed out.
-- `quantity_maintained` is editable inline per assignment row. Saving any value triggers an asynchronous summary recalculation; the СВОД tab shows a "Пересчитывается..." indicator.
+- `quantity_maintained` is editable inline per assignment row. Saving any value marks the object summary stale. The СВОД tab shows a "Данные устарели — нажмите Пересчитать" indicator until the admin triggers recalculation via `POST /svod/recalculate`.
 - **Warning rule:** When `quantity_maintained > quantity_physical` for a single assignment row, display a yellow ⚠ icon and tooltip: **"Обслуживаемое количество (N) превышает физическое (M)"**. This is informational — it does not block saving.
 - **Cascade on removal:** Removing a device from Section A (physical inventory) cascades to remove all its system assignments at this object. A confirmation dialog lists all affected assignments (e.g., "Это удалит назначения: ОС × 1, ПС × 1. Продолжить?") before proceeding.
 - **Preventing orphaned assignments:** The API enforces that an `object_system_assignments` row cannot exist without a corresponding `object_devices` row for the same (object_id, device_type_id). Enforced at the application layer (not FK, since they are separate tables).
@@ -1451,7 +1451,7 @@ Shows all engineers assigned to this object and their workload share:
 - "Доля объекта" = `itogo_chislo_with_travel / engineer_count` for this object.
 - "Загрузка" = that engineer's total load ratio across ALL their objects (not just this one). Provides context — assigns may push an already-loaded engineer into overload.
 - "+" button opens a searchable dropdown of all active engineers (not restricted by division).
-- Removing an engineer triggers immediate recalculation of all remaining engineers at this object.
+- Removing an engineer immediately marks all remaining engineers at this object as stale.
 - **Travel review prompt:** When a new engineer is assigned to an object (or the last engineer is removed and a new one added), the UI displays a non-blocking banner: **"Проверьте данные о маршруте — время в пути может отличаться для нового инженера"**. Travel time is stored per object and reflects the distance from the assigned engineer's home division office. When the responsible engineer changes, travel data should be reviewed and updated manually.
 
 ### 7.5 Engineer List Page (`/engineers`)
@@ -1592,7 +1592,7 @@ Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — н
 - Zero values may display as blank (matching Excel behavior) but stored as 0.
 - Inline СВОД editing not permitted.
 - Engineer load ratio bars use colour coding matching status: green (normal) / amber (warning) / red (overloaded).
-- Stale engineer summaries display "Пересчитывается..." placeholder values, never the last stale numbers.
+- Stale summaries (`is_stale = 'TRUE'`, no job running) display **"Данные устарели — нажмите Пересчитать"** in place of numeric values — never the last stale numbers. While the background job is actively processing, display **"Пересчитывается..."** instead.
 - **Data entry by engineers:** Engineers can enter and edit Записи and Ремонт data for their assigned objects in the active period only. They cannot edit Оборудование, Нормативы, or Дорога. This matches their role as field operators who report what happened (repairs done, records requests handled) without modifying the equipment inventory or normatives.
 - **Period lock:** Once a period is deactivated, all its Записи and Ремонт data becomes read-only for all roles including admin. Only a new period activation can unlock data entry.
 
@@ -1821,11 +1821,11 @@ DELETE /objects/:id/assignments/:aid         Remove assignment
 
 ```
 GET    /objects/:id/records            Get records task quantities
-PUT    /objects/:id/records            Update (triggers recalc)
+PUT    /objects/:id/records            Update (marks stale)
 GET    /objects/:id/repairs            List repair counts per type
-PUT    /objects/:id/repairs/:rtid      Set count for one repair type (triggers recalc)
+PUT    /objects/:id/repairs/:rtid      Set count for one repair type (marks stale)
 GET    /objects/:id/travel             Get travel data
-PUT    /objects/:id/travel             Update (triggers recalc)
+PUT    /objects/:id/travel             Update (marks stale)
 ```
 
 #### Device Catalog
@@ -1839,7 +1839,7 @@ DELETE /catalog/devices/:id            Delete (blocked if object_devices rows ex
 
 GET    /catalog/devices/:id/contexts   List system contexts
 POST   /catalog/devices/:id/contexts   Add context {system_type, r1_minutes, r2_minutes}
-PUT    /catalog/devices/:id/contexts/:cid  Update r1/r2 (triggers bulk recalc for affected objects)
+PUT    /catalog/devices/:id/contexts/:cid  Update r1/r2 (marks stale for affected objects)
 DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments; returns 409)
 ```
 
@@ -1848,7 +1848,7 @@ DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments
 ```
 GET    /catalog/repairs                List all repair types
 POST   /catalog/repairs                Create {name, time_minutes}
-PUT    /catalog/repairs/:id            Update (triggers bulk recalc for affected objects)
+PUT    /catalog/repairs/:id            Update (marks stale for affected objects)
 DELETE /catalog/repairs/:id            Delete (blocked if active object_repairs; returns 409)
 ```
 
@@ -1866,8 +1866,51 @@ GET    /svod/export/pdf                Export to PDF (active period by default; 
 
 ```
 GET    /admin/config                   List all config keys/values
-PUT    /admin/config/:key              Update value (marks all summaries stale; logged to audit_log)
+PUT    /admin/config                   Batch update multiple keys (validates all constraints; marks summaries stale; logged to audit_log)
 GET    /admin/audit                    Audit log (admin only)
+```
+
+##### Config Update Request/Response
+
+All violations in a single save are reported together (not fail-fast per key). See §6.11.1 for complete per-key and cross-key constraint definitions.
+
+**Request (batch save):**
+
+```json
+{
+  "REPAIR_TRAVEL_CAP": 10,
+  "REPAIR_TRAVEL_ZERO_THRESHOLD": 5,
+  "ENGINEER_WARNING_THRESHOLD": 0.8
+}
+```
+
+**Response on success (HTTP 200):**
+
+```json
+{
+  "data": {
+    "updated_keys": ["REPAIR_TRAVEL_CAP", "REPAIR_TRAVEL_ZERO_THRESHOLD", "ENGINEER_WARNING_THRESHOLD"],
+    "timestamp": "2026-03-16T14:32:00Z"
+  },
+  "meta": null,
+  "error": null
+}
+```
+
+**Response on validation failure (HTTP 422):**
+
+```json
+{
+  "status": 422,
+  "code": "CONFIG_CONSTRAINT_VIOLATED",
+  "violations": [
+    {
+      "key": "REPAIR_TRAVEL_ZERO_THRESHOLD",
+      "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
+      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (5) must be less than REPAIR_TRAVEL_CAP (10)"
+    }
+  ]
+}
 ```
 
 #### Planning Periods
@@ -2019,7 +2062,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 6. Populate `object_repairs` per object from the `repairs` map.
 7. Populate `travel` per object from the `travel` map.
 8. Return validation report: objects created, warnings, skipped entries.
-9. Queue full bulk recalculation.
+9. Mark all imported object summaries stale. _(PoC: immediately run synchronous bulk recalculation inline; MVP: admin triggers recalculation via `POST /svod/recalculate`.)_
 
 > After import, `quantity_physical = quantity_maintained` for all records. Editors adjust `quantity_physical` manually if needed.
 
@@ -2284,7 +2327,7 @@ All computed СВОД values match source XLSX "Расчет" sheet values withi
 
 ### AC-03: Dynamic Normative Editability
 
-After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale and recalculated by the background job — without code deployment. UI shows stale indicator during recalculation.
+After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`.
 
 ### AC-04: New Device Type Usable Without Code Changes
 
@@ -2353,9 +2396,9 @@ Given engineer with `capacity_fte = 0.8` and `total_load = 0.76`:
 - With `ENGINEER_WARNING_THRESHOLD = 0.9`: status must be "warning"
   Given `total_load = 0.84`: `load_ratio = 1.05` → status must be "overloaded"
 
-### AC-17: Assignment Change Triggers All Co-Engineer Recalculation
+### AC-17: Assignment Change Marks All Co-Engineers Stale
 
-When a third engineer is added to an object that previously had two, all three engineers' `engineer_summaries.is_stale` must be set to TRUE in the same transaction. After background recalculation, each engineer's share of that object must equal `itogo_chislo_with_travel / 3`.
+When a third engineer is added to an object that previously had two, all three engineers' `engineer_summaries.is_stale` must be set to TRUE in the same transaction. After admin-triggered recalculation (`POST /svod/recalculate`), each engineer's share of that object must equal `itogo_chislo_with_travel / 3`.
 
 ### AC-18: Coverage Gap Reporting
 
