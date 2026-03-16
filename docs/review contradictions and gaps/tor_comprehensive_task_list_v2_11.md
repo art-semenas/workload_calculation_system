@@ -113,7 +113,7 @@
 - **Action / Required Resolution:** Remove the pending language and define a concrete MVP policy: "Object repair rows with `count > 0` (in any period, past or active) block deletion of a repair type. Rows with `count = 0` do not block deletion."
 - **Done Criteria:** Ambiguity note is replaced with a hard business rule.
 
-### [ ] G-06. `app_config` Invalidation Rule for PoC
+### [x] G-06. `app_config` Invalidation Rule for PoC
 *Source: Review Item 6*
 - **Priority:** Low
 - **Problem:** §6.10 caching rules specify summary invalidation triggers on `app_config` UPDATE. However, the PoC explicitly excludes an `app_config` table (S-03) and `is_stale` column (S-02).
