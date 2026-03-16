@@ -2,9 +2,9 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.12
+**Version:** 2.14
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
-**Date:** 2026-03-13
+**Date:** 2026-03-16
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
 **Changelog v2.1:** Incorporated three architectural decisions: (1) Option C two-layer quantity model (physical + maintained); (2) System type restriction enforced at UI/API/DB levels; (3) Normatives managed per (device, system) pair. Updated §4.2, §4.3, §6.4, §7.3, §7.4, added C-17–C-20, added AC-11–AC-13.  
 **Changelog v2.2:** Added Engineers Module — engineers as first-class entities, object-engineer assignments with equal workload split, engineer capacity tracking, overload detection, engineer dashboard, and coverage gap reporting. Updated §2, §3, §4 (FR-10, FR-11), §5, §6 (§6.12–6.14), §7, §9, §10, §12, §13 (C-21–C-25), §14 (AC-14–AC-18).  
@@ -16,6 +16,8 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.14:** R-02 — Unified stale vs processing UI wording. Fixed §7.6 Section 5 (engineer stale indicator used "Данные пересчитываются..." for `is_stale = 'TRUE'` — wrong state). Applied canonical two-state rule from §7.10 to all three sections (§7.6, §7.9, §7.10): `TRUE` → "Данные устарели — нажмите Пересчитать"; `PROCESSING` → "Пересчитывается...". Added PoC scope note to all three sections: stale banners are MVP-only (PoC recalculates synchronously on save, no `is_stale`, per S-02/R-01 resolution). No interference with R-01 — R-02 depends on R-01 canonical model and now references it explicitly.
+**Changelog v2.13:** R-01 — Resolved PoC recalculation model contradiction. Canonical model: PoC uses synchronous recalculation on save (S-02), no `is_stale`, no background worker, no Redis; MVP uses on-demand recalculation with staleness tracking, background worker, and admin trigger. Updated AD-10 to scope on-demand model to MVP only. Updated AD-13 to state Redis is MVP-only (introduced with M-06). Rewrote C-28 to explicitly split PoC vs MVP behaviour.
 **Changelog v2.12:** Fixed G-01 — defined object hard-delete cascade contract. Added `ON DELETE CASCADE` annotations to all child tables referencing `objects.id` (§5.2: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Added `objects` DELETE row to §6.10 cache invalidation table (read engineers → cascade-delete → mark `engineer_summaries` stale, all in one transaction). Added cascade statement to §8.4 Data Integrity rules with application-layer ordering note. Annotated `DELETE /objects/:id` in §10.2 API with cascade and stale-marking behaviour.
 **Changelog v2.11:** Fixed 13 gaps and contradictions: (1) Fixed changelog order and bumped version. (2) Removed `RedisHealthIndicator` from PoC health endpoint (Redis not used in PoC). (3) Removed spurious `system` field from `device_types` import array — system affiliation belongs in `device_system_contexts`. (4) Moved JWT refresh token flow to MVP scope; PoC uses access tokens only. (5) Replaced hardcoded `/6` divisor in records formula with `config[PLANNING_PERIOD_MONTHS]`. (6) Fixed `ENGINEER_WARNING_THRESHOLD` upper bound from `<= 1.0` to `< 1.0` — at exactly 1.0 the warning band collapses. (7) Marked §6.11.1 config validation and AC-23 as MVP scope (requires `app_config` table, M-10). (8) Removed dead `v1.3.0-physical-inventory.xml` entry from §11.3 (M-03 struck in v2.9). (9) Reordered §13 clarifications C-33–C-39 and C-20 into sequential numeric order. (10) Removed `total_repairs` from AC-07 read-only field list — not stored in PoC schema. (11) Added `users.home_division_id` UPDATE to §6.10 cache invalidation rules and added C-40 travel-review trigger clarification. (12) Clarified §16.3 branch/division breakdown — branch_load = SUM(itogo_chislo_with_travel) per object; no undefined PZV/travel contribution term. (13) Explicitly excluded MVP-only columns (`failed_login_count`, `locked_until`) from PoC users schema in §15.4.
 
@@ -1532,8 +1534,11 @@ A personal workload dashboard with five sections:
 **Section 4 — Assign / remove objects** (admin and editor only)
 Button to assign additional objects; remove button per row.
 
-**Section 5 — Stale indicator**
-If `engineer_summaries.is_stale = 'TRUE'`: banner "Данные пересчитываются..." across the page.
+**Section 5 — Stale indicator (MVP only)**
+- `is_stale = 'TRUE'` (stale, no job running): banner **"Данные устарели — нажмите Пересчитать"** across the page.
+- `is_stale = 'PROCESSING'` (background job actively running): banner **"Пересчитывается..."** across the page.
+
+_PoC: No stale indicator is shown — engineer summaries recalculate synchronously on save (S-02)._
 
 ### 7.7 Division Detail — Coverage Gaps
 
@@ -1602,7 +1607,11 @@ The UI pre-checks on click and shows: **"Нельзя удалить: 42 объ�
 | 18  | Р1 на объекте всех систем                | `summaries.r1_per_visit_total`                                     |
 | 19  | Р2 на объекте всех систем                | `summaries.r2_per_visit_total`                                     |
 
-Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — нажмите Пересчитать" indicator in place of numeric values.
+Stale rows display state-specific indicators in place of numeric values (MVP only):
+- `is_stale = 'TRUE'` (stale, no job running): **"Данные устарели — нажмите Пересчитать"**
+- `is_stale = 'PROCESSING'` (background job actively running): **"Пересчитывается..."**
+
+_PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 **Period selector:** A dropdown above the СВОД table allows selecting which planning period's data to view. Defaults to the active period. When a non-active period is selected, the table shows historical data for that period (read-only). The "Пересчитать" button is disabled for past periods.
 
@@ -1614,7 +1623,10 @@ Stale rows (`is_stale = 'TRUE'`) display a "Данные устарели — н
 - Zero values may display as blank (matching Excel behavior) but stored as 0.
 - Inline СВОД editing not permitted.
 - Engineer load ratio bars use colour coding matching status: green (normal) / amber (warning) / red (overloaded).
-- Stale summaries (`is_stale = 'TRUE'`, no job running) display **"Данные устарели — нажмите Пересчитать"** in place of numeric values — never the last stale numbers. While the background job is actively processing, display **"Пересчитывается..."** instead.
+- Stale summaries display state-specific text in place of numeric values — never the last stale numbers (MVP only):
+  - `is_stale = 'TRUE'` (stale, no job running): **"Данные устарели — нажмите Пересчитать"**
+  - `is_stale = 'PROCESSING'` (background job actively running): **"Пересчитывается..."**
+  - _PoC: Stale banners do not appear — summaries recalculate synchronously on save (S-02). Stale banners are available from MVP onward._
 - **Data entry by engineers:** Engineers can enter and edit Записи and Ремонт data for their assigned objects in the active period only. They cannot edit Оборудование, Нормативы, or Дорога. This matches their role as field operators who report what happened (repairs done, records requests handled) without modifying the equipment inventory or normatives.
 - **Period lock:** Once a period is deactivated, all its Записи and Ремонт data becomes read-only for all roles including admin. Only a new period activation can unlock data entry.
 
@@ -1772,8 +1784,8 @@ The frontend never computes workload values. It reads exclusively from `summarie
 **AD-09: All calculation constants are read from `app_config` at compute time.**
 The calculation service must reload config values for each recalculation batch, not cache them for the process lifetime. This ensures admin changes to constants take effect immediately in the next triggered recalculation.
 
-**AD-10: Recalculation is on-demand, not event-driven.**
-The system marks summaries stale automatically on data change, but does not auto-trigger recalculation. Recalculation runs only when an admin explicitly triggers it. This is the correct model for PoC — it avoids cascading background load during bulk data entry and gives operators control over when they see updated numbers. Post-MVP may move to automatic triggers.
+**AD-10: Recalculation is on-demand, not event-driven. (MVP only)**
+The system marks summaries stale automatically on data change, but does not auto-trigger recalculation. Recalculation runs only when an admin explicitly triggers it via `POST /svod/recalculate`. This model avoids cascading background load and gives operators control over when updated numbers are computed. Post-MVP may move to automatic triggers. **PoC uses synchronous recalculation on save instead (S-02): no `is_stale` flag, no background worker, no admin trigger button.**
 
 **AD-11: Period is the unit of data versioning for operational data.**
 `object_repairs` and `records_tasks` are period-scoped. All other data (equipment, travel, assignments) is current-state only — no period versioning. This means СВОД can be computed for any historical period by using that period's repair/records rows with current equipment and normatives. Historical equipment states are not tracked in PoC.
@@ -1781,8 +1793,8 @@ The system marks summaries stale automatically on data change, but does not auto
 **AD-12: Travel time is per-object, set by whoever enters data.**
 Travel data reflects the distance from the responsible engineer's home division base to the object. It is a manually entered field — the system does not compute it. When engineer assignment changes, the travel field must be manually reviewed. The home division of the engineer is the reference, but no automatic distance calculation is implemented.
 
-**AD-13: Redis scope is job queue first, cache second.**
-Redis serves two purposes. Primary: the recalculation job queue — stale summary IDs are pushed to a Redis list; the background worker pops and processes them. Secondary (MVP only): response caching for aggregation endpoints (§16.7) if query latency becomes measurable under load. For PoC, Redis is used for the job queue only. Aggregation queries run live against PostgreSQL (on-the-fly per §16 decision). No business data is stored in Redis — it is a transient layer only. If Redis is unavailable, the system degrades gracefully: recalculation is blocked but all read/write operations against PostgreSQL continue.
+**AD-13: Redis scope is job queue first, cache second. (MVP only)**
+Redis serves two purposes. Primary: the recalculation job queue — stale summary IDs are pushed to a Redis list; the background worker pops and processes them. Secondary (MVP only): response caching for aggregation endpoints (§16.7) if query latency becomes measurable under load. **Redis is introduced in MVP with M-06 alongside staleness tracking and the background worker. It is not used in PoC — PoC recalculates synchronously on save (S-02) and requires no job queue.** Aggregation queries run live against PostgreSQL in both PoC and MVP (on-the-fly per §16 decision). No business data is stored in Redis — it is a transient layer only. If Redis is unavailable, the system degrades gracefully: recalculation is blocked but all read/write operations against PostgreSQL continue.
 
 **AD-14: All API responses go through DTOs — never raw JPA entities.**
 MapStruct compile-time mappers translate between JPA entities and DTOs for all request/response cycles. JPA entities are never serialised directly to JSON. This prevents accidental exposure of lazy-loaded relations, internal fields (`password_hash`, `is_stale` internals), and database-level annotations leaking into the API contract. The DTO layer is the API contract. Changing internal entity structure does not break the API as long as mappers are updated.
@@ -2399,9 +2411,11 @@ R2 maintenance is a full inspection that covers the scope of R1 work. However, t
 
 The `Дорога` sheet stores one travel time per object. This time represents the distance from the **primary (first-assigned) engineer's** home division office to the object. When multiple engineers are assigned to the same object, the travel time reflects the route from the first-assigned engineer's base — it is not averaged or split. It is entered manually — not computed from coordinates. When the primary engineer changes (different home division) or a new first engineer is assigned, the travel time field must be reviewed and updated by an editor or admin. The system prompts for review but does not block saving. This is the canonical travel value used by the calculation engine for `round_trip_min` in the СВОД formula — all co-engineers at the object share the same travel overhead in the headcount calculation.
 
-### C-28: Recalculation Is On-Demand — Not Automatic
+### C-28: Recalculation Is On-Demand — Not Automatic (MVP only)
 
-The system marks summaries stale immediately when data changes, but does not automatically trigger recalculation. Recalculation runs only when an admin explicitly presses "Пересчитать". This is intentional for PoC — it prevents background calculation load during bulk data entry sessions. Automatic triggering is a post-MVP enhancement.
+**PoC:** Summaries are recalculated synchronously on every save (~5 ms per object). No staleness tracking, no `is_stale` flag, no background worker, no admin trigger button (S-02).
+
+**MVP:** The system marks summaries stale immediately when data changes, but does not automatically trigger recalculation. Recalculation runs only when an admin explicitly presses "Пересчитать" (`POST /svod/recalculate`). This prevents background calculation load during bulk data entry sessions. Automatic triggering is a post-MVP enhancement.
 
 ### C-29: Planning Periods Lock Operational Data
 
