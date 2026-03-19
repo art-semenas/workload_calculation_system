@@ -399,7 +399,7 @@ Repair counts and records tasks are tied to a specific **6-month planning period
 
 ### 5.1 Entity Relationship Overview
 
-> **Transaction isolation level:** `READ COMMITTED` (PostgreSQL default). This is sufficient because all writes to `summaries` and `engineer_summaries` go through the background worker (serialised by the Redis job queue), not concurrent user transactions. The optimistic locking strategy in §17 handles write conflicts on user-facing tables without requiring a stricter isolation level. `REPEATABLE READ` is used only inside the bulk recalculation batch transaction to ensure consistent reads of normatives and assignments throughout the batch.
+> **Transaction isolation level:** `READ COMMITTED` (PostgreSQL default). This is sufficient because **MVP:** all writes to `summaries` and `engineer_summaries` go through the background worker (serialised by the Redis job queue) — see AD-13 and S-02. **PoC:** Summaries are written synchronously in the request thread on save; no background worker or Redis is used. The optimistic locking strategy in §17 handles write conflicts on user-facing tables without requiring a stricter isolation level. `REPEATABLE READ` is used only inside the bulk recalculation batch transaction to ensure consistent reads of normatives and assignments throughout the batch.
 
 ```
 Division ──< Branch ──< Object ──────────────────────────────┐
@@ -768,9 +768,9 @@ CREATE INDEX idx_obj_devices_object      ON object_devices(object_id);
 CREATE INDEX idx_obj_assignments_object  ON object_system_assignments(object_id);
 CREATE INDEX idx_obj_assignments_context ON object_system_assignments(context_id);
 
--- Repairs and records (calculation + period scope)
-CREATE INDEX idx_repairs_object_period   ON object_repairs(object_id, period_id);
-CREATE INDEX idx_records_object_period   ON records_tasks(object_id, period_id);
+-- Repairs and records (calculation; no period scope in PoC)
+CREATE INDEX idx_repairs_object   ON object_repairs(object_id);
+CREATE INDEX idx_records_object   ON records_tasks(object_id);
 
 -- Engineer assignment lookup
 CREATE INDEX idx_obj_engineers_object    ON object_engineers(object_id);
@@ -778,11 +778,7 @@ CREATE INDEX idx_obj_engineers_engineer  ON object_engineers(engineer_id);
 
 -- Summaries (СВОД page, aggregation queries)
 CREATE INDEX idx_summaries_object        ON summaries(object_id);
-CREATE INDEX idx_summaries_stale         ON summaries(is_stale) WHERE is_stale = 'TRUE';
-CREATE INDEX idx_summaries_processing    ON summaries(is_stale) WHERE is_stale = 'PROCESSING';  -- watchdog (§17.7)
 CREATE INDEX idx_eng_summaries_engineer  ON engineer_summaries(engineer_id);
-CREATE INDEX idx_eng_summaries_stale     ON engineer_summaries(is_stale) WHERE is_stale = 'TRUE';
-CREATE INDEX idx_eng_summaries_processing ON engineer_summaries(is_stale) WHERE is_stale = 'PROCESSING';
 
 -- Aggregation (§16 — live SUM over summaries joined to org hierarchy)
 CREATE INDEX idx_branches_division       ON branches(division_id);
@@ -800,10 +796,10 @@ CREATE INDEX idx_objects_branch_covering ON objects(branch_id) INCLUDE (id);
 -- device_system_contexts(device_type_id, system_type) UNIQUE
 -- object_devices(object_id, device_type_id) UNIQUE
 -- object_system_assignments(object_id, device_type_id, system_type) UNIQUE
--- records_tasks(object_id, period_id) UNIQUE
--- object_repairs(object_id, repair_type_id, period_id) UNIQUE
+-- records_tasks(object_id, period_id) UNIQUE              -- MVP (M-07)
+-- object_repairs(object_id, repair_type_id, period_id) UNIQUE  -- MVP (M-07)
 -- travel.object_id UNIQUE
--- periods: one_active_period partial UNIQUE INDEX
+-- periods: one_active_period partial UNIQUE INDEX          -- MVP (M-07)
 -- summaries.object_id UNIQUE
 -- engineer_summaries.engineer_id UNIQUE
 -- object_engineers(object_id, engineer_id) UNIQUE
@@ -813,6 +809,16 @@ CREATE INDEX idx_objects_branch_covering ON objects(branch_id) INCLUDE (id);
 #### MVP-only indexes
 
 ```sql
+-- Staleness indexes (added in M-06 along with is_stale column)
+CREATE INDEX idx_summaries_stale ON summaries(is_stale) WHERE is_stale = 'TRUE';              -- MVP (M-06)
+CREATE INDEX idx_summaries_processing ON summaries(is_stale) WHERE is_stale = 'PROCESSING';   -- MVP (M-06) watchdog (§17.7)
+CREATE INDEX idx_eng_summaries_stale ON engineer_summaries(is_stale) WHERE is_stale = 'TRUE'; -- MVP (M-06)
+CREATE INDEX idx_eng_summaries_processing ON engineer_summaries(is_stale) WHERE is_stale = 'PROCESSING'; -- MVP (M-06)
+
+-- Period-scope indexes (added in M-07 along with period_id column)
+CREATE INDEX idx_repairs_object_period ON object_repairs(object_id, period_id);  -- MVP (M-07)
+CREATE INDEX idx_records_object_period ON records_tasks(object_id, period_id);   -- MVP (M-07)
+
 -- Full-text search on object name (if ilike search becomes slow at 10k rows)
 CREATE INDEX idx_objects_name_gin ON objects USING gin(to_tsvector('russian', name));  -- MVP
 
@@ -1383,6 +1389,8 @@ The overload boundary is always exactly `1.0` (load = capacity) and is not confi
 | `app_config[ENGINEER_WARNING_THRESHOLD]` UPDATE            | All engineers                                         | Mark all `engineer_summaries.is_stale = 'TRUE'`   |
 
 Staleness is set in the same transaction as the triggering change. Actual recalculation is on-demand (triggered by admin). Background worker processes engineer summaries only after all dependent object summaries are fresh.
+
+> **PoC:** No stale marking is performed — engineer summaries recalculate synchronously on every triggering event (S-02). The `is_stale` column is not present in the PoC `engineer_summaries` schema (added in M-06). This table applies to MVP only.
 
 ---
 
@@ -3047,12 +3055,17 @@ volumes:
 
 **Schema continuity guarantee:** The PoC Liquibase changelog (`v1.0.0`) uses the full MVP two-layer equipment model and includes all columns present in the §5 schema, **with the following explicit exceptions** — these MVP-only columns are added in later migrations and must not appear in `v1.0.0`:
 
-| Column                  | Table                             | Added in                       |
-| ----------------------- | --------------------------------- | ------------------------------ |
-| `failed_login_count`    | `users`                           | M-02 (account lockout, §21.3)  |
-| `locked_until`          | `users`                           | M-02 (account lockout, §21.3)  |
-| `period_id`             | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12) |
-| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking)      |
+| Column                  | Table                             | Added in                        |
+| ----------------------- | --------------------------------- | ------------------------------- |
+| `failed_login_count`    | `users`                           | M-02 (account lockout, §21.3)   |
+| `locked_until`          | `users`                           | M-02 (account lockout, §21.3)   |
+| `period_id`             | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12)  |
+| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking)       |
+| `records_6months`       | `summaries`                       | M-06 (traceability / debugging) |
+| `repair_work_6months`   | `summaries`                       | M-06 (traceability / debugging) |
+| `repair_travel_6months` | `summaries`                       | M-06 (traceability / debugging) |
+| `repair_pzv_6months`    | `summaries`                       | M-06 (traceability / debugging) |
+| `total_repairs`         | `summaries`                       | M-06 (traceability / debugging) |
 
 MVP migrations (`v1.1.0` onwards) add tables and columns — they never drop or rename PoC columns. PoC data survives migration intact.
 
