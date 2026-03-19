@@ -606,7 +606,7 @@ updated_at  TIMESTAMP
 updated_by  UUID         FK → users.id
 ```
 
-All named calculation constants (see §6.12). Changes to any key trigger bulk summary invalidation.
+All named calculation constants (see §6.11). **MVP (M-10):** This table is created in M-10 when admin-editable configuration is introduced; changes to any key trigger bulk summary invalidation (§6.10). **PoC (S-03):** This table is not created — constants are bound at startup as Docker environment variables via `@ConfigurationProperties(prefix="workload.config")`; the admin config UI is introduced in M-10.
 
 #### `summaries` — Computed Cache
 
@@ -840,7 +840,11 @@ The integration test suite (§19.3) must include an `IndexUsageTest` that runs `
 
 ## 6. Calculation Engine
 
-All calculations are performed **server-side only**. The `summaries` table is a precomputed cache. When source data changes, the affected summary is marked `is_stale = 'TRUE'` synchronously; a background job recalculates it asynchronously.
+All calculations are performed **server-side only**. The `summaries` table is a precomputed cache.
+
+**PoC (S-02):** When source data changes, the affected summary is recalculated synchronously in the same request thread before the response is returned. No background job, no `is_stale` column.
+
+**MVP (AD-10):** When source data changes, the affected summary is marked `is_stale = 'TRUE'` synchronously in the same transaction. A background worker recalculates stale summaries asynchronously when triggered by admin via `POST /svod/recalculate`.
 
 ### 6.1 Pipeline Overview
 
@@ -1190,7 +1194,9 @@ division_headcount = SUM(itogo_chislo_with_travel)  for all objects in division
 
 ### 6.10 Cache Invalidation Rules
 
-Summaries are marked stale automatically on data change, but **recalculation is triggered on-demand by admins only** — not automatically. The background worker runs only when explicitly triggered via `POST /svod/recalculate` (see §10). This simplifies operations and gives admins control over when calculations are refreshed (e.g. after a bulk data entry session).
+**MVP (AD-10):** Summaries are marked stale automatically on data change; recalculation is triggered on-demand by admins via `POST /svod/recalculate`. The background worker processes stale summaries only when explicitly triggered.
+
+**PoC (S-02):** No staleness tracking. All summaries are recalculated synchronously on every data-changing request. The table below lists triggering events; stale-marking actions apply to MVP only unless stated otherwise.
 
 | Triggering Event                                     | Staleness Action (immediate, same transaction)                                                                                                                                                                                                                                                                                              |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1202,12 +1208,14 @@ Summaries are marked stale automatically on data change, but **recalculation is 
 | `device_system_contexts` UPDATE (r1 or r2)           | Mark `is_stale = 'TRUE'` for ALL objects with assignments using this context                                                                                                                                                                                                                                                                |
 | `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                                                                                                                                                                                                              |
 | `app_config` UPDATE (any calculation key) (MVP)      | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
-| `periods.is_active` changed (period switch)          | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
-| `objects` DELETE                                     | Before cascade: read all engineers assigned to the object from `object_engineers`. Cascade-delete all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Mark those engineers' `engineer_summaries.is_stale = 'TRUE'` — all in the same transaction. |
-| Any `summaries.is_stale` set to `'TRUE'`             | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                          |
+| `periods.is_active` changed (period switch) (MVP)    | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
+| `objects` DELETE                                     | **PoC:** Before cascade: read all engineers assigned to the object from `object_engineers`. Cascade-delete all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`) — all in the same transaction. Immediately recalculate engineer summaries synchronously for all affected engineers (S-02). **MVP:** Same cascade, then mark those engineers' `engineer_summaries.is_stale = 'TRUE'` in the same transaction. |
+| Any `summaries.is_stale` set to `'TRUE'` (MVP)       | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                          |
 | `users.home_division_id` UPDATE for engineer E       | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40.                                        |
 
-**Recalculation trigger:** Admin clicks "Пересчитать" in the UI or calls `POST /svod/recalculate`. The background worker then processes all stale summaries in dependency order: object summaries first, then engineer summaries.
+**Recalculation trigger (MVP):** Admin clicks "Пересчитать" or calls `POST /svod/recalculate`. The background worker processes all stale summaries in dependency order: object summaries first, then engineer summaries.
+
+**PoC:** No admin trigger. All summaries are recalculated synchronously on every data-changing request (S-02).
 
 ### 6.11 Application Configuration Constants
 
