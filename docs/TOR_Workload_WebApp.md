@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.18:** Gap resolution sweep (T-01 through T-07). (1) T-01: Fixed S-05 "Reversed in:" label from M-01 to M-07 — planning periods are implemented in M-07, not M-01. (2) T-02: Fixed §10.2 validation failure example to use inverted threshold values (ZERO_THRESHOLD=8, CAP=5) that actually trigger the constraint error; aligned violation key attribution with §6.11.1 (key=REPAIR_TRAVEL_CAP). (3) T-03: Added "Two-step import flow" sub-section to §11.1 specifying that POST /import/data is a stateless dry-run, POST /import/data/confirm re-submits the full payload and executes all writes; defined preview report fields. (4) T-04: Added PoC scope notes to §7.2 СВОД tab description and §7.3 stale indicator sentence — consistent with existing §7.6/§7.9/§7.10 PoC annotations. (5) T-05: Fixed §6.13 header from "Two new app_config keys" to "One new app_config key" — only ENGINEER_WARNING_THRESHOLD is configurable; 1.0 overload boundary is a non-configurable constant. (6) T-06: Added clarifying note to §16.6 that engineers_overloaded_branch is a division-level metric duplicated per branch, not a true branch-scoped count. (7) T-07: Added "(MVP — requires M-04 and M-06)" annotation to AC-03, "(MVP — requires M-06)" to AC-17, and "(MVP — requires M-04 and M-06)" to AC-20 — consistent with AC-23 pattern.
 **Changelog v2.17:** Verification cleanup after residual-task sweep. Fixed the last leaked PoC recalculation wording in §24 so snapshot/freeze scope no longer says PoC uses on-demand recalculation. Canonical split remains unchanged: PoC = synchronous recalculation on save; MVP = on-demand recalculation with staleness tracking.
 **Changelog v2.16:** R-04 — Completed JSON import terminology cleanup. Removed the remaining stack notes that implied direct server-side XLSX parsing. §9.1 now scopes Apache POI to server-side XLSX export only, and §15.8 clarifies that M-01 adds JSON bulk import while XLSX remains an external conversion source handled outside the application.
 **Changelog v2.15:** R-03 — Aligned Redis scope with PoC model in §9.1 tech stack table. Added "MVP only — not used in PoC (see §15.8)" annotation to Cache + Queue (Redis) and Job integration (Spring Data Redis / Redisson) rows. Changed Docker Compose container count from "5 containers" to "MVP: 5 containers / PoC: 4 containers (no Redis)" to prevent ambiguity for PoC developers reading §9.1 without cross-referencing §15.8 or AD-13.
@@ -1378,7 +1379,7 @@ status:
   load_ratio >= 1.0                                  → "overloaded"
 ```
 
-Two new `app_config` keys:
+One new `app_config` key:
 
 | Key                          | Default | Description                                  |
 | ---------------------------- | ------- | -------------------------------------------- |
@@ -1437,7 +1438,7 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 3. **Ремонт** — Repair operation counts _(scoped to active period)_
 4. **Дорога** — Travel data
 5. **Инженеры** — Assigned engineers list with their share of this object's workload
-6. **СВОД** — Computed summary (read-only; shows stale indicator when `is_stale = 'TRUE'`; period shown in header)
+6. **СВОД** — Computed summary (read-only; shows stale indicator when `is_stale = 'TRUE'`; period shown in header) _(PoC: stale indicator not shown — summary updates synchronously on save per S-02.)_
 
 ### 7.3 Equipment Tab — Two-Layer UI
 
@@ -1472,7 +1473,7 @@ Galaxy 512 (контроллер АСПС и СО)  [Physical qty: 1]
 - **Workflow order:** A device must be added to Section A (Physical Inventory) before it can appear in Section B (System Assignments). The "Assign to system" button in Section B is only available for devices already in the physical inventory.
 - **R1/R2 are read-only in this view.** Values shown per assignment are pulled from `device_system_contexts` and cannot be edited here. A "Edit normatives →" link navigates to the Device Catalog page for that device.
 - **System type dropdown** in "Assign to system" shows **only** system types for which a `device_system_contexts` row exists for that device. System types with no context are hidden entirely — not grayed out.
-- `quantity_maintained` is editable inline per assignment row. Saving any value marks the object summary stale. The СВОД tab shows a "Данные устарели — нажмите Пересчитать" indicator until the admin triggers recalculation via `POST /svod/recalculate`.
+- `quantity_maintained` is editable inline per assignment row. Saving any value marks the object summary stale. The СВОД tab shows a "Данные устарели — нажмите Пересчитать" indicator until the admin triggers recalculation via `POST /svod/recalculate`. _(PoC: saving any value immediately triggers synchronous recalculation — S-02. The СВОД tab shows updated values directly, with no stale indicator.)_
 - **Warning rule:** When `quantity_maintained > quantity_physical` for a single assignment row, display a yellow ⚠ icon and tooltip: **"Обслуживаемое количество (N) превышает физическое (M)"**. This is informational — it does not block saving.
 - **Cascade on removal:** Removing a device from Section A (physical inventory) cascades to remove all its system assignments at this object. A confirmation dialog lists all affected assignments (e.g., "Это удалит назначения: ОС × 1, ПС × 1. Продолжить?") before proceeding.
 - **Preventing orphaned assignments:** The API enforces that an `object_system_assignments` row cannot exist without a corresponding `object_devices` row for the same (object_id, device_type_id). Enforced at the application layer (not FK, since they are separate tables).
@@ -2125,7 +2126,7 @@ GET    /admin/audit                    Audit log (admin only)
 
 All violations in a single save are reported together (not fail-fast per key). See §6.11.1 for complete per-key and cross-key constraint definitions.
 
-**Request (batch save):**
+**Request (batch save — valid values):**
 
 ```json
 {
@@ -2152,6 +2153,15 @@ All violations in a single save are reported together (not fail-fast per key). S
 }
 ```
 
+**Request (inverted thresholds — triggers validation failure):**
+
+```json
+{
+  "REPAIR_TRAVEL_ZERO_THRESHOLD": 8,
+  "REPAIR_TRAVEL_CAP": 5
+}
+```
+
 **Response on validation failure (HTTP 422):**
 
 ```json
@@ -2160,9 +2170,9 @@ All violations in a single save are reported together (not fail-fast per key). S
   "code": "CONFIG_CONSTRAINT_VIOLATED",
   "violations": [
     {
-      "key": "REPAIR_TRAVEL_ZERO_THRESHOLD",
+      "key": "REPAIR_TRAVEL_CAP",
       "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
-      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (5) must be less than REPAIR_TRAVEL_CAP (10)"
+      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
     }
   ]
 }
@@ -2318,6 +2328,20 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 7. Populate `travel` per object from the `travel` map.
 8. Return validation report: objects created, warnings, skipped entries.
 9. Mark all imported object summaries stale. _(PoC: immediately run synchronous bulk recalculation inline; MVP: admin triggers recalculation via `POST /svod/recalculate`.)_
+
+#### Two-step import flow
+
+The import API uses a stateless two-call pattern:
+
+1. **`POST /import/data` — dry-run (no writes).** The server validates the entire payload and returns a preview report. No rows are written to the database. The preview report contains:
+   - `objects_valid` — count of object entries that would be created/updated.
+   - `warnings` — list of entries with non-fatal issues (e.g. unresolved engineer names that would generate placeholder accounts, device type names not found in catalog).
+   - `skipped` — count of entries rejected due to fatal validation errors (missing `number`, empty `division`, invalid `system_type`, etc.) with per-entry reasons.
+   - `estimated_placeholders` — count of engineer placeholder accounts that would be created.
+
+2. **`POST /import/data/confirm` — execute (all writes).** The client re-submits the identical JSON payload. The server re-validates and executes processing steps 1–9 atomically. No server-side session or token links the two calls — the client is responsible for re-submitting the payload.
+
+> If the payload sent to `/confirm` differs from the payload sent to `/data`, the confirm call re-validates from scratch and may produce different results. There is no stale-check between the two calls.
 
 > After import, `quantity_physical = quantity_maintained` for all records. Editors adjust `quantity_physical` manually if needed.
 
@@ -2584,7 +2608,7 @@ Import of the reference dataset (converted from `Шаблон_нагрузки_�
 
 All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `ps_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `itogo_chislo_no_travel`, `itogo_chislo_with_travel`, `r1_per_visit_total`, `r2_per_visit_total`.
 
-### AC-03: Dynamic Normative Editability
+### AC-03: Dynamic Normative Editability _(MVP — requires M-04 and M-06)_
 
 After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`.
 
@@ -2655,7 +2679,7 @@ Given engineer with `capacity_fte = 0.8` and `total_load = 0.76`:
 - With `ENGINEER_WARNING_THRESHOLD = 0.9`: status must be "warning"
   Given `total_load = 0.84`: `load_ratio = 1.05` → status must be "overloaded"
 
-### AC-17: Assignment Change Marks All Co-Engineers Stale
+### AC-17: Assignment Change Marks All Co-Engineers Stale _(MVP — requires M-06)_
 
 When a third engineer is added to an object that previously had two, all three engineers' `engineer_summaries.is_stale` must be set to TRUE in the same transaction. After admin-triggered recalculation (`POST /svod/recalculate`), each engineer's share of that object must equal `itogo_chislo_with_travel / 3`.
 
@@ -2667,7 +2691,7 @@ When a third engineer is added to an object that previously had two, all three e
 
 Repair counts entered in period H1 2025 must not appear in H2 2025 calculations. After switching the active period, `GET /objects/:id/repairs` returns 0 counts for repair types with no H2 2025 rows, even if H1 2025 rows exist for the same types.
 
-### AC-20: On-Demand Recalculation Only
+### AC-20: On-Demand Recalculation Only _(MVP — requires M-04 and M-06)_
 
 After updating a normative (`PUT /catalog/devices/:id/contexts/:cid`), all affected summaries must be marked `is_stale = 'TRUE'` but values in the СВОД must remain unchanged (showing stale indicator) until `POST /svod/recalculate` is called. Auto-recalculation must not occur.
 
@@ -2788,7 +2812,7 @@ Full TOR: `periods` table; repairs and records are period-scoped.
 
 PoC: one `object_repairs` row per (object, repair_type), one `records_tasks` row per object — no period FK.
 
-_Reversed in:_ M-01 (MVP)
+_Reversed in:_ M-07 (MVP)
 
 **S-06: JSON bulk import is manual — import via UI is MVP**
 
@@ -3214,6 +3238,8 @@ engineers_warning_branch      = COUNT(users) ... WHERE status = 'warning'
 ```
 
 > Note: overload is attributed to the engineer's `home_division_id`, not to where their objects are located. An engineer may service objects in multiple divisions — their overload status is reported under their home division.
+
+> **Note:** Engineer overload is attributed to the engineer's `home_division_id`, not to any specific branch. The `engineers_overloaded_branch` formula returns a division-level count (identical for all branches within the same division). This metric is included for API response parity but is not meaningful at the branch level — use the division-level aggregation endpoint for accurate overload reporting.
 
 ---
 
