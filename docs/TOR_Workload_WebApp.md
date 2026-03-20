@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.17
+**Version:** 2.21
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-16
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -16,6 +16,9 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.21:** T-06 — Changed §11.1 step 4 `object_devices` from "Create" to "Upsert". If a device appears in multiple equipment entries (different `system_type`), the first occurrence sets `quantity_physical`; subsequent entries skip the `object_devices` row. Added post-import editor note. Prevents UNIQUE(object_id, device_type_id) constraint violation when importing objects with devices assigned to multiple systems.
+**Changelog v2.20:** T-05 — Removed duplicate shorter note from §16.6. Retained the complete note: "Engineer overload is attributed to the engineer's `home_division_id`, not to any specific branch…". The removed note was a strict subset of the retained one.
+**Changelog v2.19:** T-04 — Added `/engineers/:id/edit` to §15.5 PoC UI routes table. The route was claimed in §15.2 ("full §4.10–4.11") and defined in §7.1 but absent from the PoC route list, making `capacity_fte` and `home_division_id` unreachable in the PoC UI.
 **Changelog v2.18:** Gap resolution sweep (T-01 through T-07). (1) T-01: Fixed S-05 "Reversed in:" label from M-01 to M-07 — planning periods are implemented in M-07, not M-01. (2) T-02: Fixed §10.2 validation failure example to use inverted threshold values (ZERO_THRESHOLD=8, CAP=5) that actually trigger the constraint error; aligned violation key attribution with §6.11.1 (key=REPAIR_TRAVEL_CAP). (3) T-03: Added "Two-step import flow" sub-section to §11.1 specifying that POST /import/data is a stateless dry-run, POST /import/data/confirm re-submits the full payload and executes all writes; defined preview report fields. (4) T-04: Added PoC scope notes to §7.2 СВОД tab description and §7.3 stale indicator sentence — consistent with existing §7.6/§7.9/§7.10 PoC annotations. (5) T-05: Fixed §6.13 header from "Two new app_config keys" to "One new app_config key" — only ENGINEER_WARNING_THRESHOLD is configurable; 1.0 overload boundary is a non-configurable constant. (6) T-06: Added clarifying note to §16.6 that engineers_overloaded_branch is a division-level metric duplicated per branch, not a true branch-scoped count. (7) T-07: Added "(MVP — requires M-04 and M-06)" annotation to AC-03, "(MVP — requires M-06)" to AC-17, and "(MVP — requires M-04 and M-06)" to AC-20 — consistent with AC-23 pattern.
 **Changelog v2.17:** Verification cleanup after residual-task sweep. Fixed the last leaked PoC recalculation wording in §24 so snapshot/freeze scope no longer says PoC uses on-demand recalculation. Canonical split remains unchanged: PoC = synchronous recalculation on save; MVP = on-demand recalculation with staleness tracking.
 **Changelog v2.16:** R-04 — Completed JSON import terminology cleanup. Removed the remaining stack notes that implied direct server-side XLSX parsing. §9.1 now scopes Apache POI to server-side XLSX export only, and §15.8 clarifies that M-01 adds JSON bulk import while XLSX remains an external conversion source handled outside the application.
@@ -2321,8 +2324,10 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 4. For each non-zero equipment entry:
    - Resolve `device_types` by name (create if not found, with warning).
    - Resolve `device_system_contexts` for (device, system_type).
-   - Create `object_devices` with `quantity_physical = quantity`.
+   - **Upsert** `object_devices`: if no row exists for `(object_id, device_type_id)`, INSERT with `quantity_physical = quantity`. If a row already exists (device appears in multiple equipment entries with different `system_type` values), **skip** — retain the existing `quantity_physical`. The import treats the first occurrence's quantity as the physical quantity.
    - Create `object_system_assignments` with `quantity_maintained = quantity`.
+
+   > **Note:** After import, editors should review `quantity_physical` for devices assigned to multiple systems, as the physical quantity is taken from the first equipment entry for that device. This matches the post-import behaviour in §4.3: `quantity_physical = quantity_maintained` initially; editors adjust manually if needed.
 5. Populate `records_tasks` per object from the `records` map.
 6. Populate `object_repairs` per object from the `repairs` map.
 7. Populate `travel` per object from the `travel` map.
@@ -2754,7 +2759,7 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 
 | Feature                 | Notes                                                                                                                                                              |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. All 2,935 objects from source file entered manually (import is MVP).                             |
+| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,935. Full import is MVP (see S-06).  |
 | **Calculation engine**  | Full calculation: ОС, ПС, Видео, Записи, Ремонт, Дорога → ИТОГО Числ. All formulas from §6.                                                                        |
 | **СВОД table**          | Paginated table matching all 19 source columns.                                                                                                                    |
 | **СВОД export to XLSX** | Export matching original template structure. Stakeholders verify spot-checked rows against source file.                                                            |
@@ -2764,7 +2769,7 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 | **Basic dashboard**     | Required FTE by division, top objects by workload, coverage gaps.                                                                                                  |
 | **Authentication**      | Login / logout. Single role — all authenticated users can read and write.                                                                                          |
 | **Seed normatives**     | Device catalog and repair types loaded as migration seed data. Values from source XLSX.                                                                            |
-| **Basic observability** | Structured logging, health endpoint, job failure alerting (§18 PoC tier).                                                                                          |
+| **Basic observability** | Structured logging (JSON to stdout), health endpoint (`/actuator/health`). Job failure alerting via Datadog is MVP (§18.2).                                         |
 
 ---
 
@@ -2948,8 +2953,9 @@ UNIQUE(engineer_id)
 | `/objects/:id`      | Object detail — 6 tabs: Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД |
 | `/objects/:id/svod` | СВОД tab (computed summary, read-only)                                       |
 | `/engineers`        | Engineer list — load ratio, status, object count                             |
-| `/engineers/:id`    | Engineer detail — workload dashboard                                         |
-| `/svod`             | Full СВОД table — paginated, filterable                                      |
+| `/engineers/:id`      | Engineer detail — workload dashboard                                         |
+| `/engineers/:id/edit` | Engineer Edit — Edit name, capacity_fte, home division                       |
+| `/svod`               | Full СВОД table — paginated, filterable                                      |
 | `/svod/export`      | Trigger XLSX export                                                          |
 | `/divisions`        | Division list — name, branch count, object count; create button              |
 | `/divisions/:id`    | Division detail — СВОД + branch list; create branch button                   |
@@ -3237,8 +3243,6 @@ engineers_overloaded_branch   = COUNT(users)
 engineers_warning_branch      = COUNT(users) ... WHERE status = 'warning'
 ```
 
-> Note: overload is attributed to the engineer's `home_division_id`, not to where their objects are located. An engineer may service objects in multiple divisions — their overload status is reported under their home division.
-
 > **Note:** Engineer overload is attributed to the engineer's `home_division_id`, not to any specific branch. The `engineers_overloaded_branch` formula returns a division-level count (identical for all branches within the same division). This metric is included for API response parity but is not meaningful at the branch level — use the division-level aggregation endpoint for accurate overload reporting.
 
 ---
@@ -3414,7 +3418,7 @@ Requirements are tiered: **PoC** covers the minimum needed to operate the demo c
 
 #### Structured Logging — log4j2
 
-Configure log4j2 with `JsonTemplateLayout` (or `JsonLayout`) so all log output is newline-delimited JSON to stdout. Docker captures stdout; Datadog Agent tails container logs.
+Configure log4j2 with `JsonTemplateLayout` (or `JsonLayout`) so all log output is newline-delimited JSON to stdout. Docker captures stdout; logs are available via `docker compose logs` in PoC. In MVP, the Datadog Agent tails container logs (§18.2).
 
 `log4j2-spring.xml` minimum configuration:
 
@@ -3476,9 +3480,13 @@ healthcheck:
   retries: 3
 ```
 
-#### Datadog Integration — PoC
+---
 
-Install the Datadog Agent as a Docker Compose sidecar:
+### 18.2 MVP Tier (Required Before Production Launch)
+
+#### Datadog Integration — MVP
+
+Install the Datadog Agent as a Docker Compose sidecar (add to `docker-compose.yml` for MVP):
 
 ```yaml
 datadog-agent:
@@ -3513,19 +3521,15 @@ management:
         step: 30s
 ```
 
-For PoC, this provides: log aggregation, JVM metrics (heap, GC, threads), HTTP request metrics, and basic APM tracing — with zero code instrumentation.
+This provides: log aggregation, JVM metrics (heap, GC, threads), HTTP request metrics, and basic APM tracing.
 
-#### Error Alerting — PoC
+#### Error Alerting — MVP
 
-Datadog alert on `status:error` log events from service `workload-api`. Notification via email (configure in Datadog UI). No on-call paging for PoC. 7-day log retention.
-
----
-
-### 18.2 MVP Tier (Required Before Production Launch)
+Datadog alert on `status:error` log events from service `workload-api`. Notification via email (configure in Datadog UI). No on-call paging in initial MVP. 7-day log retention.
 
 #### Application Performance Monitoring (APM)
 
-Datadog APM is the single APM platform (chosen in §9.1). The Datadog Agent (introduced in PoC) is configured for full APM tracing in MVP via the Datadog Java APM agent (`dd-java-agent.jar`). Instrument:
+Datadog APM is the single APM platform (chosen in §9.1). The Datadog Agent (introduced in MVP) is configured for full APM tracing via the Datadog Java APM agent (`dd-java-agent.jar`). Instrument:
 
 - Every HTTP request: method, route, status code, duration, user_id
 - Every database query: query type, table, duration, row count
@@ -4267,4 +4271,4 @@ For PoC (demo environment, no production data):
 
 ---
 
-_End of Technical Specification — Version 2.11_
+_End of Technical Specification — Version 2.21_
