@@ -2,9 +2,9 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.21
+**Version:** 2.22
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
-**Date:** 2026-03-16
+**Date:** 2026-03-20
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
 **Changelog v2.1:** Incorporated three architectural decisions: (1) Option C two-layer quantity model (physical + maintained); (2) System type restriction enforced at UI/API/DB levels; (3) Normatives managed per (device, system) pair. Updated §4.2, §4.3, §6.4, §7.3, §7.4, added C-17–C-20, added AC-11–AC-13.  
 **Changelog v2.2:** Added Engineers Module — engineers as first-class entities, object-engineer assignments with equal workload split, engineer capacity tracking, overload detection, engineer dashboard, and coverage gap reporting. Updated §2, §3, §4 (FR-10, FR-11), §5, §6 (§6.12–6.14), §7, §9, §10, §12, §13 (C-21–C-25), §14 (AC-14–AC-18).  
@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.22:** T-01 — Re-scoped architecture/config rules for PoC vs MVP. Rewrote AD-08 to split PoC synchronous recalculation from MVP staleness tracking, rewrote AD-09 to use phase-appropriate config sources (PoC env vars vs MVP `app_config`), and updated §6.11 intro so it no longer implies `app_config` exists in PoC.
 **Changelog v2.21:** T-06 — Changed §11.1 step 4 `object_devices` from "Create" to "Upsert". If a device appears in multiple equipment entries (different `system_type`), the first occurrence sets `quantity_physical`; subsequent entries skip the `object_devices` row. Added post-import editor note. Prevents UNIQUE(object_id, device_type_id) constraint violation when importing objects with devices assigned to multiple systems.
 **Changelog v2.20:** T-05 — Removed duplicate shorter note from §16.6. Retained the complete note: "Engineer overload is attributed to the engineer's `home_division_id`, not to any specific branch…". The removed note was a strict subset of the retained one.
 **Changelog v2.19:** T-04 — Added `/engineers/:id/edit` to §15.5 PoC UI routes table. The route was claimed in §15.2 ("full §4.10–4.11") and defined in §7.1 but absent from the PoC route list, making `capacity_fte` and `home_division_id` unreachable in the PoC UI.
@@ -1245,7 +1246,7 @@ division_headcount = SUM(itogo_chislo_with_travel)  for all objects in division
 | `RECORDS_BACKUP_MINUTES`       | 120     | Normative minutes per backup control instance (Записи)                                                                                                                                                            |
 | `RECORDS_ADMIN_MINUTES`        | 60      | Normative minutes per security admin instance (Записи)                                                                                                                                                            |
 
-All constants are stored in `app_config`, editable by admins at `/admin/config`. Never hardcoded in application logic.
+Calculation constants are externalized and never hardcoded in application logic. **PoC (S-03):** constants are injected from Docker environment variables at startup. **MVP (M-10):** constants are stored in `app_config`, editable by admins at `/admin/config`, and read from the database during recalculation (see AD-09).
 
 ### 6.11.1 Configuration Validation Rules _(MVP — requires M-10)_
 
@@ -1807,11 +1808,17 @@ Visit frequency (R1/R2 visits per year) is read from `app_config` keyed by syste
 **AD-07: All calculations are server-side only.**
 The frontend never computes workload values. It reads exclusively from `summaries`. This prevents calculation drift from UI bugs and ensures all users see consistent values.
 
-**AD-08: Summaries use explicit staleness tracking.**
-`is_stale` is set synchronously on write, cleared on successful recalculation. Background worker recalculates asynchronously. The UI reads `is_stale` and shows an indicator. This prevents serving stale data silently while maintaining write performance.
+**AD-08: Summary freshness model is phase-dependent.**
+**PoC (S-02):** No explicit staleness tracking. When source data changes, affected object and engineer summaries are recalculated synchronously in the same request flow before the response is returned. There is no `is_stale` column, no background worker, and no admin-triggered recalculation button.
 
-**AD-09: All calculation constants are read from `app_config` at compute time.**
-The calculation service must reload config values for each recalculation batch, not cache them for the process lifetime. This ensures admin changes to constants take effect immediately in the next triggered recalculation.
+**MVP (M-06 + AD-10):** Explicit staleness tracking is used. `is_stale` is set synchronously on write, cleared on successful recalculation, and read by the UI to show stale/processing indicators. A background worker recalculates stale summaries asynchronously when triggered by admin. This prevents serving stale data silently while maintaining write performance during larger write batches.
+
+**AD-09: Calculation constants are externalized and read from the phase-appropriate source.**
+Constants are never hardcoded in calculation logic.
+
+**PoC (S-03):** Constants are injected at application startup from Docker environment variables bound via `@ConfigurationProperties(prefix="workload.config")`. Because PoC has no admin config UI and no `app_config` table, these values remain fixed until restart.
+
+**MVP (M-10):** Constants are stored in `app_config`. The calculation service must reload config values for each recalculation batch, not cache them for the process lifetime. This ensures admin changes take effect immediately in the next triggered recalculation.
 
 **AD-10: Recalculation is on-demand, not event-driven. (MVP only)**
 The system marks summaries stale automatically on data change, but does not auto-trigger recalculation. Recalculation runs only when an admin explicitly triggers it via `POST /svod/recalculate`. This model avoids cascading background load and gives operators control over when updated numbers are computed. Post-MVP may move to automatic triggers. **PoC uses synchronous recalculation on save instead (S-02): no `is_stale` flag, no background worker, no admin trigger button.**
@@ -4271,4 +4278,4 @@ For PoC (demo environment, no production data):
 
 ---
 
-_End of Technical Specification — Version 2.21_
+_End of Technical Specification — Version 2.22_
