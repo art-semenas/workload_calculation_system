@@ -2,7 +2,7 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.23
+**Version:** 2.24
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
 **Date:** 2026-03-25
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.24:** Consolidated resolution of the residual gaps from `tor_gap_task_list_v2.23`. (1) T-01: Re-scoped app-config and audit surfaces to MVP only in shared UI/API sections; PoC remains startup-only via environment variables with no `/admin/config` or `/admin/audit` endpoints. (2) T-02: Marked planning-period UI/API surfaces as MVP-only (`M-07`) and added PoC notes clarifying that the period selector is absent because planning periods do not exist in PoC. (3) T-03: Rewrote §8.4 stale-handling guidance to match the canonical phase split: PoC uses synchronous recalculation with no `is_stale` writes, MVP uses same-transaction stale marking. (4) T-04: Corrected the PoC operational runbook to use `/actuator/health`, environment-variable config checks, and `docker compose logs` instead of non-PoC config endpoints or Datadog guidance.
 **Changelog v2.23:** Gap resolution (T-01 through T-06 from tor_gap_task_list_v2.22). (0) T-01: Resolved cross-division assignment ambiguity with Option A — editors can assign any active engineer to objects in their own division. Updated §4.11 assignment rules, §12 permissions table and editor scope note, §21.5 field-level access table, AD-15 distinction note, and §5.2 schema note to consistently reflect that `division_id` scopes editor **object** access while `home_division_id` is display-only for engineers. (1) T-02: Added RBAC-by-phase notes to §10.2 engineer and object-engineer assignment endpoints; added PoC disclaimer to §12 permission matrix. (2) T-03: Added stale-marking-by-phase header note to Records/Repairs/Travel endpoints; added inline "(MVP; synchronous recalc — PoC)" annotations to all stale-marking endpoints; marked Recalculation sub-section as MVP-only. (3) T-04: Split DELETE /objects/:id behavior note into PoC (synchronous recalc) and MVP (stale-marking) paths. (4) T-05: Rewrote §23.2 — separated PoC limitations (no periods, no audit log, no admin UI) from MVP mitigations; removed false claims that PoC has planning periods or audit_log. (5) T-06: Added AC-24 through AC-32 covering FR-01 (CRUD lifecycle, hierarchy enforcement), FR-04 (records entry), FR-06 (travel entry, round-trip calc), FR-08 (PDF export, object inventory XLSX — both MVP), FR-12 (period CRUD, read-only, no-active-period blocking — all MVP); added cross-reference note to AC-08 linking it to §12.
 **Changelog v2.22:** T-01 — Re-scoped architecture/config rules for PoC vs MVP. Rewrote AD-08 to split PoC synchronous recalculation from MVP staleness tracking, rewrote AD-09 to use phase-appropriate config sources (PoC env vars vs MVP `app_config`), and updated §6.11 intro so it no longer implies `app_config` exists in PoC.
 **Changelog v2.21:** T-06 — Changed §11.1 step 4 `object_devices` from "Create" to "Upsert". If a device appears in multiple equipment entries (different `system_type`), the first occurrence sets `quantity_physical`; subsequent entries skip the `object_devices` row. Added post-import editor note. Prevents UNIQUE(object_id, device_type_id) constraint violation when importing objects with devices assigned to multiple systems.
@@ -1204,20 +1205,20 @@ division_headcount = SUM(itogo_chislo_with_travel)  for all objects in division
 
 **PoC (S-02):** No staleness tracking. All summaries are recalculated synchronously on every data-changing request. The table below lists triggering events; stale-marking actions apply to MVP only unless stated otherwise.
 
-| Triggering Event                                     | Staleness Action (immediate, same transaction)                                                                                                                                                                                                                                                                                              |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `object_system_assignments` INSERT / UPDATE / DELETE | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
-| `object_devices` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
-| `records_tasks` INSERT / UPDATE                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
-| `object_repairs` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'` (any change to repair counts or the set of performed types changes kvo and repair_work_6months)                                                                                                                                                                                            |
-| `travel` UPDATE                                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                            |
-| `device_system_contexts` UPDATE (r1 or r2)           | Mark `is_stale = 'TRUE'` for ALL objects with assignments using this context                                                                                                                                                                                                                                                                |
-| `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                                                                                                                                                                                                              |
-| `app_config` UPDATE (any calculation key) (MVP)      | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
-| `periods.is_active` changed (period switch) (MVP)    | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                      |
+| Triggering Event                                     | Staleness Action (immediate, same transaction)                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `object_system_assignments` INSERT / UPDATE / DELETE | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `object_devices` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `records_tasks` INSERT / UPDATE                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `object_repairs` INSERT / UPDATE / DELETE            | Mark this object's `summaries.is_stale = 'TRUE'` (any change to repair counts or the set of performed types changes kvo and repair_work_6months)                                                                                                                                                                                                                                                                                                                                                     |
+| `travel` UPDATE                                      | Mark this object's `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `device_system_contexts` UPDATE (r1 or r2)           | Mark `is_stale = 'TRUE'` for ALL objects with assignments using this context                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `repair_types.time_minutes` UPDATE                   | Mark `is_stale = 'TRUE'` for ALL objects with this repair type                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `app_config` UPDATE (any calculation key) (MVP)      | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `periods.is_active` changed (period switch) (MVP)    | Mark ALL `summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `objects` DELETE                                     | **PoC:** Before cascade: read all engineers assigned to the object from `object_engineers`. Cascade-delete all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`) — all in the same transaction. Immediately recalculate engineer summaries synchronously for all affected engineers (S-02). **MVP:** Same cascade, then mark those engineers' `engineer_summaries.is_stale = 'TRUE'` in the same transaction. |
-| Any `summaries.is_stale` set to `'TRUE'` (MVP)       | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                          |
-| `users.home_division_id` UPDATE for engineer E       | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40.                                        |
+| Any `summaries.is_stale` set to `'TRUE'` (MVP)       | Mark all engineers assigned to that object: `engineer_summaries.is_stale = 'TRUE'`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `users.home_division_id` UPDATE for engineer E       | No automatic summary invalidation. Display a UI warning banner on the engineer's profile page: **"Домашнее подразделение изменено — проверьте время в пути для всех объектов инженера"**. Travel data for assigned objects remains valid until manually reviewed and updated by an editor. See C-40.                                                                                                                                                                                                 |
 
 **Recalculation trigger (MVP):** Admin clicks "Пересчитать" or calls `POST /svod/recalculate`. The background worker processes all stale summaries in dependency order: object summaries first, then engineer summaries.
 
@@ -1422,13 +1423,13 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 | `/objects/new`         | Object Create    | Create new object                                                                                       |
 | `/objects/:id`         | Object Detail    | Tabbed detail view                                                                                      |
 | `/objects/:id/edit`    | Object Edit      | Edit object metadata                                                                                    |
-| `/svod`                | СВОД             | Full summary table with period selector, filters, and export                                            |
+| `/svod`                | СВОД             | Full summary table with filters and export; period selector is MVP only — requires M-07                 |
 | `/catalog/devices`     | Device Catalog   | List / create / edit device types and contexts                                                          |
 | `/catalog/devices/new` | New Device       | Create device type and assign system contexts                                                           |
 | `/catalog/devices/:id` | Device Detail    | View/edit device and all system contexts                                                                |
 | `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog                                                                |
-| `/admin/config`        | App Config       | View/edit all calculation constants (admin only)                                                        |
-| `/admin/periods`       | Planning Periods | Create / activate / deactivate planning periods (admin only)                                            |
+| `/admin/config`        | App Config       | MVP only — requires M-10; view/edit all calculation constants (admin only)                              |
+| `/admin/periods`       | Planning Periods | MVP only — requires M-07; create / activate / deactivate planning periods (admin only)                  |
 | `/admin/users`         | Users            | User management (admin only)                                                                            |
 | `/import`              | Import           | JSON / text-list import wizard                                                                          |
 | `/export`              | Export           | Export options                                                                                          |
@@ -1644,7 +1645,7 @@ Stale rows display state-specific indicators in place of numeric values (MVP onl
 
 _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
-**Period selector:** A dropdown above the СВОД table allows selecting which planning period's data to view. Defaults to the active period. When a non-active period is selected, the table shows historical data for that period (read-only). The "Пересчитать" button is disabled for past periods.
+**Period selector (MVP only — requires M-07):** A dropdown above the СВОД table allows selecting which planning period's data to view. Defaults to the active period. When a non-active period is selected, the table shows historical data for that period (read-only). The "Пересчитать" button is disabled for past periods. _PoC: selector absent because planning periods do not exist yet (S-05); СВОД shows only the current PoC dataset._
 
 ### 7.10 UI/UX Constraints
 
@@ -1698,10 +1699,10 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 - `ON DELETE RESTRICT` on `object_system_assignments.context_id → device_system_contexts.id`.
 - `ON DELETE RESTRICT` on `object_repairs.repair_type_id → repair_types.id`. Application-level deletion logic: (1) if any `object_repairs` row for this type has `count > 0` (in any period), return HTTP 409 `REPAIR_TYPE_IN_USE`; (2) otherwise, delete all referencing `object_repairs` rows with `count = 0` in the same transaction, then delete the `repair_types` row. This satisfies the DB RESTRICT constraint.
-- `ON DELETE CASCADE` applies to all child tables referencing `objects.id`: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`. Object hard-delete removes all dependent rows atomically. The application layer must read assigned engineers from `object_engineers` **before** issuing the DELETE and mark their `engineer_summaries.is_stale = 'TRUE'` in the same transaction (DB cascade fires after the application read).
+- `ON DELETE CASCADE` applies to all child tables referencing `objects.id`: `object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`. Object hard-delete removes all dependent rows atomically. The application layer must read assigned engineers from `object_engineers` **before** issuing the DELETE because DB cascade fires after the application read. Engineer summary handling is phase-specific: **PoC (S-02)** recalculates affected engineer summaries synchronously in the same request flow after the delete; no `is_stale` writes exist. **MVP (AD-10)** marks affected `engineer_summaries.is_stale = 'TRUE'` in the same transaction, with recalculation triggered later on demand.
 - Deleting a `device_type` that has `object_devices` rows is blocked (application-level guard + DB constraint).
 - Deleting a `users` record with role `engineer` that has active `object_engineers` rows is blocked until all assignments are removed.
-- `is_stale = 'TRUE'` is set in the **same transaction** as the data change — for both `summaries` and `engineer_summaries`.
+- **MVP only (AD-10):** `is_stale = 'TRUE'` is set in the **same transaction** as the data change — for both `summaries` and `engineer_summaries`. **PoC (S-02):** no `is_stale` columns exist; affected summaries are recalculated synchronously during the request instead.
 - All NULL quantities treated as 0 in calculations.
 - `engineer_summaries` recalculation must wait for all dependent `summaries` to be current (worker ordering constraint).
 
@@ -2130,17 +2131,19 @@ GET    /svod/export/xlsx               Export to XLSX (active period by default;
 GET    /svod/export/pdf                Export to PDF (active period by default; ?period_id= for historical)
 ```
 
-#### App Configuration
+#### App Configuration _(MVP only — requires M-10)_
+
+> **PoC note:** These endpoints do not exist in PoC. In PoC (S-03, S-07), calculation constants are provided only via Docker environment variables at application startup, there is no HTTP config-management API, and there is no audit-log API. See §6.11 and §15.3.
 
 ```
 GET    /admin/config                   List all config keys/values
-PUT    /admin/config                   Batch update multiple keys (validates all constraints; marks summaries stale — MVP; synchronous recalc — PoC; logged to audit_log — MVP only)
-GET    /admin/audit                    Audit log (admin only)
+PUT    /admin/config                   Batch update multiple keys (validates all constraints; marks summaries stale; logged to audit_log — MVP only; see §6.11 / M-10)
+GET    /admin/audit                    Audit log (admin only; MVP only — requires M-08)
 ```
 
 ##### Config Update Request/Response
 
-All violations in a single save are reported together (not fail-fast per key). See §6.11.1 for complete per-key and cross-key constraint definitions.
+All violations in a single save are reported together (not fail-fast per key). See §6.11.1 for complete per-key and cross-key constraint definitions. The request/response examples below are MVP-only because PoC has no `PUT /admin/config` endpoint.
 
 **Request (batch save — valid values):**
 
@@ -2194,7 +2197,9 @@ All violations in a single save are reported together (not fail-fast per key). S
 }
 ```
 
-#### Planning Periods
+#### Planning Periods _(MVP only — requires M-07)_
+
+> **PoC note:** These endpoints do not exist in PoC. In PoC (S-05), planning periods are not implemented yet, so `/admin/periods` is unavailable and summary/data-entry flows operate without period selection. See §15.3 and §15.7.
 
 ```
 GET    /admin/periods                  List all periods
@@ -2347,6 +2352,7 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
    - Create `object_system_assignments` with `quantity_maintained = quantity`.
 
    > **Note:** After import, editors should review `quantity_physical` for devices assigned to multiple systems, as the physical quantity is taken from the first equipment entry for that device. This matches the post-import behaviour in §4.3: `quantity_physical = quantity_maintained` initially; editors adjust manually if needed.
+
 5. Populate `records_tasks` per object from the `records` map.
 6. Populate `object_repairs` per object from the `repairs` map.
 7. Populate `travel` per object from the `travel` map.
@@ -2410,25 +2416,25 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 
 > **PoC (S-04):** The permission matrix below describes **MVP behavior**. In PoC, all authenticated users can read and write all data regardless of role — no division scoping, no role-based restrictions. The `role` column exists on `users` and is set correctly, but access control is not enforced. See §15.3 S-04.
 
-| Permission                             | Admin | Editor       | Viewer | Engineer           |
-| -------------------------------------- | ----- | ------------ | ------ | ------------------ |
-| View all objects / СВОД                | ✅    | ✅           | ✅     | Own objects only   |
-| Edit object metadata                   | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Edit equipment / assignments           | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Edit records / repairs (active period) | ✅    | ✅ (own div) | ❌     | ✅ (own objects)   |
-| Edit travel data                       | ✅    | ✅ (own div) | ❌     | ❌                 |
-| Create / delete objects                | ✅    | ❌           | ❌     | ❌                 |
-| Manage device catalog                  | ✅    | ❌           | ❌     | ❌                 |
-| Manage repair type catalog             | ✅    | ❌           | ❌     | ❌                 |
-| Edit app configuration constants       | ✅    | ❌           | ❌     | ❌                 |
-| Import data (JSON / text)              | ✅    | ❌           | ❌     | ❌                 |
-| Export XLSX / PDF                      | ✅    | ✅           | ✅     | ✅ (own objects)   |
-| Trigger bulk recalculation             | ✅    | ❌           | ❌     | ❌                 |
-| View audit log                         | ✅    | ❌           | ❌     | ❌                 |
-| Manage users / engineers               | ✅    | ❌           | ❌     | ❌                 |
-| View own workload dashboard            | ✅    | ✅           | ✅     | ✅                 |
+| Permission                             | Admin | Editor                             | Viewer | Engineer           |
+| -------------------------------------- | ----- | ---------------------------------- | ------ | ------------------ |
+| View all objects / СВОД                | ✅    | ✅                                 | ✅     | Own objects only   |
+| Edit object metadata                   | ✅    | ✅ (own div)                       | ❌     | ❌                 |
+| Edit equipment / assignments           | ✅    | ✅ (own div)                       | ❌     | ❌                 |
+| Edit records / repairs (active period) | ✅    | ✅ (own div)                       | ❌     | ✅ (own objects)   |
+| Edit travel data                       | ✅    | ✅ (own div)                       | ❌     | ❌                 |
+| Create / delete objects                | ✅    | ❌                                 | ❌     | ❌                 |
+| Manage device catalog                  | ✅    | ❌                                 | ❌     | ❌                 |
+| Manage repair type catalog             | ✅    | ❌                                 | ❌     | ❌                 |
+| Edit app configuration constants       | ✅    | ❌                                 | ❌     | ❌                 |
+| Import data (JSON / text)              | ✅    | ❌                                 | ❌     | ❌                 |
+| Export XLSX / PDF                      | ✅    | ✅                                 | ✅     | ✅ (own objects)   |
+| Trigger bulk recalculation             | ✅    | ❌                                 | ❌     | ❌                 |
+| View audit log                         | ✅    | ❌                                 | ❌     | ❌                 |
+| Manage users / engineers               | ✅    | ❌                                 | ❌     | ❌                 |
+| View own workload dashboard            | ✅    | ✅                                 | ✅     | ✅                 |
 | Assign / remove engineers to objects   | ✅    | ✅ (own div objects, any engineer) | ❌     | ❌                 |
-| View engineer list and load ratios     | ✅    | ✅ (all engineers)           | ✅     | ✅ (own data only) |
+| View engineer list and load ratios     | ✅    | ✅ (all engineers)                 | ✅     | ✅ (own data only) |
 
 **Editor scope:** `division_id` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level.  
 **Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
@@ -2816,19 +2822,19 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 
 #### Core (non-negotiable for PoC)
 
-| Feature                 | Notes                                                                                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,935. Full import is MVP (see S-06).  |
-| **Calculation engine**  | Full calculation: ОС, ПС, Видео, Записи, Ремонт, Дорога → ИТОГО Числ. All formulas from §6.                                                                        |
-| **СВОД table**          | Paginated table matching all 19 source columns.                                                                                                                    |
-| **СВОД export to XLSX** | Export matching original template structure. Stakeholders verify spot-checked rows against source file.                                                            |
-| **Object detail page**  | View and edit equipment quantities, repairs, records, travel.                                                                                                      |
-| **Engineer module**     | Engineers as users, object-engineer assignments, workload split, capacity, load ratio, overload status, engineer dashboard. Full §4.10–4.11, §6.12–6.14, §7.4–7.7. |
-| **Aggregation layer**   | Branch, division, company-wide required FTE totals. All computed on the fly (§16).                                                                                 |
-| **Basic dashboard**     | Required FTE by division, top objects by workload, coverage gaps.                                                                                                  |
-| **Authentication**      | Login / logout. Single role — all authenticated users can read and write.                                                                                          |
-| **Seed normatives**     | Device catalog and repair types loaded as migration seed data. Values from source XLSX.                                                                            |
-| **Basic observability** | Structured logging (JSON to stdout), health endpoint (`/actuator/health`). Job failure alerting via Datadog is MVP (§18.2).                                         |
+| Feature                 | Notes                                                                                                                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,935. Full import is MVP (see S-06). |
+| **Calculation engine**  | Full calculation: ОС, ПС, Видео, Записи, Ремонт, Дорога → ИТОГО Числ. All formulas from §6.                                                                                                                                   |
+| **СВОД table**          | Paginated table matching all 19 source columns.                                                                                                                                                                               |
+| **СВОД export to XLSX** | Export matching original template structure. Stakeholders verify spot-checked rows against source file.                                                                                                                       |
+| **Object detail page**  | View and edit equipment quantities, repairs, records, travel.                                                                                                                                                                 |
+| **Engineer module**     | Engineers as users, object-engineer assignments, workload split, capacity, load ratio, overload status, engineer dashboard. Full §4.10–4.11, §6.12–6.14, §7.4–7.7.                                                            |
+| **Aggregation layer**   | Branch, division, company-wide required FTE totals. All computed on the fly (§16).                                                                                                                                            |
+| **Basic dashboard**     | Required FTE by division, top objects by workload, coverage gaps.                                                                                                                                                             |
+| **Authentication**      | Login / logout. Single role — all authenticated users can read and write.                                                                                                                                                     |
+| **Seed normatives**     | Device catalog and repair types loaded as migration seed data. Values from source XLSX.                                                                                                                                       |
+| **Basic observability** | Structured logging (JSON to stdout), health endpoint (`/actuator/health`). Job failure alerting via Datadog is MVP (§18.2).                                                                                                   |
 
 ---
 
@@ -3003,22 +3009,22 @@ UNIQUE(engineer_id)
 
 ### 15.5 PoC UI Routes
 
-| Route               | View                                                                         |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `/login`            | Login page                                                                   |
-| `/`                 | Dashboard — required FTE by division, top 10 objects, coverage gaps          |
-| `/objects`          | Object list — searchable, filterable, shows ИТОГО Числ                       |
-| `/objects/new`      | Create object                                                                |
-| `/objects/:id`      | Object detail — 6 tabs: Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД |
-| `/objects/:id/svod` | СВОД tab (computed summary, read-only)                                       |
-| `/engineers`        | Engineer list — load ratio, status, object count                             |
+| Route                 | View                                                                         |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `/login`              | Login page                                                                   |
+| `/`                   | Dashboard — required FTE by division, top 10 objects, coverage gaps          |
+| `/objects`            | Object list — searchable, filterable, shows ИТОГО Числ                       |
+| `/objects/new`        | Create object                                                                |
+| `/objects/:id`        | Object detail — 6 tabs: Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД |
+| `/objects/:id/svod`   | СВОД tab (computed summary, read-only)                                       |
+| `/engineers`          | Engineer list — load ratio, status, object count                             |
 | `/engineers/:id`      | Engineer detail — workload dashboard                                         |
 | `/engineers/:id/edit` | Engineer Edit — Edit name, capacity_fte, home division                       |
 | `/svod`               | Full СВОД table — paginated, filterable                                      |
-| `/svod/export`      | Trigger XLSX export                                                          |
-| `/divisions`        | Division list — name, branch count, object count; create button              |
-| `/divisions/:id`    | Division detail — СВОД + branch list; create branch button                   |
-| `/branches/:id`     | Branch detail — object list with СВОД; create object button                  |
+| `/svod/export`        | Trigger XLSX export                                                          |
+| `/divisions`          | Division list — name, branch count, object count; create button              |
+| `/divisions/:id`      | Division detail — СВОД + branch list; create branch button                   |
+| `/branches/:id`       | Branch detail — object list with СВОД; create object button                  |
 
 No catalog management pages, no periods page.
 
@@ -3653,13 +3659,13 @@ This enables distributed tracing if a second service is added (e.g., a notificat
 
 Minimal operational runbook for PoC deployment:
 
-| Scenario                          | Action                                                                                                           |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Application not responding        | `docker compose restart api` — check `/health`                                                                   |
-| Database connection errors        | Check PostgreSQL container logs; verify connection pool settings                                                 |
-| Calculation produces wrong values | Check seed normative data via `/admin/config`; compare with source XLSX values in §4.2                           |
-| XLSX export fails                 | Check Datadog logs for `ApachePOI` or `XSSFWorkbook` exception; verify column mapping in §7.9                    |
-| All summaries show stale (MVP)    | Trigger `POST /svod/recalculate` as admin; monitor job logs. _Not applicable to PoC (S-02: synchronous recalc)._ |
+| Scenario                          | Action                                                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Application not responding        | Check `GET /actuator/health`; if unhealthy or unreachable, inspect `docker compose logs api` and restart with `docker compose restart api`                                                 |
+| Database connection errors        | Check PostgreSQL container logs; verify connection pool settings                                                                                                                           |
+| Calculation produces wrong values | Check PoC environment-variable config, verify seed normative data migration values, and inspect local JSON logs via `docker compose logs` before comparing with source XLSX values in §4.2 |
+| XLSX export fails                 | Inspect container stdout via `docker compose logs api` for `ApachePOI` or `XSSFWorkbook` exceptions; verify column mapping in §7.9                                                         |
+| All summaries show stale (MVP)    | Trigger `POST /svod/recalculate` as admin; monitor job logs. _Not applicable to PoC (S-02: synchronous recalc)._                                                                           |
 
 ## 19. Testing Strategy
 
@@ -4063,7 +4069,7 @@ In MVP, field-level access rules are:
 | Role     | Visible data scope                                                                             | Write scope                                                   |
 | -------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | admin    | All divisions, all objects, all engineers                                                      | Everything                                                    |
-| editor   | Own division objects and branches; **all active engineers** (for cross-division assignment)     | Own division objects and assignments                          |
+| editor   | Own division objects and branches; **all active engineers** (for cross-division assignment)    | Own division objects and assignments                          |
 | engineer | All objects they are assigned to + own engineer profile; `GET /engineers` returns own row only | Записи and Ремонт for their own objects in active period only |
 | viewer   | All divisions, all objects (read-only)                                                         | Nothing                                                       |
 
