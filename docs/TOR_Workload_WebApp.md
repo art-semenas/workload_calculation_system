@@ -2,9 +2,9 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.22
+**Version:** 2.23
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
-**Date:** 2026-03-20
+**Date:** 2026-03-25
 **Changelog v2.0:** Replaced hardcoded equipment tables with dynamic device catalog architecture (§4.2, §4.3, §4.5, §5, §6.3, §6.4, §7, §9, §10, §13).  
 **Changelog v2.1:** Incorporated three architectural decisions: (1) Option C two-layer quantity model (physical + maintained); (2) System type restriction enforced at UI/API/DB levels; (3) Normatives managed per (device, system) pair. Updated §4.2, §4.3, §6.4, §7.3, §7.4, added C-17–C-20, added AC-11–AC-13.  
 **Changelog v2.2:** Added Engineers Module — engineers as first-class entities, object-engineer assignments with equal workload split, engineer capacity tracking, overload detection, engineer dashboard, and coverage gap reporting. Updated §2, §3, §4 (FR-10, FR-11), §5, §6 (§6.12–6.14), §7, §9, §10, §12, §13 (C-21–C-25), §14 (AC-14–AC-18).  
@@ -16,6 +16,7 @@
 **Changelog v2.8:** Structural gap closure. Added: §5.3 Indexing Strategy (PoC); §21 Security Hardening (password policy, JWT, lockout, encryption); §22 Multi-Environment Definition; §23 Normative Versioning Policy; §24 Calculation Snapshot & Freeze (Post-MVP); §25 Backup & Disaster Recovery. Updated: §5.1 isolation level; §6 partial-period policy (C-38); §8.3 security hardening refs; TOC.  
 **Changelog v2.9:** Gap and contradiction resolution. (1) Removed `responsible_engineer` VARCHAR from §5.2 `objects` table — contradicted C-22/C-32; updated §7.9 СВОД column 5 source to `object_engineers → users.name` JOIN. (2) Added `is_active`, `requires_activation` to §5.2 `users` table — required by AD-18, C-24, C-31 but missing from full schema. (3) Changed `is_stale` from `BOOLEAN` to `VARCHAR(20)` in `summaries` and `engineer_summaries` to support `'PROCESSING'` state (§17.7). (4) Added component breakdown clarification (C-39) — PZV and travel are unattributed overhead in per-component breakdown; `itogo_chislo_with_travel` is authoritative. (5) Added `role` column to PoC schema (§15.4), simplified S-04 to "no division scoping" rather than "no role column". (6) Replaced XLSX-based import model in §11.1 with structured JSON/text list import. (7) Added records normative keys to §6.11 `app_config`. (8) Defined travel time policy (C-27) as primary/first-assigned engineer is canonical. (9) Aligned PAC-09 to `/actuator/health` with Spring Boot default response. (10) Updated §17 to reference MVP table names. (11) Added HIGH-7 note on repair type deletion semantics. (12) Documented PoC intermediate repair fields as in-memory only (§15.4). (13) Amended C-04 to clarify `round_trip_min` is cached in `summaries`. (14) Added zero guard to §6.8 itogo formulas — matches XLSX IF-guard that forces itogo=0 when all work components are zero (prevents PZV/travel phantom FTE on empty objects); updated C-39 accordingly.
 **Changelog v2.10:** Added §6.11.1 Configuration Validation Rules — per-key and cross-key constraints for all 19 `app_config` values, fail-fast startup behaviour, HTTP 422 save rejection with structured violation codes, and AC-23 acceptance criteria covering startup refusal, inverted-threshold rejection, and boundary value tests.
+**Changelog v2.23:** Gap resolution (T-01 through T-06 from tor_gap_task_list_v2.22). (0) T-01: Resolved cross-division assignment ambiguity with Option A — editors can assign any active engineer to objects in their own division. Updated §4.11 assignment rules, §12 permissions table and editor scope note, §21.5 field-level access table, AD-15 distinction note, and §5.2 schema note to consistently reflect that `division_id` scopes editor **object** access while `home_division_id` is display-only for engineers. (1) T-02: Added RBAC-by-phase notes to §10.2 engineer and object-engineer assignment endpoints; added PoC disclaimer to §12 permission matrix. (2) T-03: Added stale-marking-by-phase header note to Records/Repairs/Travel endpoints; added inline "(MVP; synchronous recalc — PoC)" annotations to all stale-marking endpoints; marked Recalculation sub-section as MVP-only. (3) T-04: Split DELETE /objects/:id behavior note into PoC (synchronous recalc) and MVP (stale-marking) paths. (4) T-05: Rewrote §23.2 — separated PoC limitations (no periods, no audit log, no admin UI) from MVP mitigations; removed false claims that PoC has planning periods or audit_log. (5) T-06: Added AC-24 through AC-32 covering FR-01 (CRUD lifecycle, hierarchy enforcement), FR-04 (records entry), FR-06 (travel entry, round-trip calc), FR-08 (PDF export, object inventory XLSX — both MVP), FR-12 (period CRUD, read-only, no-active-period blocking — all MVP); added cross-reference note to AC-08 linking it to §12.
 **Changelog v2.22:** T-01 — Re-scoped architecture/config rules for PoC vs MVP. Rewrote AD-08 to split PoC synchronous recalculation from MVP staleness tracking, rewrote AD-09 to use phase-appropriate config sources (PoC env vars vs MVP `app_config`), and updated §6.11 intro so it no longer implies `app_config` exists in PoC.
 **Changelog v2.21:** T-06 — Changed §11.1 step 4 `object_devices` from "Create" to "Upsert". If a device appears in multiple equipment entries (different `system_type`), the first occurrence sets `quantity_physical`; subsequent entries skip the `object_devices` row. Added post-import editor note. Prevents UNIQUE(object_id, device_type_id) constraint violation when importing objects with devices assigned to multiple systems.
 **Changelog v2.20:** T-05 — Removed duplicate shorter note from §16.6. Retained the complete note: "Engineer overload is attributed to the engineer's `home_division_id`, not to any specific branch…". The removed note was a strict subset of the retained one.
@@ -369,7 +370,7 @@ An object can have zero, one, or many engineers assigned (joint responsibility w
 - Admins and editors (within their division) manage assignments via the Object Detail page or the Engineer Detail page.
 - There is no system-type constraint on assignments — an engineer assigned to an object is responsible for all maintenance at that object.
 - Assignments record `assigned_at` timestamp for audit purposes.
-- An engineer can be assigned to objects in any division (cross-division allowed).
+- **Cross-division assignments are allowed.** An engineer can be assigned to objects in any division, regardless of their `home_division_id`. Editors may assign any active engineer to objects within the editor's own division — the engineer picker is not restricted by division. Admins may assign any active engineer to any object.
 - Removing an assignment immediately marks that engineer's workload summary stale.
 
 **Workload split:** When multiple engineers share an object, the object's `itogo_chislo_with_travel` is divided **equally** among all assigned engineers. The split ratio is `1 / COUNT(assigned engineers at object)` and is recomputed dynamically — not stored.
@@ -692,8 +693,8 @@ created_at            TIMESTAMP
 updated_at            TIMESTAMP
 ```
 
-> **Note:** `division_id` is the **access-control** scope used by editors.  
-> `home_division_id` is the **display** home for engineers — they can be assigned to objects in any division regardless of this value.
+> **Note:** `division_id` is the **access-control** scope used by editors — it restricts which **objects** (and their branches) an editor can manage. It does **not** restrict which engineers an editor can see or assign.
+> `home_division_id` is the **display** home for engineers — used for grouping and filtering in reports and dashboards. Engineers can be assigned to objects in any division regardless of this value, and editors can assign any active engineer to objects in their own division.
 > `is_active` controls soft-delete for engineers (AD-18). Inactive engineers are hidden from assignment dropdowns but their historical data is preserved (C-24).
 > `requires_activation` flags placeholder accounts created during import (C-31). Admins activate them by setting a password.
 
@@ -1836,7 +1837,7 @@ Redis serves two purposes. Primary: the recalculation job queue — stale summar
 MapStruct compile-time mappers translate between JPA entities and DTOs for all request/response cycles. JPA entities are never serialised directly to JSON. This prevents accidental exposure of lazy-loaded relations, internal fields (`password_hash`, `is_stale` internals), and database-level annotations leaking into the API contract. The DTO layer is the API contract. Changing internal entity structure does not break the API as long as mappers are updated.
 
 **AD-15: Engineers are users, not a separate entity.**
-An engineer is a `users` row with `role = 'engineer'`. There is no separate `engineers` table. `capacity_fte`, `home_division_id`, and `employee_id` are columns on `users`. This keeps authentication, role management, and engineer data in one place. The distinction between `division_id` (editor access scope) and `home_division_id` (engineer display home) must be explicitly maintained — they serve different purposes.
+An engineer is a `users` row with `role = 'engineer'`. There is no separate `engineers` table. `capacity_fte`, `home_division_id`, and `employee_id` are columns on `users`. This keeps authentication, role management, and engineer data in one place. The distinction between `division_id` (editor access scope — restricts which **objects** an editor can manage) and `home_division_id` (engineer display home — used for grouping and filtering, does **not** restrict assignment) must be explicitly maintained — they serve different purposes. Editors can see and assign **all active engineers** to objects within their division, regardless of engineer `home_division_id`.
 
 **AD-16: Engineer workload split ratio is always computed, never stored.**
 `engineer_count` per object is a live COUNT query. Storing it would require updating it on every assignment change. Because the split is equal and the count is cheap to compute from `object_engineers`, it is calculated at summary computation time and not persisted.
@@ -2059,7 +2060,10 @@ DELETE /objects/:id                    Hard-delete; cascades all child tables; m
 GET    /objects/:id/summary            Get computed summary
 ```
 
-> **Object hard-delete behaviour:** `DELETE /objects/:id` permanently removes the object and cascade-deletes all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Before deletion the service reads all engineers assigned to the object and marks their `engineer_summaries.is_stale = 'TRUE'` within the same transaction. Recalculation of affected engineer summaries happens on-demand when `POST /svod/recalculate` is triggered (see §6.10). Returns `204 No Content` on success.
+> **Object hard-delete behaviour:** `DELETE /objects/:id` permanently removes the object and cascade-deletes all child rows (`object_engineers`, `object_devices`, `object_system_assignments`, `records_tasks`, `object_repairs`, `travel`, `summaries`). Before deletion the service reads all engineers assigned to the object. Returns `204 No Content` on success. Engineer summary handling differs by phase (see §6.10):
+>
+> - **PoC (S-02):** Cascade-delete all child rows in the same transaction, then immediately recalculate engineer summaries synchronously for all affected engineers. No `is_stale` column exists in PoC.
+> - **MVP (AD-10):** Cascade-delete all child rows, then mark affected engineers' `engineer_summaries.is_stale = 'TRUE'` within the same transaction. Recalculation happens on-demand when `POST /svod/recalculate` is triggered.
 
 #### Physical Inventory
 
@@ -2081,13 +2085,15 @@ DELETE /objects/:id/assignments/:aid         Remove assignment
 
 #### Records, Repairs, Travel
 
+> **Stale-marking by phase:** The "(marks stale)" annotations below describe **MVP behavior** (AD-10). In PoC (S-02), there is no `is_stale` column — all affected summaries are recalculated synchronously in the same request. See §6.10 for the full invalidation rules.
+
 ```
 GET    /objects/:id/records            Get records task quantities
-PUT    /objects/:id/records            Update (marks stale)
+PUT    /objects/:id/records            Update (marks stale — MVP; synchronous recalc — PoC)
 GET    /objects/:id/repairs            List repair counts per type
-PUT    /objects/:id/repairs/:rtid      Set count for one repair type (marks stale)
+PUT    /objects/:id/repairs/:rtid      Set count for one repair type (marks stale — MVP; synchronous recalc — PoC)
 GET    /objects/:id/travel             Get travel data
-PUT    /objects/:id/travel             Update (marks stale)
+PUT    /objects/:id/travel             Update (marks stale — MVP; synchronous recalc — PoC)
 ```
 
 #### Device Catalog
@@ -2101,7 +2107,7 @@ DELETE /catalog/devices/:id            Delete (blocked if object_devices rows ex
 
 GET    /catalog/devices/:id/contexts   List system contexts
 POST   /catalog/devices/:id/contexts   Add context {system_type, r1_minutes, r2_minutes}
-PUT    /catalog/devices/:id/contexts/:cid  Update r1/r2 (marks stale for affected objects)
+PUT    /catalog/devices/:id/contexts/:cid  Update r1/r2 (marks stale for affected objects — MVP; synchronous recalc — PoC)
 DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments; returns 409)
 ```
 
@@ -2110,7 +2116,7 @@ DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments
 ```
 GET    /catalog/repairs                List all repair types
 POST   /catalog/repairs                Create {name, time_minutes}
-PUT    /catalog/repairs/:id            Update (marks stale for affected objects)
+PUT    /catalog/repairs/:id            Update (marks stale for affected objects — MVP; synchronous recalc — PoC)
 DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row with count > 0 references this type; returns 409)
 ```
 
@@ -2128,7 +2134,7 @@ GET    /svod/export/pdf                Export to PDF (active period by default; 
 
 ```
 GET    /admin/config                   List all config keys/values
-PUT    /admin/config                   Batch update multiple keys (validates all constraints; marks summaries stale; logged to audit_log)
+PUT    /admin/config                   Batch update multiple keys (validates all constraints; marks summaries stale — MVP; synchronous recalc — PoC; logged to audit_log — MVP only)
 GET    /admin/audit                    Audit log (admin only)
 ```
 
@@ -2198,7 +2204,9 @@ PUT    /admin/periods/:id/activate     Set as active period (deactivates current
 GET    /admin/periods/active           Get the currently active period
 ```
 
-#### Recalculation (on-demand)
+#### Recalculation (on-demand) _(MVP only — not available in PoC)_
+
+> **PoC note:** These endpoints do not exist in PoC. In PoC (S-02), all summaries are recalculated synchronously on every data-changing request — there is no `is_stale` column, no background worker, and no admin-triggered recalculation. See §6.10.
 
 ```
 POST   /svod/recalculate               Trigger full recalculation of all stale summaries (admin only)
@@ -2221,6 +2229,8 @@ POST   /engineers/:id/objects             Assign object {object_id} to this engi
 DELETE /engineers/:id/objects/:oid        Remove object assignment
 ```
 
+> **RBAC by phase:** See §15.3 S-04. In PoC: all engineer endpoints (`POST`, `PUT`, `DELETE`, assignment endpoints) are accessible to any authenticated user — no admin-only restriction is enforced. In MVP: `POST /engineers`, `PUT /engineers/:id`, and `DELETE /engineers/:id` are admin-only; assignment endpoints (`POST /engineers/:id/objects`, `DELETE /engineers/:id/objects/:oid`) follow the editor division-scoping rules defined in §12; `GET` endpoints are accessible to all authenticated users (engineers see only their own row).
+
 #### Object-Engineer Assignments (alternative entry point from object side)
 
 ```
@@ -2228,6 +2238,8 @@ GET    /objects/:id/engineers             List engineers assigned to this object
 POST   /objects/:id/engineers             Assign engineer {engineer_id} to this object
 DELETE /objects/:id/engineers/:eid        Remove engineer assignment
 ```
+
+> **RBAC by phase:** See §15.3 S-04. In PoC: all object-engineer assignment endpoints are accessible to any authenticated user. In MVP: `POST` and `DELETE` are restricted to admins and editors (editors scoped to own-division objects per §12); `GET` is accessible to all authenticated users.
 
 #### Coverage
 
@@ -2396,6 +2408,8 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 
 ## 12. Roles & Permissions
 
+> **PoC (S-04):** The permission matrix below describes **MVP behavior**. In PoC, all authenticated users can read and write all data regardless of role — no division scoping, no role-based restrictions. The `role` column exists on `users` and is set correctly, but access control is not enforced. See §15.3 S-04.
+
 | Permission                             | Admin | Editor       | Viewer | Engineer           |
 | -------------------------------------- | ----- | ------------ | ------ | ------------------ |
 | View all objects / СВОД                | ✅    | ✅           | ✅     | Own objects only   |
@@ -2413,10 +2427,10 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 | View audit log                         | ✅    | ❌           | ❌     | ❌                 |
 | Manage users / engineers               | ✅    | ❌           | ❌     | ❌                 |
 | View own workload dashboard            | ✅    | ✅           | ✅     | ✅                 |
-| Assign / remove engineers to objects   | ✅    | ✅ (own div) | ❌     | ❌                 |
-| View engineer list and load ratios     | ✅    | ✅           | ✅     | ✅ (own data only) |
+| Assign / remove engineers to objects   | ✅    | ✅ (own div objects, any engineer) | ❌     | ❌                 |
+| View engineer list and load ratios     | ✅    | ✅ (all engineers)           | ✅     | ✅ (own data only) |
 
-**Editor scope:** `division_id` restricts all write operations to objects in their assigned division. Enforced at the API level.  
+**Editor scope:** `division_id` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level.  
 **Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
 **Period lock:** Записи and Ремонт data is read-only for all roles once a period is deactivated. Only admin can create and activate a new period to enable data entry again.
 
@@ -2642,7 +2656,9 @@ API ignores or rejects attempts to set `round_trip_min`, `is_stale`, or any `sum
 
 > **PoC note:** `total_repairs` is computed in-memory during PoC calculation and is **not** stored in the PoC `summaries` schema (§15.4) — there is no field to protect. In MVP, when `total_repairs` is added as a persisted column in `summaries`, it must also become a read-only field (computed output, not an input).
 
-### AC-08: Role Enforcement
+### AC-08: Role Enforcement _(MVP — requires M-02)_
+
+> **Covers:** §12 Roles & Permissions (no dedicated FR in §4 — RBAC is defined as a cross-cutting concern in §12 and implemented via M-02).
 
 Editor assigned to Division A cannot read or write objects in Division B. `PUT /objects/:id` for a Division B object returns HTTP 403.
 
@@ -2749,6 +2765,42 @@ All 19 `app_config` keys must be present in the seed migration and must satisfy 
 - `ENGINEER_WARNING_THRESHOLD = 1.0` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` (threshold at exactly 1.0 collapses warning band to zero)
 - `ENGINEER_WARNING_THRESHOLD = 1.1` → HTTP 422 `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE`
 - `REPAIR_PRODUCTIVE_MONTHS = 7` when `PLANNING_PERIOD_MONTHS = 6` → HTTP 422 `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING`
+
+### AC-24: Object CRUD Lifecycle (FR-01)
+
+Creating an object via `POST /objects` with valid `branch_id`, `name`, and `address` returns HTTP 201 and the object appears in `GET /objects` filtered by the parent division. Updating the object name via `PUT /objects/:id` persists the change. `DELETE /objects/:id` removes the object and all child rows (devices, assignments, records, repairs, travel, summaries) — `GET /objects/:id` returns HTTP 404 after deletion.
+
+### AC-25: Object Hierarchy Enforcement (FR-01)
+
+`POST /objects` with an invalid `branch_id` (non-existent or belonging to a different division) returns HTTP 422. Every object belongs to exactly one branch, and every branch belongs to exactly one division. `GET /objects?division_id=X` returns only objects whose branch belongs to division X.
+
+### AC-26: Records Task Data Entry and Persistence (FR-04)
+
+`PUT /objects/:id/records` with quantities for all five task types persists the values. `GET /objects/:id/records` returns the saved quantities. Setting a task quantity to 0 is valid. The `records_monthly` value in the object summary equals `SUM(task_quantity × task_normative_minutes) / config[PLANNING_PERIOD_MONTHS]` within ±0.001.
+
+### AC-27: Travel Data Entry and Round-Trip Calculation (FR-06)
+
+`PUT /objects/:id/travel` with `transport_type`, `distance_km`, and `one_way_minutes` persists all three fields. `GET /objects/:id/travel` returns the saved values plus `round_trip_min = one_way_minutes × 2` (auto-calculated, never user-editable). Attempting to set `round_trip_min` directly via the API is ignored or returns HTTP 422.
+
+### AC-28: PDF Export Fidelity _(MVP — requires M-11)_
+
+`GET /svod/export/pdf` generates a PDF document containing СВОД data that matches the XLSX export values within ±0.001. The PDF includes all columns present in the XLSX export and is readable without data truncation.
+
+### AC-29: Object Inventory XLSX Export _(MVP)_
+
+`GET /objects/:id/export/xlsx` (or equivalent endpoint) generates an XLSX file containing the object's full equipment inventory (physical devices and system assignments), records task quantities, repair counts, and travel data. All values match the API responses for the same object.
+
+### AC-30: Period CRUD and Active Switching _(MVP — requires M-07)_
+
+`POST /admin/periods` creates a new period with `name`, `start_date`, `end_date`. `PUT /admin/periods/:id/activate` sets the period as active and deactivates the previously active period — verified by `GET /admin/periods/active` returning the newly activated period. Only one period can be active at a time.
+
+### AC-31: Period Read-Only Enforcement _(MVP — requires M-07)_
+
+After deactivating a period, `PUT /objects/:id/records` and `PUT /objects/:id/repairs/:rtid` targeting the deactivated period return HTTP 403 or 422 with a message indicating the period is read-only. Data for the deactivated period remains unchanged and accessible via `GET` endpoints.
+
+### AC-32: Data Entry Blocking When No Active Period _(MVP — requires M-07)_
+
+When no period is active (all periods deactivated), `PUT /objects/:id/records` and `PUT /objects/:id/repairs/:rtid` return HTTP 422 with a message indicating no active period exists. The UI shows a warning that data entry is blocked until an admin activates a period.
 
 ## 15. PoC Scope
 
@@ -4011,7 +4063,7 @@ In MVP, field-level access rules are:
 | Role     | Visible data scope                                                                             | Write scope                                                   |
 | -------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | admin    | All divisions, all objects, all engineers                                                      | Everything                                                    |
-| editor   | Own division only (objects, branches, engineers in their `division_id`)                        | Own division objects and assignments                          |
+| editor   | Own division objects and branches; **all active engineers** (for cross-division assignment)     | Own division objects and assignments                          |
 | engineer | All objects they are assigned to + own engineer profile; `GET /engineers` returns own row only | Записи and Ремонт for their own objects in active period only |
 | viewer   | All divisions, all objects (read-only)                                                         | Nothing                                                       |
 
@@ -4095,20 +4147,31 @@ Anonymisation runs as a one-way SQL script before staging restore. Never runs on
 - `repair_types.time_minutes`
 - `app_config` values (MONTHLY_HOURS_FUND, ABSENCE_COEFFICIENT, visit frequencies, thresholds)
 
-### 23.2 PoC Policy (Current)
+### 23.2 PoC & MVP Policy (Current)
 
-In PoC and MVP, normatives are not versioned. The `device_system_contexts` and `repair_types` tables contain a single current value. When an admin edits a normative, the change takes effect immediately for the next recalculation. Historical summaries computed before the change remain in `summaries` until recalculation overwrites them.
+In both PoC and MVP, normatives are not versioned. The `device_system_contexts` and `repair_types` tables contain a single current value. When a normative is edited, the change takes effect immediately for the next recalculation. Historical summaries computed before the change remain in `summaries` until recalculation overwrites them.
 
-**What this means for auditing:**
-The `audit_log` records _who changed what and when_, but the system does not store _what the previous value produced_ once summaries are recalculated. A summary row after recalculation reflects current normatives, not the normatives in effect when the data was originally entered.
+#### PoC limitations
 
-This is acceptable for PoC and MVP because:
+PoC has **no planning periods** (S-05), **no audit log** (S-07), and normatives are loaded as seed data with no admin edit UI (S-03). Therefore:
 
-1. Planning periods (FR-12) provide a form of historical isolation — past period summaries are read-only.
-2. The audit_log provides a complete change trail for normative values.
-3. The source XLSX values are the normative baseline and are embedded in seed data.
+- There is no historical isolation — PoC has only a single implicit "current" period.
+- There is no change trail for normative values.
+- Historical reproducibility is intentionally weak: if seed data is modified and the application is redeployed, all summaries will reflect the new values with no record of the prior state.
 
-**Risk acknowledged:** If normatives change mid-period, re-triggering recalculation will update summaries for the active period using the new normatives. Division managers may see calculations change after period-end if an admin recalculates. This is a known limitation.
+This is acceptable for PoC because it is a demonstration environment. The source XLSX values are the normative baseline and are embedded in seed data, providing a known starting point.
+
+#### MVP mitigations
+
+MVP adds the following protections that PoC lacks:
+
+1. **Planning periods (FR-12)** provide a form of historical isolation — past period summaries are read-only.
+2. **Audit log (M-08)** records _who changed what and when_ for normative values.
+3. **Admin catalog UI (M-04, M-05)** allows controlled normative edits with audit trail.
+
+Even with these mitigations, the system does not store _what the previous value produced_ once summaries are recalculated. A summary row after recalculation reflects current normatives, not the normatives in effect when the data was originally entered.
+
+**Risk acknowledged (MVP):** If normatives change mid-period, re-triggering recalculation will update summaries for the active period using the new normatives. Division managers may see calculations change after period-end if an admin recalculates. This is a known limitation addressed by the post-MVP versioning policy (§23.3).
 
 ### 23.3 Post-MVP Policy (Normative Versioning)
 
