@@ -1430,7 +1430,7 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 | `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog — **PoC: read-only seed data, no management UI (S-03, M-05)**       |
 | `/admin/config`        | App Config       | MVP only — requires M-10; view/edit all calculation constants (admin only)                                   |
 | `/admin/periods`       | Planning Periods | MVP only — requires M-07; create / activate / deactivate planning periods (admin only)                       |
-| `/admin/users`         | Users            | User management (admin only)                                                                                 |
+| `/admin/users`         | Users            | User management (admin only) — **MVP only — requires M-02 (S-04)**                                          |
 | `/import`              | Import           | JSON / text-list import wizard — **MVP only — requires M-01 (S-06)**                                        |
 | `/export`              | Export           | Export options                                                                                               |
 | `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves)                                     |
@@ -2097,6 +2097,21 @@ GET    /objects/:id/travel             Get travel data
 PUT    /objects/:id/travel             Update (marks stale — MVP; synchronous recalc — PoC)
 ```
 
+#### Object Export _(MVP only — out of PoC scope)_
+
+> **PoC note:** This endpoint does not exist in PoC (S-10). Object-level XLSX export is introduced in M-12 (MVP). See AC-29 and §15.3.
+
+```
+GET    /objects/:id/export/xlsx        Export object inventory to XLSX
+```
+
+- **RBAC:** `editor`, `admin` (same access as object write operations; `viewer` and `engineer` are not permitted).
+- **Response:** HTTP 200 with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and `Content-Disposition: attachment; filename="object_{id}_export.xlsx"`.
+- **File contents:** The generated file contains one sheet per data group — physical devices (device type, physical quantity), system assignments (device type, system type, maintained quantity), records task quantities, repair counts by type, and travel data (transport type, distance km, one-way minutes, round-trip minutes). All values match the corresponding `GET` API responses for the same object at the time of export.
+- **Error cases:**
+  - `404 { "code": "OBJECT_NOT_FOUND" }` — object does not exist.
+  - `403 { "code": "FORBIDDEN" }` — caller role is not permitted.
+
 #### Device Catalog
 
 ```
@@ -2235,6 +2250,27 @@ DELETE /engineers/:id/objects/:oid        Remove object assignment
 ```
 
 > **RBAC by phase:** See §15.3 S-04. In PoC: all engineer endpoints (`POST`, `PUT`, `DELETE`, assignment endpoints) are accessible to any authenticated user — no admin-only restriction is enforced. In MVP: `POST /engineers`, `PUT /engineers/:id`, and `DELETE /engineers/:id` are admin-only; assignment endpoints (`POST /engineers/:id/objects`, `DELETE /engineers/:id/objects/:oid`) follow the editor division-scoping rules defined in §12; `GET` endpoints are accessible to all authenticated users (engineers see only their own row).
+
+#### User Administration _(MVP only — requires M-02)_
+
+> **PoC note:** These endpoints do not exist in PoC. In PoC (S-04), there is only one effective role — all authenticated users can read and write. Engineer accounts are the only user type that matters in PoC; they are managed entirely via `/engineers`. The `/admin/users` screen and these endpoints are introduced in M-02 when role enforcement is added.
+
+```
+GET    /admin/users                    List all users (all roles; paginated; filterable by ?role=&is_active=)
+POST   /admin/users                    Create non-engineer user {name, email, role, division_id?} (admin only; for engineers use POST /engineers)
+GET    /admin/users/:id                Get user details
+PUT    /admin/users/:id                Update {name, email, role, division_id} (admin only)
+PUT    /admin/users/:id/activate       Set is_active=TRUE, requires_activation=FALSE (admin only; covers placeholder activation from M-01/§11.1)
+DELETE /admin/users/:id                Deactivate — sets is_active=FALSE (admin only; blocked with 409 if engineer has active object assignments)
+```
+
+- **RBAC:** all endpoints are `admin` only.
+- **Role constraint:** `POST /admin/users` accepts `role` values `admin`, `editor`, `viewer`. To create an `engineer`, use `POST /engineers` (which sets the extra fields `capacity_fte` and `home_division_id`). Engineers appear in `GET /admin/users` results but their engineer-specific fields are managed via `/engineers/:id`.
+- **Placeholder activation:** `PUT /admin/users/:id/activate` is the canonical surface for activating placeholder accounts created by bulk import (M-01). It sets `is_active = TRUE` and `requires_activation = FALSE`. The admin then provides or resets the password through the standard authentication flow.
+- **Error cases:**
+  - `404 { "code": "USER_NOT_FOUND" }` — user does not exist.
+  - `409 { "code": "ENGINEER_HAS_ACTIVE_ASSIGNMENTS" }` — deactivation blocked because the engineer has active object assignments; remove assignments first.
+  - `422 { "code": "INVALID_ROLE_FOR_ENDPOINT" }` — attempted to create role `engineer` via `POST /admin/users`.
 
 #### Object-Engineer Assignments (alternative entry point from object side)
 
@@ -2794,9 +2830,9 @@ Creating an object via `POST /objects` with valid `branch_id`, `name`, and `addr
 
 `GET /svod/export/pdf` generates a PDF document containing СВОД data that matches the XLSX export values within ±0.001. The PDF includes all columns present in the XLSX export and is readable without data truncation.
 
-### AC-29: Object Inventory XLSX Export _(MVP)_
+### AC-29: Object Inventory XLSX Export _(MVP — requires M-12, S-10)_
 
-`GET /objects/:id/export/xlsx` (or equivalent endpoint) generates an XLSX file containing the object's full equipment inventory (physical devices and system assignments), records task quantities, repair counts, and travel data. All values match the API responses for the same object.
+`GET /objects/:id/export/xlsx` generates an XLSX file containing the object's full equipment inventory (physical devices and system assignments), records task quantities, repair counts, and travel data. All values match the API responses for the same object. See §10.2 "Object Export" for the full endpoint contract.
 
 ### AC-30: Period CRUD and Active Switching _(MVP — requires M-07)_
 
@@ -2915,6 +2951,14 @@ Full TOR: optimistic locking with `updated_at` version check (§17).
 PoC: last-write-wins. Acceptable with 1–2 demo users.
 
 _Reversed in:_ M-09 (MVP)
+
+**S-10: No object inventory XLSX export**
+
+Full TOR: `GET /objects/:id/export/xlsx` exports per-object equipment inventory, records, repairs, and travel to XLSX.
+
+PoC: this endpoint is not implemented. СВОД XLSX export (`GET /svod/export/xlsx`) is available in PoC; object-level export is out of scope.
+
+_Reversed in:_ M-12 (MVP)
 
 ---
 
@@ -3065,6 +3109,7 @@ Items are ordered by dependency. M-01 is the highest priority because manual ent
 | M-09     | Concurrency / optimistic locking                | M-06       | Resolves S-09. `updated_at` version check on writes.                                         |
 | M-10     | `app_config` table with admin UI                | M-02       | Move hardcoded constants to DB.                                                              |
 | M-11     | PDF export                                      | —          | Resolves S-08. Post-MVP.                                                                     |
+| M-12     | Object inventory XLSX export                    | M-02       | Resolves S-10. Adds `GET /objects/:id/export/xlsx`; RBAC enforced (editor, admin only).      |
 
 ---
 
@@ -3668,10 +3713,10 @@ Minimal operational runbook for PoC deployment:
 
 | Scenario                          | Action                                                                                                                                                                                     |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Application not responding        | Check `GET /actuator/health`; if unhealthy or unreachable, inspect `docker compose logs api` and restart with `docker compose restart api`                                                 |
+| Application not responding        | Check `GET /actuator/health`; if unhealthy or unreachable, inspect `docker compose logs backend` and restart with `docker compose restart backend`                                         |
 | Database connection errors        | Check PostgreSQL container logs; verify connection pool settings                                                                                                                           |
 | Calculation produces wrong values | Check PoC environment-variable config, verify seed normative data migration values, and inspect local JSON logs via `docker compose logs` before comparing with source XLSX values in §4.2 |
-| XLSX export fails                 | Inspect container stdout via `docker compose logs api` for `ApachePOI` or `XSSFWorkbook` exceptions; verify column mapping in §7.9                                                         |
+| XLSX export fails                 | Inspect container stdout via `docker compose logs backend` for `ApachePOI` or `XSSFWorkbook` exceptions; verify column mapping in §7.9                                                     |
 | All summaries show stale (MVP)    | Trigger `POST /svod/recalculate` as admin; monitor job logs. _Not applicable to PoC (S-02: synchronous recalc)._                                                                           |
 
 ## 19. Testing Strategy
