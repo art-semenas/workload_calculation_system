@@ -1431,7 +1431,7 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 | `/admin/config`        | App Config       | MVP only — requires M-10; view/edit all calculation constants (admin only)                                   |
 | `/admin/periods`       | Planning Periods | MVP only — requires M-07; create / activate / deactivate planning periods (admin only)                       |
 | `/admin/users`         | Users            | User management (admin only)                                                                                 |
-| `/import`              | Import           | JSON / text-list import wizard                                                                               |
+| `/import`              | Import           | JSON / text-list import wizard — **MVP only — requires M-01 (S-06)**                                        |
 | `/export`              | Export           | Export options                                                                                               |
 | `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves)                                     |
 | `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                                                                          |
@@ -2128,7 +2128,7 @@ DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row
 ```
 GET    /svod                           All summaries (paginated, filterable)
 GET    /svod/export/xlsx               Export to XLSX (active period by default; ?period_id= for historical)
-GET    /svod/export/pdf                Export to PDF (active period by default; ?period_id= for historical)
+GET    /svod/export/pdf                Export to PDF (active period by default; ?period_id= for historical) — **Post-MVP — requires M-11 (S-08)**
 ```
 
 #### App Configuration _(MVP only — requires M-10)_
@@ -3117,6 +3117,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       # SPRING_REDIS_HOST is NOT set — Redis disabled in PoC
+      # WORKLOAD_CONFIG_* env vars are REQUIRED for startup (S-03, AD-09).
+      # All 19 keys must be set — see §6.11 for the full list and default values.
+      # Example: WORKLOAD_CONFIG_PLANNING_PERIOD_MONTHS=6
+      # Missing or type-invalid vars cause a Spring binding exception (startup failure).
     depends_on:
       postgres: { condition: service_healthy }
       # redis intentionally omitted
@@ -3165,7 +3169,8 @@ volumes:
 | `failed_login_count`    | `users`                           | M-02 (account lockout, §21.3)   |
 | `locked_until`          | `users`                           | M-02 (account lockout, §21.3)   |
 | `period_id`             | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12)  |
-| `is_stale`, `period_id` | `summaries`, `engineer_summaries` | M-06 (staleness tracking)       |
+| `is_stale`              | `summaries`, `engineer_summaries` | M-06 (staleness tracking)       |
+| `period_id`             | `summaries`                       | M-06 (active-period traceability) |
 | `records_6months`       | `summaries`                       | M-06 (traceability / debugging) |
 | `repair_work_6months`   | `summaries`                       | M-06 (traceability / debugging) |
 | `repair_travel_6months` | `summaries`                       | M-06 (traceability / debugging) |
