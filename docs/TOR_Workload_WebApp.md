@@ -1413,29 +1413,29 @@ Staleness is set in the same transaction as the triggering change. Actual recalc
 
 ### 7.1 Pages / Views
 
-| Route                  | View             | Description                                                                                             |
-| ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `/`                    | Dashboard        | Headcount cards by division; top objects by workload                                                    |
-| `/divisions`           | Division List    | List/search divisions + "Добавить подразделение" button (admin in MVP; any auth user in PoC)            |
-| `/divisions/:id`       | Division Detail  | СВОД subtotals + branch list + "Добавить филиал" button (admin in MVP; any auth user in PoC)            |
-| `/branches/:id`        | Branch Detail    | Object list with СВОД per object + "Добавить объект" button (admin/editor in MVP; any auth user in PoC) |
-| `/objects`             | Object List      | Searchable, filterable table                                                                            |
-| `/objects/new`         | Object Create    | Create new object                                                                                       |
-| `/objects/:id`         | Object Detail    | Tabbed detail view                                                                                      |
-| `/objects/:id/edit`    | Object Edit      | Edit object metadata                                                                                    |
-| `/svod`                | СВОД             | Full summary table with filters and export; period selector is MVP only — requires M-07                 |
-| `/catalog/devices`     | Device Catalog   | List / create / edit device types and contexts                                                          |
-| `/catalog/devices/new` | New Device       | Create device type and assign system contexts                                                           |
-| `/catalog/devices/:id` | Device Detail    | View/edit device and all system contexts                                                                |
-| `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog                                                                |
-| `/admin/config`        | App Config       | MVP only — requires M-10; view/edit all calculation constants (admin only)                              |
-| `/admin/periods`       | Planning Periods | MVP only — requires M-07; create / activate / deactivate planning periods (admin only)                  |
-| `/admin/users`         | Users            | User management (admin only)                                                                            |
-| `/import`              | Import           | JSON / text-list import wizard                                                                          |
-| `/export`              | Export           | Export options                                                                                          |
-| `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves)                                |
-| `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                                                                     |
-| `/engineers/:id/edit`  | Engineer Edit    | Edit name, capacity, home division                                                                      |
+| Route                  | View             | Description                                                                                                  |
+| ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/`                    | Dashboard        | Headcount cards by division; top objects by workload                                                         |
+| `/divisions`           | Division List    | List/search divisions + "Добавить подразделение" button (admin in MVP; any auth user in PoC)                 |
+| `/divisions/:id`       | Division Detail  | СВОД subtotals + branch list + "Добавить филиал" button (admin in MVP; any auth user in PoC)                 |
+| `/branches/:id`        | Branch Detail    | Object list with СВОД per object + "Добавить объект" button (admin/editor in MVP; any auth user in PoC)      |
+| `/objects`             | Object List      | Searchable, filterable table                                                                                 |
+| `/objects/new`         | Object Create    | Create new object                                                                                            |
+| `/objects/:id`         | Object Detail    | Tabbed detail view                                                                                           |
+| `/objects/:id/edit`    | Object Edit      | Edit object metadata                                                                                         |
+| `/svod`                | СВОД             | Full summary table with filters and export; period selector is MVP only — requires M-07                      |
+| `/catalog/devices`     | Device Catalog   | List / create / edit device types and contexts — **PoC: read-only seed data, no management UI (S-03, M-04)** |
+| `/catalog/devices/new` | New Device       | Create device type and assign system contexts — **MVP only — requires M-04**                                 |
+| `/catalog/devices/:id` | Device Detail    | View/edit device and all system contexts — **PoC: view-only; edit requires M-04**                            |
+| `/catalog/repairs`     | Repair Types     | List / create / edit repair type catalog — **PoC: read-only seed data, no management UI (S-03, M-05)**       |
+| `/admin/config`        | App Config       | MVP only — requires M-10; view/edit all calculation constants (admin only)                                   |
+| `/admin/periods`       | Planning Periods | MVP only — requires M-07; create / activate / deactivate planning periods (admin only)                       |
+| `/admin/users`         | Users            | User management (admin only)                                                                                 |
+| `/import`              | Import           | JSON / text-list import wizard                                                                               |
+| `/export`              | Export           | Export options                                                                                               |
+| `/engineers`           | Engineer List    | All engineers with load ratio and status (engineers see only themselves)                                     |
+| `/engineers/:id`       | Engineer Detail  | Workload dashboard for one engineer                                                                          |
+| `/engineers/:id/edit`  | Engineer Edit    | Edit name, capacity, home division                                                                           |
 
 ### 7.2 Object Detail Page — Tabs
 
@@ -2297,7 +2297,9 @@ On error:
 
 ## 11. Migrations & Data Import
 
-### 11.1 Initial Data Import from JSON / Text Lists
+### 11.1 Initial Data Import from JSON / Text Lists _(MVP — requires M-01)_
+
+> **Scope: MVP.** Data import via the `/import` endpoint is introduced in M-01 and is **not available in PoC** (S-06). In PoC, all data is entered manually through the UI. The import payload format, two-step flow, and validation rules defined here apply to MVP only. The PoC schema (§15.4) uses `UNIQUE(object_id)` on `records_tasks` and `object_repairs` (no `period_id` column) — the MVP import logic references `period_id` fields not present in PoC.
 
 The import endpoint (`POST /import/data`) accepts a single JSON payload containing all entity lists. The admin prepares the data outside the application (e.g. by converting the legacy XLSX workbook with a standalone script) and uploads the resulting JSON. The server never parses XLSX directly.
 
@@ -2353,8 +2355,8 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 
    > **Note:** After import, editors should review `quantity_physical` for devices assigned to multiple systems, as the physical quantity is taken from the first equipment entry for that device. This matches the post-import behaviour in §4.3: `quantity_physical = quantity_maintained` initially; editors adjust manually if needed.
 
-5. Populate `records_tasks` per object from the `records` map.
-6. Populate `object_repairs` per object from the `repairs` map.
+5. Populate `records_tasks` per object from the `records` map, using `period_id = active_period.id` (the period active at import time — see §11.2). If no period is active, this step is blocked and the import returns HTTP 422.
+6. Populate `object_repairs` per object from the `repairs` map, similarly using `period_id = active_period.id`. Only repair types with a non-zero count in the payload create rows; zero-count entries are skipped.
 7. Populate `travel` per object from the `travel` map.
 8. Return validation report: objects created, warnings, skipped entries.
 9. Mark all imported object summaries stale. _(PoC: immediately run synchronous bulk recalculation inline; MVP: admin triggers recalculation via `POST /svod/recalculate`.)_
@@ -4347,4 +4349,4 @@ For PoC (demo environment, no production data):
 
 ---
 
-_End of Technical Specification — Version 2.22_
+_End of Technical Specification — Version 2.24_
