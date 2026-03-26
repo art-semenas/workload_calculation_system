@@ -50,7 +50,7 @@ CREATE UNIQUE INDEX one_active_period ON periods (is_active) WHERE is_active = T
 - Add index: `CREATE INDEX idx_records_object_period ON records_tasks(object_id, period_id)`
 
 **`object_repairs` — critical data model change:**
-- Add column: `period_id UUID FK → repairs.id` → actually `period_id UUID FK → periods.id NOT NULL`
+- Add column: `period_id UUID FK → periods.id NOT NULL`
 - Drop old UNIQUE constraint: `UNIQUE(object_id, repair_type_id)`
 - Add new UNIQUE constraint: `UNIQUE(object_id, repair_type_id, period_id)`
 - Add index: `CREATE INDEX idx_repairs_object_period ON object_repairs(object_id, period_id)`
