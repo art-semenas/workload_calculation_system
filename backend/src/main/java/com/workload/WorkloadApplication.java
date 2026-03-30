@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @SpringBootApplication
 @EnableConfigurationProperties(WorkloadConfig.class)
 public class WorkloadApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(WorkloadApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(WorkloadApplication.class, args);
+  }
 }
