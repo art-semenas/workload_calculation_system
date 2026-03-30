@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workload
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # 19 required workload config keys (TOR §6.11)
+      WORKLOAD_CONFIG_PLANNING_PERIOD_MONTHS: ${WORKLOAD_CONFIG_PLANNING_PERIOD_MONTHS:-6}
+      WORKLOAD_CONFIG_REPAIR_PRODUCTIVE_MONTHS: ${WORKLOAD_CONFIG_REPAIR_PRODUCTIVE_MONTHS:-5}
+      WORKLOAD_CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD: ${WORKLOAD_CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD:-5}
+      WORKLOAD_CONFIG_REPAIR_TRAVEL_CAP: ${WORKLOAD_CONFIG_REPAIR_TRAVEL_CAP:-10}
+      WORKLOAD_CONFIG_PZV_MINUTES: ${WORKLOAD_CONFIG_PZV_MINUTES:-20}
+      WORKLOAD_CONFIG_ENGINEER_WARNING_THRESHOLD: ${WORKLOAD_CONFIG_ENGINEER_WARNING_THRESHOLD:-0.9}
+      WORKLOAD_CONFIG_ENGINEER_OVERLOAD_THRESHOLD: ${WORKLOAD_CONFIG_ENGINEER_OVERLOAD_THRESHOLD:-1.0}
+      WORKLOAD_CONFIG_OS_R1_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_OS_R1_VISITS_PER_YEAR:-10}
+      WORKLOAD_CONFIG_OS_R2_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_OS_R2_VISITS_PER_YEAR:-2}
+      WORKLOAD_CONFIG_PS_R1_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_PS_R1_VISITS_PER_YEAR:-8}
+      WORKLOAD_CONFIG_PS_R2_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_PS_R2_VISITS_PER_YEAR:-4}
+      WORKLOAD_CONFIG_VIDEO_R1_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_VIDEO_R1_VISITS_PER_YEAR:-10}
+      WORKLOAD_CONFIG_VIDEO_R2_VISITS_PER_YEAR: ${WORKLOAD_CONFIG_VIDEO_R2_VISITS_PER_YEAR:-2}
+      WORKLOAD_CONFIG_RECORDS_ACCESS_MINUTES: ${WORKLOAD_CONFIG_RECORDS_ACCESS_MINUTES:-60}
+      WORKLOAD_CONFIG_RECORDS_MONITORING_MINUTES: ${WORKLOAD_CONFIG_RECORDS_MONITORING_MINUTES:-180}
+      WORKLOAD_CONFIG_RECORDS_FOOTAGE_MINUTES: ${WORKLOAD_CONFIG_RECORDS_FOOTAGE_MINUTES:-180}
+      WORKLOAD_CONFIG_RECORDS_BACKUP_MINUTES: ${WORKLOAD_CONFIG_RECORDS_BACKUP_MINUTES:-120}
+      WORKLOAD_CONFIG_RECORDS_ADMIN_MINUTES: ${WORKLOAD_CONFIG_RECORDS_ADMIN_MINUTES:-60}
+      WORKLOAD_CONFIG_MINUTES_PER_MONTH: ${WORKLOAD_CONFIG_MINUTES_PER_MONTH:-166}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: workload
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.poc.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+  # redis — OMITTED in PoC. Add in MVP (M-06). See TOR §20.7.
+  # datadog-agent — OMITTED in PoC. Add in MVP. See TOR §20.7.
+
+volumes:
+  pgdata:

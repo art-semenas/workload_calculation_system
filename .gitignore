@@ -1,2 +1,4 @@
 .idea/
-backend/target/
+backend/target/.env
+
+.env
