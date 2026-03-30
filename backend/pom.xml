@@ -29,6 +29,7 @@
     <spotless.version>2.43.0</spotless.version>
     <google-java-format.version>1.22.0</google-java-format.version>
     <spotbugs.plugin.version>4.8.6.4</spotbugs.plugin.version>
+    <jacoco.version>0.8.14</jacoco.version>
   </properties>
 
   <dependencies>
@@ -216,6 +217,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -231,13 +233,74 @@
             <goals><goal>check</goal></goals>
             <configuration>
               <rules>
+                <!-- Calculation engine — highest coverage requirement -->
                 <rule>
                   <element>PACKAGE</element>
+                  <includes>
+                    <include>com.workload.service.calculation.*</include>
+                  </includes>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.95</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.90</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+                <!-- Other service packages -->
+                <rule>
+                  <element>PACKAGE</element>
+                  <includes>
+                    <include>com.workload.service.*</include>
+                  </includes>
+                  <excludes>
+                    <exclude>com.workload.service.calculation.*</exclude>
+                  </excludes>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.75</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+                <!-- Mappers -->
+                <rule>
+                  <element>PACKAGE</element>
+                  <includes>
+                    <include>com.workload.mapper.*</include>
+                  </includes>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+                <!-- Overall project minimum -->
+                <rule>
+                  <element>BUNDLE</element>
                   <limits>
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
                       <minimum>0.75</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.70</minimum>
                     </limit>
                   </limits>
                 </rule>
