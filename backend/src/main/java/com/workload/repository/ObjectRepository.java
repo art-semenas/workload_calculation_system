@@ -9,4 +9,8 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
     List<ObjectEntity> findAllByBranchId(UUID branchId);
 
     List<ObjectEntity> findAllByBranchDivisionId(UUID divisionId);
+
+    long countByBranchId(UUID branchId);
+
+    long countByBranchDivisionId(UUID divisionId);
 }
