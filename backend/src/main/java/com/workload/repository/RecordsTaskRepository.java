@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RecordsTaskRepository extends JpaRepository<RecordsTask, UUID> {
-  Optional<RecordsTask> findByObjectId(UUID objectId);
+    Optional<RecordsTask> findByObjectId(UUID objectId);
 }

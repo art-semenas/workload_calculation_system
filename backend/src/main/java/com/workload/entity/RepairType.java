@@ -22,17 +22,18 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RepairType {
 
-  @Id private UUID id;
+    @Id
+    private UUID id;
 
-  @Column(nullable = false, unique = true)
-  private String name;
+    @Column(nullable = false, unique = true)
+    private String name;
 
-  @Column(name = "time_minutes", nullable = false, precision = 10, scale = 4)
-  private BigDecimal timeMinutes;
+    @Column(name = "time_minutes", nullable = false, precision = 10, scale = 4)
+    private BigDecimal timeMinutes;
 
-  @Column(name = "created_at", nullable = false)
-  private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
-  @Column(name = "updated_at", nullable = false)
-  private OffsetDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 }

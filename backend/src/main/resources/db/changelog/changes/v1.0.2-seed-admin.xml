@@ -13,7 +13,7 @@
       <column name="id" value="11111111-1111-1111-1111-111111111111"/>
       <column name="email" value="admin@workload.local"/>
       <column name="name" value="PoC Admin"/>
-      <column name="password_hash" value="$2a$10$7EqJtq98hPqEX7fNZaFWoOHiD7R6vVQZ8nfdXbra.6A7BfrpsbR9C"/>
+      <column name="password_hash" value="$2a$10$cWr8HncP9LlQR40EkHdmSumNwv0NSXxcXP39veukloDhhfoEOKO12"/>
       <column name="role" value="admin"/>
       <column name="capacity_fte" valueNumeric="1.00"/>
       <column name="is_active" valueBoolean="true"/>

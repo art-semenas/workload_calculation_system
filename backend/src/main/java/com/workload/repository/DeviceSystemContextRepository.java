@@ -8,8 +8,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DeviceSystemContextRepository extends JpaRepository<DeviceSystemContext, UUID> {
-  List<DeviceSystemContext> findAllByDeviceTypeId(UUID deviceTypeId);
+    List<DeviceSystemContext> findAllByDeviceTypeId(UUID deviceTypeId);
 
-  Optional<DeviceSystemContext> findByDeviceTypeIdAndSystemType(
-      UUID deviceTypeId, SystemType systemType);
+    Optional<DeviceSystemContext> findByDeviceTypeIdAndSystemType(
+            UUID deviceTypeId, SystemType systemType);
 }

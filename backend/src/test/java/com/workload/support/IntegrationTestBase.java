@@ -11,14 +11,16 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 
-  @LocalServerPort protected int port;
+    @LocalServerPort
+    protected int port;
 
-  @Autowired protected AuthenticationTestHelper authenticationTestHelper;
+    @Autowired
+    protected AuthenticationTestHelper authenticationTestHelper;
 
-  @BeforeEach
-  void configureRestAssured() {
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = port;
-    RestAssured.basePath = "/api/v1";
-  }
+    @BeforeEach
+    void configureRestAssured() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+        RestAssured.basePath = "/api/v1";
+    }
 }

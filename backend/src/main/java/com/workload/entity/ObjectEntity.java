@@ -23,21 +23,22 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ObjectEntity {
 
-  @Id private UUID id;
+    @Id
+    private UUID id;
 
-  @ManyToOne(optional = false)
-  @JoinColumn(name = "branch_id", nullable = false)
-  private Branch branch;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
 
-  @Column(nullable = false, length = 500)
-  private String name;
+    @Column(nullable = false, length = 500)
+    private String name;
 
-  @Column(name = "import_seq_no")
-  private Integer importSeqNo;
+    @Column(name = "import_seq_no")
+    private Integer importSeqNo;
 
-  @Column(name = "created_at", nullable = false)
-  private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
-  @Column(name = "updated_at", nullable = false)
-  private OffsetDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 }

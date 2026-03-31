@@ -23,18 +23,19 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Branch {
 
-  @Id private UUID id;
+    @Id
+    private UUID id;
 
-  @ManyToOne(optional = false)
-  @JoinColumn(name = "division_id", nullable = false)
-  private Division division;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "division_id", nullable = false)
+    private Division division;
 
-  @Column(nullable = false)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(name = "created_at", nullable = false)
-  private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
-  @Column(name = "updated_at", nullable = false)
-  private OffsetDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 }
