@@ -23,42 +23,43 @@ import lombok.Setter;
 @AllArgsConstructor
 public class User {
 
-  @Id private UUID id;
+    @Id
+    private UUID id;
 
-  @Column(nullable = false, unique = true)
-  private String email;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-  @Column(nullable = false)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(name = "password_hash", nullable = false)
-  private String passwordHash;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
 
-  @Convert(converter = RoleConverter.class)
-  @Column(nullable = false, length = 20)
-  private Role role;
+    @Convert(converter = RoleConverter.class)
+    @Column(nullable = false, length = 20)
+    private Role role;
 
-  @Column(name = "division_id")
-  private UUID divisionId;
+    @Column(name = "division_id")
+    private UUID divisionId;
 
-  @Column(name = "home_division_id")
-  private UUID homeDivisionId;
+    @Column(name = "home_division_id")
+    private UUID homeDivisionId;
 
-  @Column(name = "capacity_fte", nullable = false, precision = 4, scale = 2)
-  private BigDecimal capacityFte;
+    @Column(name = "capacity_fte", nullable = false, precision = 4, scale = 2)
+    private BigDecimal capacityFte;
 
-  @Column(name = "employee_id", length = 100)
-  private String employeeId;
+    @Column(name = "employee_id", length = 100)
+    private String employeeId;
 
-  @Column(name = "is_active", nullable = false)
-  private boolean isActive;
+    @Column(name = "is_active", nullable = false)
+    private boolean active;
 
-  @Column(name = "requires_activation", nullable = false)
-  private boolean requiresActivation;
+    @Column(name = "requires_activation", nullable = false)
+    private boolean requiresActivation;
 
-  @Column(name = "created_at", nullable = false)
-  private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
-  @Column(name = "updated_at", nullable = false)
-  private OffsetDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 }
