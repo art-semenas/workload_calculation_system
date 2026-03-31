@@ -9,14 +9,19 @@ import static org.mockito.Mockito.when;
 import com.workload.dto.ObjectCreateRequest;
 import com.workload.dto.ObjectDto;
 import com.workload.dto.ObjectUpdateRequest;
+import com.workload.dto.SummaryDto;
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
 import com.workload.entity.ObjectEntity;
+import com.workload.entity.Summary;
 import com.workload.exception.BranchNotFoundException;
 import com.workload.exception.ObjectNotFoundException;
+import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.ObjectMapper;
+import com.workload.mapper.SummaryMapper;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.ObjectRepository;
+import com.workload.repository.SummaryRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +38,8 @@ class ObjectServiceTest {
     @Mock private ObjectRepository objectRepository;
     @Mock private BranchRepository branchRepository;
     @Mock private ObjectMapper objectMapper;
+    @Mock private SummaryRepository summaryRepository;
+    @Mock private SummaryMapper summaryMapper;
 
     @InjectMocks private ObjectService objectService;
 
@@ -147,6 +154,42 @@ class ObjectServiceTest {
 
         assertThatThrownBy(() -> objectService.delete(id))
                 .isInstanceOf(ObjectNotFoundException.class);
+    }
+
+    @Test
+    void getSummaryThrowsWhenObjectMissing() {
+        UUID id = UUID.randomUUID();
+        when(objectRepository.existsById(id)).thenReturn(false);
+
+        assertThatThrownBy(() -> objectService.getSummary(id))
+                .isInstanceOf(ObjectNotFoundException.class);
+    }
+
+    @Test
+    void getSummaryThrowsWhenNoSummaryRow() {
+        UUID id = UUID.randomUUID();
+        when(objectRepository.existsById(id)).thenReturn(true);
+        when(summaryRepository.findByObjectId(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> objectService.getSummary(id))
+                .isInstanceOf(SummaryNotFoundException.class);
+    }
+
+    @Test
+    void getSummaryReturnsDtoWhenExists() {
+        ObjectEntity obj = buildObject("Archive");
+        Summary summary = Summary.builder().id(UUID.randomUUID()).object(obj).build();
+        SummaryDto dto = new SummaryDto(summary.getId(), obj.getId(),
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null);
+        when(objectRepository.existsById(obj.getId())).thenReturn(true);
+        when(summaryRepository.findByObjectId(obj.getId())).thenReturn(Optional.of(summary));
+        when(summaryMapper.toDto(summary)).thenReturn(dto);
+
+        SummaryDto result = objectService.getSummary(obj.getId());
+
+        assertThat(result.objectId()).isEqualTo(obj.getId());
     }
 
     private ObjectEntity buildObject(String name) {

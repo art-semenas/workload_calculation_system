@@ -29,6 +29,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void summaryNotFoundReturns404WithSpecificCode() {
+        ResponseEntity<ApiResponse<Void>> response =
+                handler.handleSummaryNotFound(new SummaryNotFoundException("abc"));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().error().code()).isEqualTo("SUMMARY_NOT_FOUND");
+    }
+
+    @Test
     void dataIntegrityViolationReturns409() {
         ResponseEntity<ApiResponse<Void>> response =
                 handler.handleDataIntegrityViolation(

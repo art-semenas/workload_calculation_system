@@ -4,6 +4,7 @@ import com.workload.dto.ApiResponse;
 import com.workload.dto.ObjectCreateRequest;
 import com.workload.dto.ObjectDto;
 import com.workload.dto.ObjectUpdateRequest;
+import com.workload.dto.SummaryDto;
 import com.workload.service.ObjectService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -60,5 +61,11 @@ public class ObjectController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         objectService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<ApiResponse<SummaryDto>> getObjectSummary(@PathVariable UUID id) {
+        SummaryDto summary = objectService.getSummary(id);
+        return ResponseEntity.ok(ApiResponse.success(summary));
     }
 }

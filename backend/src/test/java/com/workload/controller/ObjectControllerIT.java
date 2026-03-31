@@ -190,4 +190,29 @@ class ObjectControllerIT extends IntegrationTestBase {
                 .then()
                 .statusCode(404);
     }
+
+    @Test
+    void getObjectSummaryReturns404WhenNoSummaryExists() {
+        String objectId =
+                given()
+                        .header("Authorization", bearerToken)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {"branchId": "%s", "name": "SummaryTestObj"}
+                                """.formatted(branchId))
+                        .when()
+                        .post("/objects")
+                        .then()
+                        .statusCode(201)
+                        .extract()
+                        .path("data.id");
+
+        given()
+                .header("Authorization", bearerToken)
+                .when()
+                .get("/objects/{id}/summary", objectId)
+                .then()
+                .statusCode(404)
+                .body("error.code", equalTo("SUMMARY_NOT_FOUND"));
+    }
 }
