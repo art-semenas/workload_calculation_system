@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.workload.service.BranchServiceTest
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.382 s -- in com.workload.service.BranchServiceTest

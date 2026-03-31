@@ -63,6 +63,38 @@ class TravelControllerIT extends IntegrationTestBase {
         .body("error.code", equalTo("ROUND_TRIP_NOT_EDITABLE"));
   }
 
+  @Test
+  void updateTravelWithSnakeCaseRoundTripMinRejects422() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            """
+{"transportType": "car", "distanceKm": 15.5, "oneWayTimeMin": 30.0, "round_trip_min": 60.0}
+""")
+        .when()
+        .put("/objects/{oid}/travel", objectId)
+        .then()
+        .statusCode(422)
+        .body("error.code", equalTo("ROUND_TRIP_NOT_EDITABLE"));
+  }
+
+  @Test
+  void updateTravelWithoutTransportType() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {"distanceKm": 10.0, "oneWayTimeMin": 20.0}
+            """)
+        .when()
+        .put("/objects/{oid}/travel", objectId)
+        .then()
+        .statusCode(200)
+        .body("data.roundTripMin", equalTo(40.0f));
+  }
+
   private String createTestObject(String token) {
     String divisionId =
         given()

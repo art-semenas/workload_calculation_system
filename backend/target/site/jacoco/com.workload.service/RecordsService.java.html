@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RecordsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">workload-backend</a> &gt; <a href="index.source.html" class="el_package">com.workload.service</a> &gt; <span class="el_source">RecordsService.java</span></div><h1>RecordsService.java</h1><pre class="source lang-java linenums">package com.workload.service;
+
+import com.workload.dto.RecordsDto;
+import com.workload.dto.RecordsUpdateRequest;
+import com.workload.entity.ObjectEntity;
+import com.workload.entity.RecordsTask;
+import com.workload.exception.ObjectNotFoundException;
+import com.workload.mapper.EquipmentMapper;
+import com.workload.repository.ObjectRepository;
+import com.workload.repository.RecordsTaskRepository;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+
+@Service
+public class RecordsService {
+
+  private final RecordsTaskRepository recordsTaskRepository;
+  private final ObjectRepository objectRepository;
+  private final EquipmentMapper equipmentMapper;
+
+  public RecordsService(
+      RecordsTaskRepository recordsTaskRepository,
+      ObjectRepository objectRepository,
+<span class="fc" id="L25">      EquipmentMapper equipmentMapper) {</span>
+<span class="fc" id="L26">    this.recordsTaskRepository = recordsTaskRepository;</span>
+<span class="fc" id="L27">    this.objectRepository = objectRepository;</span>
+<span class="fc" id="L28">    this.equipmentMapper = equipmentMapper;</span>
+<span class="fc" id="L29">  }</span>
+
+  public RecordsDto get(UUID objectId) {
+<span class="fc" id="L32">    requireObject(objectId);</span>
+<span class="fc" id="L33">    return recordsTaskRepository</span>
+<span class="fc" id="L34">        .findByObjectId(objectId)</span>
+<span class="fc" id="L35">        .map(equipmentMapper::toRecordsDto)</span>
+<span class="fc" id="L36">        .orElse(new RecordsDto(null, objectId, 0, 0, 0, 0, 0));</span>
+  }
+
+  public RecordsDto update(UUID objectId, RecordsUpdateRequest request) {
+<span class="fc" id="L40">    ObjectEntity object = findObject(objectId);</span>
+<span class="fc" id="L41">    RecordsTask task =</span>
+        recordsTaskRepository
+<span class="fc" id="L43">            .findByObjectId(objectId)</span>
+<span class="fc" id="L44">            .orElseGet(() -&gt; RecordsTask.builder().id(UUID.randomUUID()).object(object).build());</span>
+
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    task.setAccessRequests(request.accessRequests() != null ? request.accessRequests() : 0);</span>
+<span class="fc" id="L47">    task.setMonitoringRequests(</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        request.monitoringRequests() != null ? request.monitoringRequests() : 0);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">    task.setFootageRequests(request.footageRequests() != null ? request.footageRequests() : 0);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">    task.setBackupControl(request.backupControl() != null ? request.backupControl() : 0);</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    task.setSecurityAdmin(request.securityAdmin() != null ? request.securityAdmin() : 0);</span>
+<span class="fc" id="L52">    task.setUpdatedAt(OffsetDateTime.now());</span>
+<span class="fc" id="L53">    task = recordsTaskRepository.save(task);</span>
+<span class="fc" id="L54">    return equipmentMapper.toRecordsDto(task);</span>
+  }
+
+  private ObjectEntity findObject(UUID objectId) {
+<span class="fc" id="L58">    return objectRepository</span>
+<span class="fc" id="L59">        .findById(objectId)</span>
+<span class="pc" id="L60">        .orElseThrow(() -&gt; new ObjectNotFoundException(objectId.toString()));</span>
+  }
+
+  private void requireObject(UUID objectId) {
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">    if (!objectRepository.existsById(objectId)) {</span>
+<span class="nc" id="L65">      throw new ObjectNotFoundException(objectId.toString());</span>
+    }
+<span class="fc" id="L67">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

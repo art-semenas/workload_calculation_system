@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EquipmentMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">workload-backend</a> &gt; <a href="index.source.html" class="el_package">com.workload.mapper</a> &gt; <span class="el_source">EquipmentMapper.java</span></div><h1>EquipmentMapper.java</h1><pre class="source lang-java linenums">package com.workload.mapper;
+
+import com.workload.dto.AssignmentDto;
+import com.workload.dto.ObjectDeviceDto;
+import com.workload.dto.RecordsDto;
+import com.workload.dto.RepairDto;
+import com.workload.dto.TravelDto;
+import com.workload.entity.ObjectDevice;
+import com.workload.entity.ObjectRepair;
+import com.workload.entity.ObjectSystemAssignment;
+import com.workload.entity.RecordsTask;
+import com.workload.entity.Travel;
+import java.math.BigDecimal;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+@Mapper(componentModel = &quot;spring&quot;)
+public interface EquipmentMapper {
+
+  @Mapping(target = &quot;objectId&quot;, source = &quot;object.id&quot;)
+  @Mapping(target = &quot;deviceTypeId&quot;, source = &quot;deviceType.id&quot;)
+  @Mapping(target = &quot;deviceTypeName&quot;, source = &quot;deviceType.name&quot;)
+  ObjectDeviceDto toDeviceDto(ObjectDevice device);
+
+  @Mapping(target = &quot;objectId&quot;, source = &quot;object.id&quot;)
+  @Mapping(target = &quot;deviceTypeId&quot;, source = &quot;deviceType.id&quot;)
+  @Mapping(target = &quot;deviceTypeName&quot;, source = &quot;deviceType.name&quot;)
+  @Mapping(target = &quot;contextId&quot;, source = &quot;context.id&quot;)
+  AssignmentDto toAssignmentDto(ObjectSystemAssignment assignment);
+
+  @Mapping(target = &quot;objectId&quot;, source = &quot;object.id&quot;)
+  @Mapping(target = &quot;repairTypeId&quot;, source = &quot;repairType.id&quot;)
+  @Mapping(target = &quot;repairTypeName&quot;, source = &quot;repairType.name&quot;)
+  RepairDto toRepairDto(ObjectRepair repair);
+
+  @Mapping(target = &quot;objectId&quot;, source = &quot;object.id&quot;)
+  RecordsDto toRecordsDto(RecordsTask task);
+
+  @Mapping(target = &quot;objectId&quot;, source = &quot;object.id&quot;)
+  @Mapping(target = &quot;roundTripMin&quot;, expression = &quot;java(computeRoundTrip(travel))&quot;)
+  TravelDto toTravelDto(Travel travel);
+
+  default BigDecimal computeRoundTrip(Travel travel) {
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">    if (travel.getOneWayTimeMin() == null) {</span>
+<span class="nc" id="L45">      return BigDecimal.ZERO;</span>
+    }
+<span class="fc" id="L47">    return travel.getOneWayTimeMin().multiply(BigDecimal.valueOf(2));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

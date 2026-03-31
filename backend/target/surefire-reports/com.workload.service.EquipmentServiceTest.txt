@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.workload.service.EquipmentServiceTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.365 s -- in com.workload.service.EquipmentServiceTest

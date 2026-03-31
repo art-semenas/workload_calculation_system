@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BranchService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">workload-backend</a> &gt; <a href="index.source.html" class="el_package">com.workload.service</a> &gt; <span class="el_source">BranchService.java</span></div><h1>BranchService.java</h1><pre class="source lang-java linenums">package com.workload.service;
+
+import com.workload.dto.BranchCreateRequest;
+import com.workload.dto.BranchDto;
+import com.workload.dto.BranchUpdateRequest;
+import com.workload.entity.Branch;
+import com.workload.entity.Division;
+import com.workload.exception.BranchNotFoundException;
+import com.workload.exception.DivisionNotFoundException;
+import com.workload.mapper.BranchMapper;
+import com.workload.repository.BranchRepository;
+import com.workload.repository.DivisionRepository;
+import com.workload.repository.ObjectRepository;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BranchService {
+
+  private final BranchRepository branchRepository;
+  private final DivisionRepository divisionRepository;
+  private final ObjectRepository objectRepository;
+  private final BranchMapper branchMapper;
+
+  public BranchService(
+      BranchRepository branchRepository,
+      DivisionRepository divisionRepository,
+      ObjectRepository objectRepository,
+<span class="fc" id="L31">      BranchMapper branchMapper) {</span>
+<span class="fc" id="L32">    this.branchRepository = branchRepository;</span>
+<span class="fc" id="L33">    this.divisionRepository = divisionRepository;</span>
+<span class="fc" id="L34">    this.objectRepository = objectRepository;</span>
+<span class="fc" id="L35">    this.branchMapper = branchMapper;</span>
+<span class="fc" id="L36">  }</span>
+
+  public List&lt;BranchDto&gt; findByDivision(UUID divisionId) {
+<span class="fc" id="L39">    divisionRepository</span>
+<span class="fc" id="L40">        .findById(divisionId)</span>
+<span class="fc" id="L41">        .orElseThrow(() -&gt; new DivisionNotFoundException(divisionId.toString()));</span>
+<span class="fc" id="L42">    return branchRepository.findAllByDivisionId(divisionId).stream().map(this::toDto).toList();</span>
+  }
+
+  public BranchDto findById(UUID id) {
+<span class="fc" id="L46">    Branch branch =</span>
+<span class="fc" id="L47">        branchRepository.findById(id).orElseThrow(() -&gt; new BranchNotFoundException(id.toString()));</span>
+<span class="fc" id="L48">    return toDto(branch);</span>
+  }
+
+  public BranchDto create(UUID divisionId, BranchCreateRequest request) {
+<span class="fc" id="L52">    Division division =</span>
+        divisionRepository
+<span class="fc" id="L54">            .findById(divisionId)</span>
+<span class="fc" id="L55">            .orElseThrow(() -&gt; new DivisionNotFoundException(divisionId.toString()));</span>
+<span class="fc" id="L56">    OffsetDateTime now = OffsetDateTime.now();</span>
+    Branch branch =
+<span class="fc" id="L58">        Branch.builder()</span>
+<span class="fc" id="L59">            .id(UUID.randomUUID())</span>
+<span class="fc" id="L60">            .division(division)</span>
+<span class="fc" id="L61">            .name(request.name())</span>
+<span class="fc" id="L62">            .createdAt(now)</span>
+<span class="fc" id="L63">            .updatedAt(now)</span>
+<span class="fc" id="L64">            .build();</span>
+<span class="fc" id="L65">    branch = branchRepository.save(branch);</span>
+<span class="fc" id="L66">    return toDto(branch);</span>
+  }
+
+  public BranchDto update(UUID id, BranchUpdateRequest request) {
+<span class="fc" id="L70">    Branch branch =</span>
+<span class="pc" id="L71">        branchRepository.findById(id).orElseThrow(() -&gt; new BranchNotFoundException(id.toString()));</span>
+<span class="fc" id="L72">    branch.setName(request.name());</span>
+<span class="fc" id="L73">    branch.setUpdatedAt(OffsetDateTime.now());</span>
+<span class="fc" id="L74">    branch = branchRepository.save(branch);</span>
+<span class="fc" id="L75">    return toDto(branch);</span>
+  }
+
+  private BranchDto toDto(Branch branch) {
+<span class="fc" id="L79">    long objectCount = objectRepository.countByBranchId(branch.getId());</span>
+<span class="fc" id="L80">    return branchMapper.toDto(branch, objectCount);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

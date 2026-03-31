@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">workload-backend</a> &gt; <a href="index.source.html" class="el_package">com.workload.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.workload.exception;
+
+import com.workload.dto.ApiError;
+import com.workload.dto.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+<span class="fc" id="L17">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L19">  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+  @ExceptionHandler(SummaryNotFoundException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleSummaryNotFound(SummaryNotFoundException ex) {
+<span class="fc" id="L23">    return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L24">        .body(ApiResponse.error(new ApiError(&quot;SUMMARY_NOT_FOUND&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleEntityNotFound(EntityNotFoundException ex) {
+<span class="fc" id="L29">    return ResponseEntity.status(HttpStatus.NOT_FOUND)</span>
+<span class="fc" id="L30">        .body(ApiResponse.error(new ApiError(&quot;ENTITY_NOT_FOUND&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleDataIntegrityViolation(
+      DataIntegrityViolationException ex) {
+<span class="fc" id="L36">    return ResponseEntity.status(HttpStatus.CONFLICT)</span>
+<span class="fc" id="L37">        .body(</span>
+<span class="fc" id="L38">            ApiResponse.error(</span>
+                new ApiError(&quot;CONSTRAINT_VIOLATION&quot;, &quot;A database constraint was violated&quot;, null)));
+  }
+
+  @ExceptionHandler(DeviceNotInInventoryException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleDeviceNotInInventory(
+      DeviceNotInInventoryException ex) {
+<span class="fc" id="L45">    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)</span>
+<span class="fc" id="L46">        .body(ApiResponse.error(new ApiError(&quot;DEVICE_NOT_IN_INVENTORY&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(NoContextForSystemException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleNoContextForSystem(
+      NoContextForSystemException ex) {
+<span class="fc" id="L52">    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)</span>
+<span class="fc" id="L53">        .body(ApiResponse.error(new ApiError(&quot;NO_CONTEXT_FOR_SYSTEM&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(RoundTripNotEditableException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleRoundTripNotEditable(
+      RoundTripNotEditableException ex) {
+<span class="fc" id="L59">    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)</span>
+<span class="fc" id="L60">        .body(ApiResponse.error(new ApiError(&quot;ROUND_TRIP_NOT_EDITABLE&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleValidation(MethodArgumentNotValidException ex) {
+<span class="nc" id="L65">    String message =</span>
+<span class="nc" id="L66">        ex.getBindingResult().getFieldErrors().stream()</span>
+<span class="nc" id="L67">            .map(fe -&gt; fe.getField() + &quot;: &quot; + fe.getDefaultMessage())</span>
+<span class="nc" id="L68">            .reduce((a, b) -&gt; a + &quot;; &quot; + b)</span>
+<span class="nc" id="L69">            .orElse(&quot;Validation failed&quot;);</span>
+<span class="nc" id="L70">    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)</span>
+<span class="nc" id="L71">        .body(ApiResponse.error(new ApiError(&quot;VALIDATION_ERROR&quot;, message, null)));</span>
+  }
+
+  @ExceptionHandler(InvalidCredentialsException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleInvalidCredentials(
+      InvalidCredentialsException ex) {
+<span class="fc" id="L77">    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="fc" id="L78">        .body(ApiResponse.error(new ApiError(&quot;INVALID_CREDENTIALS&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleBadCredentials(BadCredentialsException ex) {
+<span class="fc" id="L83">    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)</span>
+<span class="fc" id="L84">        .body(</span>
+<span class="fc" id="L85">            ApiResponse.error(</span>
+                new ApiError(&quot;INVALID_CREDENTIALS&quot;, &quot;Invalid email or password&quot;, null)));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleAccessDenied(AccessDeniedException ex) {
+<span class="fc" id="L91">    return ResponseEntity.status(HttpStatus.FORBIDDEN)</span>
+<span class="fc" id="L92">        .body(ApiResponse.error(new ApiError(&quot;ACCESS_DENIED&quot;, ex.getMessage(), null)));</span>
+  }
+
+  @ExceptionHandler(RuntimeException.class)
+  public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleUnhandledException(RuntimeException ex) {
+<span class="fc" id="L97">    log.error(&quot;Unhandled exception&quot;, ex);</span>
+<span class="fc" id="L98">    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L99">        .body(</span>
+<span class="fc" id="L100">            ApiResponse.error(</span>
+                new ApiError(&quot;INTERNAL_ERROR&quot;, &quot;An unexpected error occurred&quot;, null)));
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

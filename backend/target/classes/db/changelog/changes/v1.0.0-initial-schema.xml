@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="v1.0.0-1" author="workload">
+    <comment>PoC initial schema — divisions, branches, objects (TOR §15.4)</comment>
+
+    <createTable tableName="divisions">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createTable tableName="branches">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="division_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="name" type="varchar(255)"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="branches" baseColumnNames="division_id"
+        constraintName="fk_branches_division"
+        referencedTableName="divisions" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+
+    <createTable tableName="objects">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="branch_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="name" type="varchar(500)"><constraints nullable="false"/></column>
+      <column name="import_seq_no" type="integer"/>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="objects" baseColumnNames="branch_id"
+        constraintName="fk_objects_branch"
+        referencedTableName="branches" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-2" author="workload">
+    <comment>Device catalog — seed-only in PoC (S-03)</comment>
+
+    <createTable tableName="device_types">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)"><constraints nullable="false" unique="true"/></column>
+      <column name="description" type="text"/>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createTable tableName="device_system_contexts">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="device_type_id" type="uuid"><constraints nullable="false"/></column>
+      <!-- system_type: 'OS' | 'PS' | 'VIDEO' -->
+      <column name="system_type" type="varchar(10)"><constraints nullable="false"/></column>
+      <column name="r1_minutes" type="decimal(10,4)"><constraints nullable="false"/></column>
+      <column name="r2_minutes" type="decimal(10,4)"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="device_system_contexts" baseColumnNames="device_type_id"
+        constraintName="fk_dsc_device_type"
+        referencedTableName="device_types" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+    <addUniqueConstraint
+        tableName="device_system_contexts"
+        columnNames="device_type_id,system_type"
+        constraintName="uq_dsc_device_system"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-3" author="workload">
+    <comment>Equipment — two-layer model (S-01 removed in TOR v2.9)</comment>
+
+    <createTable tableName="object_devices">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="device_type_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="quantity_physical" type="decimal(10,2)"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="object_devices" baseColumnNames="object_id"
+        constraintName="fk_od_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addForeignKeyConstraint
+        baseTableName="object_devices" baseColumnNames="device_type_id"
+        constraintName="fk_od_device_type"
+        referencedTableName="device_types" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+    <addUniqueConstraint
+        tableName="object_devices"
+        columnNames="object_id,device_type_id"
+        constraintName="uq_od_object_device"/>
+
+    <createTable tableName="object_system_assignments">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="device_type_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="system_type" type="varchar(10)"><constraints nullable="false"/></column>
+      <column name="quantity_maintained" type="decimal(10,2)"><constraints nullable="false"/></column>
+      <column name="context_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="object_system_assignments" baseColumnNames="object_id"
+        constraintName="fk_osa_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addForeignKeyConstraint
+        baseTableName="object_system_assignments" baseColumnNames="context_id"
+        constraintName="fk_osa_context"
+        referencedTableName="device_system_contexts" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+    <addUniqueConstraint
+        tableName="object_system_assignments"
+        columnNames="object_id,device_type_id,system_type"
+        constraintName="uq_osa_object_device_system"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-4" author="workload">
+    <comment>Repair catalog and operational data (no period FK — S-05)</comment>
+
+    <createTable tableName="repair_types">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="varchar(255)"><constraints nullable="false" unique="true"/></column>
+      <column name="time_minutes" type="decimal(10,4)"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createTable tableName="object_repairs">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="repair_type_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="count" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="object_repairs" baseColumnNames="object_id"
+        constraintName="fk_or_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addForeignKeyConstraint
+        baseTableName="object_repairs" baseColumnNames="repair_type_id"
+        constraintName="fk_or_repair_type"
+        referencedTableName="repair_types" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+    <addUniqueConstraint
+        tableName="object_repairs"
+        columnNames="object_id,repair_type_id"
+        constraintName="uq_or_object_repair"/>
+
+    <createTable tableName="records_tasks">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="access_requests" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="monitoring_requests" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="footage_requests" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="backup_control" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="security_admin" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="records_tasks" baseColumnNames="object_id"
+        constraintName="fk_rt_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addUniqueConstraint
+        tableName="records_tasks" columnNames="object_id"
+        constraintName="uq_rt_object"/>
+
+    <createTable tableName="travel">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="transport_type" type="varchar(50)"/>
+      <column name="distance_km" type="decimal(10,2)"/>
+      <column name="one_way_time_min" type="decimal(10,2)"/>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="travel" baseColumnNames="object_id"
+        constraintName="fk_travel_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addUniqueConstraint
+        tableName="travel" columnNames="object_id"
+        constraintName="uq_travel_object"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-5" author="workload">
+    <comment>Computed cache — summaries (synchronous PoC, no is_stale — S-02)</comment>
+
+    <createTable tableName="summaries">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="os_r1_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="os_r2_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="ps_r1_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="ps_r2_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="video_r1_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="video_r2_per_visit" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="r1_per_visit_total" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="r2_per_visit_total" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="os_monthly_avg" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="ps_monthly_avg" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="video_monthly_avg" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="records_monthly" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="repair_no_travel_monthly" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="repair_with_travel_monthly" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="round_trip_min" type="decimal(10,2)" defaultValueNumeric="0"/>
+      <column name="pzv_minutes" type="decimal(10,2)" defaultValueNumeric="0"/>
+      <column name="total_no_travel_min" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="itogo_chislo_no_travel" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="total_with_travel_min" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="itogo_chislo_with_travel" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="computed_at" type="timestamptz"/>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="summaries" baseColumnNames="object_id"
+        constraintName="fk_summaries_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addUniqueConstraint
+        tableName="summaries" columnNames="object_id"
+        constraintName="uq_summaries_object"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-6" author="workload">
+    <comment>Users and engineer module (roles exist, no RBAC enforcement — S-04)</comment>
+
+    <createTable tableName="users">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="email" type="varchar(255)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="name" type="varchar(255)"><constraints nullable="false"/></column>
+      <column name="password_hash" type="varchar(255)"><constraints nullable="false"/></column>
+      <!-- 'admin' | 'editor' | 'viewer' | 'engineer' — stored but not enforced in PoC -->
+      <column name="role" type="varchar(20)" defaultValue="viewer">
+        <constraints nullable="false"/>
+      </column>
+      <!-- division_id: access scope for editors; NULL = all divisions -->
+      <column name="division_id" type="uuid"/>
+      <!-- home_division_id: display + travel reference for engineers -->
+      <column name="home_division_id" type="uuid"/>
+      <column name="capacity_fte" type="decimal(4,2)" defaultValueNumeric="1.0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="employee_id" type="varchar(100)"/>
+      <column name="is_active" type="boolean" defaultValueBoolean="true">
+        <constraints nullable="false"/>
+      </column>
+      <column name="requires_activation" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+      <!-- NOTE: failed_login_count and locked_until are MVP-only (M-02, §21.3) -->
+      <!-- DO NOT add them here — see poc-scope.md MVP-only columns table -->
+      <column name="created_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="users" baseColumnNames="division_id"
+        constraintName="fk_users_division"
+        referencedTableName="divisions" referencedColumnNames="id"
+        onDelete="SET NULL"/>
+    <addForeignKeyConstraint
+        baseTableName="users" baseColumnNames="home_division_id"
+        constraintName="fk_users_home_division"
+        referencedTableName="divisions" referencedColumnNames="id"
+        onDelete="SET NULL"/>
+
+    <createTable tableName="object_engineers">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="object_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="engineer_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="assigned_at" type="timestamptz" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="assigned_by" type="uuid"/>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="object_engineers" baseColumnNames="object_id"
+        constraintName="fk_oe_object"
+        referencedTableName="objects" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addForeignKeyConstraint
+        baseTableName="object_engineers" baseColumnNames="engineer_id"
+        constraintName="fk_oe_engineer"
+        referencedTableName="users" referencedColumnNames="id"
+        onDelete="RESTRICT"/>
+    <addUniqueConstraint
+        tableName="object_engineers"
+        columnNames="object_id,engineer_id"
+        constraintName="uq_oe_object_engineer"/>
+
+    <createTable tableName="engineer_summaries">
+      <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="engineer_id" type="uuid"><constraints nullable="false"/></column>
+      <column name="total_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="object_count" type="integer" defaultValueNumeric="0"/>
+      <column name="os_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="ps_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="video_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="records_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="repair_load" type="decimal(18,6)" defaultValueNumeric="0"/>
+      <column name="capacity_fte" type="decimal(4,2)" defaultValueNumeric="1.0"/>
+      <column name="load_ratio" type="decimal(10,6)" defaultValueNumeric="0"/>
+      <!-- status: 'normal' | 'warning' | 'overloaded' -->
+      <column name="status" type="varchar(20)" defaultValue="normal"/>
+      <column name="computed_at" type="timestamptz"/>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="engineer_summaries" baseColumnNames="engineer_id"
+        constraintName="fk_es_engineer"
+        referencedTableName="users" referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <addUniqueConstraint
+        tableName="engineer_summaries" columnNames="engineer_id"
+        constraintName="uq_es_engineer"/>
+  </changeSet>
+
+  <changeSet id="v1.0.0-7" author="workload">
+    <comment>Indexes — PoC set (TOR §5.3)</comment>
+
+    <createIndex tableName="branches" indexName="idx_branches_division_id">
+      <column name="division_id"/>
+    </createIndex>
+    <createIndex tableName="objects" indexName="idx_objects_branch_id">
+      <column name="branch_id"/>
+    </createIndex>
+    <createIndex tableName="object_devices" indexName="idx_od_object_id">
+      <column name="object_id"/>
+    </createIndex>
+    <createIndex tableName="object_system_assignments" indexName="idx_osa_object_id">
+      <column name="object_id"/>
+    </createIndex>
+    <createIndex tableName="object_repairs" indexName="idx_or_object_id">
+      <column name="object_id"/>
+    </createIndex>
+    <createIndex tableName="object_engineers" indexName="idx_oe_engineer_id">
+      <column name="engineer_id"/>
+    </createIndex>
+    <createIndex tableName="object_engineers" indexName="idx_oe_object_id">
+      <column name="object_id"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ObjectController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">workload-backend</a> &gt; <a href="index.source.html" class="el_package">com.workload.controller</a> &gt; <span class="el_source">ObjectController.java</span></div><h1>ObjectController.java</h1><pre class="source lang-java linenums">package com.workload.controller;
+
+import com.workload.dto.ApiResponse;
+import com.workload.dto.ObjectCreateRequest;
+import com.workload.dto.ObjectDto;
+import com.workload.dto.ObjectUpdateRequest;
+import com.workload.dto.SummaryDto;
+import com.workload.service.ObjectService;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(&quot;/api/v1/objects&quot;)
+public class ObjectController {
+
+  private final ObjectService objectService;
+
+<span class="fc" id="L31">  public ObjectController(ObjectService objectService) {</span>
+<span class="fc" id="L32">    this.objectService = objectService;</span>
+<span class="fc" id="L33">  }</span>
+
+  @GetMapping
+  public ResponseEntity&lt;ApiResponse&lt;List&lt;ObjectDto&gt;&gt;&gt; getAll(
+      @RequestParam(name = &quot;division_id&quot;, required = false) UUID divisionId) {
+<span class="fc" id="L38">    return ResponseEntity.ok(</span>
+<span class="fc" id="L39">        ApiResponse.success(objectService.findAll(Optional.ofNullable(divisionId))));</span>
+  }
+
+  @PostMapping
+  public ResponseEntity&lt;ApiResponse&lt;ObjectDto&gt;&gt; create(
+      @Valid @RequestBody ObjectCreateRequest request) {
+<span class="fc" id="L45">    ObjectDto dto = objectService.create(request);</span>
+<span class="fc" id="L46">    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));</span>
+  }
+
+  @GetMapping(&quot;/{id}&quot;)
+  public ResponseEntity&lt;ApiResponse&lt;ObjectDto&gt;&gt; getById(@PathVariable UUID id) {
+<span class="fc" id="L51">    return ResponseEntity.ok(ApiResponse.success(objectService.findById(id)));</span>
+  }
+
+  @PutMapping(&quot;/{id}&quot;)
+  public ResponseEntity&lt;ApiResponse&lt;ObjectDto&gt;&gt; update(
+      @PathVariable UUID id, @Valid @RequestBody ObjectUpdateRequest request) {
+<span class="fc" id="L57">    return ResponseEntity.ok(ApiResponse.success(objectService.update(id, request)));</span>
+  }
+
+  @DeleteMapping(&quot;/{id}&quot;)
+  public ResponseEntity&lt;Void&gt; delete(@PathVariable UUID id) {
+<span class="fc" id="L62">    objectService.delete(id);</span>
+<span class="fc" id="L63">    return ResponseEntity.noContent().build();</span>
+  }
+
+  @GetMapping(&quot;/{id}/summary&quot;)
+  public ResponseEntity&lt;ApiResponse&lt;SummaryDto&gt;&gt; getObjectSummary(@PathVariable UUID id) {
+<span class="nc" id="L68">    SummaryDto summary = objectService.getSummary(id);</span>
+<span class="nc" id="L69">    return ResponseEntity.ok(ApiResponse.success(summary));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

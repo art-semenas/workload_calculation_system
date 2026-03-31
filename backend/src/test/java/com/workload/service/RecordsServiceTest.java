@@ -66,4 +66,34 @@ class RecordsServiceTest {
     assertThat(result.accessRequests()).isEqualTo(5);
     assertThat(result.monitoringRequests()).isEqualTo(3);
   }
+
+  @Test
+  void updateDefaultsNullFieldsToZero() {
+    ObjectEntity object = ObjectEntity.builder().id(objectId).build();
+    when(objectRepository.findById(objectId)).thenReturn(Optional.of(object));
+    when(recordsTaskRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(recordsTaskRepository.save(any(RecordsTask.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(equipmentMapper.toRecordsDto(any(RecordsTask.class)))
+        .thenAnswer(
+            inv -> {
+              RecordsTask t = inv.getArgument(0);
+              return new RecordsDto(
+                  t.getId(),
+                  objectId,
+                  t.getAccessRequests(),
+                  t.getMonitoringRequests(),
+                  t.getFootageRequests(),
+                  t.getBackupControl(),
+                  t.getSecurityAdmin());
+            });
+
+    RecordsDto result =
+        recordsService.update(objectId, new RecordsUpdateRequest(null, null, null, null, null));
+
+    assertThat(result.accessRequests()).isZero();
+    assertThat(result.monitoringRequests()).isZero();
+    assertThat(result.footageRequests()).isZero();
+    assertThat(result.backupControl()).isZero();
+    assertThat(result.securityAdmin()).isZero();
+  }
 }
