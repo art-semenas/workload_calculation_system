@@ -24,6 +24,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            RateLimitFilter rateLimitFilter,
             AuthenticationEntryPoint authenticationEntryPoint)
             throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
@@ -43,6 +44,7 @@ public class SecurityConfig {
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

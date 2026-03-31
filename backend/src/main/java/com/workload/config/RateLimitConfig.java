@@ -1,7 +1,6 @@
 package com.workload.config;
 
 import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
 import java.time.Duration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +9,10 @@ import org.springframework.context.annotation.Configuration;
 public class RateLimitConfig {
 
     @Bean
-    Bucket defaultRateLimitBucket() {
-        Bandwidth limit = Bandwidth.builder().capacity(100).refillGreedy(100, Duration.ofMinutes(1)).build();
-        return Bucket.builder().addLimit(limit).build();
+    Bandwidth defaultRateLimitBandwidth() {
+        return Bandwidth.builder()
+                .capacity(100)
+                .refillGreedy(100, Duration.ofMinutes(1))
+                .build();
     }
 }
