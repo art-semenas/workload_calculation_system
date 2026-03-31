@@ -4,5 +4,4 @@ import java.util.List;
 import java.util.UUID;
 
 public record DeviceTypeDto(
-        UUID id, String name, String description, List<DeviceSystemContextDto> contexts) {
-}
+    UUID id, String name, String description, List<DeviceSystemContextDto> contexts) {}

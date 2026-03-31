@@ -25,69 +25,67 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/objects/{objectId}")
 public class EquipmentController {
 
-    private final EquipmentService equipmentService;
+  private final EquipmentService equipmentService;
 
-    public EquipmentController(EquipmentService equipmentService) {
-        this.equipmentService = equipmentService;
-    }
+  public EquipmentController(EquipmentService equipmentService) {
+    this.equipmentService = equipmentService;
+  }
 
-    @GetMapping("/devices")
-    public ResponseEntity<ApiResponse<List<ObjectDeviceDto>>> getDevices(
-            @PathVariable UUID objectId) {
-        return ResponseEntity.ok(ApiResponse.success(equipmentService.getDevices(objectId)));
-    }
+  @GetMapping("/devices")
+  public ResponseEntity<ApiResponse<List<ObjectDeviceDto>>> getDevices(
+      @PathVariable UUID objectId) {
+    return ResponseEntity.ok(ApiResponse.success(equipmentService.getDevices(objectId)));
+  }
 
-    @PostMapping("/devices")
-    public ResponseEntity<ApiResponse<ObjectDeviceDto>> upsertDevice(
-            @PathVariable UUID objectId,
-            @Valid @RequestBody ObjectDeviceUpsertRequest request) {
-        ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
-    }
+  @PostMapping("/devices")
+  public ResponseEntity<ApiResponse<ObjectDeviceDto>> upsertDevice(
+      @PathVariable UUID objectId, @Valid @RequestBody ObjectDeviceUpsertRequest request) {
+    ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
+  }
 
-    @PutMapping("/devices/{deviceTypeId}")
-    public ResponseEntity<ApiResponse<ObjectDeviceDto>> updateDevice(
-            @PathVariable UUID objectId,
-            @PathVariable UUID deviceTypeId,
-            @Valid @RequestBody ObjectDeviceUpsertRequest request) {
-        ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
-        return ResponseEntity.ok(ApiResponse.success(dto));
-    }
+  @PutMapping("/devices/{deviceTypeId}")
+  public ResponseEntity<ApiResponse<ObjectDeviceDto>> updateDevice(
+      @PathVariable UUID objectId,
+      @PathVariable UUID deviceTypeId,
+      @Valid @RequestBody ObjectDeviceUpsertRequest request) {
+    ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
+    return ResponseEntity.ok(ApiResponse.success(dto));
+  }
 
-    @DeleteMapping("/devices/{deviceTypeId}")
-    public ResponseEntity<Void> deleteDevice(
-            @PathVariable UUID objectId, @PathVariable UUID deviceTypeId) {
-        equipmentService.deleteDevice(objectId, deviceTypeId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/devices/{deviceTypeId}")
+  public ResponseEntity<Void> deleteDevice(
+      @PathVariable UUID objectId, @PathVariable UUID deviceTypeId) {
+    equipmentService.deleteDevice(objectId, deviceTypeId);
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/assignments")
-    public ResponseEntity<ApiResponse<List<AssignmentDto>>> getAssignments(
-            @PathVariable UUID objectId) {
-        return ResponseEntity.ok(ApiResponse.success(equipmentService.getAssignments(objectId)));
-    }
+  @GetMapping("/assignments")
+  public ResponseEntity<ApiResponse<List<AssignmentDto>>> getAssignments(
+      @PathVariable UUID objectId) {
+    return ResponseEntity.ok(ApiResponse.success(equipmentService.getAssignments(objectId)));
+  }
 
-    @PostMapping("/assignments")
-    public ResponseEntity<ApiResponse<AssignmentDto>> addAssignment(
-            @PathVariable UUID objectId,
-            @Valid @RequestBody AssignmentCreateRequest request) {
-        AssignmentDto dto = equipmentService.addAssignment(objectId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
-    }
+  @PostMapping("/assignments")
+  public ResponseEntity<ApiResponse<AssignmentDto>> addAssignment(
+      @PathVariable UUID objectId, @Valid @RequestBody AssignmentCreateRequest request) {
+    AssignmentDto dto = equipmentService.addAssignment(objectId, request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
+  }
 
-    @PutMapping("/assignments/{assignmentId}")
-    public ResponseEntity<ApiResponse<AssignmentDto>> updateAssignment(
-            @PathVariable UUID objectId,
-            @PathVariable UUID assignmentId,
-            @Valid @RequestBody AssignmentUpdateRequest request) {
-        return ResponseEntity.ok(
-                ApiResponse.success(equipmentService.updateAssignment(assignmentId, request)));
-    }
+  @PutMapping("/assignments/{assignmentId}")
+  public ResponseEntity<ApiResponse<AssignmentDto>> updateAssignment(
+      @PathVariable UUID objectId,
+      @PathVariable UUID assignmentId,
+      @Valid @RequestBody AssignmentUpdateRequest request) {
+    return ResponseEntity.ok(
+        ApiResponse.success(equipmentService.updateAssignment(assignmentId, request)));
+  }
 
-    @DeleteMapping("/assignments/{assignmentId}")
-    public ResponseEntity<Void> deleteAssignment(
-            @PathVariable UUID objectId, @PathVariable UUID assignmentId) {
-        equipmentService.deleteAssignment(assignmentId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/assignments/{assignmentId}")
+  public ResponseEntity<Void> deleteAssignment(
+      @PathVariable UUID objectId, @PathVariable UUID assignmentId) {
+    equipmentService.deleteAssignment(assignmentId);
+    return ResponseEntity.noContent().build();
+  }
 }

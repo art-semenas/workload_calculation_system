@@ -19,70 +19,64 @@ import org.springframework.stereotype.Service;
 @Service
 public class BranchService {
 
-    private final BranchRepository branchRepository;
-    private final DivisionRepository divisionRepository;
-    private final ObjectRepository objectRepository;
-    private final BranchMapper branchMapper;
+  private final BranchRepository branchRepository;
+  private final DivisionRepository divisionRepository;
+  private final ObjectRepository objectRepository;
+  private final BranchMapper branchMapper;
 
-    public BranchService(
-            BranchRepository branchRepository,
-            DivisionRepository divisionRepository,
-            ObjectRepository objectRepository,
-            BranchMapper branchMapper) {
-        this.branchRepository = branchRepository;
-        this.divisionRepository = divisionRepository;
-        this.objectRepository = objectRepository;
-        this.branchMapper = branchMapper;
-    }
+  public BranchService(
+      BranchRepository branchRepository,
+      DivisionRepository divisionRepository,
+      ObjectRepository objectRepository,
+      BranchMapper branchMapper) {
+    this.branchRepository = branchRepository;
+    this.divisionRepository = divisionRepository;
+    this.objectRepository = objectRepository;
+    this.branchMapper = branchMapper;
+  }
 
-    public List<BranchDto> findByDivision(UUID divisionId) {
+  public List<BranchDto> findByDivision(UUID divisionId) {
+    divisionRepository
+        .findById(divisionId)
+        .orElseThrow(() -> new DivisionNotFoundException(divisionId.toString()));
+    return branchRepository.findAllByDivisionId(divisionId).stream().map(this::toDto).toList();
+  }
+
+  public BranchDto findById(UUID id) {
+    Branch branch =
+        branchRepository.findById(id).orElseThrow(() -> new BranchNotFoundException(id.toString()));
+    return toDto(branch);
+  }
+
+  public BranchDto create(UUID divisionId, BranchCreateRequest request) {
+    Division division =
         divisionRepository
-                .findById(divisionId)
-                .orElseThrow(() -> new DivisionNotFoundException(divisionId.toString()));
-        return branchRepository.findAllByDivisionId(divisionId).stream()
-                .map(this::toDto)
-                .toList();
-    }
+            .findById(divisionId)
+            .orElseThrow(() -> new DivisionNotFoundException(divisionId.toString()));
+    OffsetDateTime now = OffsetDateTime.now();
+    Branch branch =
+        Branch.builder()
+            .id(UUID.randomUUID())
+            .division(division)
+            .name(request.name())
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+    branch = branchRepository.save(branch);
+    return toDto(branch);
+  }
 
-    public BranchDto findById(UUID id) {
-        Branch branch =
-                branchRepository
-                        .findById(id)
-                        .orElseThrow(() -> new BranchNotFoundException(id.toString()));
-        return toDto(branch);
-    }
+  public BranchDto update(UUID id, BranchUpdateRequest request) {
+    Branch branch =
+        branchRepository.findById(id).orElseThrow(() -> new BranchNotFoundException(id.toString()));
+    branch.setName(request.name());
+    branch.setUpdatedAt(OffsetDateTime.now());
+    branch = branchRepository.save(branch);
+    return toDto(branch);
+  }
 
-    public BranchDto create(UUID divisionId, BranchCreateRequest request) {
-        Division division =
-                divisionRepository
-                        .findById(divisionId)
-                        .orElseThrow(() -> new DivisionNotFoundException(divisionId.toString()));
-        OffsetDateTime now = OffsetDateTime.now();
-        Branch branch =
-                Branch.builder()
-                        .id(UUID.randomUUID())
-                        .division(division)
-                        .name(request.name())
-                        .createdAt(now)
-                        .updatedAt(now)
-                        .build();
-        branch = branchRepository.save(branch);
-        return toDto(branch);
-    }
-
-    public BranchDto update(UUID id, BranchUpdateRequest request) {
-        Branch branch =
-                branchRepository
-                        .findById(id)
-                        .orElseThrow(() -> new BranchNotFoundException(id.toString()));
-        branch.setName(request.name());
-        branch.setUpdatedAt(OffsetDateTime.now());
-        branch = branchRepository.save(branch);
-        return toDto(branch);
-    }
-
-    private BranchDto toDto(Branch branch) {
-        long objectCount = objectRepository.countByBranchId(branch.getId());
-        return branchMapper.toDto(branch, objectCount);
-    }
+  private BranchDto toDto(Branch branch) {
+    long objectCount = objectRepository.countByBranchId(branch.getId());
+    return branchMapper.toDto(branch, objectCount);
+  }
 }

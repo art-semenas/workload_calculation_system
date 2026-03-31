@@ -8,6 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SummaryMapper {
 
-    @Mapping(target = "objectId", source = "object.id")
-    SummaryDto toDto(Summary entity);
+  @Mapping(target = "objectId", source = "object.id")
+  SummaryDto toDto(Summary entity);
 }

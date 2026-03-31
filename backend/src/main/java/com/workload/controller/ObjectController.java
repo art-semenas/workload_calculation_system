@@ -26,46 +26,46 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/objects")
 public class ObjectController {
 
-    private final ObjectService objectService;
+  private final ObjectService objectService;
 
-    public ObjectController(ObjectService objectService) {
-        this.objectService = objectService;
-    }
+  public ObjectController(ObjectService objectService) {
+    this.objectService = objectService;
+  }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<ObjectDto>>> getAll(
-            @RequestParam(name = "division_id", required = false) UUID divisionId) {
-        return ResponseEntity.ok(
-                ApiResponse.success(objectService.findAll(Optional.ofNullable(divisionId))));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<ObjectDto>>> getAll(
+      @RequestParam(name = "division_id", required = false) UUID divisionId) {
+    return ResponseEntity.ok(
+        ApiResponse.success(objectService.findAll(Optional.ofNullable(divisionId))));
+  }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ObjectDto>> create(
-            @Valid @RequestBody ObjectCreateRequest request) {
-        ObjectDto dto = objectService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
-    }
+  @PostMapping
+  public ResponseEntity<ApiResponse<ObjectDto>> create(
+      @Valid @RequestBody ObjectCreateRequest request) {
+    ObjectDto dto = objectService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ObjectDto>> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(objectService.findById(id)));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<ObjectDto>> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(objectService.findById(id)));
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ObjectDto>> update(
-            @PathVariable UUID id, @Valid @RequestBody ObjectUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(objectService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<ApiResponse<ObjectDto>> update(
+      @PathVariable UUID id, @Valid @RequestBody ObjectUpdateRequest request) {
+    return ResponseEntity.ok(ApiResponse.success(objectService.update(id, request)));
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        objectService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    objectService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/{id}/summary")
-    public ResponseEntity<ApiResponse<SummaryDto>> getObjectSummary(@PathVariable UUID id) {
-        SummaryDto summary = objectService.getSummary(id);
-        return ResponseEntity.ok(ApiResponse.success(summary));
-    }
+  @GetMapping("/{id}/summary")
+  public ResponseEntity<ApiResponse<SummaryDto>> getObjectSummary(@PathVariable UUID id) {
+    SummaryDto summary = objectService.getSummary(id);
+    return ResponseEntity.ok(ApiResponse.success(summary));
+  }
 }

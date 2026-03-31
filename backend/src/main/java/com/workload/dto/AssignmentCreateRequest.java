@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record AssignmentCreateRequest(
-        @NotNull UUID deviceTypeId,
-        @NotNull SystemType systemType,
-        @NotNull @DecimalMin("0.00") BigDecimal quantityMaintained) {
-}
+    @NotNull UUID deviceTypeId,
+    @NotNull SystemType systemType,
+    @NotNull @DecimalMin("0.00") BigDecimal quantityMaintained) {}

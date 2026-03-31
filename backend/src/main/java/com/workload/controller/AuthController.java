@@ -24,49 +24,51 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserMapper userMapper;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtTokenProvider jwtTokenProvider;
+  private final UserMapper userMapper;
 
-    public AuthController(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtTokenProvider jwtTokenProvider,
-            UserMapper userMapper) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.userMapper = userMapper;
+  public AuthController(
+      UserRepository userRepository,
+      PasswordEncoder passwordEncoder,
+      JwtTokenProvider jwtTokenProvider,
+      UserMapper userMapper) {
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.jwtTokenProvider = jwtTokenProvider;
+    this.userMapper = userMapper;
+  }
+
+  @PostMapping("/login")
+  public ResponseEntity<ApiResponse<LoginResponse>> login(
+      @Valid @RequestBody LoginRequest request) {
+    User user =
+        userRepository
+            .findByEmail(request.email())
+            .filter(u -> u.isActive())
+            .orElseThrow(InvalidCredentialsException::new);
+
+    if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+      throw new InvalidCredentialsException();
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
-        User user = userRepository
-                .findByEmail(request.email())
-                .filter(u -> u.isActive())
-                .orElseThrow(InvalidCredentialsException::new);
+    String token = jwtTokenProvider.generateToken(user);
+    UserDto userDto = userMapper.toDto(user);
+    return ResponseEntity.ok(ApiResponse.success(new LoginResponse(token, userDto)));
+  }
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new InvalidCredentialsException();
-        }
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout() {
+    return ResponseEntity.noContent().build();
+  }
 
-        String token = jwtTokenProvider.generateToken(user);
-        UserDto userDto = userMapper.toDto(user);
-        return ResponseEntity.ok(ApiResponse.success(new LoginResponse(token, userDto)));
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserDto>> me(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(InvalidCredentialsException::new);
-        return ResponseEntity.ok(ApiResponse.success(userMapper.toDto(user)));
-    }
+  @GetMapping("/me")
+  public ResponseEntity<ApiResponse<UserDto>> me(@AuthenticationPrincipal UserDetails userDetails) {
+    User user =
+        userRepository
+            .findByEmail(userDetails.getUsername())
+            .orElseThrow(InvalidCredentialsException::new);
+    return ResponseEntity.ok(ApiResponse.success(userMapper.toDto(user)));
+  }
 }

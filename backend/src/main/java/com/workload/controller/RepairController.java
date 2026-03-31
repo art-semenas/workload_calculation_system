@@ -19,23 +19,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/objects/{objectId}/repairs")
 public class RepairController {
 
-    private final RepairService repairService;
+  private final RepairService repairService;
 
-    public RepairController(RepairService repairService) {
-        this.repairService = repairService;
-    }
+  public RepairController(RepairService repairService) {
+    this.repairService = repairService;
+  }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<RepairDto>>> getAll(@PathVariable UUID objectId) {
-        return ResponseEntity.ok(ApiResponse.success(repairService.getAll(objectId)));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<RepairDto>>> getAll(@PathVariable UUID objectId) {
+    return ResponseEntity.ok(ApiResponse.success(repairService.getAll(objectId)));
+  }
 
-    @PutMapping("/{repairTypeId}")
-    public ResponseEntity<ApiResponse<RepairDto>> update(
-            @PathVariable UUID objectId,
-            @PathVariable UUID repairTypeId,
-            @Valid @RequestBody RepairUpdateRequest request) {
-        return ResponseEntity.ok(
-                ApiResponse.success(repairService.update(objectId, repairTypeId, request)));
-    }
+  @PutMapping("/{repairTypeId}")
+  public ResponseEntity<ApiResponse<RepairDto>> update(
+      @PathVariable UUID objectId,
+      @PathVariable UUID repairTypeId,
+      @Valid @RequestBody RepairUpdateRequest request) {
+    return ResponseEntity.ok(
+        ApiResponse.success(repairService.update(objectId, repairTypeId, request)));
+  }
 }

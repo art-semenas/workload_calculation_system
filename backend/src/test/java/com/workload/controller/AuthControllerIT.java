@@ -10,80 +10,80 @@ import org.junit.jupiter.api.Test;
 
 class AuthControllerIT extends IntegrationTestBase {
 
-    @Test
-    void loginWithValidCredentialsReturnsToken() {
-        given()
-                .contentType(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "email": "admin@workload.local",
-                                  "password": "password"
-                                }
-                                """)
-                .when()
-                .post("/auth/login")
-                .then()
-                .statusCode(200)
-                .body("data.token", notNullValue())
-                .body("data.user.email", notNullValue())
-                .body("error", nullValue());
-    }
+  @Test
+  void loginWithValidCredentialsReturnsToken() {
+    given()
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {
+              "email": "admin@workload.local",
+              "password": "password"
+            }
+            """)
+        .when()
+        .post("/auth/login")
+        .then()
+        .statusCode(200)
+        .body("data.token", notNullValue())
+        .body("data.user.email", notNullValue())
+        .body("error", nullValue());
+  }
 
-    @Test
-    void loginWithWrongPasswordReturns401() {
-        given()
-                .contentType(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "email": "admin@workload.local",
-                                  "password": "wrongpassword"
-                                }
-                                """)
-                .when()
-                .post("/auth/login")
-                .then()
-                .statusCode(401);
-    }
+  @Test
+  void loginWithWrongPasswordReturns401() {
+    given()
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {
+              "email": "admin@workload.local",
+              "password": "wrongpassword"
+            }
+            """)
+        .when()
+        .post("/auth/login")
+        .then()
+        .statusCode(401);
+  }
 
-    @Test
-    void loginWithUnknownEmailReturns401() {
-        given()
-                .contentType(ContentType.JSON)
-                .body(
-                        """
-                                {
-                                  "email": "unknown@example.com",
-                                  "password": "password"
-                                }
-                                """)
-                .when()
-                .post("/auth/login")
-                .then()
-                .statusCode(401);
-    }
+  @Test
+  void loginWithUnknownEmailReturns401() {
+    given()
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {
+              "email": "unknown@example.com",
+              "password": "password"
+            }
+            """)
+        .when()
+        .post("/auth/login")
+        .then()
+        .statusCode(401);
+  }
 
-    @Test
-    void getMeWithoutTokenReturns401() {
-        given().when().get("/auth/me").then().statusCode(401);
-    }
+  @Test
+  void getMeWithoutTokenReturns401() {
+    given().when().get("/auth/me").then().statusCode(401);
+  }
 
-    @Test
-    void getMeWithValidTokenReturns200() {
-        String bearerToken = authenticationTestHelper.loginAsAdmin();
+  @Test
+  void getMeWithValidTokenReturns200() {
+    String bearerToken = authenticationTestHelper.loginAsAdmin();
 
-        given()
-                .header("Authorization", bearerToken)
-                .when()
-                .get("/auth/me")
-                .then()
-                .statusCode(200)
-                .body("data.email", notNullValue());
-    }
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .get("/auth/me")
+        .then()
+        .statusCode(200)
+        .body("data.email", notNullValue());
+  }
 
-    @Test
-    void logoutReturns204() {
-        given().when().post("/auth/logout").then().statusCode(204);
-    }
+  @Test
+  void logoutReturns204() {
+    given().when().post("/auth/logout").then().statusCode(204);
+  }
 }

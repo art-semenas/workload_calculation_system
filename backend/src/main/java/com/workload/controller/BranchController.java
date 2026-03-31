@@ -18,20 +18,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/branches")
 public class BranchController {
 
-    private final BranchService branchService;
+  private final BranchService branchService;
 
-    public BranchController(BranchService branchService) {
-        this.branchService = branchService;
-    }
+  public BranchController(BranchService branchService) {
+    this.branchService = branchService;
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BranchDto>> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(branchService.findById(id)));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<BranchDto>> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(branchService.findById(id)));
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<BranchDto>> update(
-            @PathVariable UUID id, @Valid @RequestBody BranchUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(branchService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<ApiResponse<BranchDto>> update(
+      @PathVariable UUID id, @Valid @RequestBody BranchUpdateRequest request) {
+    return ResponseEntity.ok(ApiResponse.success(branchService.update(id, request)));
+  }
 }

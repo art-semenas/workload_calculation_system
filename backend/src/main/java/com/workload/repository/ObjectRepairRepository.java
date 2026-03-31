@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ObjectRepairRepository extends JpaRepository<ObjectRepair, UUID> {
-    List<ObjectRepair> findAllByObjectId(UUID objectId);
+  List<ObjectRepair> findAllByObjectId(UUID objectId);
 
-    Optional<ObjectRepair> findByObjectIdAndRepairTypeId(UUID objectId, UUID repairTypeId);
+  Optional<ObjectRepair> findByObjectIdAndRepairTypeId(UUID objectId, UUID repairTypeId);
 }

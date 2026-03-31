@@ -16,78 +16,83 @@ import org.mapstruct.factory.Mappers;
 
 class EquipmentMapperTest {
 
-    private final ObjectMapper objectMapper = Mappers.getMapper(ObjectMapper.class);
-    private final EquipmentMapper equipmentMapper = Mappers.getMapper(EquipmentMapper.class);
+  private final ObjectMapper objectMapper = Mappers.getMapper(ObjectMapper.class);
+  private final EquipmentMapper equipmentMapper = Mappers.getMapper(EquipmentMapper.class);
 
-    @Test
-    void mapsObjectEntityToDto() {
-        Division division = Division.builder()
-                .id(UUID.randomUUID())
-                .name("Div")
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
-        Branch branch = Branch.builder()
-                .id(UUID.randomUUID())
-                .division(division)
-                .name("Branch")
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
-        ObjectEntity entity = ObjectEntity.builder()
-                .id(UUID.randomUUID())
-                .branch(branch)
-                .name("Test Object")
-                .importSeqNo(42)
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+  @Test
+  void mapsObjectEntityToDto() {
+    Division division =
+        Division.builder()
+            .id(UUID.randomUUID())
+            .name("Div")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    Branch branch =
+        Branch.builder()
+            .id(UUID.randomUUID())
+            .division(division)
+            .name("Branch")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    ObjectEntity entity =
+        ObjectEntity.builder()
+            .id(UUID.randomUUID())
+            .branch(branch)
+            .name("Test Object")
+            .importSeqNo(42)
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
 
-        ObjectDto dto = objectMapper.toDto(entity);
+    ObjectDto dto = objectMapper.toDto(entity);
 
-        assertThat(dto.id()).isEqualTo(entity.getId());
-        assertThat(dto.branchId()).isEqualTo(branch.getId());
-        assertThat(dto.divisionId()).isEqualTo(division.getId());
-        assertThat(dto.name()).isEqualTo("Test Object");
-        assertThat(dto.importSeqNo()).isEqualTo(42);
-    }
+    assertThat(dto.id()).isEqualTo(entity.getId());
+    assertThat(dto.branchId()).isEqualTo(branch.getId());
+    assertThat(dto.divisionId()).isEqualTo(division.getId());
+    assertThat(dto.name()).isEqualTo("Test Object");
+    assertThat(dto.importSeqNo()).isEqualTo(42);
+  }
 
-    @Test
-    void mapsTravelWithComputedRoundTrip() {
-        ObjectEntity obj = ObjectEntity.builder()
-                .id(UUID.randomUUID())
-                .branch(
-                        Branch.builder()
-                                .id(UUID.randomUUID())
-                                .division(
-                                        Division.builder()
-                                                .id(UUID.randomUUID())
-                                                .name("D")
-                                                .createdAt(OffsetDateTime.now())
-                                                .updatedAt(OffsetDateTime.now())
-                                                .build())
-                                .name("B")
-                                .createdAt(OffsetDateTime.now())
-                                .updatedAt(OffsetDateTime.now())
-                                .build())
-                .name("O")
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+  @Test
+  void mapsTravelWithComputedRoundTrip() {
+    ObjectEntity obj =
+        ObjectEntity.builder()
+            .id(UUID.randomUUID())
+            .branch(
+                Branch.builder()
+                    .id(UUID.randomUUID())
+                    .division(
+                        Division.builder()
+                            .id(UUID.randomUUID())
+                            .name("D")
+                            .createdAt(OffsetDateTime.now())
+                            .updatedAt(OffsetDateTime.now())
+                            .build())
+                    .name("B")
+                    .createdAt(OffsetDateTime.now())
+                    .updatedAt(OffsetDateTime.now())
+                    .build())
+            .name("O")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
 
-        Travel travel = Travel.builder()
-                .id(UUID.randomUUID())
-                .object(obj)
-                .transportType("car")
-                .distanceKm(new BigDecimal("15.00"))
-                .oneWayTimeMin(new BigDecimal("30.00"))
-                .updatedAt(OffsetDateTime.now())
-                .build();
+    Travel travel =
+        Travel.builder()
+            .id(UUID.randomUUID())
+            .object(obj)
+            .transportType("car")
+            .distanceKm(new BigDecimal("15.00"))
+            .oneWayTimeMin(new BigDecimal("30.00"))
+            .updatedAt(OffsetDateTime.now())
+            .build();
 
-        TravelDto dto = equipmentMapper.toTravelDto(travel);
+    TravelDto dto = equipmentMapper.toTravelDto(travel);
 
-        assertThat(dto.objectId()).isEqualTo(obj.getId());
-        assertThat(dto.oneWayTimeMin()).isEqualByComparingTo("30.00");
-        assertThat(dto.roundTripMin()).isEqualByComparingTo("60.00");
-    }
+    assertThat(dto.objectId()).isEqualTo(obj.getId());
+    assertThat(dto.oneWayTimeMin()).isEqualByComparingTo("30.00");
+    assertThat(dto.roundTripMin()).isEqualByComparingTo("60.00");
+  }
 }

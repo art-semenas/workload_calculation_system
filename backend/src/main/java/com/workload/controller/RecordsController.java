@@ -18,20 +18,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/objects/{objectId}/records")
 public class RecordsController {
 
-    private final RecordsService recordsService;
+  private final RecordsService recordsService;
 
-    public RecordsController(RecordsService recordsService) {
-        this.recordsService = recordsService;
-    }
+  public RecordsController(RecordsService recordsService) {
+    this.recordsService = recordsService;
+  }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<RecordsDto>> get(@PathVariable UUID objectId) {
-        return ResponseEntity.ok(ApiResponse.success(recordsService.get(objectId)));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<RecordsDto>> get(@PathVariable UUID objectId) {
+    return ResponseEntity.ok(ApiResponse.success(recordsService.get(objectId)));
+  }
 
-    @PutMapping
-    public ResponseEntity<ApiResponse<RecordsDto>> update(
-            @PathVariable UUID objectId, @Valid @RequestBody RecordsUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(recordsService.update(objectId, request)));
-    }
+  @PutMapping
+  public ResponseEntity<ApiResponse<RecordsDto>> update(
+      @PathVariable UUID objectId, @Valid @RequestBody RecordsUpdateRequest request) {
+    return ResponseEntity.ok(ApiResponse.success(recordsService.update(objectId, request)));
+  }
 }

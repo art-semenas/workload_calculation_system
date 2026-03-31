@@ -25,46 +25,46 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/divisions")
 public class DivisionController {
 
-    private final DivisionService divisionService;
-    private final BranchService branchService;
+  private final DivisionService divisionService;
+  private final BranchService branchService;
 
-    public DivisionController(DivisionService divisionService, BranchService branchService) {
-        this.divisionService = divisionService;
-        this.branchService = branchService;
-    }
+  public DivisionController(DivisionService divisionService, BranchService branchService) {
+    this.divisionService = divisionService;
+    this.branchService = branchService;
+  }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<DivisionDto>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success(divisionService.findAll()));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<DivisionDto>>> getAll() {
+    return ResponseEntity.ok(ApiResponse.success(divisionService.findAll()));
+  }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<DivisionDto>> create(
-            @Valid @RequestBody DivisionCreateRequest request) {
-        DivisionDto dto = divisionService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
-    }
+  @PostMapping
+  public ResponseEntity<ApiResponse<DivisionDto>> create(
+      @Valid @RequestBody DivisionCreateRequest request) {
+    DivisionDto dto = divisionService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<DivisionDto>> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(divisionService.findById(id)));
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<DivisionDto>> getById(@PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(divisionService.findById(id)));
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<DivisionDto>> update(
-            @PathVariable UUID id, @Valid @RequestBody DivisionUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(divisionService.update(id, request)));
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<ApiResponse<DivisionDto>> update(
+      @PathVariable UUID id, @Valid @RequestBody DivisionUpdateRequest request) {
+    return ResponseEntity.ok(ApiResponse.success(divisionService.update(id, request)));
+  }
 
-    @GetMapping("/{id}/branches")
-    public ResponseEntity<ApiResponse<List<BranchDto>>> getBranches(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(branchService.findByDivision(id)));
-    }
+  @GetMapping("/{id}/branches")
+  public ResponseEntity<ApiResponse<List<BranchDto>>> getBranches(@PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(branchService.findByDivision(id)));
+  }
 
-    @PostMapping("/{id}/branches")
-    public ResponseEntity<ApiResponse<BranchDto>> createBranch(
-            @PathVariable UUID id, @Valid @RequestBody BranchCreateRequest request) {
-        BranchDto dto = branchService.create(id, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
-    }
+  @PostMapping("/{id}/branches")
+  public ResponseEntity<ApiResponse<BranchDto>> createBranch(
+      @PathVariable UUID id, @Valid @RequestBody BranchCreateRequest request) {
+    BranchDto dto = branchService.create(id, request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
+  }
 }

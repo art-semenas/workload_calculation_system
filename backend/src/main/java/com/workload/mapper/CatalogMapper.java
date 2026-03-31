@@ -13,11 +13,11 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CatalogMapper {
 
-    @Mapping(target = "contexts", source = "contexts")
-    DeviceTypeDto toDeviceTypeDto(DeviceType deviceType, List<DeviceSystemContext> contexts);
+  @Mapping(target = "contexts", source = "contexts")
+  DeviceTypeDto toDeviceTypeDto(DeviceType deviceType, List<DeviceSystemContext> contexts);
 
-    @Mapping(target = "deviceTypeId", source = "deviceType.id")
-    DeviceSystemContextDto toContextDto(DeviceSystemContext context);
+  @Mapping(target = "deviceTypeId", source = "deviceType.id")
+  DeviceSystemContextDto toContextDto(DeviceSystemContext context);
 
-    RepairTypeDto toRepairTypeDto(RepairType repairType);
+  RepairTypeDto toRepairTypeDto(RepairType repairType);
 }

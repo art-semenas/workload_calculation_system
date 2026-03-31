@@ -35,170 +35,223 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ObjectServiceTest {
 
-    @Mock private ObjectRepository objectRepository;
-    @Mock private BranchRepository branchRepository;
-    @Mock private ObjectMapper objectMapper;
-    @Mock private SummaryRepository summaryRepository;
-    @Mock private SummaryMapper summaryMapper;
+  @Mock private ObjectRepository objectRepository;
+  @Mock private BranchRepository branchRepository;
+  @Mock private ObjectMapper objectMapper;
+  @Mock private SummaryRepository summaryRepository;
+  @Mock private SummaryMapper summaryMapper;
 
-    @InjectMocks private ObjectService objectService;
+  @InjectMocks private ObjectService objectService;
 
-    private final UUID divisionId = UUID.randomUUID();
-    private final Division division =
-            Division.builder()
-                    .id(divisionId)
-                    .name("Brest")
-                    .createdAt(OffsetDateTime.now())
-                    .updatedAt(OffsetDateTime.now())
-                    .build();
-    private final UUID branchId = UUID.randomUUID();
-    private final Branch branch =
-            Branch.builder()
-                    .id(branchId)
-                    .division(division)
-                    .name("Branch1")
-                    .createdAt(OffsetDateTime.now())
-                    .updatedAt(OffsetDateTime.now())
-                    .build();
+  private final UUID divisionId = UUID.randomUUID();
+  private final Division division =
+      Division.builder()
+          .id(divisionId)
+          .name("Brest")
+          .createdAt(OffsetDateTime.now())
+          .updatedAt(OffsetDateTime.now())
+          .build();
+  private final UUID branchId = UUID.randomUUID();
+  private final Branch branch =
+      Branch.builder()
+          .id(branchId)
+          .division(division)
+          .name("Branch1")
+          .createdAt(OffsetDateTime.now())
+          .updatedAt(OffsetDateTime.now())
+          .build();
 
-    @Test
-    void findAllReturnsAllObjects() {
-        ObjectEntity entity = buildObject("Archive");
-        when(objectRepository.findAll()).thenReturn(List.of(entity));
-        ObjectDto dto = new ObjectDto(entity.getId(), branchId, divisionId, "Archive", null, entity.getCreatedAt(), entity.getUpdatedAt());
-        when(objectMapper.toDto(entity)).thenReturn(dto);
+  @Test
+  void findAllReturnsAllObjects() {
+    ObjectEntity entity = buildObject("Archive");
+    when(objectRepository.findAll()).thenReturn(List.of(entity));
+    ObjectDto dto =
+        new ObjectDto(
+            entity.getId(),
+            branchId,
+            divisionId,
+            "Archive",
+            null,
+            entity.getCreatedAt(),
+            entity.getUpdatedAt());
+    when(objectMapper.toDto(entity)).thenReturn(dto);
 
-        List<ObjectDto> result = objectService.findAll(Optional.empty());
+    List<ObjectDto> result = objectService.findAll(Optional.empty());
 
-        assertThat(result).hasSize(1);
-    }
+    assertThat(result).hasSize(1);
+  }
 
-    @Test
-    void findAllFiltersByDivision() {
-        ObjectEntity entity = buildObject("Archive");
-        when(objectRepository.findAllByBranchDivisionId(divisionId)).thenReturn(List.of(entity));
-        ObjectDto dto = new ObjectDto(entity.getId(), branchId, divisionId, "Archive", null, entity.getCreatedAt(), entity.getUpdatedAt());
-        when(objectMapper.toDto(entity)).thenReturn(dto);
+  @Test
+  void findAllFiltersByDivision() {
+    ObjectEntity entity = buildObject("Archive");
+    when(objectRepository.findAllByBranchDivisionId(divisionId)).thenReturn(List.of(entity));
+    ObjectDto dto =
+        new ObjectDto(
+            entity.getId(),
+            branchId,
+            divisionId,
+            "Archive",
+            null,
+            entity.getCreatedAt(),
+            entity.getUpdatedAt());
+    when(objectMapper.toDto(entity)).thenReturn(dto);
 
-        List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
+    List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
 
-        assertThat(result).hasSize(1);
-    }
+    assertThat(result).hasSize(1);
+  }
 
-    @Test
-    void findByIdThrowsWhenMissing() {
-        UUID id = UUID.randomUUID();
-        when(objectRepository.findById(id)).thenReturn(Optional.empty());
+  @Test
+  void findByIdThrowsWhenMissing() {
+    UUID id = UUID.randomUUID();
+    when(objectRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> objectService.findById(id))
-                .isInstanceOf(ObjectNotFoundException.class);
-    }
+    assertThatThrownBy(() -> objectService.findById(id))
+        .isInstanceOf(ObjectNotFoundException.class);
+  }
 
-    @Test
-    void createRejectsUnknownBranch() {
-        UUID unknownBranchId = UUID.randomUUID();
-        when(branchRepository.findById(unknownBranchId)).thenReturn(Optional.empty());
+  @Test
+  void createRejectsUnknownBranch() {
+    UUID unknownBranchId = UUID.randomUUID();
+    when(branchRepository.findById(unknownBranchId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> objectService.create(new ObjectCreateRequest(unknownBranchId, "X", null)))
-                .isInstanceOf(BranchNotFoundException.class);
-    }
+    assertThatThrownBy(
+            () -> objectService.create(new ObjectCreateRequest(unknownBranchId, "X", null)))
+        .isInstanceOf(BranchNotFoundException.class);
+  }
 
-    @Test
-    void createSavesObject() {
-        when(branchRepository.findById(branchId)).thenReturn(Optional.of(branch));
-        when(objectRepository.save(any(ObjectEntity.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(objectMapper.toDto(any(ObjectEntity.class)))
-                .thenAnswer(inv -> {
-                    ObjectEntity e = inv.getArgument(0);
-                    return new ObjectDto(e.getId(), branchId, divisionId, e.getName(), e.getImportSeqNo(), e.getCreatedAt(), e.getUpdatedAt());
-                });
+  @Test
+  void createSavesObject() {
+    when(branchRepository.findById(branchId)).thenReturn(Optional.of(branch));
+    when(objectRepository.save(any(ObjectEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(objectMapper.toDto(any(ObjectEntity.class)))
+        .thenAnswer(
+            inv -> {
+              ObjectEntity e = inv.getArgument(0);
+              return new ObjectDto(
+                  e.getId(),
+                  branchId,
+                  divisionId,
+                  e.getName(),
+                  e.getImportSeqNo(),
+                  e.getCreatedAt(),
+                  e.getUpdatedAt());
+            });
 
-        ObjectDto result = objectService.create(new ObjectCreateRequest(branchId, "NewObj", 42));
+    ObjectDto result = objectService.create(new ObjectCreateRequest(branchId, "NewObj", 42));
 
-        assertThat(result.name()).isEqualTo("NewObj");
-        assertThat(result.importSeqNo()).isEqualTo(42);
-        verify(objectRepository).save(any(ObjectEntity.class));
-    }
+    assertThat(result.name()).isEqualTo("NewObj");
+    assertThat(result.importSeqNo()).isEqualTo(42);
+    verify(objectRepository).save(any(ObjectEntity.class));
+  }
 
-    @Test
-    void updateReplacesMetadata() {
-        ObjectEntity entity = buildObject("OldName");
-        when(objectRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
-        when(objectRepository.save(any(ObjectEntity.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(objectMapper.toDto(any(ObjectEntity.class)))
-                .thenAnswer(inv -> {
-                    ObjectEntity e = inv.getArgument(0);
-                    return new ObjectDto(e.getId(), branchId, divisionId, e.getName(), e.getImportSeqNo(), e.getCreatedAt(), e.getUpdatedAt());
-                });
+  @Test
+  void updateReplacesMetadata() {
+    ObjectEntity entity = buildObject("OldName");
+    when(objectRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(objectRepository.save(any(ObjectEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(objectMapper.toDto(any(ObjectEntity.class)))
+        .thenAnswer(
+            inv -> {
+              ObjectEntity e = inv.getArgument(0);
+              return new ObjectDto(
+                  e.getId(),
+                  branchId,
+                  divisionId,
+                  e.getName(),
+                  e.getImportSeqNo(),
+                  e.getCreatedAt(),
+                  e.getUpdatedAt());
+            });
 
-        ObjectDto result = objectService.update(entity.getId(), new ObjectUpdateRequest("NewName", 99));
+    ObjectDto result = objectService.update(entity.getId(), new ObjectUpdateRequest("NewName", 99));
 
-        assertThat(result.name()).isEqualTo("NewName");
-        assertThat(result.importSeqNo()).isEqualTo(99);
-    }
+    assertThat(result.name()).isEqualTo("NewName");
+    assertThat(result.importSeqNo()).isEqualTo(99);
+  }
 
-    @Test
-    void deleteDeletesObject() {
-        UUID id = UUID.randomUUID();
-        when(objectRepository.existsById(id)).thenReturn(true);
+  @Test
+  void deleteDeletesObject() {
+    UUID id = UUID.randomUUID();
+    when(objectRepository.existsById(id)).thenReturn(true);
 
-        objectService.delete(id);
+    objectService.delete(id);
 
-        verify(objectRepository).deleteById(id);
-    }
+    verify(objectRepository).deleteById(id);
+  }
 
-    @Test
-    void deleteThrowsWhenMissing() {
-        UUID id = UUID.randomUUID();
-        when(objectRepository.existsById(id)).thenReturn(false);
+  @Test
+  void deleteThrowsWhenMissing() {
+    UUID id = UUID.randomUUID();
+    when(objectRepository.existsById(id)).thenReturn(false);
 
-        assertThatThrownBy(() -> objectService.delete(id))
-                .isInstanceOf(ObjectNotFoundException.class);
-    }
+    assertThatThrownBy(() -> objectService.delete(id)).isInstanceOf(ObjectNotFoundException.class);
+  }
 
-    @Test
-    void getSummaryThrowsWhenObjectMissing() {
-        UUID id = UUID.randomUUID();
-        when(objectRepository.existsById(id)).thenReturn(false);
+  @Test
+  void getSummaryThrowsWhenObjectMissing() {
+    UUID id = UUID.randomUUID();
+    when(objectRepository.existsById(id)).thenReturn(false);
 
-        assertThatThrownBy(() -> objectService.getSummary(id))
-                .isInstanceOf(ObjectNotFoundException.class);
-    }
+    assertThatThrownBy(() -> objectService.getSummary(id))
+        .isInstanceOf(ObjectNotFoundException.class);
+  }
 
-    @Test
-    void getSummaryThrowsWhenNoSummaryRow() {
-        UUID id = UUID.randomUUID();
-        when(objectRepository.existsById(id)).thenReturn(true);
-        when(summaryRepository.findByObjectId(id)).thenReturn(Optional.empty());
+  @Test
+  void getSummaryThrowsWhenNoSummaryRow() {
+    UUID id = UUID.randomUUID();
+    when(objectRepository.existsById(id)).thenReturn(true);
+    when(summaryRepository.findByObjectId(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> objectService.getSummary(id))
-                .isInstanceOf(SummaryNotFoundException.class);
-    }
+    assertThatThrownBy(() -> objectService.getSummary(id))
+        .isInstanceOf(SummaryNotFoundException.class);
+  }
 
-    @Test
-    void getSummaryReturnsDtoWhenExists() {
-        ObjectEntity obj = buildObject("Archive");
-        Summary summary = Summary.builder().id(UUID.randomUUID()).object(obj).build();
-        SummaryDto dto = new SummaryDto(summary.getId(), obj.getId(),
-                null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null,
-                null, null, null, null, null);
-        when(objectRepository.existsById(obj.getId())).thenReturn(true);
-        when(summaryRepository.findByObjectId(obj.getId())).thenReturn(Optional.of(summary));
-        when(summaryMapper.toDto(summary)).thenReturn(dto);
+  @Test
+  void getSummaryReturnsDtoWhenExists() {
+    ObjectEntity obj = buildObject("Archive");
+    Summary summary = Summary.builder().id(UUID.randomUUID()).object(obj).build();
+    SummaryDto dto =
+        new SummaryDto(
+            summary.getId(),
+            obj.getId(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+    when(objectRepository.existsById(obj.getId())).thenReturn(true);
+    when(summaryRepository.findByObjectId(obj.getId())).thenReturn(Optional.of(summary));
+    when(summaryMapper.toDto(summary)).thenReturn(dto);
 
-        SummaryDto result = objectService.getSummary(obj.getId());
+    SummaryDto result = objectService.getSummary(obj.getId());
 
-        assertThat(result.objectId()).isEqualTo(obj.getId());
-    }
+    assertThat(result.objectId()).isEqualTo(obj.getId());
+  }
 
-    private ObjectEntity buildObject(String name) {
-        return ObjectEntity.builder()
-                .id(UUID.randomUUID())
-                .branch(branch)
-                .name(name)
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
-    }
+  private ObjectEntity buildObject(String name) {
+    return ObjectEntity.builder()
+        .id(UUID.randomUUID())
+        .branch(branch)
+        .name(name)
+        .createdAt(OffsetDateTime.now())
+        .updatedAt(OffsetDateTime.now())
+        .build();
+  }
 }

@@ -11,23 +11,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    public UserDetailsServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+  public UserDetailsServiceImpl(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
 
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        var user = userRepository
-                .findByEmail(email)
-                .filter(u -> u.isActive())
-                .orElseThrow(
-                        () -> new UsernameNotFoundException("User not found or inactive: " + email));
+  @Override
+  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    var user =
+        userRepository
+            .findByEmail(email)
+            .filter(u -> u.isActive())
+            .orElseThrow(
+                () -> new UsernameNotFoundException("User not found or inactive: " + email));
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPasswordHash(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getValue().toUpperCase())));
-    }
+    return new org.springframework.security.core.userdetails.User(
+        user.getEmail(),
+        user.getPasswordHash(),
+        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getValue().toUpperCase())));
+  }
 }

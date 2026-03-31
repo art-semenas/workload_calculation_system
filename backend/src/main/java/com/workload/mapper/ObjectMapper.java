@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ObjectMapper {
 
-    @Mapping(target = "branchId", source = "branch.id")
-    @Mapping(target = "divisionId", source = "branch.division.id")
-    ObjectDto toDto(ObjectEntity entity);
+  @Mapping(target = "branchId", source = "branch.id")
+  @Mapping(target = "divisionId", source = "branch.division.id")
+  ObjectDto toDto(ObjectEntity entity);
 }

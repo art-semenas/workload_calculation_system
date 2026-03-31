@@ -25,53 +25,62 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TravelServiceTest {
 
-    @Mock private TravelRepository travelRepository;
-    @Mock private ObjectRepository objectRepository;
-    @Mock private EquipmentMapper equipmentMapper;
+  @Mock private TravelRepository travelRepository;
+  @Mock private ObjectRepository objectRepository;
+  @Mock private EquipmentMapper equipmentMapper;
 
-    @InjectMocks private TravelService travelService;
+  @InjectMocks private TravelService travelService;
 
-    private final UUID objectId = UUID.randomUUID();
+  private final UUID objectId = UUID.randomUUID();
 
-    @Test
-    void getReturnsDefaultWhenNoTravel() {
-        when(objectRepository.existsById(objectId)).thenReturn(true);
-        when(travelRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
+  @Test
+  void getReturnsDefaultWhenNoTravel() {
+    when(objectRepository.existsById(objectId)).thenReturn(true);
+    when(travelRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
 
-        TravelDto result = travelService.get(objectId);
+    TravelDto result = travelService.get(objectId);
 
-        assertThat(result.objectId()).isEqualTo(objectId);
-        assertThat(result.roundTripMin()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
+    assertThat(result.objectId()).isEqualTo(objectId);
+    assertThat(result.roundTripMin()).isEqualByComparingTo(BigDecimal.ZERO);
+  }
 
-    @Test
-    void getThrowsWhenObjectMissing() {
-        when(objectRepository.existsById(objectId)).thenReturn(false);
+  @Test
+  void getThrowsWhenObjectMissing() {
+    when(objectRepository.existsById(objectId)).thenReturn(false);
 
-        assertThatThrownBy(() -> travelService.get(objectId))
-                .isInstanceOf(ObjectNotFoundException.class);
-    }
+    assertThatThrownBy(() -> travelService.get(objectId))
+        .isInstanceOf(ObjectNotFoundException.class);
+  }
 
-    @Test
-    void updatePerformsUpsert() {
-        ObjectEntity object = ObjectEntity.builder().id(objectId).build();
-        when(objectRepository.findById(objectId)).thenReturn(Optional.of(object));
-        when(travelRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
-        when(travelRepository.save(any(Travel.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(equipmentMapper.toTravelDto(any(Travel.class)))
-                .thenAnswer(inv -> {
-                    Travel t = inv.getArgument(0);
-                    BigDecimal rt = t.getOneWayTimeMin() != null
-                            ? t.getOneWayTimeMin().multiply(BigDecimal.valueOf(2))
-                            : BigDecimal.ZERO;
-                    return new TravelDto(t.getId(), objectId, t.getTransportType(),
-                            t.getDistanceKm(), t.getOneWayTimeMin(), rt);
-                });
+  @Test
+  void updatePerformsUpsert() {
+    ObjectEntity object = ObjectEntity.builder().id(objectId).build();
+    when(objectRepository.findById(objectId)).thenReturn(Optional.of(object));
+    when(travelRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(travelRepository.save(any(Travel.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(equipmentMapper.toTravelDto(any(Travel.class)))
+        .thenAnswer(
+            inv -> {
+              Travel t = inv.getArgument(0);
+              BigDecimal rt =
+                  t.getOneWayTimeMin() != null
+                      ? t.getOneWayTimeMin().multiply(BigDecimal.valueOf(2))
+                      : BigDecimal.ZERO;
+              return new TravelDto(
+                  t.getId(),
+                  objectId,
+                  t.getTransportType(),
+                  t.getDistanceKm(),
+                  t.getOneWayTimeMin(),
+                  rt);
+            });
 
-        TravelDto result = travelService.update(objectId,
-                new TravelUpdateRequest("car", new BigDecimal("15.00"), new BigDecimal("30.00")));
+    TravelDto result =
+        travelService.update(
+            objectId,
+            new TravelUpdateRequest("car", new BigDecimal("15.00"), new BigDecimal("30.00")));
 
-        assertThat(result.oneWayTimeMin()).isEqualByComparingTo(new BigDecimal("30.00"));
-        assertThat(result.roundTripMin()).isEqualByComparingTo(new BigDecimal("60.00"));
-    }
+    assertThat(result.oneWayTimeMin()).isEqualByComparingTo(new BigDecimal("30.00"));
+    assertThat(result.roundTripMin()).isEqualByComparingTo(new BigDecimal("60.00"));
+  }
 }

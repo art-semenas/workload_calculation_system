@@ -17,31 +17,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/catalog")
 public class CatalogController {
 
-    private final CatalogService catalogService;
+  private final CatalogService catalogService;
 
-    public CatalogController(CatalogService catalogService) {
-        this.catalogService = catalogService;
-    }
+  public CatalogController(CatalogService catalogService) {
+    this.catalogService = catalogService;
+  }
 
-    @GetMapping("/device-types")
-    public ResponseEntity<ApiResponse<List<DeviceTypeDto>>> getAllDeviceTypes() {
-        return ResponseEntity.ok(ApiResponse.success(catalogService.getAllDeviceTypes()));
-    }
+  @GetMapping("/device-types")
+  public ResponseEntity<ApiResponse<List<DeviceTypeDto>>> getAllDeviceTypes() {
+    return ResponseEntity.ok(ApiResponse.success(catalogService.getAllDeviceTypes()));
+  }
 
-    @GetMapping("/device-types/{id}")
-    public ResponseEntity<ApiResponse<DeviceTypeDto>> getDeviceType(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(catalogService.getDeviceType(id)));
-    }
+  @GetMapping("/device-types/{id}")
+  public ResponseEntity<ApiResponse<DeviceTypeDto>> getDeviceType(@PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(catalogService.getDeviceType(id)));
+  }
 
-    @GetMapping("/device-types/{id}/contexts")
-    public ResponseEntity<ApiResponse<List<DeviceSystemContextDto>>> getContexts(
-            @PathVariable UUID id) {
-        return ResponseEntity.ok(
-                ApiResponse.success(catalogService.getContextsForDevice(id)));
-    }
+  @GetMapping("/device-types/{id}/contexts")
+  public ResponseEntity<ApiResponse<List<DeviceSystemContextDto>>> getContexts(
+      @PathVariable UUID id) {
+    return ResponseEntity.ok(ApiResponse.success(catalogService.getContextsForDevice(id)));
+  }
 
-    @GetMapping("/repair-types")
-    public ResponseEntity<ApiResponse<List<RepairTypeDto>>> getAllRepairTypes() {
-        return ResponseEntity.ok(ApiResponse.success(catalogService.getAllRepairTypes()));
-    }
+  @GetMapping("/repair-types")
+  public ResponseEntity<ApiResponse<List<RepairTypeDto>>> getAllRepairTypes() {
+    return ResponseEntity.ok(ApiResponse.success(catalogService.getAllRepairTypes()));
+  }
 }

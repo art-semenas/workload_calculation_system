@@ -17,33 +17,33 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface EquipmentMapper {
 
-    @Mapping(target = "objectId", source = "object.id")
-    @Mapping(target = "deviceTypeId", source = "deviceType.id")
-    @Mapping(target = "deviceTypeName", source = "deviceType.name")
-    ObjectDeviceDto toDeviceDto(ObjectDevice device);
+  @Mapping(target = "objectId", source = "object.id")
+  @Mapping(target = "deviceTypeId", source = "deviceType.id")
+  @Mapping(target = "deviceTypeName", source = "deviceType.name")
+  ObjectDeviceDto toDeviceDto(ObjectDevice device);
 
-    @Mapping(target = "objectId", source = "object.id")
-    @Mapping(target = "deviceTypeId", source = "deviceType.id")
-    @Mapping(target = "deviceTypeName", source = "deviceType.name")
-    @Mapping(target = "contextId", source = "context.id")
-    AssignmentDto toAssignmentDto(ObjectSystemAssignment assignment);
+  @Mapping(target = "objectId", source = "object.id")
+  @Mapping(target = "deviceTypeId", source = "deviceType.id")
+  @Mapping(target = "deviceTypeName", source = "deviceType.name")
+  @Mapping(target = "contextId", source = "context.id")
+  AssignmentDto toAssignmentDto(ObjectSystemAssignment assignment);
 
-    @Mapping(target = "objectId", source = "object.id")
-    @Mapping(target = "repairTypeId", source = "repairType.id")
-    @Mapping(target = "repairTypeName", source = "repairType.name")
-    RepairDto toRepairDto(ObjectRepair repair);
+  @Mapping(target = "objectId", source = "object.id")
+  @Mapping(target = "repairTypeId", source = "repairType.id")
+  @Mapping(target = "repairTypeName", source = "repairType.name")
+  RepairDto toRepairDto(ObjectRepair repair);
 
-    @Mapping(target = "objectId", source = "object.id")
-    RecordsDto toRecordsDto(RecordsTask task);
+  @Mapping(target = "objectId", source = "object.id")
+  RecordsDto toRecordsDto(RecordsTask task);
 
-    @Mapping(target = "objectId", source = "object.id")
-    @Mapping(target = "roundTripMin", expression = "java(computeRoundTrip(travel))")
-    TravelDto toTravelDto(Travel travel);
+  @Mapping(target = "objectId", source = "object.id")
+  @Mapping(target = "roundTripMin", expression = "java(computeRoundTrip(travel))")
+  TravelDto toTravelDto(Travel travel);
 
-    default BigDecimal computeRoundTrip(Travel travel) {
-        if (travel.getOneWayTimeMin() == null) {
-            return BigDecimal.ZERO;
-        }
-        return travel.getOneWayTimeMin().multiply(BigDecimal.valueOf(2));
+  default BigDecimal computeRoundTrip(Travel travel) {
+    if (travel.getOneWayTimeMin() == null) {
+      return BigDecimal.ZERO;
     }
+    return travel.getOneWayTimeMin().multiply(BigDecimal.valueOf(2));
+  }
 }

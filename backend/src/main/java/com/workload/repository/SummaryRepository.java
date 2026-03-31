@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SummaryRepository extends JpaRepository<Summary, UUID> {
-    Optional<Summary> findByObjectId(UUID objectId);
+  Optional<Summary> findByObjectId(UUID objectId);
 }

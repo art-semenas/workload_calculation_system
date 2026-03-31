@@ -8,9 +8,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ObjectSystemAssignmentRepository
-        extends JpaRepository<ObjectSystemAssignment, UUID> {
-    List<ObjectSystemAssignment> findAllByObjectId(UUID objectId);
+    extends JpaRepository<ObjectSystemAssignment, UUID> {
+  List<ObjectSystemAssignment> findAllByObjectId(UUID objectId);
 
-    Optional<ObjectSystemAssignment> findByObjectIdAndDeviceTypeIdAndSystemType(
-            UUID objectId, UUID deviceTypeId, SystemType systemType);
+  Optional<ObjectSystemAssignment> findByObjectIdAndDeviceTypeIdAndSystemType(
+      UUID objectId, UUID deviceTypeId, SystemType systemType);
 }

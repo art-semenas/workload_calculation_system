@@ -13,22 +13,21 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class WorkloadApplicationTest {
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   @Test
-  void contextLoads() {
-  }
+  void contextLoads() {}
 
   @Test
   void usersTableAndSeedAdminArePresent() {
-    Integer tableCount = jdbcTemplate.queryForObject(
-        """
+    Integer tableCount =
+        jdbcTemplate.queryForObject(
+            """
             select count(*)
             from information_schema.tables
             where table_schema = 'public' and table_name = 'users'
             """,
-        Integer.class);
+            Integer.class);
 
     assertThat(tableCount).isEqualTo(1);
 

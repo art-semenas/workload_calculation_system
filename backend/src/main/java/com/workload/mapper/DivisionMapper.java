@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface DivisionMapper {
 
-    @Mapping(target = "branchCount", source = "branchCount")
-    @Mapping(target = "objectCount", source = "objectCount")
-    DivisionDto toDto(Division division, Long branchCount, Long objectCount);
+  @Mapping(target = "branchCount", source = "branchCount")
+  @Mapping(target = "objectCount", source = "objectCount")
+  DivisionDto toDto(Division division, Long branchCount, Long objectCount);
 }

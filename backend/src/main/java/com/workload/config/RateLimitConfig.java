@@ -8,11 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RateLimitConfig {
 
-    @Bean
-    Bandwidth defaultRateLimitBandwidth() {
-        return Bandwidth.builder()
-                .capacity(100)
-                .refillGreedy(100, Duration.ofMinutes(1))
-                .build();
-    }
+  @Bean
+  Bandwidth defaultRateLimitBandwidth() {
+    return Bandwidth.builder().capacity(100).refillGreedy(100, Duration.ofMinutes(1)).build();
+  }
 }
