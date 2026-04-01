@@ -1753,6 +1753,88 @@ Only create this commit if Step 3 required source changes.
 
 ---
 
+## Task 15.2: Add backend CI workflow
+
+**Files:**
+
+- Create: `.github/workflows/backend-ci.yml`
+
+Implements TOR §20.2 steps 1–8 (backend-only; frontend steps are added when the frontend milestone is complete). Triggered on every push and pull request targeting `main` or `develop`. No Docker build on PRs — keeps feedback fast.
+
+- [ ] **Step 1: Create the GitHub Actions workflow file**
+
+Create `.github/workflows/backend-ci.yml`:
+
+```yaml
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: workload_test
+          POSTGRES_USER: workload
+          POSTGRES_PASSWORD: workload
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Compile
+        working-directory: backend
+        run: mvn -B compile
+
+      - name: Run full verification (unit tests, integration tests, Jacoco, SpotBugs, Spotless)
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/workload_test
+          SPRING_DATASOURCE_USERNAME: workload
+          SPRING_DATASOURCE_PASSWORD: workload
+        run: mvn -B verify
+
+      - name: Upload Jacoco coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/target/site/jacoco/
+```
+
+- [ ] **Step 2: Commit the workflow**
+
+```bash
+git add .github/workflows/backend-ci.yml
+git commit -m "chore: add backend CI workflow for quality gates (TOR §20.2)"
+```
+
+Expected: one new file committed; `git status` shows clean working tree.
+
+---
+
 ## Task 16: Push the branch
 
 **Files:**
@@ -1775,6 +1857,20 @@ git push -u origin feature/poc-m01-backend
 ```
 
 Expected: branch is published to origin and set as the upstream branch.
+
+- [ ] **Step 3: Verify CI run passes**
+
+```bash
+gh run list --branch feature/poc-m01-backend --limit 1
+```
+
+Wait for the run to complete, then confirm status is `completed` / `success`:
+
+```bash
+gh run watch
+```
+
+Expected: the `Backend CI` workflow run completes with all steps green. If it fails, fix the root cause before opening a PR.
 
 ---
 
