@@ -12,4 +12,6 @@ public interface ObjectDeviceRepository extends JpaRepository<ObjectDevice, UUID
   Optional<ObjectDevice> findByObjectIdAndDeviceTypeId(UUID objectId, UUID deviceTypeId);
 
   void deleteByObjectIdAndDeviceTypeId(UUID objectId, UUID deviceTypeId);
+
+  boolean existsByDeviceTypeId(UUID deviceTypeId);
 }

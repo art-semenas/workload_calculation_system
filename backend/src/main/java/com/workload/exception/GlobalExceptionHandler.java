@@ -78,6 +78,24 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(new ApiError("INVALID_CREDENTIALS", ex.getMessage(), null)));
   }
 
+  @ExceptionHandler(DeviceTypeInUseException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDeviceTypeInUse(DeviceTypeInUseException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(new ApiError("DEVICE_IN_USE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(ContextInUseException.class)
+  public ResponseEntity<ApiResponse<Void>> handleContextInUse(ContextInUseException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(new ApiError("CONTEXT_IN_USE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(RepairTypeInUseException.class)
+  public ResponseEntity<ApiResponse<Void>> handleRepairTypeInUse(RepairTypeInUseException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(new ApiError("REPAIR_TYPE_IN_USE", ex.getMessage(), null)));
+  }
+
   @ExceptionHandler(BadCredentialsException.class)
   public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

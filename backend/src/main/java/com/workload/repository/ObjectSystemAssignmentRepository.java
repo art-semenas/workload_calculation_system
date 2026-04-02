@@ -13,4 +13,6 @@ public interface ObjectSystemAssignmentRepository
 
   Optional<ObjectSystemAssignment> findByObjectIdAndDeviceTypeIdAndSystemType(
       UUID objectId, UUID deviceTypeId, SystemType systemType);
+
+  boolean existsByContextId(UUID contextId);
 }
