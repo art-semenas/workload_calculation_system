@@ -118,6 +118,10 @@
     <insert tableName="device_types">
       <column name="name" value="Системный блок (видео сервер)"/>
     </insert>
+
+    <rollback>
+      <delete tableName="device_types"/>
+    </rollback>
   </changeSet>
 
   <!-- ================================================================
@@ -350,6 +354,10 @@
       <column name="r1_minutes" value="10"/>
       <column name="r2_minutes" value="40"/>
     </insert>
+
+    <rollback>
+      <delete tableName="device_system_contexts"/>
+    </rollback>
   </changeSet>
 
   <!-- ================================================================
@@ -459,6 +467,10 @@
       <column name="name" value="Акт на списание ТМЦ из подотчета Видео"/>
       <column name="time_minutes" value="20"/>
     </insert>
+
+    <rollback>
+      <delete tableName="repair_types"/>
+    </rollback>
   </changeSet>
 
 </databaseChangeLog>
