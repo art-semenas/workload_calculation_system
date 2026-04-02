@@ -164,10 +164,62 @@ class ObjectServiceTest {
                   e.getUpdatedAt());
             });
 
-    ObjectDto result = objectService.update(entity.getId(), new ObjectUpdateRequest("NewName", 99));
+    ObjectDto result =
+        objectService.update(entity.getId(), new ObjectUpdateRequest("NewName", 99, null));
 
     assertThat(result.name()).isEqualTo("NewName");
     assertThat(result.importSeqNo()).isEqualTo(99);
+  }
+
+  @Test
+  void updateMovesObjectToNewBranch() {
+    UUID newBranchId = UUID.randomUUID();
+    Branch newBranch =
+        Branch.builder()
+            .id(newBranchId)
+            .division(division)
+            .name("NewBranch")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    ObjectEntity entity = buildObject("OldName");
+    when(objectRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(branchRepository.findById(newBranchId)).thenReturn(Optional.of(newBranch));
+    when(objectRepository.save(any(ObjectEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(objectMapper.toDto(any(ObjectEntity.class)))
+        .thenAnswer(
+            inv -> {
+              ObjectEntity e = inv.getArgument(0);
+              return new ObjectDto(
+                  e.getId(),
+                  e.getBranch().getId(),
+                  divisionId,
+                  e.getName(),
+                  e.getImportSeqNo(),
+                  e.getCreatedAt(),
+                  e.getUpdatedAt());
+            });
+
+    ObjectDto result =
+        objectService.update(entity.getId(), new ObjectUpdateRequest("OldName", null, newBranchId));
+
+    assertThat(result.branchId()).isEqualTo(newBranchId);
+    verify(branchRepository).findById(newBranchId);
+    verify(objectRepository).save(any(ObjectEntity.class));
+  }
+
+  @Test
+  void updateThrowsWhenNewBranchNotFound() {
+    UUID missingBranchId = UUID.randomUUID();
+    ObjectEntity entity = buildObject("OldName");
+    when(objectRepository.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(branchRepository.findById(missingBranchId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () ->
+                objectService.update(
+                    entity.getId(), new ObjectUpdateRequest("OldName", null, missingBranchId)))
+        .isInstanceOf(BranchNotFoundException.class);
   }
 
   @Test

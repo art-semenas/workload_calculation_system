@@ -80,6 +80,13 @@ public class ObjectService {
         objectRepository.findById(id).orElseThrow(() -> new ObjectNotFoundException(id.toString()));
     entity.setName(request.name());
     entity.setImportSeqNo(request.importSeqNo());
+    if (request.branchId() != null) {
+      Branch branch =
+          branchRepository
+              .findById(request.branchId())
+              .orElseThrow(() -> new BranchNotFoundException(request.branchId().toString()));
+      entity.setBranch(branch);
+    }
     entity.setUpdatedAt(OffsetDateTime.now());
     entity = objectRepository.save(entity);
     return objectMapper.toDto(entity);
