@@ -7,6 +7,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -35,20 +36,20 @@ public class RecordsTask {
   @JoinColumn(name = "object_id", nullable = false)
   private ObjectEntity object;
 
-  @Column(name = "access_requests", nullable = false)
-  private Integer accessRequests;
+  @Column(name = "access_requests", nullable = false, precision = 10, scale = 2)
+  private BigDecimal accessRequests;
 
-  @Column(name = "monitoring_requests", nullable = false)
-  private Integer monitoringRequests;
+  @Column(name = "monitoring_requests", nullable = false, precision = 10, scale = 2)
+  private BigDecimal monitoringRequests;
 
-  @Column(name = "footage_requests", nullable = false)
-  private Integer footageRequests;
+  @Column(name = "footage_requests", nullable = false, precision = 10, scale = 2)
+  private BigDecimal footageRequests;
 
-  @Column(name = "backup_control", nullable = false)
-  private Integer backupControl;
+  @Column(name = "backup_control", nullable = false, precision = 10, scale = 2)
+  private BigDecimal backupControl;
 
-  @Column(name = "security_admin", nullable = false)
-  private Integer securityAdmin;
+  @Column(name = "security_admin", nullable = false, precision = 10, scale = 2)
+  private BigDecimal securityAdmin;
 
   @Column(name = "updated_at", nullable = false)
   private OffsetDateTime updatedAt;

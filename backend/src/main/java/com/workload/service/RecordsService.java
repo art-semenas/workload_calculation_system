@@ -8,6 +8,7 @@ import com.workload.exception.ObjectNotFoundException;
 import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.RecordsTaskRepository;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,15 @@ public class RecordsService {
     return recordsTaskRepository
         .findByObjectId(objectId)
         .map(equipmentMapper::toRecordsDto)
-        .orElse(new RecordsDto(null, objectId, 0, 0, 0, 0, 0));
+        .orElse(
+            new RecordsDto(
+                null,
+                objectId,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO));
   }
 
   public RecordsDto update(UUID objectId, RecordsUpdateRequest request) {
@@ -43,12 +52,16 @@ public class RecordsService {
             .findByObjectId(objectId)
             .orElseGet(() -> RecordsTask.builder().id(UUID.randomUUID()).object(object).build());
 
-    task.setAccessRequests(request.accessRequests() != null ? request.accessRequests() : 0);
+    task.setAccessRequests(
+        request.accessRequests() != null ? request.accessRequests() : BigDecimal.ZERO);
     task.setMonitoringRequests(
-        request.monitoringRequests() != null ? request.monitoringRequests() : 0);
-    task.setFootageRequests(request.footageRequests() != null ? request.footageRequests() : 0);
-    task.setBackupControl(request.backupControl() != null ? request.backupControl() : 0);
-    task.setSecurityAdmin(request.securityAdmin() != null ? request.securityAdmin() : 0);
+        request.monitoringRequests() != null ? request.monitoringRequests() : BigDecimal.ZERO);
+    task.setFootageRequests(
+        request.footageRequests() != null ? request.footageRequests() : BigDecimal.ZERO);
+    task.setBackupControl(
+        request.backupControl() != null ? request.backupControl() : BigDecimal.ZERO);
+    task.setSecurityAdmin(
+        request.securityAdmin() != null ? request.securityAdmin() : BigDecimal.ZERO);
     task.setUpdatedAt(OffsetDateTime.now());
     task = recordsTaskRepository.save(task);
     return equipmentMapper.toRecordsDto(task);

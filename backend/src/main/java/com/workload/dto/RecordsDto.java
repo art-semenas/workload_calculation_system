@@ -1,12 +1,13 @@
 package com.workload.dto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public record RecordsDto(
     UUID id,
     UUID objectId,
-    Integer accessRequests,
-    Integer monitoringRequests,
-    Integer footageRequests,
-    Integer backupControl,
-    Integer securityAdmin) {}
+    BigDecimal accessRequests,
+    BigDecimal monitoringRequests,
+    BigDecimal footageRequests,
+    BigDecimal backupControl,
+    BigDecimal securityAdmin) {}

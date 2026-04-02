@@ -86,11 +86,11 @@ class RepositoryConstraintTest {
         RecordsTask.builder()
             .id(UUID.randomUUID())
             .object(obj)
-            .accessRequests(0)
-            .monitoringRequests(0)
-            .footageRequests(0)
-            .backupControl(0)
-            .securityAdmin(0)
+            .accessRequests(java.math.BigDecimal.ZERO)
+            .monitoringRequests(java.math.BigDecimal.ZERO)
+            .footageRequests(java.math.BigDecimal.ZERO)
+            .backupControl(java.math.BigDecimal.ZERO)
+            .securityAdmin(java.math.BigDecimal.ZERO)
             .updatedAt(OffsetDateTime.now())
             .build();
     recordsTaskRepository.saveAndFlush(task);

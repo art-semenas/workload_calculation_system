@@ -1,10 +1,11 @@
 package com.workload.dto;
 
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMin;
+import java.math.BigDecimal;
 
 public record RecordsUpdateRequest(
-    @Min(0) Integer accessRequests,
-    @Min(0) Integer monitoringRequests,
-    @Min(0) Integer footageRequests,
-    @Min(0) Integer backupControl,
-    @Min(0) Integer securityAdmin) {}
+    @DecimalMin("0") BigDecimal accessRequests,
+    @DecimalMin("0") BigDecimal monitoringRequests,
+    @DecimalMin("0") BigDecimal footageRequests,
+    @DecimalMin("0") BigDecimal backupControl,
+    @DecimalMin("0") BigDecimal securityAdmin) {}

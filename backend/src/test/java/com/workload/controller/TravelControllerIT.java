@@ -44,7 +44,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(200)
-        .body("data.roundTripMin", equalTo(60.0f));
+        .body("data.roundTripMin", equalTo(60));
   }
 
   @Test
@@ -92,7 +92,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(200)
-        .body("data.roundTripMin", equalTo(40.0f));
+        .body("data.roundTripMin", equalTo(40));
   }
 
   @Test

@@ -11,6 +11,7 @@ import com.workload.entity.RecordsTask;
 import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.RecordsTaskRepository;
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -61,10 +62,18 @@ class RecordsServiceTest {
                   t.getSecurityAdmin());
             });
 
-    RecordsDto result = recordsService.update(objectId, new RecordsUpdateRequest(5, 3, 2, 1, 0));
+    RecordsDto result =
+        recordsService.update(
+            objectId,
+            new RecordsUpdateRequest(
+                BigDecimal.valueOf(5),
+                BigDecimal.valueOf(3),
+                BigDecimal.valueOf(2),
+                BigDecimal.valueOf(1),
+                BigDecimal.ZERO));
 
-    assertThat(result.accessRequests()).isEqualTo(5);
-    assertThat(result.monitoringRequests()).isEqualTo(3);
+    assertThat(result.accessRequests()).isEqualByComparingTo(BigDecimal.valueOf(5));
+    assertThat(result.monitoringRequests()).isEqualByComparingTo(BigDecimal.valueOf(3));
   }
 
   @Test
