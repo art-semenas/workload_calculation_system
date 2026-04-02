@@ -12,7 +12,8 @@ jwt:
   secret: test-secret-key-minimum-32-characters-long-for-hmac
 
 rate-limit:
-  capacity: 10000
+  unauthenticated-capacity: 10000
+  authenticated-capacity: 10000
 
 workload:
   config:

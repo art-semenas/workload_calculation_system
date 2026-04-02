@@ -5,6 +5,8 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
       https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
+  <!-- PoC only (S-04): fixed credentials seeded for local dev and integration tests.
+       MVP: remove this changeset and provision admin credentials via environment secrets. -->
   <changeSet id="v1.0.2-1" author="workload">
     <comment>Seed PoC admin user</comment>
 

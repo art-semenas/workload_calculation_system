@@ -17,7 +17,6 @@ import com.workload.entity.ObjectDevice;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.ObjectSystemAssignment;
 import com.workload.entity.SystemType;
-import com.workload.exception.DeviceInUseException;
 import com.workload.exception.DeviceNotInInventoryException;
 import com.workload.exception.NoContextForSystemException;
 import com.workload.exception.ObjectNotFoundException;
@@ -218,23 +217,13 @@ class EquipmentServiceTest {
   }
 
   @Test
-  void deleteDeviceThrowsWhenAssignmentsExist() {
+  void deleteDeviceCascadesAssignmentsThenDeletesDevice() {
+    // TOR §7.3: delete cascades to system assignments regardless of their count
     when(objectRepository.existsById(objectId)).thenReturn(true);
-    when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
-        .thenReturn(true);
-
-    assertThatThrownBy(() -> equipmentService.deleteDevice(objectId, deviceTypeId))
-        .isInstanceOf(DeviceInUseException.class);
-  }
-
-  @Test
-  void deleteDeviceSucceedsWhenNoAssignmentsExist() {
-    when(objectRepository.existsById(objectId)).thenReturn(true);
-    when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
-        .thenReturn(false);
 
     equipmentService.deleteDevice(objectId, deviceTypeId);
 
+    verify(assignmentRepository).deleteAllByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
     verify(objectDeviceRepository).deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
   }
 }

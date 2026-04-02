@@ -291,7 +291,7 @@ class EquipmentControllerIT extends IntegrationTestBase {
   }
 
   @Test
-  void deleteDeviceReturns409WhenAssignmentsExist() {
+  void deleteDeviceCascadesSystemAssignments() {
     // Add device to inventory
     given()
         .header("Authorization", bearerToken)
@@ -320,13 +320,21 @@ class EquipmentControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(201);
 
-    // Attempt to delete the device — must return 409 INVENTORY_DEVICE_IN_USE
+    // Delete the device — TOR §7.3: cascades all system assignments
     given()
         .header("Authorization", bearerToken)
         .when()
         .delete("/objects/{oid}/devices/{dtid}", objectId, deviceTypeId)
         .then()
-        .statusCode(409)
-        .body("error.code", equalTo("INVENTORY_DEVICE_IN_USE"));
+        .statusCode(204);
+
+    // Verify assignments are gone
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .get("/objects/{oid}/assignments", objectId)
+        .then()
+        .statusCode(200)
+        .body("data", hasSize(0));
   }
 }
