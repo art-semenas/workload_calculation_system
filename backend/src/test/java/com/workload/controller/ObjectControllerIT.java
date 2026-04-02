@@ -86,7 +86,7 @@ class ObjectControllerIT extends IntegrationTestBase {
         .post("/objects")
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("ENTITY_NOT_FOUND"));
+        .body("error.code", equalTo("NOT_FOUND"));
   }
 
   @Test

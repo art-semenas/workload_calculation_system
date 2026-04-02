@@ -175,9 +175,11 @@ class EquipmentServiceTest {
 
   @Test
   void updateAssignmentUpdatesQuantity() {
+    ObjectEntity object = ObjectEntity.builder().id(objectId).build();
     ObjectSystemAssignment assignment =
         ObjectSystemAssignment.builder()
             .id(UUID.randomUUID())
+            .object(object)
             .quantityMaintained(BigDecimal.ONE)
             .updatedAt(OffsetDateTime.now())
             .build();
@@ -197,7 +199,7 @@ class EquipmentServiceTest {
 
     AssignmentDto result =
         equipmentService.updateAssignment(
-            assignment.getId(), new AssignmentUpdateRequest(BigDecimal.TEN));
+            objectId, assignment.getId(), new AssignmentUpdateRequest(BigDecimal.TEN));
 
     assertThat(result.quantityMaintained()).isEqualByComparingTo(BigDecimal.TEN);
   }
@@ -205,15 +207,19 @@ class EquipmentServiceTest {
   @Test
   void deleteAssignmentRemoves() {
     UUID assignmentId = UUID.randomUUID();
-    when(assignmentRepository.existsById(assignmentId)).thenReturn(true);
+    ObjectEntity object = ObjectEntity.builder().id(objectId).build();
+    ObjectSystemAssignment assignment =
+        ObjectSystemAssignment.builder().id(assignmentId).object(object).build();
+    when(assignmentRepository.findById(assignmentId)).thenReturn(Optional.of(assignment));
 
-    equipmentService.deleteAssignment(assignmentId);
+    equipmentService.deleteAssignment(objectId, assignmentId);
 
     verify(assignmentRepository).deleteById(assignmentId);
   }
 
   @Test
   void deleteDeviceThrowsWhenAssignmentsExist() {
+    when(objectRepository.existsById(objectId)).thenReturn(true);
     when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
         .thenReturn(true);
 
@@ -223,6 +229,7 @@ class EquipmentServiceTest {
 
   @Test
   void deleteDeviceSucceedsWhenNoAssignmentsExist() {
+    when(objectRepository.existsById(objectId)).thenReturn(true);
     when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
         .thenReturn(false);
 

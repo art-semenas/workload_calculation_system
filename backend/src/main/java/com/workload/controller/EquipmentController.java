@@ -6,6 +6,7 @@ import com.workload.dto.AssignmentDto;
 import com.workload.dto.AssignmentUpdateRequest;
 import com.workload.dto.ObjectDeviceDto;
 import com.workload.dto.ObjectDeviceUpsertRequest;
+import com.workload.exception.RequestValidationException;
 import com.workload.service.EquipmentService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -49,6 +50,9 @@ public class EquipmentController {
       @PathVariable UUID objectId,
       @PathVariable UUID deviceTypeId,
       @Valid @RequestBody ObjectDeviceUpsertRequest request) {
+    if (!deviceTypeId.equals(request.deviceTypeId())) {
+      throw new RequestValidationException("deviceTypeId in body must match deviceTypeId in path");
+    }
     ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, deviceTypeId, request);
     return ResponseEntity.ok(ApiResponse.success(dto));
   }
@@ -79,13 +83,13 @@ public class EquipmentController {
       @PathVariable UUID assignmentId,
       @Valid @RequestBody AssignmentUpdateRequest request) {
     return ResponseEntity.ok(
-        ApiResponse.success(equipmentService.updateAssignment(assignmentId, request)));
+        ApiResponse.success(equipmentService.updateAssignment(objectId, assignmentId, request)));
   }
 
   @DeleteMapping("/assignments/{assignmentId}")
   public ResponseEntity<Void> deleteAssignment(
       @PathVariable UUID objectId, @PathVariable UUID assignmentId) {
-    equipmentService.deleteAssignment(assignmentId);
+    equipmentService.deleteAssignment(objectId, assignmentId);
     return ResponseEntity.noContent().build();
   }
 }

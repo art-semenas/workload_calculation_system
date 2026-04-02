@@ -78,7 +78,7 @@ class TravelServiceTest {
     TravelDto result =
         travelService.update(
             objectId,
-            new TravelUpdateRequest("car", new BigDecimal("15.00"), new BigDecimal("30.00")));
+            new TravelUpdateRequest("car", new BigDecimal("15.00"), new BigDecimal("30.00"), null));
 
     assertThat(result.oneWayTimeMin()).isEqualByComparingTo(new BigDecimal("30.00"));
     assertThat(result.roundTripMin()).isEqualByComparingTo(new BigDecimal("60.00"));

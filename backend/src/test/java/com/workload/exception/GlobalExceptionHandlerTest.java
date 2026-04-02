@@ -21,11 +21,38 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  void entityNotFoundReturns404() {
+  void genericEntityNotFoundReturns404() {
     ResponseEntity<ApiResponse<Void>> response =
-        handler.handleEntityNotFound(new EntityNotFoundException("Division", "abc"));
+        handler.handleEntityNotFound(new EntityNotFoundException("DeviceType", "abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     assertThat(response.getBody().error().code()).isEqualTo("ENTITY_NOT_FOUND");
+  }
+
+  @Test
+  void divisionNotFoundReturnsTorCode() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleDivisionNotFound(new DivisionNotFoundException("abc"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().message()).isEqualTo("Division not found");
+  }
+
+  @Test
+  void branchNotFoundReturnsTorCode() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleBranchNotFound(new BranchNotFoundException("abc"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().message()).isEqualTo("Branch not found");
+  }
+
+  @Test
+  void objectNotFoundReturnsTorCode() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleObjectNotFound(new ObjectNotFoundException("abc"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getBody().error().code()).isEqualTo("OBJECT_NOT_FOUND");
+    assertThat(response.getBody().error().message()).isEqualTo("Object not found");
   }
 
   @Test
@@ -37,9 +64,27 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  void dataIntegrityViolationReturns409() {
+  void dataIntegrityViolationWithDuplicateReturnsNameConflict() {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDataIntegrityViolation(new DataIntegrityViolationException("duplicate key"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody().error().code()).isEqualTo("NAME_CONFLICT");
+  }
+
+  @Test
+  void dataIntegrityViolationWithUniqueReturnsNameConflict() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleDataIntegrityViolation(
+            new DataIntegrityViolationException("unique constraint violated"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody().error().code()).isEqualTo("NAME_CONFLICT");
+  }
+
+  @Test
+  void dataIntegrityViolationGenericReturnsConstraintViolation() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleDataIntegrityViolation(
+            new DataIntegrityViolationException("foreign key constraint"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     assertThat(response.getBody().error().code()).isEqualTo("CONSTRAINT_VIOLATION");
   }

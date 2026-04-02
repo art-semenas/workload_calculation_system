@@ -53,7 +53,7 @@ public class SecurityConfig {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       ApiResponse<Void> body =
-          ApiResponse.error(new ApiError("UNAUTHORIZED", "Authentication required", null));
+          ApiResponse.error(new ApiError("INVALID_CREDENTIALS", "Authentication required", null));
       objectMapper.writeValue(response.getOutputStream(), body);
     };
   }

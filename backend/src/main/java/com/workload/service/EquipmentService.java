@@ -111,6 +111,7 @@ public class EquipmentService {
 
   @Transactional
   public void deleteDevice(UUID objectId, UUID deviceTypeId) {
+    requireObject(objectId);
     if (assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId)) {
       throw new DeviceInUseException(deviceTypeId.toString());
     }
@@ -159,19 +160,27 @@ public class EquipmentService {
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
-  public AssignmentDto updateAssignment(UUID assignmentId, AssignmentUpdateRequest request) {
+  public AssignmentDto updateAssignment(
+      UUID objectId, UUID assignmentId, AssignmentUpdateRequest request) {
     ObjectSystemAssignment assignment =
         assignmentRepository
             .findById(assignmentId)
             .orElseThrow(() -> new EntityNotFoundException("Assignment", assignmentId.toString()));
+    if (!assignment.getObject().getId().equals(objectId)) {
+      throw new EntityNotFoundException("Assignment", assignmentId.toString());
+    }
     assignment.setQuantityMaintained(request.quantityMaintained());
     assignment.setUpdatedAt(OffsetDateTime.now());
     assignment = assignmentRepository.save(assignment);
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
-  public void deleteAssignment(UUID assignmentId) {
-    if (!assignmentRepository.existsById(assignmentId)) {
+  public void deleteAssignment(UUID objectId, UUID assignmentId) {
+    ObjectSystemAssignment assignment =
+        assignmentRepository
+            .findById(assignmentId)
+            .orElseThrow(() -> new EntityNotFoundException("Assignment", assignmentId.toString()));
+    if (!assignment.getObject().getId().equals(objectId)) {
       throw new EntityNotFoundException("Assignment", assignmentId.toString());
     }
     assignmentRepository.deleteById(assignmentId);

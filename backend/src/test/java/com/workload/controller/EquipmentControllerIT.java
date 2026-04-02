@@ -200,8 +200,8 @@ class EquipmentControllerIT extends IntegrationTestBase {
   }
 
   @Test
-  void updateDeviceUsesPathVariableDeviceTypeId() {
-    // Create a device via POST (uses request body deviceTypeId)
+  void updateDeviceReturns422WhenBodyDeviceTypeIdMismatchesPath() {
+    // Create a device via POST
     given()
         .header("Authorization", bearerToken)
         .contentType(ContentType.JSON)
@@ -222,10 +222,7 @@ class EquipmentControllerIT extends IntegrationTestBase {
             .extract()
             .path("data[1].id");
 
-    // PUT with a different deviceTypeId in the body — body's deviceTypeId must be
-    // ignored
-    // The path variable must win: result should be the device pointed to by the
-    // path variable
+    // PUT with a different deviceTypeId in the body — must be rejected (422)
     given()
         .header("Authorization", bearerToken)
         .contentType(ContentType.JSON)
@@ -233,9 +230,30 @@ class EquipmentControllerIT extends IntegrationTestBase {
         .when()
         .put("/objects/{oid}/devices/{dtId}", objectId, deviceTypeId)
         .then()
-        .statusCode(200)
-        .body("data.deviceTypeId", equalTo(deviceTypeId))
-        .body("data.quantityPhysical", equalTo(5));
+        .statusCode(422);
+  }
+
+  @Test
+  void updateDeviceReturns200WhenBodyMatchesPath() {
+    // Create a device via POST
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"deviceTypeId\": \"" + deviceTypeId + "\", \"quantityPhysical\": 1}")
+        .when()
+        .post("/objects/{oid}/devices", objectId)
+        .then()
+        .statusCode(201);
+
+    // PUT with matching deviceTypeId in body and path — must succeed
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"deviceTypeId\": \"" + deviceTypeId + "\", \"quantityPhysical\": 5}")
+        .when()
+        .put("/objects/{oid}/devices/{dtId}", objectId, deviceTypeId)
+        .then()
+        .statusCode(200);
   }
 
   @Test

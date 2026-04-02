@@ -10,7 +10,17 @@ import org.springframework.context.annotation.Configuration;
 public class RateLimitConfig {
 
   @Bean
-  Bandwidth defaultRateLimitBandwidth(@Value("${rate-limit.capacity:100}") long capacity) {
+  Bandwidth unauthenticatedRateLimitBandwidth(
+      @Value("${rate-limit.unauthenticated-capacity:100}") long capacity) {
+    return Bandwidth.builder()
+        .capacity(capacity)
+        .refillGreedy(capacity, Duration.ofMinutes(1))
+        .build();
+  }
+
+  @Bean
+  Bandwidth authenticatedRateLimitBandwidth(
+      @Value("${rate-limit.authenticated-capacity:300}") long capacity) {
     return Bandwidth.builder()
         .capacity(capacity)
         .refillGreedy(capacity, Duration.ofMinutes(1))

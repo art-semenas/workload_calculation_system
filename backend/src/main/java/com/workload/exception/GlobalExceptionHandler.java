@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,6 +25,24 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(new ApiError("SUMMARY_NOT_FOUND", ex.getMessage(), null)));
   }
 
+  @ExceptionHandler(DivisionNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDivisionNotFound(DivisionNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(new ApiError("NOT_FOUND", "Division not found", null)));
+  }
+
+  @ExceptionHandler(BranchNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleBranchNotFound(BranchNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(new ApiError("NOT_FOUND", "Branch not found", null)));
+  }
+
+  @ExceptionHandler(ObjectNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleObjectNotFound(ObjectNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(new ApiError("OBJECT_NOT_FOUND", "Object not found", null)));
+  }
+
   @ExceptionHandler(EntityNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -33,6 +52,13 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
       DataIntegrityViolationException ex) {
+    String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+    if (msg.contains("unique") || msg.contains("duplicate")) {
+      return ResponseEntity.status(HttpStatus.CONFLICT)
+          .body(
+              ApiResponse.error(
+                  new ApiError("NAME_CONFLICT", "A record with that name already exists", null)));
+    }
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(
             ApiResponse.error(
@@ -58,6 +84,19 @@ public class GlobalExceptionHandler {
       RoundTripNotEditableException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
         .body(ApiResponse.error(new ApiError("ROUND_TRIP_NOT_EDITABLE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(RequestValidationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleRequestValidation(RequestValidationException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("VALIDATION_ERROR", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(
+      HttpMessageNotReadableException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("VALIDATION_ERROR", "Invalid request body", null)));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
