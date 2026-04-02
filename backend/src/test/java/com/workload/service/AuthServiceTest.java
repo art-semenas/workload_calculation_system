@@ -2,6 +2,7 @@ package com.workload.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.workload.dto.LoginRequest;
@@ -85,8 +86,48 @@ class AuthServiceTest {
         .build();
 
     when(userRepository.findByEmail("inactive@workload.local")).thenReturn(Optional.of(user));
+    // Lenient: the filter guard fires before password check, so this stub is not invoked.
+    // It exists to prove the test would fail if the .filter() guard were removed.
+    lenient().when(passwordEncoder.matches("pw", "hashed")).thenReturn(true);
 
     assertThatThrownBy(() -> authService.login(new LoginRequest("inactive@workload.local", "pw")))
+        .isInstanceOf(InvalidCredentialsException.class);
+  }
+
+  @Test
+  void getMeReturnsUserDtoForKnownEmail() {
+    User user = User.builder()
+        .id(UUID.randomUUID())
+        .email("admin@workload.local")
+        .passwordHash("hashed")
+        .role(Role.ADMIN)
+        .active(true)
+        .build();
+    com.workload.dto.UserDto dto = new com.workload.dto.UserDto(
+        user.getId(),
+        "admin@workload.local",
+        "PoC Admin",
+        Role.ADMIN,
+        null,
+        null,
+        java.math.BigDecimal.ONE,
+        null,
+        true,
+        false);
+
+    when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
+    when(userMapper.toDto(user)).thenReturn(dto);
+
+    com.workload.dto.UserDto result = authService.getMe("admin@workload.local");
+
+    assertThat(result).isEqualTo(dto);
+  }
+
+  @Test
+  void getMeThrowsForUnknownEmail() {
+    when(userRepository.findByEmail("deleted@workload.local")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> authService.getMe("deleted@workload.local"))
         .isInstanceOf(InvalidCredentialsException.class);
   }
 }
