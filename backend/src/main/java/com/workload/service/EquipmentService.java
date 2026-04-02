@@ -10,6 +10,7 @@ import com.workload.entity.DeviceType;
 import com.workload.entity.ObjectDevice;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.ObjectSystemAssignment;
+import com.workload.exception.DeviceInUseException;
 import com.workload.exception.DeviceNotInInventoryException;
 import com.workload.exception.EntityNotFoundException;
 import com.workload.exception.NoContextForSystemException;
@@ -110,6 +111,9 @@ public class EquipmentService {
 
   @Transactional
   public void deleteDevice(UUID objectId, UUID deviceTypeId) {
+    if (assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId)) {
+      throw new DeviceInUseException(deviceTypeId.toString());
+    }
     objectDeviceRepository.deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
   }
 

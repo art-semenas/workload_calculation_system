@@ -84,6 +84,12 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(new ApiError("DEVICE_IN_USE", ex.getMessage(), null)));
   }
 
+  @ExceptionHandler(DeviceInUseException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDeviceInUse(DeviceInUseException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(new ApiError("INVENTORY_DEVICE_IN_USE", ex.getMessage(), null)));
+  }
+
   @ExceptionHandler(ContextInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleContextInUse(ContextInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)

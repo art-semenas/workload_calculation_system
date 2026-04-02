@@ -17,6 +17,7 @@ import com.workload.entity.ObjectDevice;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.ObjectSystemAssignment;
 import com.workload.entity.SystemType;
+import com.workload.exception.DeviceInUseException;
 import com.workload.exception.DeviceNotInInventoryException;
 import com.workload.exception.NoContextForSystemException;
 import com.workload.exception.ObjectNotFoundException;
@@ -209,5 +210,24 @@ class EquipmentServiceTest {
     equipmentService.deleteAssignment(assignmentId);
 
     verify(assignmentRepository).deleteById(assignmentId);
+  }
+
+  @Test
+  void deleteDeviceThrowsWhenAssignmentsExist() {
+    when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
+        .thenReturn(true);
+
+    assertThatThrownBy(() -> equipmentService.deleteDevice(objectId, deviceTypeId))
+        .isInstanceOf(DeviceInUseException.class);
+  }
+
+  @Test
+  void deleteDeviceSucceedsWhenNoAssignmentsExist() {
+    when(assignmentRepository.existsByObjectIdAndDeviceTypeId(objectId, deviceTypeId))
+        .thenReturn(false);
+
+    equipmentService.deleteDevice(objectId, deviceTypeId);
+
+    verify(objectDeviceRepository).deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
   }
 }

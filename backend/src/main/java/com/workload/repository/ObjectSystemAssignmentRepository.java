@@ -15,4 +15,6 @@ public interface ObjectSystemAssignmentRepository
       UUID objectId, UUID deviceTypeId, SystemType systemType);
 
   boolean existsByContextId(UUID contextId);
+
+  boolean existsByObjectIdAndDeviceTypeId(UUID objectId, UUID deviceTypeId);
 }

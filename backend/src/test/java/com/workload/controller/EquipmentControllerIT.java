@@ -222,8 +222,10 @@ class EquipmentControllerIT extends IntegrationTestBase {
             .extract()
             .path("data[1].id");
 
-    // PUT with a different deviceTypeId in the body — body's deviceTypeId must be ignored
-    // The path variable must win: result should be the device pointed to by the path variable
+    // PUT with a different deviceTypeId in the body — body's deviceTypeId must be
+    // ignored
+    // The path variable must win: result should be the device pointed to by the
+    // path variable
     given()
         .header("Authorization", bearerToken)
         .contentType(ContentType.JSON)
@@ -268,5 +270,45 @@ class EquipmentControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(200)
         .body("data", hasSize(greaterThanOrEqualTo(1)));
+  }
+
+  @Test
+  void deleteDeviceReturns409WhenAssignmentsExist() {
+    // Add device to inventory
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {"deviceTypeId": "%s", "quantityPhysical": 2.00}
+            """
+                .formatted(deviceTypeId))
+        .when()
+        .post("/objects/{oid}/devices", objectId)
+        .then()
+        .statusCode(201);
+
+    // Add assignment for that device
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            """
+            {"deviceTypeId": "%s", "systemType": "OS", "quantityMaintained": 1.00}
+            """
+                .formatted(deviceTypeId))
+        .when()
+        .post("/objects/{oid}/assignments", objectId)
+        .then()
+        .statusCode(201);
+
+    // Attempt to delete the device — must return 409 INVENTORY_DEVICE_IN_USE
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/objects/{oid}/devices/{dtid}", objectId, deviceTypeId)
+        .then()
+        .statusCode(409)
+        .body("error.code", equalTo("INVENTORY_DEVICE_IN_USE"));
   }
 }
