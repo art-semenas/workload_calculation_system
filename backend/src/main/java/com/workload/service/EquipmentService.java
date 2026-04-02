@@ -83,6 +83,32 @@ public class EquipmentService {
     return equipmentMapper.toDeviceDto(device);
   }
 
+  public ObjectDeviceDto upsertDevice(
+      UUID objectId, UUID deviceTypeId, ObjectDeviceUpsertRequest request) {
+    ObjectEntity object = findObject(objectId);
+    DeviceType deviceType =
+        deviceTypeRepository
+            .findById(deviceTypeId)
+            .orElseThrow(
+                () -> new EntityNotFoundException("DeviceType", deviceTypeId.toString()));
+
+    ObjectDevice device =
+        objectDeviceRepository
+            .findByObjectIdAndDeviceTypeId(objectId, deviceTypeId)
+            .orElseGet(
+                () ->
+                    ObjectDevice.builder()
+                        .id(UUID.randomUUID())
+                        .object(object)
+                        .deviceType(deviceType)
+                        .build());
+
+    device.setQuantityPhysical(request.quantityPhysical());
+    device.setUpdatedAt(OffsetDateTime.now());
+    device = objectDeviceRepository.save(device);
+    return equipmentMapper.toDeviceDto(device);
+  }
+
   @Transactional
   public void deleteDevice(UUID objectId, UUID deviceTypeId) {
     objectDeviceRepository.deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);

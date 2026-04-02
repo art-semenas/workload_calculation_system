@@ -200,6 +200,43 @@ class EquipmentControllerIT extends IntegrationTestBase {
   }
 
   @Test
+  void updateDeviceUsesPathVariableDeviceTypeId() {
+    // Create a device via POST (uses request body deviceTypeId)
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"deviceTypeId\": \"" + deviceTypeId + "\", \"quantityPhysical\": 1}")
+        .when()
+        .post("/objects/{oid}/devices", objectId)
+        .then()
+        .statusCode(201);
+
+    // GET a second device type id from the catalog
+    String secondDeviceTypeId =
+        given()
+            .header("Authorization", bearerToken)
+            .when()
+            .get("/catalog/device-types")
+            .then()
+            .statusCode(200)
+            .extract()
+            .path("data[1].id");
+
+    // PUT with a different deviceTypeId in the body — body's deviceTypeId must be ignored
+    // The path variable must win: result should be the device pointed to by the path variable
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"deviceTypeId\": \"" + secondDeviceTypeId + "\", \"quantityPhysical\": 5}")
+        .when()
+        .put("/objects/{oid}/devices/{dtId}", objectId, deviceTypeId)
+        .then()
+        .statusCode(200)
+        .body("data.deviceTypeId", equalTo(deviceTypeId))
+        .body("data.quantityPhysical", equalTo(5));
+  }
+
+  @Test
   void getAssignmentsReturnsListAfterAdd() {
     // Setup device + assignment
     given()

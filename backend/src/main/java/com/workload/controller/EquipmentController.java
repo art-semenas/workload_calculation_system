@@ -49,7 +49,7 @@ public class EquipmentController {
       @PathVariable UUID objectId,
       @PathVariable UUID deviceTypeId,
       @Valid @RequestBody ObjectDeviceUpsertRequest request) {
-    ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
+    ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, deviceTypeId, request);
     return ResponseEntity.ok(ApiResponse.success(dto));
   }
 
