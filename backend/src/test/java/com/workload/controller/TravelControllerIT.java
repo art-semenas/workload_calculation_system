@@ -95,6 +95,45 @@ class TravelControllerIT extends IntegrationTestBase {
         .body("data.roundTripMin", equalTo(40.0f));
   }
 
+  @Test
+  void updateTravelWithMissingDistanceKmReturns422() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"oneWayTimeMin\": 30}")
+        .when()
+        .put("/objects/{oid}/travel", objectId)
+        .then()
+        .statusCode(422)
+        .body("error.code", equalTo("VALIDATION_ERROR"));
+  }
+
+  @Test
+  void updateTravelWithMissingOneWayTimeMinReturns422() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"distanceKm\": 10}")
+        .when()
+        .put("/objects/{oid}/travel", objectId)
+        .then()
+        .statusCode(422)
+        .body("error.code", equalTo("VALIDATION_ERROR"));
+  }
+
+  @Test
+  void updateTravelWithNonNumericValueReturns422() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"distanceKm\": \"not-a-number\", \"oneWayTimeMin\": 30}")
+        .when()
+        .put("/objects/{oid}/travel", objectId)
+        .then()
+        .statusCode(422)
+        .body("error.code", equalTo("VALIDATION_ERROR"));
+  }
+
   private String createTestObject(String token) {
     String divisionId =
         given()
