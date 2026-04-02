@@ -89,8 +89,7 @@ public class EquipmentService {
     DeviceType deviceType =
         deviceTypeRepository
             .findById(deviceTypeId)
-            .orElseThrow(
-                () -> new EntityNotFoundException("DeviceType", deviceTypeId.toString()));
+            .orElseThrow(() -> new EntityNotFoundException("DeviceType", deviceTypeId.toString()));
 
     ObjectDevice device =
         objectDeviceRepository

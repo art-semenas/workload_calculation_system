@@ -47,10 +47,7 @@ public class AuthService {
   }
 
   public UserDto getMe(String email) {
-    User user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(InvalidCredentialsException::new);
+    User user = userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
     return userMapper.toDto(user);
   }
 }

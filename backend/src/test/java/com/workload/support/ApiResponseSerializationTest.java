@@ -39,8 +39,7 @@ class ApiResponseSerializationTest {
 
   @Test
   void serializesAffectedCountWhenPresent() throws Exception {
-    ApiResponse<Void> response =
-        ApiResponse.error(new ApiError("TEST_ERROR", "failure", 3));
+    ApiResponse<Void> response = ApiResponse.error(new ApiError("TEST_ERROR", "failure", 3));
 
     String json = objectMapper.writeValueAsString(response);
 

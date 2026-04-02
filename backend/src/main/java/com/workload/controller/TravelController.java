@@ -46,7 +46,8 @@ public class TravelController {
       return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
           .body(
               ApiResponse.error(
-                  new ApiError("VALIDATION_ERROR", "distanceKm and oneWayTimeMin are required", null)));
+                  new ApiError(
+                      "VALIDATION_ERROR", "distanceKm and oneWayTimeMin are required", null)));
     }
 
     BigDecimal distanceKm;
@@ -58,7 +59,8 @@ public class TravelController {
       return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
           .body(
               ApiResponse.error(
-                  new ApiError("VALIDATION_ERROR", "distanceKm and oneWayTimeMin must be numeric", null)));
+                  new ApiError(
+                      "VALIDATION_ERROR", "distanceKm and oneWayTimeMin must be numeric", null)));
     }
 
     String transportType =

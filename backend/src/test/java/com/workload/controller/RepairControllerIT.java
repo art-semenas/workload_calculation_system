@@ -27,7 +27,7 @@ class RepairControllerIT extends IntegrationTestBase {
         given()
             .header("Authorization", bearerToken)
             .when()
-            .get("/catalog/repair-types")
+            .get("/catalog/repairs")
             .then()
             .statusCode(200)
             .body("data", hasSize(greaterThanOrEqualTo(1)))

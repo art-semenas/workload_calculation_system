@@ -33,19 +33,21 @@ class AuthServiceTest {
 
   @Test
   void loginReturnsTokenForValidCredentials() {
-    User user = User.builder()
-        .id(UUID.randomUUID())
-        .email("admin@workload.local")
-        .passwordHash("hashed")
-        .role(Role.ADMIN)
-        .active(true)
-        .build();
+    User user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email("admin@workload.local")
+            .passwordHash("hashed")
+            .role(Role.ADMIN)
+            .active(true)
+            .build();
 
     when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
     when(jwtTokenProvider.generateToken(user)).thenReturn("jwt-token");
 
-    LoginResponse response = authService.login(new LoginRequest("admin@workload.local", "password"));
+    LoginResponse response =
+        authService.login(new LoginRequest("admin@workload.local", "password"));
 
     assertThat(response.token()).isEqualTo("jwt-token");
   }
@@ -60,13 +62,14 @@ class AuthServiceTest {
 
   @Test
   void loginThrowsForWrongPassword() {
-    User user = User.builder()
-        .id(UUID.randomUUID())
-        .email("admin@workload.local")
-        .passwordHash("hashed")
-        .role(Role.ADMIN)
-        .active(true)
-        .build();
+    User user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email("admin@workload.local")
+            .passwordHash("hashed")
+            .role(Role.ADMIN)
+            .active(true)
+            .build();
 
     when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
@@ -77,13 +80,14 @@ class AuthServiceTest {
 
   @Test
   void loginThrowsForInactiveUser() {
-    User user = User.builder()
-        .id(UUID.randomUUID())
-        .email("inactive@workload.local")
-        .passwordHash("hashed")
-        .role(Role.VIEWER)
-        .active(false)
-        .build();
+    User user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email("inactive@workload.local")
+            .passwordHash("hashed")
+            .role(Role.VIEWER)
+            .active(false)
+            .build();
 
     when(userRepository.findByEmail("inactive@workload.local")).thenReturn(Optional.of(user));
     // Lenient: the filter guard fires before password check, so this stub is not invoked.
@@ -96,24 +100,26 @@ class AuthServiceTest {
 
   @Test
   void getMeReturnsUserDtoForKnownEmail() {
-    User user = User.builder()
-        .id(UUID.randomUUID())
-        .email("admin@workload.local")
-        .passwordHash("hashed")
-        .role(Role.ADMIN)
-        .active(true)
-        .build();
-    com.workload.dto.UserDto dto = new com.workload.dto.UserDto(
-        user.getId(),
-        "admin@workload.local",
-        "PoC Admin",
-        Role.ADMIN,
-        null,
-        null,
-        java.math.BigDecimal.ONE,
-        null,
-        true,
-        false);
+    User user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email("admin@workload.local")
+            .passwordHash("hashed")
+            .role(Role.ADMIN)
+            .active(true)
+            .build();
+    com.workload.dto.UserDto dto =
+        new com.workload.dto.UserDto(
+            user.getId(),
+            "admin@workload.local",
+            "PoC Admin",
+            Role.ADMIN,
+            null,
+            null,
+            java.math.BigDecimal.ONE,
+            null,
+            true,
+            false);
 
     when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
     when(userMapper.toDto(user)).thenReturn(dto);
