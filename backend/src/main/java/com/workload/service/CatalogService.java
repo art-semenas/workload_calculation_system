@@ -25,7 +25,9 @@ import com.workload.repository.ObjectSystemAssignmentRepository;
 import com.workload.repository.RepairTypeRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -57,13 +59,15 @@ public class CatalogService {
   }
 
   public List<DeviceTypeDto> getAllDeviceTypes() {
-    return deviceTypeRepository.findAll().stream()
+    List<DeviceType> deviceTypes = deviceTypeRepository.findAll();
+    Map<UUID, List<DeviceSystemContext>> contextsByDeviceType =
+        contextRepository.findAll().stream()
+            .collect(Collectors.groupingBy(ctx -> ctx.getDeviceType().getId()));
+    return deviceTypes.stream()
         .map(
-            dt -> {
-              List<DeviceSystemContext> contexts =
-                  contextRepository.findAllByDeviceTypeId(dt.getId());
-              return catalogMapper.toDeviceTypeDto(dt, contexts);
-            })
+            dt ->
+                catalogMapper.toDeviceTypeDto(
+                    dt, contextsByDeviceType.getOrDefault(dt.getId(), List.of())))
         .toList();
   }
 
@@ -150,7 +154,7 @@ public class CatalogService {
         .orElseThrow(() -> new EntityNotFoundException("DeviceType", deviceTypeId.toString()));
     DeviceSystemContext ctx =
         contextRepository
-            .findById(contextId)
+            .findByIdAndDeviceTypeId(contextId, deviceTypeId)
             .orElseThrow(() -> new EntityNotFoundException("Context", contextId.toString()));
     ctx.setR1Minutes(request.r1Minutes());
     ctx.setR2Minutes(request.r2Minutes());
@@ -164,7 +168,7 @@ public class CatalogService {
         .orElseThrow(() -> new EntityNotFoundException("DeviceType", deviceTypeId.toString()));
     DeviceSystemContext ctx =
         contextRepository
-            .findById(contextId)
+            .findByIdAndDeviceTypeId(contextId, deviceTypeId)
             .orElseThrow(() -> new EntityNotFoundException("Context", contextId.toString()));
     if (assignmentRepository.existsByContextId(contextId)) {
       throw new ContextInUseException(contextId.toString());

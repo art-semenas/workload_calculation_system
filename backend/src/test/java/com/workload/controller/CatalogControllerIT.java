@@ -356,4 +356,108 @@ class CatalogControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(204);
   }
+
+  // ── Cross-device context ownership tests ─────────────────────────────────
+
+  @Test
+  void updateContextWithCrossDeviceReturns404() {
+    // Create two device types
+    String deviceTypeId1 =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"name\": \"CrossA-" + UUID.randomUUID().toString().substring(0, 8) + "\"}")
+            .when()
+            .post("/catalog/devices")
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    String deviceTypeId2 =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"name\": \"CrossB-" + UUID.randomUUID().toString().substring(0, 8) + "\"}")
+            .when()
+            .post("/catalog/devices")
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    // Create a context on device type 1
+    String contextId =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"systemType\": \"OS\", \"r1Minutes\": 5.0, \"r2Minutes\": 3.0}")
+            .when()
+            .post("/catalog/devices/{id}/contexts", deviceTypeId1)
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    // Try to update the context through device type 2's URL
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"r1Minutes\": 9.0, \"r2Minutes\": 9.0}")
+        .when()
+        .put("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
+        .then()
+        .statusCode(404)
+        .body("error.code", equalTo("ENTITY_NOT_FOUND"));
+  }
+
+  @Test
+  void deleteContextWithCrossDeviceReturns404() {
+    // Create two device types
+    String deviceTypeId1 =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"name\": \"DelCrossA-" + UUID.randomUUID().toString().substring(0, 8) + "\"}")
+            .when()
+            .post("/catalog/devices")
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    String deviceTypeId2 =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"name\": \"DelCrossB-" + UUID.randomUUID().toString().substring(0, 8) + "\"}")
+            .when()
+            .post("/catalog/devices")
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    // Create a context on device type 1
+    String contextId =
+        given()
+            .header("Authorization", bearerToken)
+            .contentType(ContentType.JSON)
+            .body("{\"systemType\": \"OS\", \"r1Minutes\": 5.0, \"r2Minutes\": 3.0}")
+            .when()
+            .post("/catalog/devices/{id}/contexts", deviceTypeId1)
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    // Try to delete the context through device type 2's URL
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
+        .then()
+        .statusCode(404)
+        .body("error.code", equalTo("ENTITY_NOT_FOUND"));
+  }
 }

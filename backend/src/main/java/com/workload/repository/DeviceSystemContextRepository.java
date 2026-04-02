@@ -12,4 +12,6 @@ public interface DeviceSystemContextRepository extends JpaRepository<DeviceSyste
 
   Optional<DeviceSystemContext> findByDeviceTypeIdAndSystemType(
       UUID deviceTypeId, SystemType systemType);
+
+  Optional<DeviceSystemContext> findByIdAndDeviceTypeId(UUID id, UUID deviceTypeId);
 }

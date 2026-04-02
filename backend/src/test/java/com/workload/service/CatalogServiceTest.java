@@ -209,7 +209,8 @@ class CatalogServiceTest {
             .build();
 
     when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
-    when(contextRepository.findById(contextId)).thenReturn(Optional.of(ctx));
+    when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
+        .thenReturn(Optional.of(ctx));
     when(assignmentRepository.existsByContextId(contextId)).thenReturn(true);
 
     assertThatThrownBy(() -> catalogService.deleteContext(deviceTypeId, contextId))
@@ -239,12 +240,109 @@ class CatalogServiceTest {
             .build();
 
     when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
-    when(contextRepository.findById(contextId)).thenReturn(Optional.of(ctx));
+    when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
+        .thenReturn(Optional.of(ctx));
     when(assignmentRepository.existsByContextId(contextId)).thenReturn(false);
 
     catalogService.deleteContext(deviceTypeId, contextId);
 
     verify(contextRepository).delete(ctx);
+  }
+
+  @Test
+  void updateContextThrowsWhenDeviceTypeMismatch() {
+    UUID deviceTypeId = UUID.randomUUID();
+    UUID contextId = UUID.randomUUID();
+    DeviceType dt =
+        DeviceType.builder()
+            .id(deviceTypeId)
+            .name("X")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+
+    when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
+    when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () ->
+                catalogService.updateContext(
+                    deviceTypeId,
+                    contextId,
+                    new com.workload.dto.DeviceSystemContextUpdateRequest(
+                        BigDecimal.ONE, BigDecimal.ONE)))
+        .isInstanceOf(EntityNotFoundException.class);
+  }
+
+  @Test
+  void deleteContextThrowsWhenDeviceTypeMismatch() {
+    UUID deviceTypeId = UUID.randomUUID();
+    UUID contextId = UUID.randomUUID();
+    DeviceType dt =
+        DeviceType.builder()
+            .id(deviceTypeId)
+            .name("X")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+
+    when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
+    when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> catalogService.deleteContext(deviceTypeId, contextId))
+        .isInstanceOf(EntityNotFoundException.class);
+  }
+
+  @Test
+  void getAllDeviceTypesGroupsContextsByDeviceType() {
+    UUID deviceTypeId1 = UUID.randomUUID();
+    UUID deviceTypeId2 = UUID.randomUUID();
+    DeviceType dt1 =
+        DeviceType.builder()
+            .id(deviceTypeId1)
+            .name("Type1")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    DeviceType dt2 =
+        DeviceType.builder()
+            .id(deviceTypeId2)
+            .name("Type2")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    DeviceSystemContext ctx =
+        DeviceSystemContext.builder()
+            .id(UUID.randomUUID())
+            .deviceType(dt1)
+            .systemType(SystemType.OS)
+            .r1Minutes(BigDecimal.ONE)
+            .r2Minutes(BigDecimal.ONE)
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    DeviceTypeDto dto1 =
+        new DeviceTypeDto(
+            deviceTypeId1,
+            "Type1",
+            null,
+            List.of(
+                new DeviceSystemContextDto(
+                    ctx.getId(), deviceTypeId1, SystemType.OS, BigDecimal.ONE, BigDecimal.ONE)));
+    DeviceTypeDto dto2 = new DeviceTypeDto(deviceTypeId2, "Type2", null, List.of());
+
+    when(deviceTypeRepository.findAll()).thenReturn(List.of(dt1, dt2));
+    when(contextRepository.findAll()).thenReturn(List.of(ctx));
+    when(catalogMapper.toDeviceTypeDto(dt1, List.of(ctx))).thenReturn(dto1);
+    when(catalogMapper.toDeviceTypeDto(dt2, List.of())).thenReturn(dto2);
+
+    List<DeviceTypeDto> result = catalogService.getAllDeviceTypes();
+
+    assertThat(result).hasSize(2);
+    assertThat(result.get(0).contexts()).hasSize(1);
+    assertThat(result.get(1).contexts()).isEmpty();
   }
 
   // ── Repair type write tests ───────────────────────────────────────────────
