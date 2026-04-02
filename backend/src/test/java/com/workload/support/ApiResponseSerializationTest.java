@@ -36,4 +36,15 @@ class ApiResponseSerializationTest {
     assertThat(json).contains("\"error\"");
     assertThat(json).contains("TEST_ERROR");
   }
+
+  @Test
+  void serializesAffectedCountWhenPresent() throws Exception {
+    ApiResponse<Void> response =
+        ApiResponse.error(new ApiError("TEST_ERROR", "failure", 3));
+
+    String json = objectMapper.writeValueAsString(response);
+
+    assertThat(json).contains("\"affected_count\"");
+    assertThat(json).contains("3");
+  }
 }
