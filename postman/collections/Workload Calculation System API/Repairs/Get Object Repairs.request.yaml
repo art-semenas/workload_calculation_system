@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Object Repairs
+order: 1000
+method: GET
+url: '{{baseUrl}}/api/v1/objects/{{objectId}}/repairs'

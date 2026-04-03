@@ -1,0 +1,49 @@
+$kind: collection
+name: Workload Calculation System API
+variables:
+  baseUrl: http://localhost
+  authEmail: admin@workload.local
+  authPassword: password
+  authToken: ""
+  divisionId: ""
+  branchId: ""
+  objectId: ""
+  deviceTypeId: ""
+  repairTypeId: ""
+  assignmentId: ""
+  catalogDeviceTypeId: ""
+  catalogContextId: ""
+  catalogRepairTypeId: ""
+  divisionName: Postman Smoke Division
+  branchName: Postman Smoke Branch
+  objectName: Postman Smoke Object
+  objectImportSeqNo: "9001"
+  quantityPhysical: "1.00"
+  quantityMaintained: "1.00"
+  assignmentSystemType: MAIN
+  recordsAccessRequests: "10.00"
+  recordsMonitoringRequests: "5.00"
+  recordsFootageRequests: "3.00"
+  recordsBackupControl: "2.00"
+  recordsSecurityAdmin: "1.00"
+  repairCount: "5"
+  travelTransportType: CAR
+  travelDistanceKm: "25.50"
+  travelOneWayTimeMin: "30.00"
+  catalogDeviceName: Postman Smoke Device Type
+  catalogDeviceDescription: Created by Postman smoke flow
+  catalogUpdatedDeviceName: Postman Smoke Device Type Updated
+  catalogUpdatedDeviceDescription: Updated by Postman smoke flow
+  catalogContextSystemType: MAIN
+  catalogContextR1Minutes: "10.00"
+  catalogContextR2Minutes: "5.00"
+  catalogUpdatedContextR1Minutes: "12.00"
+  catalogUpdatedContextR2Minutes: "6.00"
+  catalogRepairName: Postman Smoke Repair Type
+  catalogRepairMinutes: "45.00"
+  catalogUpdatedRepairName: Postman Smoke Repair Type Updated
+  catalogUpdatedRepairMinutes: "60.00"
+auth:
+  type: bearer
+  credentials:
+    token: "{{authToken}}"

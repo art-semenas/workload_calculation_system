@@ -1,0 +1,16 @@
+$kind: http-request
+name: 11 Update Object Travel
+order: 2000
+method: PUT
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/travel"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "transportType": "{{travelTransportType}}",
+      "distanceKm": {{travelDistanceKm}},
+      "oneWayTimeMin": {{travelOneWayTimeMin}}
+    }

@@ -1,0 +1,13 @@
+$kind: http-request
+name: 15 Delete Object
+order: 3000
+method: DELETE
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}"
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - pm.collectionVariables.unset('objectId');
+        - pm.collectionVariables.unset('assignmentId');
+        - pm.collectionVariables.unset('deviceTypeId');

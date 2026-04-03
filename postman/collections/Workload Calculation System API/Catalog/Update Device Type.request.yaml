@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Device Type
+order: 6000
+method: PUT
+url: "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{catalogUpdatedDeviceName}}",
+      "description": "{{catalogUpdatedDeviceDescription}}"
+    }

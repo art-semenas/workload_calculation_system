@@ -1,0 +1,5 @@
+$kind: http-request
+name: 12 Get Object Summary
+order: 6000
+method: GET
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/summary"

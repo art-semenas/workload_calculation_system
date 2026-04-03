@@ -1,0 +1,25 @@
+$kind: http-request
+name: Create Device Context
+order: 8000
+method: POST
+url: "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}/contexts"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "systemType": "{{catalogContextSystemType}}",
+      "r1Minutes": {{catalogContextR1Minutes}},
+      "r2Minutes": {{catalogContextR2Minutes}}
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const contextId = body?.data?.id;
+        - pm.test('catalog context id captured', () => pm.expect(contextId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('catalogContextId', contextId);

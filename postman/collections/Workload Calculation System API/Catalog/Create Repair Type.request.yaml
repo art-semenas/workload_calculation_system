@@ -1,0 +1,24 @@
+$kind: http-request
+name: Create Repair Type
+order: 11000
+method: POST
+url: "{{baseUrl}}/api/v1/catalog/repairs"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{catalogRepairName}}",
+      "timeMinutes": {{catalogRepairMinutes}}
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const repairTypeId = body?.data?.id;
+        - pm.test('catalog repair type id captured', () => pm.expect(repairTypeId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('catalogRepairTypeId', repairTypeId);

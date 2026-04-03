@@ -1,0 +1,32 @@
+$kind: http-request
+name: 01 Login
+order: 1000
+method: POST
+url: "{{baseUrl}}/api/v1/auth/login"
+auth:
+  type: noauth
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+    "email": "{{authEmail}}",
+    "password": "{{authPassword}}"
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const token = body?.data?.token;
+        - pm.test('login returns token', () => pm.expect(token).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('authToken', token);
+        - pm.collectionVariables.unset('divisionId');
+        - pm.collectionVariables.unset('branchId');
+        - pm.collectionVariables.unset('objectId');
+        - pm.collectionVariables.unset('deviceTypeId');
+        - pm.collectionVariables.unset('repairTypeId');
+        - pm.collectionVariables.unset('assignmentId');

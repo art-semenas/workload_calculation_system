@@ -1,0 +1,11 @@
+$kind: http-request
+name: 13 Delete Assignment
+order: 1000
+method: DELETE
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments/{{assignmentId}}"
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - pm.collectionVariables.unset('assignmentId');

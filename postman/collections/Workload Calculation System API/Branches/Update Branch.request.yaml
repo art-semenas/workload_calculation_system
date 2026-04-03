@@ -1,0 +1,14 @@
+$kind: http-request
+name: Update Branch
+order: 2000
+method: PUT
+url: '{{baseUrl}}/api/v1/branches/{{branchId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Branch Name"
+    }

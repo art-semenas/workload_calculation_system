@@ -1,0 +1,28 @@
+$kind: http-request
+name: 04 Create Object
+order: 2000
+method: POST
+url: "{{baseUrl}}/api/v1/objects"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "branchId": "{{branchId}}",
+      "name": "{{objectName}}",
+      "importSeqNo": {{objectImportSeqNo}}
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const objectId = body?.data?.id;
+        - const divisionId = body?.data?.divisionId;
+        - pm.test('object id captured', () => pm.expect(objectId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('objectId', objectId);
+        - if (divisionId) { pm.collectionVariables.set('divisionId', divisionId); }
+        - pm.collectionVariables.unset('assignmentId');

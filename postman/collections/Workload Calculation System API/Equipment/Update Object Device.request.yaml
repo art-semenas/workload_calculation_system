@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Object Device
+order: 3000
+method: PUT
+url: '{{baseUrl}}/api/v1/objects/{{objectId}}/devices/{{deviceTypeId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "deviceTypeId": "{{deviceTypeId}}",
+      "quantityPhysical": 2.00
+    }
