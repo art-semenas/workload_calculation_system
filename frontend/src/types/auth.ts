@@ -10,8 +10,8 @@ export const UserSchema = z.object({
 })
 
 export const LoginRequestSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().min(1, 'Required').email('Enter a valid email'),
+  password: z.string().min(1, 'Required'),
 })
 
 export const LoginResponseSchema = z.object({
