@@ -1,17 +1,70 @@
-# Postman Collection Notes
+# Postman Collection
 
-This workspace contains a file-based Postman collection under:
+This repo now includes a portable Postman setup that can be imported on any machine without relying on a synced paid Postman workspace.
 
-- `postman/collections/Workload Calculation System API`
+## Source Of Truth
 
-The collection is configured for the local PoC stack exposed through nginx:
+The canonical Postman artifacts are:
+
+- `postman/collection/Workload Calculation System API.postman_collection.json`
+- `postman/environments/local.postman_environment.json`
+
+The older YAML tree under `postman/collections/` is retained temporarily as a legacy source from the previous file-based workspace setup. If you update the collection going forward, update the portable JSON artifacts first.
+
+## Files
+
+Portable files:
+
+- `postman/collection/Workload Calculation System API.postman_collection.json`
+- `postman/environments/local.postman_environment.json`
+
+Legacy workspace files:
+
+- `postman/collections/Workload Calculation System API/`
+- `postman/globals/`
+
+Optional helper:
+
+- `postman/scripts/convert_to_portable.py`
+
+## Import On A New Machine
+
+1. Start the app locally with Docker Compose so the API is reachable at `http://localhost`.
+2. In Postman, import `postman/collection/Workload Calculation System API.postman_collection.json`.
+3. Import `postman/environments/local.postman_environment.json`.
+4. Select the `Workload Calculation System Local` environment.
+5. Run requests individually or execute the smoke flow in order.
+
+## Default Local Environment Values
+
+The local environment file contains:
 
 - `baseUrl = http://localhost`
-- seeded login: `admin@workload.local` / `password`
+- `authEmail = admin@workload.local`
+- `authPassword = password`
 
-## Happy-path smoke flow
+These values are intended for the local PoC stack only.
 
-Run the requests in this order:
+## Collection Variables And Runtime State
+
+The collection keeps workflow state in collection variables, including:
+
+- `authToken`
+- `divisionId`
+- `branchId`
+- `objectId`
+- `deviceTypeId`
+- `repairTypeId`
+- `assignmentId`
+- `catalogDeviceTypeId`
+- `catalogContextId`
+- `catalogRepairTypeId`
+
+The login request stores `authToken`, and later requests reuse collection variables populated by response scripts. If an earlier request fails, later requests may not have the IDs they expect.
+
+## Happy-Path Smoke Flow
+
+Run these requests in order:
 
 1. `01 Login`
 2. `02 Create Division`
@@ -29,10 +82,7 @@ Run the requests in this order:
 14. `14 Delete Object Device`
 15. `15 Delete Object`
 
-The flow relies on Postman collection variables populated by response scripts.
-If a request fails, the next request may not have the IDs it expects.
-
-## Catalog coverage
+## Catalog Coverage
 
 The `Catalog` folder contains requests for:
 
@@ -40,13 +90,13 @@ The `Catalog` folder contains requests for:
 - list, create, update, delete repair types
 - list, create, update, delete device contexts
 
-These requests target the current backend controller paths:
+These requests target:
 
 - `/api/v1/catalog/devices`
 - `/api/v1/catalog/devices/{id}/contexts`
 - `/api/v1/catalog/repairs`
 
-## Cleanup limitation
+## Cleanup Limitation
 
 The backend currently supports cleanup only for:
 
@@ -54,18 +104,22 @@ The backend currently supports cleanup only for:
 - object devices
 - objects
 
-The backend does **not** expose delete endpoints for branches or divisions.
-That means the smoke flow can delete the created object tree, but not the parent branch or division.
+The backend does not expose delete endpoints for branches or divisions. The smoke flow can delete the created object tree, but not the parent branch or division.
 
-## Why Catalog may not appear in Postman
+## Regenerating The Portable Files
 
-If you can see the collection but not the `Catalog` folder or some newly added requests, the usual cause is that Postman has not refreshed the file-based collection tree after external edits.
+If you need to regenerate the portable JSON artifacts from the legacy YAML tree, run:
 
-Try this sequence:
+```powershell
+python postman/scripts/convert_to_portable.py
+```
 
-1. Close and reopen the collection in Postman.
-2. Trigger a workspace refresh or reload the Postman window.
-3. If you are using the VS Code Postman extension, reload VS Code or reconnect the Postman workspace.
-4. Re-import the `postman` folder if the collection was imported before these files existed.
+## Validation Status
 
-The files exist on disk and validate as YAML. If Postman still does not show them after a refresh, the issue is in the client cache or sync state rather than the repository contents.
+The current portable files were generated from the legacy YAML tree and validated for:
+
+- valid JSON structure
+- matching request count between YAML and JSON exports
+- preserved login script and collection-variable flow
+
+Manual Postman import and end-to-end smoke execution are still the recommended final validation after future collection edits.
