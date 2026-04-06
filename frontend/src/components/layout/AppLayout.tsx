@@ -1,12 +1,13 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import {
+  AppBar,
   Box,
   Drawer,
   List,
   ListItemButton,
   ListItemText,
   Toolbar,
-  AppBar,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useAuthStore } from '../../store/authStore'
@@ -14,31 +15,35 @@ import { useAuthStore } from '../../store/authStore'
 const NAV_WIDTH = 220
 
 const navItems = [
-  { label: 'Дашборд', path: '/' },
-  { label: 'Объекты', path: '/objects' },
-  { label: 'Инженеры', path: '/engineers' },
-  { label: 'СВОД', path: '/svod' },
-  { label: 'Подразделения', path: '/divisions' },
+  { label: 'Dashboard', path: '/' },
+  { label: 'Objects', path: '/objects' },
+  { label: 'Engineers', path: '/engineers', disabled: true },
+  { label: 'Summary', path: '/svod', disabled: true },
+  { label: 'Divisions', path: '/divisions' },
 ]
 
 export default function AppLayout() {
   const navigate = useNavigate()
-  const logout = useAuthStore((s) => s.logout)
+  const logout = useAuthStore((state) => state.logout)
+  const user = useAuthStore((state) => state.user)
 
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6">Workload Calculator</Typography>
-          <ListItemButton
-            onClick={() => {
-              logout()
-              void navigate('/login')
-            }}
-            sx={{ width: 'auto', color: 'white' }}
-          >
-            Выйти
-          </ListItemButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body1">{user?.name}</Typography>
+            <ListItemButton
+              onClick={() => {
+                logout()
+                void navigate('/login')
+              }}
+              sx={{ width: 'auto', color: 'white' }}
+            >
+              Logout
+            </ListItemButton>
+          </Box>
         </Toolbar>
       </AppBar>
       <Drawer
@@ -50,11 +55,31 @@ export default function AppLayout() {
       >
         <Toolbar />
         <List>
-          {navItems.map((item) => (
-            <ListItemButton key={item.path} onClick={() => void navigate(item.path)}>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          ))}
+          {navItems.map((item) => {
+            const content = (
+              <ListItemButton
+                onClick={() => void navigate(item.path)}
+                sx={
+                  item.disabled
+                    ? {
+                        opacity: 0.5,
+                        pointerEvents: 'none',
+                      }
+                    : undefined
+                }
+              >
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            )
+
+            return item.disabled ? (
+              <Tooltip key={item.path} title="Available in the next version" placement="right">
+                <Box>{content}</Box>
+              </Tooltip>
+            ) : (
+              <Box key={item.path}>{content}</Box>
+            )
+          })}
         </List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, ml: `${NAV_WIDTH}px` }}>
