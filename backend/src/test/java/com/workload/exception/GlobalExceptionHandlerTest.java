@@ -25,7 +25,8 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleEntityNotFound(new EntityNotFoundException("DeviceType", "abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("ENTITY_NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().message()).isEqualTo("Device type not found");
   }
 
   @Test

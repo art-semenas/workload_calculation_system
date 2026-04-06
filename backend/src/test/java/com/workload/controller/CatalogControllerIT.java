@@ -408,7 +408,7 @@ class CatalogControllerIT extends IntegrationTestBase {
         .put("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("ENTITY_NOT_FOUND"));
+        .body("error.code", equalTo("NOT_FOUND"));
   }
 
   @Test
@@ -458,6 +458,6 @@ class CatalogControllerIT extends IntegrationTestBase {
         .delete("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("ENTITY_NOT_FOUND"));
+        .body("error.code", equalTo("NOT_FOUND"));
   }
 }
