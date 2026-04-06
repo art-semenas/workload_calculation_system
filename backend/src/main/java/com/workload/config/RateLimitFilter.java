@@ -65,8 +65,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     if (bucket.tryConsume(1)) {
       filterChain.doFilter(request, response);
     } else {
-      long retryAfterSeconds =
-          bucket.estimateAbilityToConsume(1).getNanosToWaitForRefill() / 1_000_000_000L;
+      long nanosToWait = bucket.estimateAbilityToConsume(1).getNanosToWaitForRefill();
+      long retryAfterSeconds = Math.max(1L, (nanosToWait + 999_999_999L) / 1_000_000_000L);
       response.setStatus(429);
       response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
