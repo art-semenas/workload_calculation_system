@@ -1,4 +1,4 @@
-# PoC M-03 Frontend — Engineer Management UI Implementation Plan
+﻿# PoC M-03 Frontend — Engineer Management UI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -17,7 +17,7 @@
 
 **PoC Simplifications active:**
 
-- **S-02:** No stale indicators — engineer summaries recalculate synchronously on assignment changes. No "Данные устарели" banners.
+- **S-02:** No stale indicators — engineer summaries recalculate synchronously on assignment changes. No "Data is stale" banners.
 - **S-04:** No RBAC enforcement — all authenticated users can view and manage all engineers (role stored but not enforced).
 - **S-05:** No period selector or period-scoped data.
 
@@ -131,11 +131,11 @@ describe("M-03 Zod schemas", () => {
   it("EngineerSchema parses a valid engineer", () => {
     const raw = {
       id: "550e8400-e29b-41d4-a716-446655440000",
-      name: "Иванов Петр Сергеевич",
+      name: "Ivanov Petr Sergeevich",
       email: "ivanov@workload.local",
       role: "engineer",
       home_division_id: "660e8400-e29b-41d4-a716-446655440000",
-      home_division_name: "Брестское №100",
+      home_division_name: "Brest No. 100",
       capacity_fte: 1.0,
       is_active: true,
       object_count: 47,
@@ -144,7 +144,7 @@ describe("M-03 Zod schemas", () => {
       status: "WARNING",
     };
     const result = EngineerSchema.parse(raw);
-    expect(result.name).toBe("Иванов Петр Сергеевич");
+    expect(result.name).toBe("Ivanov Petr Sergeevich");
     expect(result.status).toBe("WARNING");
   });
 
@@ -189,9 +189,9 @@ describe("M-03 Zod schemas", () => {
   it("EngineerShareSchema parses per-object share", () => {
     const raw = {
       object_id: "550e8400-e29b-41d4-a716-446655440000",
-      object_name: "ЦБУ г.Брест, ул.Ленина, 10",
-      division_name: "Брестское",
-      branch_name: "Филиал 1",
+      object_name: "CBU Brest, Lenina St., 10",
+      division_name: "Brest",
+      branch_name: "Branch 1",
       engineer_share: 0.032,
       itogo_chislo_with_travel: 0.064,
       engineer_count: 2,
@@ -204,7 +204,7 @@ describe("M-03 Zod schemas", () => {
   it("ObjectEngineerRowSchema parses an engineer assigned to an object", () => {
     const raw = {
       engineer_id: "550e8400-e29b-41d4-a716-446655440000",
-      engineer_name: "Иванов Петр Сергеевич",
+      engineer_name: "Ivanov Petr Sergeevich",
       object_share: 0.0161,
       load_ratio: 0.82,
       status: "NORMAL",
@@ -215,7 +215,7 @@ describe("M-03 Zod schemas", () => {
 
   it("EngineerCreateSchema validates required fields", () => {
     const valid = EngineerCreateSchema.safeParse({
-      name: "Новый Инженер",
+      name: "New Engineer",
       email: "new@workload.local",
       capacity_fte: 1.0,
       home_division_id: "550e8400-e29b-41d4-a716-446655440000",
@@ -223,7 +223,7 @@ describe("M-03 Zod schemas", () => {
     expect(valid.success).toBe(true);
 
     const noEmail = EngineerCreateSchema.safeParse({
-      name: "Новый Инженер",
+      name: "New Engineer",
       email: "",
       capacity_fte: 1.0,
       home_division_id: "550e8400-e29b-41d4-a716-446655440000",
@@ -332,10 +332,10 @@ export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>;
 // --- Create engineer form schema ---
 
 export const EngineerCreateSchema = z.object({
-  name: z.string().min(1, "Имя обязательно"),
-  email: z.string().email("Некорректный email"),
-  capacity_fte: z.number().positive("Мощность должна быть > 0"),
-  home_division_id: z.string().uuid("Выберите подразделение"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  capacity_fte: z.number().positive("Capacity must be > 0"),
+  home_division_id: z.string().uuid("Select a division"),
 });
 export type EngineerCreateRequest = z.infer<typeof EngineerCreateSchema>;
 
@@ -869,12 +869,12 @@ The Engineer List page is a sortable, filterable table of all engineers with wor
 
 | #   | Header (Russian) | Field                                | Align  | Format                             |
 | --- | ---------------- | ------------------------------------ | ------ | ---------------------------------- |
-| 1   | Инженер          | `name`                               | left   | text, clickable → `/engineers/:id` |
-| 2   | Подразделение    | `home_division_name`                 | left   | text                               |
-| 3   | Объектов         | `object_count`                       | right  | integer                            |
-| 4   | Нагрузка FTE     | `total_load`                         | right  | 4 decimal places                   |
-| 5   | Мощность         | `capacity_fte`                       | right  | 2 decimal places                   |
-| 6   | Статус           | derived from `load_ratio` + `status` | center | colored MUI `Chip`                 |
+| 1   | Engineer          | `name`                               | left   | text, clickable → `/engineers/:id` |
+| 2   | Division    | `home_division_name`                 | left   | text                               |
+| 3   | Objects         | `object_count`                       | right  | integer                            |
+| 4   | FTE Load     | `total_load`                         | right  | 4 decimal places                   |
+| 5   | Capacity         | `capacity_fte`                       | right  | 2 decimal places                   |
+| 6   | Status           | derived from `load_ratio` + `status` | center | colored MUI `Chip`                 |
 
 **Status chip rendering:**
 
@@ -885,16 +885,16 @@ The Engineer List page is a sortable, filterable table of all engineers with wor
 **Filter bar (above table):**
 
 - Division dropdown — options from `GET /divisions` (existing `useDivisions()` hook); passes `home_division_id` to `useEngineers(status, homeDivisionId)`
-- Status dropdown — options: "Все", "Норма" (`NORMAL`), "Внимание" (`WARNING`), "Перегрузка" (`OVERLOADED`)
+- Status dropdown — options: "All", "Normal" (`NORMAL`), "Warning" (`WARNING`), "Overloaded" (`OVERLOADED`)
 - Name search — `<TextField>` that filters the client-side list by `name.toLowerCase().includes(query)`
 
-**"Создать инженера" button:**
+**"Create engineer" button:**
 
 - Opens a MUI `Dialog` with React Hook Form + Zod (`EngineerCreateSchema`):
-  - Имя (text, required)
+  - Name (text, required)
   - Email (email, required)
-  - Мощность FTE (number, > 0, required)
-  - Подразделение (dropdown from `GET /divisions`, required)
+  - Capacity FTE (number, > 0, required)
+  - Division (dropdown from `GET /divisions`, required)
 - On submit: calls `useCreateEngineer()` mutation
 - On success: dialog closes, list refetches
 
@@ -924,7 +924,7 @@ vi.mock('../hooks/useEngineers', () => ({
 vi.mock('../hooks/useDivisions', () => ({
   useDivisions: vi.fn(() => ({
     data: [
-      { id: 'div-1', name: 'Брестское', branch_count: 3, object_count: 100 },
+      { id: 'div-1', name: 'Brest', branch_count: 3, object_count: 100 },
     ],
     isLoading: false,
   })),
@@ -962,11 +962,11 @@ describe('EngineerListPage', () => {
       data: [
         {
           id: 'eng-1',
-          name: 'Иванов Петр',
+          name: 'Ivanov Petr',
           email: 'ivanov@test.com',
           role: 'engineer',
           home_division_id: 'div-1',
-          home_division_name: 'Брестское',
+          home_division_name: 'Brest',
           capacity_fte: 1.0,
           is_active: true,
           object_count: 47,
@@ -976,11 +976,11 @@ describe('EngineerListPage', () => {
         },
         {
           id: 'eng-2',
-          name: 'Сидорова Анна',
+          name: 'Sidorova Anna',
           email: 'sidorova@test.com',
           role: 'engineer',
           home_division_id: 'div-1',
-          home_division_name: 'Брестское',
+          home_division_name: 'Brest',
           capacity_fte: 1.0,
           is_active: true,
           object_count: 31,
@@ -995,8 +995,8 @@ describe('EngineerListPage', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Иванов Петр')).toBeInTheDocument()
-      expect(screen.getByText('Сидорова Анна')).toBeInTheDocument()
+      expect(screen.getByText('Ivanov Petr')).toBeInTheDocument()
+      expect(screen.getByText('Sidorova Anna')).toBeInTheDocument()
     })
     // Verify status chips are rendered (chip text shows percentage)
     expect(screen.getByText('92%')).toBeInTheDocument()
@@ -1011,13 +1011,13 @@ describe('EngineerListPage', () => {
     } as ReturnType<typeof useEngineers>)
 
     renderPage()
-    const createBtn = screen.getByRole('button', { name: /создать инженера/i })
+    const createBtn = screen.getByRole('button', { name: /create engineer/i })
     await userEvent.click(createBtn)
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/имя/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/мощность/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/capacity/i)).toBeInTheDocument()
     })
   })
 
@@ -1025,14 +1025,14 @@ describe('EngineerListPage', () => {
     mockUseEngineers.mockReturnValue({
       data: [
         {
-          id: 'eng-1', name: 'Иванов Петр', email: 'i@t.com', role: 'engineer',
-          home_division_id: 'div-1', home_division_name: 'Брестское',
+          id: 'eng-1', name: 'Ivanov Petr', email: 'i@t.com', role: 'engineer',
+          home_division_id: 'div-1', home_division_name: 'Brest',
           capacity_fte: 1.0, is_active: true, object_count: 10,
           total_load: 0.5, load_ratio: 0.5, status: 'NORMAL' as const,
         },
         {
-          id: 'eng-2', name: 'Козлов Дмитрий', email: 'k@t.com', role: 'engineer',
-          home_division_id: 'div-1', home_division_name: 'Брестское',
+          id: 'eng-2', name: 'Kozlov Dmitry', email: 'k@t.com', role: 'engineer',
+          home_division_id: 'div-1', home_division_name: 'Brest',
           capacity_fte: 0.5, is_active: true, object_count: 5,
           total_load: 0.24, load_ratio: 0.48, status: 'NORMAL' as const,
         },
@@ -1042,12 +1042,12 @@ describe('EngineerListPage', () => {
     } as ReturnType<typeof useEngineers>)
 
     renderPage()
-    const searchField = screen.getByPlaceholderText(/поиск/i)
-    await userEvent.type(searchField, 'Козлов')
+    const searchField = screen.getByPlaceholderText(/search/i)
+    await userEvent.type(searchField, 'Kozlov')
 
     await waitFor(() => {
-      expect(screen.getByText('Козлов Дмитрий')).toBeInTheDocument()
-      expect(screen.queryByText('Иванов Петр')).not.toBeInTheDocument()
+      expect(screen.getByText('Kozlov Dmitry')).toBeInTheDocument()
+      expect(screen.queryByText('Ivanov Petr')).not.toBeInTheDocument()
     })
   })
 })
@@ -1068,18 +1068,18 @@ Replace `frontend/src/pages/EngineerListPage.tsx`.
 **Implementation targets:**
 
 - File: `frontend/src/pages/EngineerListPage.tsx`
-- Page title: `<Typography variant="h4">Инженеры</Typography>`
+- Page title: `<Typography variant="h4">Engineers</Typography>`
 - Uses `useEngineers(status, homeDivisionId)` hook for data
 - Filter bar: three controls in a row (`<Box sx={{ display: 'flex', gap: 2, mb: 2 }}>`)
-  - Division `<Select>` with "Все подразделения" default option, options from `useDivisions()`
-  - Status `<Select>` with options: Все / Норма / Внимание / Перегрузка
-  - Name search `<TextField>` with placeholder "Поиск по имени..."
+  - Division `<Select>` with "All divisions" default option, options from `useDivisions()`
+  - Status `<Select>` with options: All / Normal / Warning / Overloaded
+  - Name search `<TextField>` with placeholder "Search by name..."
 - MUI `<Table>` (or `<DataGrid>`) with 6 columns as specified above
 - Status column renders a `<Chip>` with:
   - `color="success"` for NORMAL, `color="warning"` for WARNING, `color="error"` for OVERLOADED
   - Label: `Math.round(load_ratio * 100) + '%'`
 - Name column: clickable via `useNavigate()` → `/engineers/${engineer.id}`
-- "Создать инженера" button → opens `<Dialog>` with React Hook Form + Zod:
+- "Create engineer" button → opens `<Dialog>` with React Hook Form + Zod:
   - Form fields: name (`<TextField>`), email (`<TextField>`), capacity_fte (`<TextField type="number">`), home_division_id (`<Select>`)
   - Resolver: `zodResolver(EngineerCreateSchema)`
   - Submit calls `useCreateEngineer().mutateAsync(data)`
@@ -1134,10 +1134,10 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
 
 | Card | Label    | Value          | Format                                                 |
 | ---- | -------- | -------------- | ------------------------------------------------------ |
-| 1    | Нагрузка | `total_load`   | `{value} FTE`, 3 decimal places                        |
-| 2    | Мощность | `capacity_fte` | `{value} FTE`, 1 decimal place                         |
-| 3    | Загрузка | `load_ratio`   | `{value * 100}%`, colored (green/amber/red per status) |
-| 4    | Объектов | `object_count` | integer                                                |
+| 1    | Load | `total_load`   | `{value} FTE`, 3 decimal places                        |
+| 2    | Capacity | `capacity_fte` | `{value} FTE`, 1 decimal place                         |
+| 3    | Utilization | `load_ratio`   | `{value * 100}%`, colored (green/amber/red per status) |
+| 4    | Objects | `object_count` | integer                                                |
 
 **Section 2 — System breakdown chart (`SystemBreakdownChart.tsx`):**
 
@@ -1146,14 +1146,14 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
 
 | System | Label              | Value                                | Color  |
 | ------ | ------------------ | ------------------------------------ | ------ |
-| ОС     | `os_load` FTE      | `(os_load / total_load * 100)%`      | blue   |
-| ПС     | `ps_load` FTE      | `(ps_load / total_load * 100)%`      | orange |
-| Видео  | `video_load` FTE   | `(video_load / total_load * 100)%`   | green  |
-| Записи | `records_load` FTE | `(records_load / total_load * 100)%` | purple |
-| Ремонт | `repair_load` FTE  | `(repair_load / total_load * 100)%`  | red    |
+| Security     | `os_load` FTE      | `(os_load / total_load * 100)%`      | blue   |
+| Fire     | `ps_load` FTE      | `(ps_load / total_load * 100)%`      | orange |
+| Video  | `video_load` FTE   | `(video_load / total_load * 100)%`   | green  |
+| Records | `records_load` FTE | `(records_load / total_load * 100)%` | purple |
+| Repairs | `repair_load` FTE  | `(repair_load / total_load * 100)%`  | red    |
 
 - Each bar row: label (left) + `LinearProgress variant="determinate" value={percentage}` (center) + `{value} FTE ({percentage}%)` (right)
-- If `total_load` is 0, show all bars at 0% with "Нет данных о нагрузке"
+- If `total_load` is 0, show all bars at 0% with "No load data"
 
 **Section 3 — Assigned objects table (`AssignedObjectsTable.tsx`):**
 
@@ -1162,18 +1162,18 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
 
 | #   | Header (Russian) | Field                      | Align  | Format                           |
 | --- | ---------------- | -------------------------- | ------ | -------------------------------- |
-| 1   | Объект           | `object_name`              | left   | text, clickable → `/objects/:id` |
-| 2   | Доля инженера    | `engineer_share`           | right  | FTE, 4 decimal places            |
-| 3   | Всего на объект  | `itogo_chislo_with_travel` | right  | FTE, 6 decimal places            |
-| 4   | Кол-во инж.      | `engineer_count`           | right  | integer                          |
-| 5   | Действия         | —                          | center | "Снять" button                   |
+| 1   | Object           | `object_name`              | left   | text, clickable → `/objects/:id` |
+| 2   | Engineer Share    | `engineer_share`           | right  | FTE, 4 decimal places            |
+| 3   | Object Total  | `itogo_chislo_with_travel` | right  | FTE, 6 decimal places            |
+| 4   | Engineer Count      | `engineer_count`           | right  | integer                          |
+| 5   | Actions         | —                          | center | "Remove" button                   |
 
-- "Снять" button per row: calls `useRemoveObjectFromEngineer(engineerId).mutateAsync(objectId)`
-- Before removing: show `ConfirmDialog` (from M-01 common components) with message "Снять назначение инженера с объекта «{object_name}»?"
+- "Remove" button per row: calls `useRemoveObjectFromEngineer(engineerId).mutateAsync(objectId)`
+- Before removing: show `ConfirmDialog` (from M-01 common components) with message "Remove engineer assignment from object «{object_name}»?"
 
 **Section 4 — Assign object button + dialog (`EngineerAssignDialog.tsx`):**
 
-- "Назначить объект" button below the table
+- "Assign object" button below the table
 - Opens a searchable dialog:
   - Uses `useObjects()` (from M-01) to load all objects
   - `<Autocomplete>` (MUI) searchable by object name
@@ -1182,7 +1182,7 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
   - On success: dialog closes, table refetches
   - On error: display error message in dialog
 
-**"Редактировать" button (top right):**
+**"Edit" button (top right):**
 
 - Opens inline edit form (or dialog) for: name, capacity_fte, home_division_id
 - Uses React Hook Form + Zod (`EngineerUpdateSchema`)
@@ -1229,11 +1229,11 @@ const mockUseEngineerObjects = vi.mocked(useEngineerObjects)
 
 const mockEngineer = {
   id: 'eng-1',
-  name: 'Иванов Петр Сергеевич',
+  name: 'Ivanov Petr Sergeevich',
   email: 'ivanov@test.com',
   role: 'engineer',
   home_division_id: 'div-1',
-  home_division_name: 'Брестское №100',
+  home_division_name: 'Brest No. 100',
   capacity_fte: 1.0,
   is_active: true,
   object_count: 47,
@@ -1259,18 +1259,18 @@ const mockSummary = {
 const mockObjects = [
   {
     object_id: 'obj-1',
-    object_name: 'ЦБУ г.Брест, ул.Ленина, 10',
-    division_name: 'Брестское',
-    branch_name: 'Филиал 1',
+    object_name: 'CBU Brest, Lenina St., 10',
+    division_name: 'Brest',
+    branch_name: 'Branch 1',
     engineer_share: 0.032,
     itogo_chislo_with_travel: 0.064,
     engineer_count: 2,
   },
   {
     object_id: 'obj-2',
-    object_name: 'Архив г.Брест, ул.Московская, 202Д',
-    division_name: 'Брестское',
-    branch_name: 'Филиал 1',
+    object_name: 'Brest Archive, Moskovskaya St., 202D',
+    division_name: 'Brest',
+    branch_name: 'Branch 1',
     engineer_share: 0.024,
     itogo_chislo_with_travel: 0.024,
     engineer_count: 1,
@@ -1312,7 +1312,7 @@ describe('EngineerDetailPage', () => {
   it('renders summary cards with correct values', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Иванов Петр Сергеевич')).toBeInTheDocument()
+      expect(screen.getByText('Ivanov Petr Sergeevich')).toBeInTheDocument()
       expect(screen.getByText(/0\.921 FTE/)).toBeInTheDocument()
       expect(screen.getByText(/1\.0 FTE/)).toBeInTheDocument()
       expect(screen.getByText(/92%/)).toBeInTheDocument()
@@ -1323,29 +1323,29 @@ describe('EngineerDetailPage', () => {
   it('renders system breakdown bars', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText(/ОС/)).toBeInTheDocument()
-      expect(screen.getByText(/ПС/)).toBeInTheDocument()
-      expect(screen.getByText(/Видео/)).toBeInTheDocument()
-      expect(screen.getByText(/Записи/)).toBeInTheDocument()
-      expect(screen.getByText(/Ремонт/)).toBeInTheDocument()
+      expect(screen.getByText(/Security/)).toBeInTheDocument()
+      expect(screen.getByText(/Fire/)).toBeInTheDocument()
+      expect(screen.getByText(/Video/)).toBeInTheDocument()
+      expect(screen.getByText(/Records/)).toBeInTheDocument()
+      expect(screen.getByText(/Repairs/)).toBeInTheDocument()
     })
   })
 
   it('renders assigned objects table sorted by share descending', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('ЦБУ г.Брест, ул.Ленина, 10')).toBeInTheDocument()
-      expect(screen.getByText('Архив г.Брест, ул.Московская, 202Д')).toBeInTheDocument()
+      expect(screen.getByText('CBU Brest, Lenina St., 10')).toBeInTheDocument()
+      expect(screen.getByText('Brest Archive, Moskovskaya St., 202D')).toBeInTheDocument()
     })
-    // Each row has a "Снять" button
-    const removeButtons = screen.getAllByRole('button', { name: /снять/i })
+    // Each row has a "Remove" button
+    const removeButtons = screen.getAllByRole('button', { name: /remove/i })
     expect(removeButtons).toHaveLength(2)
   })
 
-  it('shows "Назначить объект" button', async () => {
+  it('shows "Assign object" button', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /назначить объект/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /assign object/i })).toBeInTheDocument()
     })
   })
 
@@ -1379,7 +1379,7 @@ Create the four component files and the page. The implementation targets below s
 - Props: `summary: EngineerSummary | undefined`, `isLoading: boolean`
 - Renders 4 MUI `Card` components in a `<Grid container spacing={2}>`
 - Each card: `<Card><CardContent><Typography variant="subtitle2">{label}</Typography><Typography variant="h5">{value}</Typography></CardContent></Card>`
-- Загрузка card: text color matches status (green/amber/red)
+- Utilization card: text color matches status (green/amber/red)
 - Shows `<Skeleton>` placeholders when `isLoading` is true
 
 **`frontend/src/components/engineers/SystemBreakdownChart.tsx`:**
@@ -1387,15 +1387,15 @@ Create the four component files and the page. The implementation targets below s
 - Props: `summary: EngineerSummary | undefined`
 - Five rows, each: label (fixed 80px width) + `<LinearProgress variant="determinate" value={percentage} />` + FTE value + percentage
 - `percentage = totalLoad > 0 ? (componentLoad / totalLoad) * 100 : 0`
-- Colors: ОС (`primary`), ПС (`warning`), Видео (`success`), Записи (`secondary`), Ремонт (`error`)
-- Shows "Нет данных о нагрузке" `<Typography>` when `total_load === 0` or `summary` is undefined
+- Colors: Security (`primary`), Fire (`warning`), Video (`success`), Records (`secondary`), Repairs (`error`)
+- Shows "No load data" `<Typography>` when `total_load === 0` or `summary` is undefined
 
 **`frontend/src/components/engineers/AssignedObjectsTable.tsx`:**
 
 - Props: `objects: EngineerShare[]`, `onRemove: (objectId: string) => void`, `isRemoving: boolean`
 - MUI `<Table>` with 5 columns as specified above
 - Object name column: clickable via `useNavigate()` → `/objects/${object_id}`
-- "Снять" button per row: calls `onRemove(object_id)` (parent handles confirmation dialog and mutation)
+- "Remove" button per row: calls `onRemove(object_id)` (parent handles confirmation dialog and mutation)
 - Sorted by `engineer_share` descending by default
 
 **`frontend/src/components/engineers/EngineerAssignDialog.tsx`:**
@@ -1404,7 +1404,7 @@ Create the four component files and the page. The implementation targets below s
 - MUI `<Dialog>` with `<Autocomplete>` for object search
 - Uses `useObjects()` (from M-01 hooks) to load all objects
 - Autocomplete option: `{object.name} — {object.division_name}`
-- "Назначить" button: calls `onAssign(selectedObjectId)`, then `onClose()` on success
+- "Assign" button: calls `onAssign(selectedObjectId)`, then `onClose()` on success
 - Cancel button: closes dialog
 
 **`frontend/src/pages/EngineerDetailPage.tsx`:**
@@ -1412,14 +1412,14 @@ Create the four component files and the page. The implementation targets below s
 - Uses `useParams()` to get `id`
 - Uses `useEngineer(id)`, `useEngineerSummary(id)`, `useEngineerObjects(id)` hooks
 - Layout:
-  - Header row: engineer name (`<Typography variant="h4">`) + "Редактировать" button
+  - Header row: engineer name (`<Typography variant="h4">`) + "Edit" button
   - Section 1: `<EngineerSummaryCards summary={summaryData} isLoading={summaryLoading} />`
   - Section 2: `<SystemBreakdownChart summary={summaryData} />`
   - Section 3: `<AssignedObjectsTable objects={objectsData} onRemove={handleRemove} isRemoving={removeMutation.isPending} />`
-  - "Назначить объект" button → opens `<EngineerAssignDialog>`
-- "Редактировать" button: opens MUI `<Dialog>` with React Hook Form + Zod (`EngineerUpdateSchema`), fields: name, capacity_fte, home_division_id
-- Remove flow: "Снять" click → `ConfirmDialog` → `useRemoveObjectFromEngineer(id).mutateAsync(objectId)`
-- Assign flow: "Назначить объект" → `EngineerAssignDialog` → `useAssignObjectToEngineer(id).mutateAsync(objectId)`
+  - "Assign object" button → opens `<EngineerAssignDialog>`
+- "Edit" button: opens MUI `<Dialog>` with React Hook Form + Zod (`EngineerUpdateSchema`), fields: name, capacity_fte, home_division_id
+- Remove flow: "Remove" click → `ConfirmDialog` → `useRemoveObjectFromEngineer(id).mutateAsync(objectId)`
+- Assign flow: "Assign object" → `EngineerAssignDialog` → `useAssignObjectToEngineer(id).mutateAsync(objectId)`
 - Show `<CircularProgress>` when `useEngineer` is loading
 
 - [ ] **Step 4: Run test — expect PASS**
@@ -1455,7 +1455,7 @@ git commit -m "feat: implement Engineer Detail dashboard with summary cards, bre
 
 - Modify: `frontend/src/pages/ObjectDetailPage.tsx` — replace Engineers tab placeholder
 
-**Prerequisite context:** The M-01 frontend plan implements the Object Detail page with 6 tabs (Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД). The Инженеры tab (index 4) was left as a `"[M-03] TODO"` placeholder. The M-02 frontend plan implemented the СВОД tab (index 5). This task replaces the Инженеры tab placeholder only.
+**Prerequisite context:** The M-01 frontend plan implements the Object Detail page with 6 tabs (Equipment, Records, Repairs, Travel, Engineers, Summary). The Engineers tab (index 4) was left as a `"[M-03] TODO"` placeholder. The M-02 frontend plan implemented the Summary tab (index 5). This task replaces the Engineers tab placeholder only.
 
 **Behavioral requirements (from `ui-spec.md` §7.4):**
 
@@ -1463,18 +1463,18 @@ git commit -m "feat: implement Engineer Detail dashboard with summary cards, bre
 
 | #   | Header (Russian) | Field           | Align  | Format                                                        |
 | --- | ---------------- | --------------- | ------ | ------------------------------------------------------------- |
-| 1   | Инженер          | `engineer_name` | left   | text, clickable → `/engineers/:id`                            |
-| 2   | Доля объекта     | `object_share`  | right  | FTE, 4 decimal places                                         |
-| 3   | Загрузка         | `load_ratio`    | center | colored `Chip` (same rendering as Engineer List status chips) |
-| 4   | Действия         | —               | center | "Снять" button                                                |
+| 1   | Engineer          | `engineer_name` | left   | text, clickable → `/engineers/:id`                            |
+| 2   | Object Share     | `object_share`  | right  | FTE, 4 decimal places                                         |
+| 3   | Utilization         | `load_ratio`    | center | colored `Chip` (same rendering as Engineer List status chips) |
+| 4   | Actions         | —               | center | "Remove" button                                                |
 
 - Data from `useObjectEngineers(objectId)` → `GET /objects/:id/engineers`
-- "Доля объекта" = `itogo_chislo_with_travel / engineer_count` for this object (computed by backend, not frontend)
-- "Загрузка" = engineer's total `load_ratio` across ALL their objects (provides context — assignment may push an already-loaded engineer into overload)
+- "Object Share" = `itogo_chislo_with_travel / engineer_count` for this object (computed by backend, not frontend)
+- "Utilization" = engineer's total `load_ratio` across ALL their objects (provides context — assignment may push an already-loaded engineer into overload)
 - Engineer name: clickable via `useNavigate()` → `/engineers/${engineer_id}`
-- "Снять" button per row: calls `useRemoveEngineerFromObject(objectId).mutateAsync(engineerId)` after `ConfirmDialog` confirmation
+- "Remove" button per row: calls `useRemoveEngineerFromObject(objectId).mutateAsync(engineerId)` after `ConfirmDialog` confirmation
 
-**"Назначить инженера" button:**
+**"Assign engineer" button:**
 
 - Opens a searchable MUI `<Dialog>` with `<Autocomplete>`
 - Options from `useEngineers()` (all active engineers, any division — per ui-spec §12 editor scoping rules: engineer picker is NOT filtered by division)
@@ -1484,7 +1484,7 @@ git commit -m "feat: implement Engineer Detail dashboard with summary cards, bre
 
 **Travel review banner:**
 
-- After a successful assignment: display MUI `<Alert severity="info" sx={{ mt: 2 }}>` with text: **"Проверьте данные о маршруте — время в пути может отличаться для нового инженера"**
+- After a successful assignment: display MUI `<Alert severity="info" sx={{ mt: 2 }}>` with text: **"Check travel data — travel time may differ for the new engineer"**
 - Dismiss button on the alert (user can close it)
 - Banner is ephemeral — does not persist on page reload
 
@@ -1517,8 +1517,8 @@ vi.mock('../hooks/useEngineers', () => ({
   useEngineers: vi.fn(() => ({
     data: [
       {
-        id: 'eng-3', name: 'Козлов Дмитрий', email: 'k@t.com', role: 'engineer',
-        home_division_id: 'div-1', home_division_name: 'Гродно',
+        id: 'eng-3', name: 'Kozlov Dmitry', email: 'k@t.com', role: 'engineer',
+        home_division_id: 'div-1', home_division_name: 'Grodno',
         capacity_fte: 1.0, is_active: true, object_count: 5,
         total_load: 0.24, load_ratio: 0.48, status: 'NORMAL' as const,
       },
@@ -1536,7 +1536,7 @@ vi.mock('../hooks/useSummary', () => ({
 
 vi.mock('../hooks/useObjects', () => ({
   useObject: vi.fn(() => ({
-    data: { id: 'obj-1', name: 'ЦБУ г.Брест', branch_id: 'br-1' },
+    data: { id: 'obj-1', name: 'CBU Brest', branch_id: 'br-1' },
     isLoading: false,
   })),
 }))
@@ -1566,14 +1566,14 @@ describe('Object Detail — Engineers tab', () => {
       data: [
         {
           engineer_id: 'eng-1',
-          engineer_name: 'Иванов Петр Сергеевич',
+          engineer_name: 'Ivanov Petr Sergeevich',
           object_share: 0.0161,
           load_ratio: 0.82,
           status: 'NORMAL' as const,
         },
         {
           engineer_id: 'eng-2',
-          engineer_name: 'Сидорова Анна Николаевна',
+          engineer_name: 'Sidorova Anna Nikolaevna',
           object_share: 0.0161,
           load_ratio: 0.45,
           status: 'NORMAL' as const,
@@ -1584,35 +1584,35 @@ describe('Object Detail — Engineers tab', () => {
     } as ReturnType<typeof useObjectEngineers>)
   })
 
-  it('renders assigned engineers when Инженеры tab is selected', async () => {
+  it('renders assigned engineers when Engineers tab is selected', async () => {
     renderPage()
-    const engineersTab = screen.getByRole('tab', { name: /инженеры/i })
+    const engineersTab = screen.getByRole('tab', { name: /engineers/i })
     await userEvent.click(engineersTab)
 
     await waitFor(() => {
-      expect(screen.getByText('Иванов Петр Сергеевич')).toBeInTheDocument()
-      expect(screen.getByText('Сидорова Анна Николаевна')).toBeInTheDocument()
+      expect(screen.getByText('Ivanov Petr Sergeevich')).toBeInTheDocument()
+      expect(screen.getByText('Sidorova Anna Nikolaevna')).toBeInTheDocument()
     })
   })
 
-  it('renders "Снять" buttons for each engineer', async () => {
+  it('renders "Remove" buttons for each engineer', async () => {
     renderPage()
-    const engineersTab = screen.getByRole('tab', { name: /инженеры/i })
+    const engineersTab = screen.getByRole('tab', { name: /engineers/i })
     await userEvent.click(engineersTab)
 
     await waitFor(() => {
-      const removeButtons = screen.getAllByRole('button', { name: /снять/i })
+      const removeButtons = screen.getAllByRole('button', { name: /remove/i })
       expect(removeButtons).toHaveLength(2)
     })
   })
 
-  it('shows "Назначить инженера" button', async () => {
+  it('shows "Assign engineer" button', async () => {
     renderPage()
-    const engineersTab = screen.getByRole('tab', { name: /инженеры/i })
+    const engineersTab = screen.getByRole('tab', { name: /engineers/i })
     await userEvent.click(engineersTab)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /назначить инженера/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /assign engineer/i })).toBeInTheDocument()
     })
   })
 
@@ -1624,11 +1624,11 @@ describe('Object Detail — Engineers tab', () => {
     } as unknown as ReturnType<typeof useAssignEngineerToObject>)
 
     renderPage()
-    const engineersTab = screen.getByRole('tab', { name: /инженеры/i })
+    const engineersTab = screen.getByRole('tab', { name: /engineers/i })
     await userEvent.click(engineersTab)
 
     // Open assign dialog
-    const assignBtn = await screen.findByRole('button', { name: /назначить инженера/i })
+    const assignBtn = await screen.findByRole('button', { name: /assign engineer/i })
     await userEvent.click(assignBtn)
 
     // The banner appears after successful assignment
@@ -1651,17 +1651,17 @@ Expected: fails because the Engineers tab in `ObjectDetailPage` is a placeholder
 
 - [ ] **Step 3: Implement the Engineers tab on Object Detail page**
 
-Modify `frontend/src/pages/ObjectDetailPage.tsx` — replace the Инженеры tab placeholder (tab index 4) with the full implementation.
+Modify `frontend/src/pages/ObjectDetailPage.tsx` — replace the Engineers tab placeholder (tab index 4) with the full implementation.
 
 **Implementation targets:**
 
 - Tab panel for index 4 renders a new section with:
-  - Table heading: "Назначенные инженеры" + "Назначить инженера" button
+  - Table heading: "Assigned engineers" + "Assign engineer" button
   - MUI `<Table>` with 4 columns as specified above
   - Engineer name: clickable `<Link>` to `/engineers/${engineer_id}`
   - Status/load chip: same `<Chip>` rendering as Engineer List page
-  - "Снять" button per row with `ConfirmDialog` confirmation
-- "Назначить инженера" dialog:
+  - "Remove" button per row with `ConfirmDialog` confirmation
+- "Assign engineer" dialog:
   - MUI `<Dialog>` with `<Autocomplete>`
   - Options from `useEngineers()` — only active engineers
   - Option render: `{name}` + status `<Chip>` showing current load_ratio
@@ -1669,7 +1669,7 @@ Modify `frontend/src/pages/ObjectDetailPage.tsx` — replace the Инженер�
 - Travel review banner:
   - `const [showTravelBanner, setShowTravelBanner] = useState(false)`
   - Set to `true` in the assign mutation's `onSuccess`
-  - `<Alert severity="info" onClose={() => setShowTravelBanner(false)}>Проверьте данные о маршруте — время в пути может отличаться для нового инженера</Alert>`
+  - `<Alert severity="info" onClose={() => setShowTravelBanner(false)}>Check travel data — travel time may differ for the new engineer</Alert>`
 - Uses `useObjectEngineers(objectId)` for data
 - Show `<CircularProgress>` while loading
 
@@ -1708,19 +1708,19 @@ The Engineers nav item was added in scaffolding. If M-01 added a `disabled` prop
 
 - [ ] **Step 1: Verify Engineers nav link is active in AppLayout.tsx**
 
-Read `frontend/src/components/layout/AppLayout.tsx` and confirm the Инженеры nav item exists without a `disabled` property. The scaffolding plan created it as:
+Read `frontend/src/components/layout/AppLayout.tsx` and confirm the Engineers nav item exists without a `disabled` property. The scaffolding plan created it as:
 
 ```typescript
 const navItems = [
-  { label: "Дашборд", path: "/" },
-  { label: "Объекты", path: "/objects" },
-  { label: "Инженеры", path: "/engineers" },
-  { label: "СВОД", path: "/svod" },
-  { label: "Подразделения", path: "/divisions" },
+  { label: "Dashboard", path: "/" },
+  { label: "Objects", path: "/objects" },
+  { label: "Engineers", path: "/engineers" },
+  { label: "Summary", path: "/svod" },
+  { label: "Divisions", path: "/divisions" },
 ];
 ```
 
-If the Инженеры item has `disabled: true`, remove that property. If it's already active, no change needed.
+If the Engineers item has `disabled: true`, remove that property. If it's already active, no change needed.
 
 - [ ] **Step 2: Commit (only if changes were made)**
 
@@ -1859,7 +1859,7 @@ git push -u origin feature/poc-m03-frontend
 | Criterion | How verified                                                                                            | Task        |
 | --------- | ------------------------------------------------------------------------------------------------------- | ----------- |
 | PAC-06    | Engineer Detail summary cards display `load_ratio` and `status` from API                                | 4           |
-| PAC-07    | Assign/remove engineer → `invalidateQueries` → engineer summaries and СВОД refetch                      | 2, 5, 7     |
+| PAC-07    | Assign/remove engineer → `invalidateQueries` → engineer summaries and Summary refetch                      | 2, 5, 7     |
 | PAC-09    | Full PoC flow: Dashboard → Create Object → Add Equipment → Assign Engineer → Engineer Detail shows load | Smoke check |
 
 ---
@@ -1870,12 +1870,14 @@ After M-03 frontend is complete, the full PoC flow is functional. Perform manual
 
 1. **Login** → Dashboard shows division FTE totals (from M-02)
 2. **Create Division** → Create Branch → Create Object (from M-01)
-3. **Add equipment** (device + assignment) → СВОД tab updates (from M-01 + M-02)
+3. **Add equipment** (device + assignment) → Summary tab updates (from M-01 + M-02)
 4. **Navigate to Engineers** → Create engineer → assign to the object
 5. **Engineer Detail** → shows correct `load_ratio`, system breakdown, assigned object
 6. **Object Detail → Engineers tab** → shows assigned engineer with correct share
 7. **Remove engineer** → share redistributes, engineer summary updates
-8. **СВОД page** → shows object with FTE value and engineer name in column 5
+8. **Summary page** → shows object with FTE value and engineer name in column 5
 9. **Dashboard** → coverage gaps section reflects assignment changes
 
 Document any deviations from expected behavior as issues to fix before merging.
+
+

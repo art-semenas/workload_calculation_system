@@ -1,23 +1,23 @@
-# PoC M-02 Frontend — Calculation Results UI Implementation Plan
+﻿# PoC M-02 Frontend — Calculation Results UI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace M-02 placeholder sections with real UI. Implement СВОД table page (19 columns, pagination, division filter, XLSX export), Dashboard with aggregation data (FTE by division, top 10 objects, coverage gaps), СВОД tab on Object Detail, and Division Detail FTE subtotals. All TanStack Query hooks, Zod schemas, and React components are fully functional.
+**Goal:** Replace M-02 placeholder sections with real UI. Implement the Summary table page (19 columns, pagination, division filter, XLSX export), Dashboard with aggregation data (FTE by division, top 10 objects, coverage gaps), the Summary tab on Object Detail, and Division Detail FTE subtotals. All TanStack Query hooks, Zod schemas, and React components are fully functional.
 
 **Branch:** `feature/poc-m02-frontend`
 **Depends on:** `feature/poc-m02-backend` merged to `feature/implementation`
 **Epic:** `docs/impl/epics/poc-m02-calculation.md` (UI Screens section)
 
-**Architecture:** All СВОД data comes from backend API — the frontend NEVER computes workload values (AD-07). All API calls use the shared Axios instance at `src/api/axios.ts`. All server state is managed by TanStack Query — never in Zustand or component state. No `any` types.
+**Architecture:** All Summary data comes from backend API — the frontend NEVER computes workload values (AD-07). All API calls use the shared Axios instance at `src/api/axios.ts`. All server state is managed by TanStack Query — never in Zustand or component state. No `any` types.
 
 **Acceptance Criteria Covered:**
-- **PAC-04:** Editing any equipment quantity and saving immediately updates the СВОД tab values without page refresh (via TanStack Query `invalidateQueries`)
-- **PAC-05:** СВОД table loads first 100 rows in under 3 seconds (loading spinner while fetching)
+- **PAC-04:** Editing any equipment quantity and saving immediately updates the Summary tab values without page refresh (via TanStack Query `invalidateQueries`)
+- **PAC-05:** The Summary table loads the first 100 rows in under 3 seconds (loading spinner while fetching)
 - **PAC-08:** Division dashboard FTE total = SUM of `itogo_chislo_with_travel` for all objects in that division (from API, not computed in frontend)
 
 **PoC Simplifications active:**
-- **S-02:** No stale indicators — summaries recalculate synchronously on save. No "Данные устарели" banners.
-- **S-05:** No period selector on СВОД page — shows only the current PoC dataset.
+- **S-02:** No stale indicators — summaries recalculate synchronously on save. No "Data is stale" banners.
+- **S-05:** No period selector on the Summary page — shows only the current PoC dataset.
 - **S-08:** No PDF export — XLSX only.
 
 ---
@@ -60,12 +60,12 @@ describe('M-02 Zod schemas', () => {
   it('SvodRowSchema parses a valid SVOD row', () => {
     const raw = {
       object_id: '550e8400-e29b-41d4-a716-446655440000',
-      object_name: 'Архив г.Брест',
-      address: 'ул.Московская, 202Д',
-      division_name: 'Брестское',
-      branch_name: 'Филиал 1',
+      object_name: 'Brest Archive',
+      address: 'Moskovskaya St., 202D',
+      division_name: 'Brest',
+      branch_name: 'Branch 1',
       import_seq_no: 1,
-      engineers: ['Иванов П.С.'],
+      engineers: ['Ivanov P.S.'],
       os_monthly_avg: 0.123456,
       ps_monthly_avg: 0.0,
       video_monthly_avg: 0.0,
@@ -128,7 +128,7 @@ describe('M-02 Zod schemas', () => {
   it('AggregationDivisionSchema parses a division summary', () => {
     const raw = {
       division_id: '550e8400-e29b-41d4-a716-446655440000',
-      division_name: 'Брестское',
+      division_name: 'Brest',
       total_fte: 12.5,
       object_count: 245,
       gap_count: 12,
@@ -140,9 +140,9 @@ describe('M-02 Zod schemas', () => {
   it('CoverageGapSchema parses an uncovered object', () => {
     const raw = {
       object_id: '550e8400-e29b-41d4-a716-446655440000',
-      object_name: 'Инфокиоск',
-      division_name: 'Брестское',
-      branch_name: 'Филиал 1',
+      object_name: 'Infokiosk',
+      division_name: 'Brest',
+      branch_name: 'Branch 1',
       itogo_chislo_with_travel: 0.008,
     }
     const result = CoverageGapSchema.parse(raw)
@@ -166,7 +166,7 @@ Create `frontend/src/types/m02.ts`:
 ```typescript
 import { z } from 'zod'
 
-// --- СВОД row (matches GET /svod response, ui-spec.md §7.9 — all 19 columns) ---
+// --- Summary row (matches GET /svod response, ui-spec.md §7.9 — all 19 columns) ---
 
 export const SvodRowSchema = z.object({
   object_id: z.string().uuid(),
@@ -176,25 +176,25 @@ export const SvodRowSchema = z.object({
   branch_name: z.string(),
   import_seq_no: z.number().nullable().optional(),
   engineers: z.array(z.string()),           // column 5: comma-joined in UI
-  os_monthly_avg: z.number(),               // column 10: Охрана
-  ps_monthly_avg: z.number(),               // column 8: Пожарная сигнализация
-  video_monthly_avg: z.number(),            // column 9: Видео
-  records_monthly: z.number(),              // column 11: Записи
-  repair_no_travel_monthly: z.number(),     // column 12: Ремонт без дороги
-  repair_with_travel_monthly: z.number(),   // column 15: Ремонт с дорогой
-  round_trip_min: z.number(),               // column 7: Дорога
-  pzv_minutes: z.number(),                  // column 6: ПЗВ
+  os_monthly_avg: z.number(),               // column 10: Security
+  ps_monthly_avg: z.number(),               // column 8: Fire Alarm
+  video_monthly_avg: z.number(),            // column 9: Video
+  records_monthly: z.number(),              // column 11: Records
+  repair_no_travel_monthly: z.number(),     // column 12: Repair without Travel
+  repair_with_travel_monthly: z.number(),   // column 15: Repair with Travel
+  round_trip_min: z.number(),               // column 7: Travel
+  pzv_minutes: z.number(),                  // column 6: PZV
   total_no_travel_min: z.number(),          // column 13
-  itogo_chislo_no_travel: z.number(),       // column 14: ИТОГО Числ (без дороги)
+  itogo_chislo_no_travel: z.number(),       // column 14: TOTAL Staffing (without travel)
   total_with_travel_min: z.number(),        // column 16
-  itogo_chislo_with_travel: z.number(),     // column 17: ИТОГО Числ (с дорогой)
+  itogo_chislo_with_travel: z.number(),     // column 17: TOTAL Staffing (with travel)
   r1_per_visit_total: z.number(),           // column 18
   r2_per_visit_total: z.number(),           // column 19
   computed_at: z.string().nullable(),
 })
 export type SvodRow = z.infer<typeof SvodRowSchema>
 
-// --- Paginated СВОД response ---
+// --- Paginated Summary response ---
 
 export const SvodPageSchema = z.object({
   content: z.array(SvodRowSchema),
@@ -627,40 +627,40 @@ git commit -m "feat: add M-02 API modules and TanStack Query hooks for SVOD, agg
 
 ---
 
-## Task 3: СВОД page (`/svod`)
+## Task 3: Summary page (`/svod`)
 
 **Files:**
 - Replace: `frontend/src/pages/SvodPage.tsx` — full SVOD table implementation
 
 **Behavioral requirements:**
 - MUI DataGrid with server-side pagination (`paginationMode="server"`, `pageSize=100`)
-- All 19 СВОД columns from `docs/impl/ui-spec.md` §7.9, in this exact order:
+- All 19 Summary columns from `docs/impl/ui-spec.md` §7.9, in this exact order:
 
 | # | Header (Russian) | Field | Align | Format |
 |---|---|---|---|---|
 | 1 | № | `import_seq_no` | left | integer |
-| 2 | Подразделение | `division_name` | left | text |
-| 3 | Филиал | `branch_name` | left | text |
-| 4 | Значение | `object_name` | left | text, clickable → `/objects/{id}` |
-| 5 | Ответственные ТО | `engineers` | left | comma-separated names |
-| 6 | ПЗВ | `pzv_minutes` | right | 2 decimal places |
-| 7 | Дорога | `round_trip_min` | right | 2 decimal places |
-| 8 | Пожарная сигн. | `ps_monthly_avg` | right | 6 decimal places |
-| 9 | Видео | `video_monthly_avg` | right | 6 decimal places |
-| 10 | Охрана | `os_monthly_avg` | right | 6 decimal places |
-| 11 | Записи | `records_monthly` | right | 6 decimal places |
-| 12 | Ремонт без дороги | `repair_no_travel_monthly` | right | 6 decimal places |
-| 13 | ТО+записи+ремонт(без дороги)+Дорога, мин | `total_no_travel_min` | right | 6 decimal places |
-| 14 | ИТОГО Числ (без дороги) | `itogo_chislo_no_travel` | right | 6 decimal places |
-| 15 | Ремонт с дорогой | `repair_with_travel_monthly` | right | 6 decimal places |
-| 16 | ТО+записи+ремонт(с дорогой)+Дорога, мин | `total_with_travel_min` | right | 6 decimal places |
-| 17 | ИТОГО Числ (с дорогой) | `itogo_chislo_with_travel` | right | 6 decimal places, **bold** |
-| 18 | Р1 на объекте всех систем | `r1_per_visit_total` | right | 6 decimal places |
-| 19 | Р2 на объекте всех систем | `r2_per_visit_total` | right | 6 decimal places |
+| 2 | Division | `division_name` | left | text |
+| 3 | Branch | `branch_name` | left | text |
+| 4 | Object | `object_name` | left | text, clickable → `/objects/{id}` |
+| 5 | Assigned Engineers | `engineers` | left | comma-separated names |
+| 6 | PZV | `pzv_minutes` | right | 2 decimal places |
+| 7 | Travel | `round_trip_min` | right | 2 decimal places |
+| 8 | Fire Alarm | `ps_monthly_avg` | right | 6 decimal places |
+| 9 | Video | `video_monthly_avg` | right | 6 decimal places |
+| 10 | Security | `os_monthly_avg` | right | 6 decimal places |
+| 11 | Records | `records_monthly` | right | 6 decimal places |
+| 12 | Repair without Travel | `repair_no_travel_monthly` | right | 6 decimal places |
+| 13 | Maintenance+records+repair(without travel)+Travel, min | `total_no_travel_min` | right | 6 decimal places |
+| 14 | TOTAL Staffing (without travel) | `itogo_chislo_no_travel` | right | 6 decimal places |
+| 15 | Repair with Travel | `repair_with_travel_monthly` | right | 6 decimal places |
+| 16 | Maintenance+records+repair(with travel)+Travel, min | `total_with_travel_min` | right | 6 decimal places |
+| 17 | TOTAL Staffing (with travel) | `itogo_chislo_with_travel` | right | 6 decimal places, **bold** |
+| 18 | R1 across all systems on the object | `r1_per_visit_total` | right | 6 decimal places |
+| 19 | R2 across all systems on the object | `r2_per_visit_total` | right | 6 decimal places |
 
 **Controls above the table:**
 - Division filter dropdown — calls `GET /divisions` for the option list, passes selected `division_id` to `useSvod(page, size, divisionId)`
-- "Экспорт XLSX" button — calls `exportSvodXlsx()`, triggers browser download via `URL.createObjectURL` + temporary `<a>` element with `download` attribute
+- "Export XLSX" button — calls `exportSvodXlsx()`, triggers browser download via `URL.createObjectURL` + temporary `<a>` element with `download` attribute
 
 **UX requirements:**
 - Show `<CircularProgress>` while loading (PAC-05: first page <3s)
@@ -730,11 +730,11 @@ describe('SvodPage', () => {
         content: [
           {
             object_id: '123',
-            object_name: 'Архив г.Брест',
-            address: 'ул.Московская',
-            division_name: 'Брестское',
-            branch_name: 'Филиал 1',
-            engineers: ['Иванов П.С.'],
+            object_name: 'Brest Archive',
+            address: 'Moskovskaya St.',
+            division_name: 'Brest',
+            branch_name: 'Branch 1',
+            engineers: ['Ivanov P.S.'],
             os_monthly_avg: 0.1,
             ps_monthly_avg: 0.0,
             video_monthly_avg: 0.0,
@@ -764,7 +764,7 @@ describe('SvodPage', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Архив г.Брест')).toBeInTheDocument()
+      expect(screen.getByText('Brest Archive')).toBeInTheDocument()
     })
   })
 
@@ -779,7 +779,7 @@ describe('SvodPage', () => {
     mockExport.mockResolvedValueOnce(blob)
 
     renderPage()
-    const exportBtn = screen.getByRole('button', { name: /экспорт xlsx/i })
+    const exportBtn = screen.getByRole('button', { name: /export xlsx/i })
     await userEvent.click(exportBtn)
     expect(mockExport).toHaveBeenCalled()
   })
@@ -802,7 +802,7 @@ Replace `frontend/src/pages/SvodPage.tsx` with the full implementation.
 - File: `frontend/src/pages/SvodPage.tsx`
 - Use `useSvod(page, pageSize, divisionId)` hook for data
 - Use MUI `DataGrid` from `@mui/x-data-grid` with `paginationMode="server"`
-- Column definitions: an array of `GridColDef` for all 19 СВОД columns, following the exact column spec above
+- Column definitions: an array of `GridColDef` for all 19 Summary columns, following the exact column spec above
 - Helper function: `formatDecimal(value: number, places: number)` — returns blank string for 0, otherwise `value.toFixed(places)`. Used as `valueFormatter` on all numeric columns.
 - Division filter: `<Select>` above the grid. Options fetched via the existing `getDivisions()` from `src/api/divisions.ts` (created in M-01). On change: update `divisionId` state → `useSvod` refetches.
 - Export button: calls `exportSvodXlsx()`, creates a Blob URL, triggers download via a temporary `<a>` element, then revokes the URL.
@@ -835,28 +835,28 @@ git commit -m "feat: implement SVOD table page with 19 columns, pagination, divi
 
 ---
 
-## Task 4: СВОД tab on Object Detail page
+## Task 4: Summary tab on Object Detail page
 
 **Files:**
-- Modify: `frontend/src/pages/ObjectDetailPage.tsx` — replace placeholder with tabbed layout including СВОД tab
+- Modify: `frontend/src/pages/ObjectDetailPage.tsx` — replace placeholder with tabbed layout including Summary tab
 
-**Prerequisite context:** The M-01 frontend plan implements the Object Detail page with 6 tabs (Оборудование, Записи, Ремонт, Дорога, Инженеры, СВОД). The СВОД tab was left as a placeholder in M-01. This task replaces the СВОД tab placeholder only.
+**Prerequisite context:** The M-01 frontend plan implements the Object Detail page with 6 tabs (Equipment, Records, Repairs, Travel, Engineers, Summary). The Summary tab was left as a placeholder in M-01. This task replaces the Summary tab placeholder only.
 
-If M-01 already implemented the tabbed layout with placeholder tabs, modify only the СВОД tab panel. If the tabbed layout does not yet exist, create the full 6-tab layout with the СВОД tab fully implemented and the other tabs as stubs referencing M-01/M-03 components.
+If M-01 already implemented the tabbed layout with placeholder tabs, modify only the Summary tab panel. If the tabbed layout does not yet exist, create the full 6-tab layout with the Summary tab fully implemented and the other tabs as stubs referencing M-01/M-03 components.
 
-**СВОД tab behavioral requirements:**
+**Summary tab behavioral requirements:**
 - Uses `useObjectSummary(objectId)` hook to fetch `GET /objects/:id/summary`
 - Read-only two-column layout (label + value) showing all 19 summary fields
 - Field grouping:
-  - **Per-visit breakdown:** ОС Р1, ОС Р2, ПС Р1, ПС Р2, Видео Р1, Видео Р2, Р1 итого, Р2 итого
-  - **Monthly averages:** ОС, ПС, Видео, Записи, Ремонт без дороги, Ремонт с дорогой
-  - **Travel:** ПЗВ, Дорога (время в оба конца)
-  - **Totals:** ТО+записи+ремонт(без дороги)+Дорога (мин), ИТОГО Числ (без дороги), ТО+записи+ремонт(с дорогой)+Дорога (мин), ИТОГО Числ (с дорогой)
+  - **Per-visit breakdown:** Security R1, Security R2, Fire R1, Fire R2, Video R1, Video R2, R1 total, R2 total
+  - **Monthly averages:** Security, Fire, Video, Records, Repair without Travel, Repair with Travel
+  - **Travel:** PZV, Travel (round-trip time)
+  - **Totals:** Maintenance+records+repair(without travel)+Travel (min), TOTAL Staffing (without travel), Maintenance+records+repair(with travel)+Travel (min), TOTAL Staffing (with travel)
   - **Computed at:** timestamp
 - FTE fields (itogo values): 6 decimal places
 - Minute fields (monthly_avg, repair, travel): 2 decimal places
-- Shows "Нет данных" when no summary row exists yet
-- **PAC-04 support:** The hook uses a query key that includes `objectId`. When source data tabs (Equipment, Records, Repairs, Travel) save successfully, they call `queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })`. This causes the СВОД tab to auto-refetch without page refresh.
+- Shows "No data" when no summary row exists yet
+- **PAC-04 support:** The hook uses a query key that includes `objectId`. When source data tabs (Equipment, Records, Repairs, Travel) save successfully, they call `queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })`. This causes the Summary tab to auto-refetch without page refresh.
 
 - [ ] **Step 1: Write the failing test first**
 
@@ -891,8 +891,8 @@ function renderPage(objectId: string = '123') {
   )
 }
 
-describe('Object Detail — СВОД tab', () => {
-  it('shows "Нет данных" when no summary exists', async () => {
+describe('Object Detail — Summary tab', () => {
+  it('shows "No data" when no summary exists', async () => {
     mockUseObjectSummary.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -900,12 +900,12 @@ describe('Object Detail — СВОД tab', () => {
     } as ReturnType<typeof useObjectSummary>)
 
     renderPage()
-    // Navigate to СВОД tab (tab index 5 — the last tab)
-    const svodTab = screen.getByRole('tab', { name: /свод/i })
+    // Navigate to Summary tab (tab index 5 — the last tab)
+    const svodTab = screen.getByRole('tab', { name: /summary/i })
     await svodTab.click()
 
     await waitFor(() => {
-      expect(screen.getByText('Нет данных')).toBeInTheDocument()
+      expect(screen.getByText('No data')).toBeInTheDocument()
     })
   })
 
@@ -940,7 +940,7 @@ describe('Object Detail — СВОД tab', () => {
     } as ReturnType<typeof useObjectSummary>)
 
     renderPage()
-    const svodTab = screen.getByRole('tab', { name: /свод/i })
+    const svodTab = screen.getByRole('tab', { name: /summary/i })
     await svodTab.click()
 
     await waitFor(() => {
@@ -956,22 +956,22 @@ describe('Object Detail — СВОД tab', () => {
 npx vitest run src/test/ObjectSvodTab.test.tsx
 ```
 
-Expected: fails because `ObjectDetailPage` is still a placeholder or lacks the СВОД tab.
+Expected: fails because `ObjectDetailPage` is still a placeholder or lacks the Summary tab.
 
-- [ ] **Step 3: Implement the Object Detail page with tabbed layout and СВОД tab**
+- [ ] **Step 3: Implement the Object Detail page with tabbed layout and Summary tab**
 
 Modify `frontend/src/pages/ObjectDetailPage.tsx`.
 
 **Implementation targets:**
 - Uses `useParams()` to get `id` from the URL
-- MUI `Tabs` component with 6 tabs: "Оборудование", "Записи", "Ремонт", "Дорога", "Инженеры", "СВОД"
+- MUI `Tabs` component with 6 tabs: "Equipment", "Records", "Repairs", "Travel", "Engineers", "Summary"
 - Tab panels rendered conditionally based on active tab index
-- Tabs 0–3 (Оборудование, Записи, Ремонт, Дорога): render placeholder text `"[M-01] TODO"` if not yet implemented from M-01 plan. If M-01 components already exist, render them.
-- Tab 4 (Инженеры): render placeholder text `"[M-03] TODO"` — filled in M-03 frontend plan
-- Tab 5 (СВОД): **fully implemented** — uses `useObjectSummary(id)` hook, renders the two-column read-only summary layout described above
+- Tabs 0–3 (Equipment, Records, Repairs, Travel): render placeholder text `"[M-01] TODO"` if not yet implemented from M-01 plan. If M-01 components already exist, render them.
+- Tab 4 (Engineers): render placeholder text `"[M-03] TODO"` — filled in M-03 frontend plan
+- Tab 5 (Summary): **fully implemented** — uses `useObjectSummary(id)` hook, renders the two-column read-only summary layout described above
 - Create a `SummaryTab` component (either inline or as a separate component in `src/components/`) that:
   - Shows `<CircularProgress>` while loading
-  - Shows "Нет данных" `<Typography>` when `data` is undefined/null
+  - Shows "No data" `<Typography>` when `data` is undefined/null
   - Otherwise renders a `<Grid container>` with label-value pairs grouped as specified
 
 - [ ] **Step 4: Run test — expect PASS**
@@ -1000,21 +1000,21 @@ git commit -m "feat: implement Object Detail tabbed layout with SVOD summary tab
 
 **Section 1 — FTE by Division** (table)
 - Data from `useDivisionsAggregation()` → `GET /aggregations/divisions`
-- Columns: Подразделение (`division_name`), ИТОГО FTE (`total_fte`, 4 decimal places), Объектов (`object_count`), Без инженера (`gap_count`)
+- Columns: Division (`division_name`), TOTAL FTE (`total_fte`, 4 decimal places), Objects (`object_count`), Without Engineer (`gap_count`)
 - Sortable by `total_fte` descending by default
 - Row click → navigate to `/divisions/:id`
 
 **Section 2 — Top 10 objects by workload** (table)
 - Data from `useSvod(0, 10)` → `GET /svod?page=0&size=10` (backend sorts by `itogo_chislo_with_travel DESC` by default)
-- Columns: Объект (`object_name`), Подразделение (`division_name`), ИТОГО Числ (`itogo_chislo_with_travel`, 6 decimal places)
+- Columns: Object (`object_name`), Division (`division_name`), TOTAL Staffing (`itogo_chislo_with_travel`, 6 decimal places)
 - Row click → navigate to `/objects/:id`
 
 **Section 3 — Coverage gaps** (table)
 - Data from `useCoverageGaps()` → `GET /coverage/gaps`
-- Columns: Объект (`object_name`), Подразделение (`division_name`), Филиал (`branch_name`), ИТОГО FTE (`itogo_chislo_with_travel`, 6 decimal places)
-- Show "Нет непокрытых объектов" when the list is empty
+- Columns: Object (`object_name`), Division (`division_name`), Branch (`branch_name`), TOTAL FTE (`itogo_chislo_with_travel`, 6 decimal places)
+- Show "No uncovered objects" when the list is empty
 
-**PAC-08 verification:** The Division FTE column must match the СВОД total. This is guaranteed by the backend — the frontend only displays API data, it does not compute anything.
+**PAC-08 verification:** The Division FTE column must match the Summary total. This is guaranteed by the backend — the frontend only displays API data, it does not compute anything.
 
 - [ ] **Step 1: Write the failing test first**
 
@@ -1058,7 +1058,7 @@ describe('DashboardPage', () => {
   it('renders FTE by division section', async () => {
     mockDivisions.mockReturnValue({
       data: [
-        { division_id: '1', division_name: 'Брестское', total_fte: 12.5, object_count: 245, gap_count: 12 },
+        { division_id: '1', division_name: 'Brest', total_fte: 12.5, object_count: 245, gap_count: 12 },
       ],
       isLoading: false,
     } as ReturnType<typeof useDivisionsAggregation>)
@@ -1067,19 +1067,19 @@ describe('DashboardPage', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Брестское')).toBeInTheDocument()
+      expect(screen.getByText('Brest')).toBeInTheDocument()
       expect(screen.getByText('12.5000')).toBeInTheDocument()
     })
   })
 
-  it('renders "Нет непокрытых объектов" when no coverage gaps', async () => {
+  it('renders "No uncovered objects" when no coverage gaps', async () => {
     mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useDivisionsAggregation>)
     mockSvod.mockReturnValue({ data: { content: [] }, isLoading: false } as ReturnType<typeof useSvod>)
     mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Нет непокрытых объектов')).toBeInTheDocument()
+      expect(screen.getByText('No uncovered objects')).toBeInTheDocument()
     })
   })
 
@@ -1090,9 +1090,9 @@ describe('DashboardPage', () => {
         content: [
           {
             object_id: 'obj-1',
-            object_name: 'ЦБУ г.Брест',
-            division_name: 'Брестское',
-            branch_name: 'Филиал 1',
+            object_name: 'CBU Brest',
+            division_name: 'Brest',
+            branch_name: 'Branch 1',
             itogo_chislo_with_travel: 0.064,
             engineers: [],
             os_monthly_avg: 0, ps_monthly_avg: 0, video_monthly_avg: 0,
@@ -1110,7 +1110,7 @@ describe('DashboardPage', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('ЦБУ г.Брест')).toBeInTheDocument()
+      expect(screen.getByText('CBU Brest')).toBeInTheDocument()
     })
   })
 })
@@ -1131,11 +1131,11 @@ Replace `frontend/src/pages/DashboardPage.tsx`.
 **Implementation targets:**
 - File: `frontend/src/pages/DashboardPage.tsx`
 - Three sections, each with a heading (`<Typography variant="h6">`) and a MUI `<Table>` or `<DataGrid>`
-- Section 1: "FTE по подразделениям" — `useDivisionsAggregation()` hook, MUI `<Table>` with 4 columns, rows clickable via `useNavigate()`
-- Section 2: "Топ-10 объектов по нагрузке" — `useSvod(0, 10)` hook, MUI `<Table>` with 3 columns, rows clickable
-- Section 3: "Непокрытые объекты" — `useCoverageGaps()` hook, MUI `<Table>` with 4 columns, or "Нет непокрытых объектов" `<Typography>` when empty
+- Section 1: "FTE by division" — `useDivisionsAggregation()` hook, MUI `<Table>` with 4 columns, rows clickable via `useNavigate()`
+- Section 2: "Top 10 objects by workload" — `useSvod(0, 10)` hook, MUI `<Table>` with 3 columns, rows clickable
+- Section 3: "Uncovered objects" — `useCoverageGaps()` hook, MUI `<Table>` with 4 columns, or "No uncovered objects" `<Typography>` when empty
 - Each section shows `<CircularProgress>` while its respective hook is loading
-- Page title: `<Typography variant="h4">Дашборд</Typography>`
+- Page title: `<Typography variant="h4">Dashboard</Typography>`
 
 - [ ] **Step 4: Run test — expect PASS**
 
@@ -1166,7 +1166,7 @@ git commit -m "feat: implement Dashboard with FTE by division, top 10 objects, c
 **FTE summary card (top of page, before branch table):**
 - Data from `useDivisionAggregation(id)` → `GET /aggregations/divisions/:id`
 - MUI `Card` showing: total FTE for this division (`total_fte`, 4 decimal places), object count, gap count
-- Three `<Chip>` or info items: "ИТОГО FTE: 12.5000", "Объектов: 245", "Без инженера: 12"
+- Three `<Chip>` or info items: "TOTAL FTE: 12.5000", "Objects: 245", "Without Engineer: 12"
 
 **Branch table FTE column:**
 - The existing branch list table (from M-01) gets an additional "FTE" column showing `total_fte` for each branch
@@ -1174,8 +1174,8 @@ git commit -m "feat: implement Dashboard with FTE by division, top 10 objects, c
 
 **Coverage gaps section (below branch table):**
 - Data from `useCoverageGaps(divisionId)` → `GET /coverage/gaps?division_id=:id`
-- Heading: "⚠ {count} объектов без назначенного инженера" (or nothing when empty)
-- MUI `<Table>`: Объект (`object_name`), Нагрузка (`itogo_chislo_with_travel`, 6 decimal places)
+- Heading: "⚠ {count} objects without an assigned engineer" (or nothing when empty)
+- MUI `<Table>`: Object (`object_name`), Load (`itogo_chislo_with_travel`, 6 decimal places)
 - Per `ui-spec.md` §7.7
 
 - [ ] **Step 1: Write the failing test first**
@@ -1217,7 +1217,7 @@ describe('DivisionDetailPage — M-02 additions', () => {
     mockDivAgg.mockReturnValue({
       data: {
         division_id: 'div-1',
-        division_name: 'Брестское',
+        division_name: 'Brest',
         total_fte: 12.5,
         object_count: 245,
         gap_count: 12,
@@ -1237,7 +1237,7 @@ describe('DivisionDetailPage — M-02 additions', () => {
     mockDivAgg.mockReturnValue({
       data: {
         division_id: 'div-1',
-        division_name: 'Брестское',
+        division_name: 'Brest',
         total_fte: 12.5,
         object_count: 245,
         gap_count: 1,
@@ -1248,9 +1248,9 @@ describe('DivisionDetailPage — M-02 additions', () => {
       data: [
         {
           object_id: 'obj-1',
-          object_name: 'Инфокиоск INF 00635',
-          division_name: 'Брестское',
-          branch_name: 'Филиал 1',
+          object_name: 'Infokiosk INF 00635',
+          division_name: 'Brest',
+          branch_name: 'Branch 1',
           itogo_chislo_with_travel: 0.008,
         },
       ],
@@ -1259,8 +1259,8 @@ describe('DivisionDetailPage — M-02 additions', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText(/без назначенного инженера/i)).toBeInTheDocument()
-      expect(screen.getByText('Инфокиоск INF 00635')).toBeInTheDocument()
+      expect(screen.getByText(/without an assigned engineer/i)).toBeInTheDocument()
+      expect(screen.getByText('Infokiosk INF 00635')).toBeInTheDocument()
     })
   })
 })
@@ -1281,7 +1281,7 @@ Modify `frontend/src/pages/DivisionDetailPage.tsx`.
 **Implementation targets:**
 - If M-01 already implemented branch list and division header: add the FTE card and coverage gaps section
 - If still a placeholder: implement the full page structure:
-  - Division name heading + "Редактировать" button
+  - Division name heading + "Edit" button
   - FTE summary `<Card>` with three items
   - Branch list `<Table>` with name, object count, and FTE columns
   - Coverage gaps section: `<Alert severity="warning">` header with gap count, then `<Table>` of uncovered objects
@@ -1306,28 +1306,28 @@ git commit -m "feat: add FTE subtotals and coverage gaps to Division Detail page
 
 ---
 
-## Task 7: Enable СВОД nav link and verify all navigation
+## Task 7: Enable Summary nav link and verify all navigation
 
 **Files:**
-- Modify: `frontend/src/components/layout/AppLayout.tsx` — ensure СВОД link is active (not disabled)
+- Modify: `frontend/src/components/layout/AppLayout.tsx` — ensure Summary link is active (not disabled)
 
-The СВОД link was added in scaffolding (`navItems` array in `AppLayout.tsx`) and is already active — it navigates to `/svod`. Verify it is not disabled. If any future M-01 implementation added a `disabled` property to the СВОД or Engineers nav items, remove the disabled state for СВОД.
+The Summary link was added in scaffolding (`navItems` array in `AppLayout.tsx`) and is already active — it navigates to `/svod`. Verify it is not disabled. If any future M-01 implementation added a `disabled` property to the Summary or Engineers nav items, remove the disabled state for Summary.
 
-- [ ] **Step 1: Verify СВОД nav link is active in AppLayout.tsx**
+- [ ] **Step 1: Verify Summary nav link is active in AppLayout.tsx**
 
-Read `frontend/src/components/layout/AppLayout.tsx` and confirm the СВОД nav item exists without a `disabled` property. The scaffolding plan created it as:
+Read `frontend/src/components/layout/AppLayout.tsx` and confirm the Summary nav item exists without a `disabled` property. The scaffolding plan created it as:
 
 ```typescript
 const navItems = [
-  { label: 'Дашборд', path: '/' },
-  { label: 'Объекты', path: '/objects' },
-  { label: 'Инженеры', path: '/engineers' },
-  { label: 'СВОД', path: '/svod' },
-  { label: 'Подразделения', path: '/divisions' },
+  { label: 'Dashboard', path: '/' },
+  { label: 'Objects', path: '/objects' },
+  { label: 'Engineers', path: '/engineers' },
+  { label: 'Summary', path: '/svod' },
+  { label: 'Divisions', path: '/divisions' },
 ]
 ```
 
-If the СВОД item has `disabled: true`, remove that property. If it's already active, no change needed.
+If the Summary item has `disabled: true`, remove that property. If it's already active, no change needed.
 
 - [ ] **Step 2: Commit (only if changes were made)**
 
@@ -1344,7 +1344,7 @@ git commit -m "chore: ensure SVOD nav link is active in sidebar"
 - Modify: `frontend/src/hooks/useSummary.ts` — export `SUMMARY_QUERY_KEY`
 - Modify: Source-data mutation hooks (from M-01) to invalidate summary query key after successful mutations
 
-**PAC-04 requirement:** After editing any equipment quantity (or records/repairs/travel) and saving, the СВОД tab values update without page refresh.
+**PAC-04 requirement:** After editing any equipment quantity (or records/repairs/travel) and saving, the Summary tab values update without page refresh.
 
 **Implementation approach:**
 
@@ -1356,8 +1356,8 @@ queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
 ```
 
 This ensures:
-1. The СВОД tab on Object Detail refetches the summary
-2. The СВОД table page refetches its data
+1. The Summary tab on Object Detail refetches the summary
+2. The Summary table page refetches its data
 
 **Files to modify (from M-01 hooks — exact file names depend on M-01 plan execution):**
 - `src/hooks/useEquipment.ts` — `useAddDevice`, `useUpdateDevice`, `useRemoveDevice`, `useAddAssignment`, `useUpdateAssignment`, `useRemoveAssignment` mutations
@@ -1497,9 +1497,12 @@ git push -u origin feature/poc-m02-frontend
 
 | Criterion | How verified | Task |
 |---|---|---|
-| PAC-04 | Query invalidation wiring: save on any source-data tab → `invalidateQueries` → СВОД tab refetches | 4, 8 |
+| PAC-04 | Query invalidation wiring: save on any source-data tab → `invalidateQueries` → Summary tab refetches | 4, 8 |
 | PAC-05 | SVOD page shows `<CircularProgress>` while loading; server-side pagination (100 rows/page) limits payload | 3 |
 | PAC-08 | Dashboard FTE column displays `total_fte` from `GET /aggregations/divisions` — no frontend calculation | 5 |
-| S-02 | No stale indicators anywhere — no "Данные устарели" banners | 3, 4 |
+| S-02 | No stale indicators anywhere — no "Data is stale" banners | 3, 4 |
 | S-05 | No period selector on SVOD page | 3 |
 | S-08 | XLSX export only — no PDF export button | 3 |
+
+
+

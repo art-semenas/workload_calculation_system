@@ -461,7 +461,7 @@ Unit test using Mockito. Mock: `ObjectEngineerRepository`, `SummaryRepository`, 
 
 **Test data for component breakdown:**
 
-Use the reference object "Архив г.Брест" with known summary values:
+Use the reference object "Brest Archive" with known summary values:
 
 ```
 os_monthly_avg = 40.683

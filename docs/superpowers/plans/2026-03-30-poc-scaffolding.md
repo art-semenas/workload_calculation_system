@@ -628,7 +628,7 @@ public class WorkloadConfig {
     @NotNull @Min(1)
     private Integer repairTravelCap;
 
-    // PZV (подготовительно-заключительное время) per trip, minutes
+    // PZV (setup and wrap-up time) per trip, minutes
     @NotNull @Min(0)
     private Integer pzvMinutes;
 
@@ -1340,7 +1340,7 @@ cp docs/superpowers/plans/seed-data/v1.0.1-seed-data.xml \
 ```
 
 Key facts encoded in the file:
-- Device types with shared names across systems (e.g. "серий А6, Аларм") get **one** `device_types` row with **two** context rows — one per system, with different R1/R2 values where applicable (e.g. "Извещатели, оповещатели": OS R1=0.7, PS R1=0.3).
+- Device types with shared names across systems (e.g. "Series A6, Alarm") get **one** `device_types` row with **two** context rows — one per system, with different R1/R2 values where applicable (e.g. "Detectors, Notifiers": OS R1=0.7, PS R1=0.3).
 - `system_type` values are `'OS'`, `'PS'`, `'VIDEO'` (uppercase) — must match exactly what the application code uses in enums/queries.
 - UUIDs are deterministic (prefix `10…` for device types, `20…` for contexts, `30…` for repair types) so migrations are idempotent.
 
@@ -1838,11 +1838,11 @@ import { useAuthStore } from '../../store/authStore'
 const NAV_WIDTH = 220
 
 const navItems = [
-  { label: 'Дашборд', path: '/' },
-  { label: 'Объекты', path: '/objects' },
-  { label: 'Инженеры', path: '/engineers' },
-  { label: 'СВОД', path: '/svod' },
-  { label: 'Подразделения', path: '/divisions' },
+  { label: 'Dashboard', path: '/' },
+  { label: 'Objects', path: '/objects' },
+  { label: 'Engineers', path: '/engineers' },
+  { label: 'Summary', path: '/svod' },
+  { label: 'Divisions', path: '/divisions' },
 ]
 
 export default function AppLayout() {
@@ -1855,7 +1855,7 @@ export default function AppLayout() {
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6">Workload Calculator</Typography>
           <ListItemButton onClick={() => { logout(); navigate('/login') }} sx={{ width: 'auto', color: 'white' }}>
-            Выйти
+            Sign Out
           </ListItemButton>
         </Toolbar>
       </AppBar>
@@ -2282,4 +2282,4 @@ After this scaffolding is complete and smoke-tested:
 
 1. **`poc-m01-backend.md`** — Spring Security + JWT login, all CRUD endpoints, JPA entities, MapStruct DTOs, Bucket4j rate limiting. Covers epic [poc-m01-core-crud.md](../../impl/epics/poc-m01-core-crud.md).
 2. **`poc-m01-frontend.md`** — Object/Division/Branch CRUD pages, Equipment tab (two-layer UI), Repairs/Records/Travel tabs. Covers UI spec from [ui-spec.md](../../impl/ui-spec.md).
-3. **`poc-m02-backend.md`** — Calculation service, summaries writes, СВОД endpoint, XLSX export. Covers epic [poc-m02-calculation.md](../../impl/epics/poc-m02-calculation.md).
+3. **`poc-m02-backend.md`** — Calculation service, summaries writes, Summary endpoint, XLSX export. Covers epic [poc-m02-calculation.md](../../impl/epics/poc-m02-calculation.md).
