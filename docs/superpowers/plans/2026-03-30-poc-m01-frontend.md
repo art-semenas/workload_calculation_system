@@ -178,18 +178,18 @@ describe("Zod schemas", () => {
 
   it("TravelUpdateSchema rejects negative distance", () => {
     const result = TravelUpdateSchema.safeParse({
-      transport_type: "car",
-      distance_km: -1,
-      one_way_time_min: 10,
+      transportType: "car",
+      distanceKm: -1,
+      oneWayTimeMin: 10,
     });
     expect(result.success).toBe(false);
   });
 
   it("TravelUpdateSchema accepts valid input", () => {
     const result = TravelUpdateSchema.safeParse({
-      transport_type: "car",
-      distance_km: 15.5,
-      one_way_time_min: 20,
+      transportType: "car",
+      distanceKm: 15.5,
+      oneWayTimeMin: 20,
     });
     expect(result.success).toBe(true);
   });
@@ -217,44 +217,44 @@ Create each type file. All types must match the API response shapes from `docs/i
 
 **`src/types/division.ts`** — Types and schemas:
 
-- `Division` — `{ id: string, name: string, branch_count: number, object_count: number, created_at?: string, updated_at?: string }`.
+- `Division` — `{ id: string, name: string, branchCount: number, objectCount: number, createdAt?: string, updatedAt?: string }`.
 - `DivisionDetail` — extends Division with `branches: Branch[]`.
-- `Branch` — `{ id: string, name: string, division_id: string, division_name?: string, object_count: number, created_at?: string, updated_at?: string }`.
+- `Branch` — `{ id: string, name: string, divisionId: string, divisionName?: string, objectCount: number, createdAt?: string, updatedAt?: string }`.
 - `BranchDetail` — extends Branch with `objects: { data: BranchObjectRow[], meta: { total: number, page: number, size: number } }`.
-- `BranchObjectRow` — `{ id: string, name: string, itogo_chislo_with_travel: number | null, engineer_count: number }`.
+- `BranchObjectRow` — `{ id: string, name: string, itogoChisloWithTravel: number | null, engineerCount: number }`.
 - Export `DivisionCreateSchema` (`name` min 1), `BranchCreateSchema` (`name` min 1).
 
 **`src/types/object.ts`** — Types and schemas:
 
-- `ObjectRecord` — `{ id: string, name: string, branch_id: string, branch_name?: string, division_name?: string, address?: string, import_seq_no?: number, created_at?: string, updated_at?: string }`.
-- Export `ObjectCreateSchema` (`name` min 1, `branch_id` uuid string), `ObjectUpdateSchema`.
+- `ObjectRecord` — `{ id: string, name: string, branchId: string, branchName?: string, divisionName?: string, address?: string, importSeqNo?: number, createdAt?: string, updatedAt?: string }`.
+- Export `ObjectCreateSchema` (`name` min 1, `branchId` uuid string), `ObjectUpdateSchema`.
 
 **`src/types/equipment.ts`** — Types and schemas:
 
-- `ObjectDevice` — `{ id: string, object_id: string, device_type_id: string, device_type_name: string, quantity_physical: number }` (`quantity_maintained` is only on `object_system_assignments`, not `object_devices` — see db-schema.md).
-- `ObjectSystemAssignment` — `{ id: string, object_id: string, device_type_id: string, device_type_name: string, system_type: 'OS' | 'PS' | 'VIDEO', quantity_maintained: number, r1_minutes: number, r2_minutes: number }`.
-- Export `DeviceAddSchema` (`device_type_id` required, `quantity_physical` ≥ 1 integer), `AssignmentCreateSchema` (`device_type_id` required, `system_type` enum, `quantity_maintained` ≥ 0 integer), `AssignmentUpdateSchema` (`quantity_maintained` ≥ 0 integer).
+- `ObjectDevice` — `{ id: string, objectId: string, deviceTypeId: string, deviceTypeName: string, quantityPhysical: number }` (`quantityMaintained` is only on `object_system_assignments`, not `object_devices` — see db-schema.md).
+- `ObjectSystemAssignment` — `{ id: string, objectId: string, deviceTypeId: string, deviceTypeName: string, systemType: 'OS' | 'PS' | 'VIDEO', quantityMaintained: number, r1Minutes: number, r2Minutes: number }`.
+- Export `DeviceAddSchema` (`deviceTypeId` required, `quantityPhysical` ≥ 1 integer), `AssignmentCreateSchema` (`deviceTypeId` required, `systemType` enum, `quantityMaintained` ≥ 0 integer), `AssignmentUpdateSchema` (`quantityMaintained` ≥ 0 integer).
 
 **`src/types/records.ts`** — Types and schemas:
 
-- `RecordsTask` — `{ id?: string, object_id: string, access_requests: number, monitoring_requests: number, footage_requests: number, backup_control: number, security_admin: number }` (field names match db-schema.md `records_tasks` columns).
+- `RecordsTask` — `{ id?: string, objectId: string, accessRequests: number, monitoringRequests: number, footageRequests: number, backupControl: number, securityAdmin: number }` (field names match db-schema.md `records_tasks` columns).
 - Export `RecordsUpdateSchema` (all 5 fields ≥ 0 integers).
 
 **`src/types/repairs.ts`** — Types and schemas:
 
-- `ObjectRepair` — `{ id: string, object_id: string, repair_type_id: string, repair_type_name: string, count: number }`.
+- `ObjectRepair` — `{ id: string, objectId: string, repairTypeId: string, repairTypeName: string, count: number }`.
 - Export `RepairUpdateSchema` (`count` ≥ 0 integer).
 
 **`src/types/travel.ts`** — Types and schemas:
 
-- `Travel` — `{ id?: string, object_id: string, transport_type: string, distance_km: number, one_way_time_min: number, round_trip_min: number }` (field name `one_way_time_min` matches db-schema.md column).
-- Export `TravelUpdateSchema` (`transport_type` min 1, `distance_km` ≥ 0 number, `one_way_time_min` ≥ 0 number). Note: `round_trip_min` is never in the form — it is read-only from the API.
+- `Travel` — `{ id?: string, objectId: string, transportType: string, distanceKm: number, oneWayTimeMin: number, roundTripMin: number }` (field name `oneWayTimeMin` matches db-schema.md column).
+- Export `TravelUpdateSchema` (`transportType` min 1, `distanceKm` ≥ 0 number, `oneWayTimeMin` ≥ 0 number). Note: `roundTripMin` is never in the form — it is read-only from the API.
 
 **`src/types/catalog.ts`** — Types only (no forms — catalog is read-only in PoC per S-03):
 
 - `DeviceType` — `{ id: string, name: string, description?: string }` (db-schema.md: `device_types` has `description TEXT`, no manufacturer/model columns).
-- `DeviceSystemContext` — `{ id: string, device_type_id: string, system_type: 'OS' | 'PS' | 'VIDEO', r1_minutes: number, r2_minutes: number }`.
-- `RepairType` — `{ id: string, name: string, time_minutes: number }`.
+- `DeviceSystemContext` — `{ id: string, deviceTypeId: string, systemType: 'OS' | 'PS' | 'VIDEO', r1Minutes: number, r2Minutes: number }`.
+- `RepairType` — `{ id: string, name: string, timeMinutes: number }`.
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -368,14 +368,14 @@ describe("API modules", () => {
     });
     const { updateTravel } = await import("../api/travel");
     await updateTravel("obj-1", {
-      transport_type: "car",
-      distance_km: 10,
-      one_way_time_min: 15,
+      transportType: "car",
+      distanceKm: 10,
+      oneWayTimeMin: 15,
     });
     expect(mockApi.put).toHaveBeenCalledWith("/objects/obj-1/travel", {
-      transport_type: "car",
-      distance_km: 10,
-      one_way_time_min: 15,
+      transportType: "car",
+      distanceKm: 10,
+      oneWayTimeMin: 15,
     });
   });
 });
@@ -415,7 +415,7 @@ Each API module exports thin functions that call the axios instance and return `
 
 **`src/api/objects.ts`** — exports:
 
-- `getObjects(params?: { division_id?: string }): Promise<ObjectRecord[]>` — `GET /objects` (with optional query param)
+- `getObjects(params?: { divisionId?: string }): Promise<ObjectRecord[]>` — `GET /objects` (with optional query param)
 - `getObject(id: string): Promise<ObjectRecord>` — `GET /objects/${id}`
 - `createObject(data: ObjectCreateRequest): Promise<ObjectRecord>` — `POST /objects`
 - `updateObject(id: string, data: ObjectUpdateRequest): Promise<ObjectRecord>` — `PUT /objects/${id}`
@@ -491,7 +491,7 @@ Each hook file exports query hooks and mutation hooks for a domain. All mutation
 
 **`src/hooks/useObjects.ts`** — exports:
 
-- `useObjects(divisionId?)` — query: `queryKey: ['objects', { divisionId }]`, `queryFn: () => getObjects({ division_id: divisionId })`.
+- `useObjects(divisionId?)` — query: `queryKey: ['objects', { divisionId }]`, `queryFn: () => getObjects({ divisionId: divisionId })`.
 - `useObject(id)` — query: `queryKey: ['objects', id]`, `queryFn: () => getObject(id)`, `enabled: !!id`.
 - `useCreateObject()` — mutation, invalidates `['objects']` on success.
 - `useUpdateObject()` — mutation, invalidates `['objects']` and `['objects', id]`.
@@ -945,8 +945,8 @@ describe('DivisionListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetDivisions.mockResolvedValue([
-      { id: '1', name: 'Подразделение 1', branch_count: 3, object_count: 50 },
-      { id: '2', name: 'Подразделение 2', branch_count: 1, object_count: 10 },
+      { id: '1', name: 'Подразделение 1', branchCount: 3, objectCount: 50 },
+      { id: '2', name: 'Подразделение 2', branchCount: 1, objectCount: 10 },
     ])
   })
 
@@ -983,7 +983,7 @@ Replace `frontend/src/pages/DivisionListPage.tsx`:
 
 - Page heading: "Подразделения".
 - MUI `Table` (or `DataGrid`) listing all divisions from `useDivisions()` hook.
-- Columns: Название (name), Филиалов (branch_count), Объектов (object_count).
+- Columns: Название (name), Филиалов (branchCount), Объектов (objectCount).
 - Row click navigates to `/divisions/:id`.
 - "Добавить подразделение" MUI `Button` above the table. Opens a MUI `Dialog` with a single "Название" field (React Hook Form + `DivisionCreateSchema`). Confirm creates via `useCreateDivision()` mutation. On success: dialog closes, list refreshes via query invalidation.
 - Loading state: MUI `CircularProgress` while fetching.
@@ -1021,7 +1021,7 @@ Test setup: mock `useDivision(id)` returning a division with branches. Mock `use
 **Tests:**
 
 - `renders division name as heading` — verifies the division name appears in an `h` element.
-- `renders branch table with object counts` — verifies branch rows show name and object_count.
+- `renders branch table with object counts` — verifies branch rows show name and objectCount.
 - `opens create branch dialog` — clicks "Добавить филиал" button, verifies dialog with name field appears.
 - `navigates to branch detail on row click` — clicks a branch row, verifies `navigate('/branches/branch-1')` called.
 - `allows inline editing of division name` — clicks edit icon, changes name, saves, verifies `updateDivision` mutation called.
@@ -1044,7 +1044,7 @@ Replace `frontend/src/pages/DivisionDetailPage.tsx`:
 - Uses `useDivision(id)` to fetch division detail (includes branches).
 - Page heading: division name with an edit icon button. Clicking edit: name becomes an inline text field, save/cancel buttons appear. Save calls `useUpdateDivision()`.
 - Breadcrumb: "Подразделения" (link to `/divisions`) > "Division Name".
-- Branch list: MUI `Table` with columns: Название (name), Объектов (object_count). Row click navigates to `/branches/:id`.
+- Branch list: MUI `Table` with columns: Название (name), Объектов (objectCount). Row click navigates to `/branches/:id`.
 - "Добавить филиал" button opens dialog with "Название" field (RHF + `BranchCreateSchema`). Confirm calls `useCreateBranch(divisionId)`.
 - Loading state: `CircularProgress`. 404: "Подразделение не найдено" message.
 
@@ -1100,8 +1100,8 @@ Replace `frontend/src/pages/BranchDetailPage.tsx`:
 - Uses `useBranch(id)` to fetch branch detail with paginated objects.
 - Breadcrumb: "Подразделения" > division name (link to `/divisions/:divisionId`) > branch name.
 - Branch name heading with edit icon. Inline edit saves via `useUpdateBranch()`.
-- Object table: columns: Название (name), ИТОГО Числ (с дорогой) — shows `itogo_chislo_with_travel` if available, else "-" (no summaries until M-02). Row click navigates to `/objects/:id`.
-- "Добавить объект" button opens a dialog/form with "Название" field and branch is pre-selected (this branch). Confirm calls `useCreateObject()` with `branch_id = this branch's id`.
+- Object table: columns: Название (name), ИТОГО Числ (с дорогой) — shows `itogoChisloWithTravel` if available, else "-" (no summaries until M-02). Row click navigates to `/objects/:id`.
+- "Добавить объект" button opens a dialog/form with "Название" field and branch is pre-selected (this branch). Confirm calls `useCreateObject()` with `branchId = this branch's id`.
 - Loading/error/empty states.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -1134,7 +1134,7 @@ Test setup: mock `useObjects()` returning a list of objects. Mock `useDivisions(
 **Tests:**
 
 - `renders object table with name and address` — verifies object rows appear.
-- `filters by division` — selects a division in the filter dropdown, verifies `getObjects` called with `division_id`.
+- `filters by division` — selects a division in the filter dropdown, verifies `getObjects` called with `divisionId`.
 - `navigates to object detail on row click` — clicks row, verifies navigation.
 - `opens create object dialog` — clicks "Добавить объект", verifies form with name and branch selection fields.
 
@@ -1151,8 +1151,8 @@ Replace `frontend/src/pages/ObjectListPage.tsx`:
 **Behavioral requirements:**
 
 - Page heading: "Объекты".
-- Division filter dropdown above the table. Uses `useDivisions()` for options. "Все подразделения" default. Selecting a division passes `division_id` to `useObjects(divisionId)`.
-- MUI DataGrid with columns: Название (name), Подразделение (division_name), Филиал (branch_name), ИТОГО Числ — shows "-" in M-01. Sortable columns. Row click navigates to `/objects/:id`.
+- Division filter dropdown above the table. Uses `useDivisions()` for options. "Все подразделения" default. Selecting a division passes `divisionId` to `useObjects(divisionId)`.
+- MUI DataGrid with columns: Название (name), Подразделение (divisionName), Филиал (branchName), ИТОГО Числ — shows "-" in M-01. Sortable columns. Row click navigates to `/objects/:id`.
 - "Добавить объект" button opens a dialog with fields: Название (text, required), Филиал (dropdown of all branches grouped by division — use `useDivisions()` and expand each to get branches). Confirm calls `useCreateObject()`.
 - Loading/empty states.
 
@@ -1270,7 +1270,7 @@ Test setup: mock all equipment and catalog hooks. Provide test data:
 
 **Tests (Section A — Physical Inventory):**
 
-- `renders device inventory table` — verifies device name, quantity_physical columns shown.
+- `renders device inventory table` — verifies device name, quantityPhysical columns shown.
 - `add device dropdown shows only devices NOT already in inventory` — clicks "+ Добавить устройство", dropdown options exclude devices already in inventory. Only the 3rd unassigned device appears.
 - `add device calls useAddDevice mutation` — selects a device from dropdown, enters quantity, clicks add. Verifies `addDevice` API called with correct payload.
 - `delete device shows confirmation listing affected assignments` — device with an assignment: delete button shows ConfirmDialog message "Это удалит назначения: ОС × 1. Продолжить?".
@@ -1278,11 +1278,11 @@ Test setup: mock all equipment and catalog hooks. Provide test data:
 
 **Tests (Section B — System Assignments):**
 
-- `renders assignments grouped by device` — verifies assignment rows show device name, system type, quantity_maintained, R1/R2 read-only values.
+- `renders assignments grouped by device` — verifies assignment rows show device name, system type, quantityMaintained, R1/R2 read-only values.
 - `assign-to-system dropdown shows only valid system types` — for a device with contexts only for OS and PS, dropdown shows only "ОС" and "ПС" (not "Видео"). If OS already assigned, only "ПС" remains (AC-13).
 - `shows error on DEVICE_NOT_IN_INVENTORY` — when `addAssignment` returns 422 `DEVICE_NOT_IN_INVENTORY`, displays "Устройство не в инвентаре".
 - `shows error on NO_CONTEXT_FOR_SYSTEM` — when `addAssignment` returns 422 `NO_CONTEXT_FOR_SYSTEM`, displays "Нет нормативов для этой системы".
-- `shows warning when quantity_maintained > quantity_physical` — assignment row with quantity_maintained=2 but device's quantity_physical=1 shows a warning icon with tooltip "Обслуживаемое количество (2) превышает физическое (1)".
+- `shows warning when quantityMaintained > quantityPhysical` — assignment row with quantityMaintained=2 but device's quantityPhysical=1 shows a warning icon with tooltip "Обслуживаемое количество (2) превышает физическое (1)".
 
 - [ ] **Step 2: Run — expect FAIL**
 
@@ -1300,12 +1300,12 @@ Create `frontend/src/components/equipment/PhysicalInventory.tsx`:
 
 - Uses `useDevices(objectId)` for current inventory.
 - Uses `useCatalogDevices()` for the full device catalog.
-- Renders a MUI `Table` with columns: Устройство (device name), Физ. кол-во (quantity_physical), Действия. (`quantity_maintained` is on `object_system_assignments`, shown in Section B — not on `object_devices`.)
+- Renders a MUI `Table` with columns: Устройство (device name), Физ. кол-во (quantityPhysical), Действия. (`quantityMaintained` is on `object_system_assignments`, shown in Section B — not on `object_devices`.)
 - "+ Добавить устройство" button above the table. Opens inline form or dialog:
   - Device dropdown: MUI `Autocomplete` searchable. Options = catalog devices filtered to exclude those already in inventory at this object.
   - Quantity field: integer ≥ 1.
-  - Confirm calls `useAddDevice(objectId)` with `{ device_type_id, quantity_physical }`.
-- Inline editing of `quantity_physical` per row. Save on blur or enter. Calls `useUpdateDevice(objectId)`. (`quantity_maintained` is edited per assignment in Section B.)
+  - Confirm calls `useAddDevice(objectId)` with `{ deviceTypeId, quantityPhysical }`.
+- Inline editing of `quantityPhysical` per row. Save on blur or enter. Calls `useUpdateDevice(objectId)`. (`quantityMaintained` is edited per assignment in Section B.)
 - Remove button per row. If device has any assignments (check `useAssignments(objectId)` data), show `ConfirmDialog` listing affected assignments: "Это удалит назначения: {list}. Продолжить?". Confirm calls `useRemoveDevice(objectId, deviceTypeId)`.
 
 - [ ] **Step 4: Implement SystemAssignments component**
@@ -1318,12 +1318,12 @@ Create `frontend/src/components/equipment/SystemAssignments.tsx`:
 
 - Uses `useAssignments(objectId)` for current assignments.
 - Uses `useDevices(objectId)` for the physical inventory (determines which devices can be assigned).
-- Groups assignments by device_type_id. For each device in inventory, shows its assignments and an "+ Назначить в систему" action.
+- Groups assignments by deviceTypeId. For each device in inventory, shows its assignments and an "+ Назначить в систему" action.
 - System type dropdown (per device): shows only system types that have a valid `device_system_contexts` row (uses `useCatalogDeviceContexts(deviceTypeId)`) AND are not already assigned for this device at this object. Hidden entirely if no valid options remain.
-- Each assignment row shows: Система (ОС/ПС/Видео), Кол-во обсл. (quantity_maintained, editable), Р1 (read-only from context), Р2 (read-only from context), Действия (remove button).
-- quantity_maintained editable inline. Save calls `useUpdateAssignment(objectId)`.
+- Each assignment row shows: Система (ОС/ПС/Видео), Кол-во обсл. (quantityMaintained, editable), Р1 (read-only from context), Р2 (read-only from context), Действия (remove button).
+- quantityMaintained editable inline. Save calls `useUpdateAssignment(objectId)`.
 - Remove button calls `useRemoveAssignment(objectId, assignmentId)`.
-- **Warning rule:** When `quantity_maintained > quantity_physical` for the parent device, show yellow ⚠ icon with MUI `Tooltip`: "Обслуживаемое количество (N) превышает физическое (M)".
+- **Warning rule:** When `quantityMaintained > quantityPhysical` for the parent device, show yellow ⚠ icon with MUI `Tooltip`: "Обслуживаемое количество (N) превышает физическое (M)".
 - **Error handling:** On 422 `DEVICE_NOT_IN_INVENTORY`: MUI `Alert` "Устройство не в инвентаре". On 422 `NO_CONTEXT_FOR_SYSTEM`: MUI `Alert` "Нет нормативов для этой системы".
 - **System type display mapping:** `OS` → "ОС", `PS` → "ПС", `VIDEO` → "Видео".
 
@@ -1384,7 +1384,7 @@ Test setup: mock `useRecords(objectId)` returning records data. Mock `useUpdateR
 
 **Tests:**
 
-- `renders 5 numeric fields with current values` — verifies fields for access_requests, monitoring_requests, footage_requests, backup_control, security_admin are rendered and show current values.
+- `renders 5 numeric fields with current values` — verifies fields for accessRequests, monitoringRequests, footageRequests, backupControl, securityAdmin are rendered and show current values.
 - `validates non-negative integers` — enters -1 in a field, verifies validation error shown.
 - `save button calls updateRecords mutation` — fills valid values, clicks "Сохранить", verifies mutation called with correct payload.
 - `shows loading state while fetching` — verifies CircularProgress shown when data is loading.
@@ -1406,11 +1406,11 @@ Replace `frontend/src/components/records/RecordsTab.tsx`:
 - Uses `useRecords(objectId)` to fetch current data. Uses `useUpdateRecords(objectId)` for saves.
 - Form using React Hook Form with `zodResolver(RecordsUpdateSchema)`.
 - 5 MUI `TextField` fields (type="number"), each labeled in Russian:
-  - "Доступ" (access_requests)
-  - "Мониторинг" (monitoring_requests)
-  - "Видеонаблюдение" (footage_requests)
-  - "Резервное копирование" (backup_control)
-  - "Администрирование" (security_admin)
+  - "Доступ" (accessRequests)
+  - "Мониторинг" (monitoringRequests)
+  - "Видеонаблюдение" (footageRequests)
+  - "Резервное копирование" (backupControl)
+  - "Администрирование" (securityAdmin)
 - All fields require integers ≥ 0.
 - "Сохранить" button. On submit: calls `useUpdateRecords(objectId)` with form values.
 - On success: MUI `Snackbar` "Данные сохранены".
@@ -1468,7 +1468,7 @@ Replace `frontend/src/components/repairs/RepairsTab.tsx`:
 - Uses `useCatalogRepairs()` to get the full list of repair types (seed data, read-only).
 - Uses `useRepairs(objectId)` to get current counts for this object.
 - Uses `useUpdateRepair(objectId)` for saving.
-- Renders a MUI `Table` with columns: Вид ремонта (repair type name), Время (мин) (time_minutes, read-only from catalog), Количество (count, editable integer input ≥ 0).
+- Renders a MUI `Table` with columns: Вид ремонта (repair type name), Время (мин) (timeMinutes, read-only from catalog), Количество (count, editable integer input ≥ 0).
 - Each row corresponds to a repair type from the catalog. The count field shows the existing `object_repairs.count` for that type, or 0 if no row exists.
 - "Сохранить" button at the bottom (or per-row save). On click: for each changed row, calls `PUT /objects/{objectId}/repairs/{repairTypeId}` with `{ count }`.
 - Alternatively: save-per-row — each row has a small save icon that appears when the value changes.
@@ -1504,10 +1504,10 @@ Test setup: mock `useTravel(objectId)` and `useUpdateTravel`.
 **Tests:**
 
 - `renders 3 editable fields and 1 read-only field` — verifies "Тип транспорта", "Расстояние (км)", "Время в одну сторону (мин)" are editable, and "Время в оба конца (мин)" is read-only.
-- `round_trip_min is never editable` — the round_trip_min field has no input, just a display value. Verifies it is not an input element.
-- `round_trip_min shows computed value from API` — when travel data has `one_way_time_min: 15`, shows "30 мин (авторасчёт)" for round trip.
+- `roundTripMin is never editable` — the roundTripMin field has no input, just a display value. Verifies it is not an input element.
+- `roundTripMin shows computed value from API` — when travel data has `oneWayTimeMin: 15`, shows "30 мин (авторасчёт)" for round trip.
 - `validates non-negative values` — enters negative distance, verifies error.
-- `save calls updateTravel mutation` — fills valid data, saves. Verifies mutation payload has `transport_type`, `distance_km`, `one_way_time_min` but NOT `round_trip_min`.
+- `save calls updateTravel mutation` — fills valid data, saves. Verifies mutation payload has `transportType`, `distanceKm`, `oneWayTimeMin` but NOT `roundTripMin`.
 - `shows empty form when no travel data exists` — all fields empty/zero when API returns null.
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -1530,9 +1530,9 @@ Replace `frontend/src/components/travel/TravelTab.tsx`:
   - "Тип транспорта" — MUI `TextField` (text input).
   - "Расстояние (км)" — MUI `TextField` (type="number", ≥ 0).
   - "Время в одну сторону (мин)" — MUI `TextField` (type="number", ≥ 0).
-  - "Время в оба конца (мин)" — **read-only display only**: `Typography` showing `round_trip_min` value from API response + " (авторасчёт)". This is NEVER an input field. round_trip_min is never sent to the API (AC-27).
-- "Сохранить" button. Payload: `{ transport_type, distance_km, one_way_time_min }` (no `round_trip_min`).
-- On success: `Snackbar` "Данные сохранены". Form refreshes with updated data including new `round_trip_min` from API.
+  - "Время в оба конца (мин)" — **read-only display only**: `Typography` showing `roundTripMin` value from API response + " (авторасчёт)". This is NEVER an input field. roundTripMin is never sent to the API (AC-27).
+- "Сохранить" button. Payload: `{ transportType, distanceKm, oneWayTimeMin }` (no `roundTripMin`).
+- On success: `Snackbar` "Данные сохранены". Form refreshes with updated data including new `roundTripMin` from API.
 - Pre-filled from API data. Empty form if no travel data exists yet.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -1545,7 +1545,7 @@ npx vitest run src/test/TravelTab.test.tsx
 
 ```bash
 git add frontend/src/components/travel/ frontend/src/test/TravelTab.test.tsx
-git commit -m "feat: implement travel tab with read-only round_trip_min"
+git commit -m "feat: implement travel tab with read-only roundTripMin"
 ```
 
 ---

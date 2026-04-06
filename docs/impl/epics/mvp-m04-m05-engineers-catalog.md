@@ -8,16 +8,16 @@
 
 ## Functional Requirements Covered
 
-- **FR-10 — Engineer Management (§4.10):** Admin creates/edits/deactivates engineer accounts. Set/update `capacity_fte` (marks engineer summary stale in MVP — synchronous in PoC). View all engineers with load ratio and status. `is_active` filtering: inactive engineers are hidden from assignment dropdowns (implemented in PoC per AD-18/C-24, enforced by RBAC from M-02).
+- **FR-10 — Engineer Management (§4.10):** Admin creates/edits/deactivates engineer accounts. Set/update `capacityFte` (marks engineer summary stale in MVP — synchronous in PoC). View all engineers with load ratio and status. `is_active` filtering: inactive engineers are hidden from assignment dropdowns (implemented in PoC per AD-18/C-24, enforced by RBAC from M-02).
 - **FR-11 — Object-Engineer Assignments (§4.11):** RBAC-enforced assignments: admin unrestricted; editor assigns any active engineer to objects in own division; engineer is read-only. Workload split: `itogo_chislo_with_travel / COUNT(assigned engineers)` — computed dynamically, not stored. Coverage gap detection: objects with zero assigned engineers flagged in dashboard and division detail.
 - **FR-02 — Device Catalog Management (§4.2) — admin UI (M-04):** Admin creates device types and device-system contexts via UI. Edit R1/R2 normatives. Delete contexts (blocked if active assignments exist). Admin creates new device type, adds system context, assigns to object → СВОД recalculates correctly without code deployment.
 - **FR-05 — Repair Type Catalog (§4.5) — admin UI (M-05):** Admin creates, edits, and deletes repair types via UI. Delete blocked if any `object_repairs` row references the type with `count > 0`.
 
 ## Acceptance Criteria In Scope
 
-**AC-03:** After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after admin explicitly triggers `POST /svod/recalculate`. _(Requires M-04 and M-06.)_
+**AC-03:** After an admin updates `r1Minutes` or `r2Minutes` on any `device_system_contexts` row, all affected object summaries are marked stale. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after admin explicitly triggers `POST /svod/recalculate`. _(Requires M-04 and M-06.)_
 
-**AC-04:** Admin creates a device type, adds a system context (R1/R2), assigns it to an object, sets `quantity_maintained`. СВОД recalculates correctly. No code deployment required.
+**AC-04:** Admin creates a device type, adds a system context (R1/R2), assigns it to an object, sets `quantityMaintained`. СВОД recalculates correctly. No code deployment required.
 
 **AC-05:** UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row. API rejects invalid assignments with `422 NO_CONTEXT_FOR_SYSTEM`.
 
@@ -27,11 +27,11 @@
 
 **AC-15:** The sum of `total_load` across all engineers assigned to a given object must equal that object's `itogo_chislo_with_travel` within ±0.000001.
 
-**AC-16:** Given engineer with `capacity_fte = 0.8` and `total_load = 0.76`: `load_ratio = 0.76 / 0.8 = 0.95`. With `ENGINEER_WARNING_THRESHOLD = 0.9`: status must be "warning". Given `total_load = 0.84`: `load_ratio = 1.05` → status must be "overloaded".
+**AC-16:** Given engineer with `capacityFte = 0.8` and `total_load = 0.76`: `loadRatio = 0.76 / 0.8 = 0.95`. With `ENGINEER_WARNING_THRESHOLD = 0.9`: status must be "warning". Given `total_load = 0.84`: `loadRatio = 1.05` → status must be "overloaded".
 
-**AC-18:** `GET /coverage/gaps?division_id=X` returns all objects in division X that have zero rows in `object_engineers`. Verified against manual count from the object list.
+**AC-18:** `GET /coverage/gaps?divisionId=X` returns all objects in division X that have zero rows in `object_engineers`. Verified against manual count from the object list.
 
-**PAC-02:** For an engineer assigned as the sole responsible engineer for the reference object with `capacity_fte = 1.0`, `engineer_total_load = 0.032327 ±0.000001` and `status = "normal"`.
+**PAC-02:** For an engineer assigned as the sole responsible engineer for the reference object with `capacityFte = 1.0`, `engineerTotalLoad = 0.032327 ±0.000001` and `status = "normal"`.
 
 **PAC-07:** When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032327 / 2 = 0.016163 ±0.000001`.
 
@@ -67,7 +67,7 @@ From docs/impl/api-spec.md:
 - `GET /engineers` — list all engineers (admin/editor/viewer: full list; engineer role: own row only)
 - `POST /engineers` — create engineer (admin only from M-02)
 - `GET /engineers/:id` — get engineer with summary
-- `PUT /engineers/:id` — update engineer name, capacity_fte, home_division (admin only from M-02)
+- `PUT /engineers/:id` — update engineer name, capacityFte, homeDivision (admin only from M-02)
 - `DELETE /engineers/:id` — deactivate engineer (admin only; blocked if active assignments: `409 ENGINEER_HAS_ACTIVE_ASSIGNMENTS`)
 - `GET /engineers/:id/summary` — get `engineer_summaries` row
 - `GET /engineers/:id/objects` — list all objects assigned to engineer with per-object shares
@@ -98,7 +98,7 @@ From docs/impl/ui-spec.md:
 
 - `/engineers` — Engineer list: load ratio, status, object count, home division (§7.5)
 - `/engineers/:id` — Engineer detail: workload dashboard with summary cards, breakdown by system type, assigned objects table, assign/remove objects (admin and editor only), stale indicator (MVP only — requires M-06)
-- `/engineers/:id/edit` — Engineer edit: name, capacity_fte, home division
+- `/engineers/:id/edit` — Engineer edit: name, capacityFte, home division
 
 ### Catalog management screens (M-04 and M-05)
 

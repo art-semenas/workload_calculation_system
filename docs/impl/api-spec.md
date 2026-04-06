@@ -17,7 +17,7 @@ All endpoints are prefixed `/api/v1` (as defined in §9 / §10.1).
 All endpoints share a common JSON envelope:
 
 ```json
-{ "data": { ... }, "meta": { "page": 1, "total": 2935, "per_page": 100 }, "error": null }
+{ "data": { ... }, "meta": { "page": 1, "total": 2935, "perPage": 100 }, "error": null }
 ```
 
 On error:
@@ -28,7 +28,7 @@ On error:
   "error": {
     "code": "CONTEXT_IN_USE",
     "message": "Cannot delete: 42 objects have active assignments using this context",
-    "affected_count": 42
+    "affectedCount": 42
   }
 }
 ```
@@ -50,8 +50,8 @@ On error:
     {
       "id": "uuid",
       "name": "Брестское областное управление №100",
-      "branch_count": 12,
-      "object_count": 245
+      "branchCount": 12,
+      "objectCount": 245
     }
   ],
   "meta": { "total": 7 },
@@ -73,7 +73,7 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Брестское областное управление №100",
-    "created_at": "2026-03-16T12:00:00Z"
+    "createdAt": "2026-03-16T12:00:00Z"
   },
   "meta": null,
   "error": null
@@ -97,9 +97,9 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Брестское областное управление №100",
-    "branch_count": 12,
-    "object_count": 245,
-    "branches": [{ "id": "uuid", "name": "Брест ЦО", "object_count": 20 }]
+    "branchCount": 12,
+    "objectCount": 245,
+    "branches": [{ "id": "uuid", "name": "Брест ЦО", "objectCount": 20 }]
   },
   "meta": null,
   "error": null
@@ -123,7 +123,7 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Новое название",
-    "updated_at": "2026-03-16T12:05:00Z"
+    "updatedAt": "2026-03-16T12:05:00Z"
   },
   "meta": null,
   "error": null
@@ -145,7 +145,7 @@ On error:
 
 ```json
 {
-  "data": [{ "id": "uuid", "name": "Брест ЦО", "object_count": 20 }],
+  "data": [{ "id": "uuid", "name": "Брест ЦО", "objectCount": 20 }],
   "meta": { "total": 12 },
   "error": null
 }
@@ -165,8 +165,8 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Брест ЦО",
-    "division_id": "uuid",
-    "created_at": "2026-03-16T12:00:00Z"
+    "divisionId": "uuid",
+    "createdAt": "2026-03-16T12:00:00Z"
   },
   "meta": null,
   "error": null
@@ -190,15 +190,15 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Брест ЦО",
-    "division_id": "uuid",
-    "division_name": "Брестское областное управление №100",
+    "divisionId": "uuid",
+    "divisionName": "Брестское областное управление №100",
     "objects": {
       "data": [
         {
           "id": "uuid",
           "name": "ул. Московская 202Д",
-          "itogo_chislo_with_travel": 0.032327,
-          "engineer_count": 1
+          "itogoChisloWithTravel": 0.032327,
+          "engineerCount": 1
         }
       ],
       "meta": { "total": 20, "page": 1, "size": 50 }
@@ -227,8 +227,8 @@ On error:
   "data": {
     "id": "uuid",
     "name": "Новое название",
-    "division_id": "uuid",
-    "updated_at": "2026-03-16T12:05:00Z"
+    "divisionId": "uuid",
+    "updatedAt": "2026-03-16T12:05:00Z"
   },
   "meta": null,
   "error": null
@@ -304,7 +304,7 @@ On error:
 
 **Phase:** PoC + MVP
 **Description:** Add a physical device to an object.
-**Request body:** `{ device_type_id, quantity_physical }`
+**Request body:** `{ deviceTypeId, quantityPhysical }`
 
 ---
 
@@ -335,15 +335,15 @@ On error:
 
 **Phase:** PoC + MVP
 **Description:** Create a system assignment.
-**Request body:** `{ device_type_id, system_type, quantity_maintained }`
+**Request body:** `{ deviceTypeId, systemType, quantityMaintained }`
 
 ---
 
 ### `PUT /objects/:id/assignments/:aid`
 
 **Phase:** PoC + MVP
-**Description:** Update `quantity_maintained` for a system assignment.
-**Request body:** Updated `quantity_maintained`.
+**Description:** Update `quantityMaintained` for a system assignment.
+**Request body:** Updated `quantityMaintained`.
 
 ---
 
@@ -456,7 +456,7 @@ On error:
 
 **Phase:** PoC + MVP
 **Description:** Add a system context to a device type.
-**Request body:** `{ system_type, r1_minutes, r2_minutes }`
+**Request body:** `{ systemType, r1Minutes, r2Minutes }`
 
 ---
 
@@ -490,7 +490,7 @@ On error:
 
 **Phase:** PoC + MVP
 **Description:** Create a repair type.
-**Request body:** `{ name, time_minutes }`
+**Request body:** `{ name, timeMinutes }`
 
 ---
 
@@ -523,7 +523,7 @@ On error:
 ### `GET /svod/export/xlsx`
 
 **Phase:** PoC + MVP
-**Description:** Export SVOD to XLSX. Defaults to active period; use `?period_id=` for historical export.
+**Description:** Export SVOD to XLSX. Defaults to active period; use `?periodId=` for historical export.
 **Request body:** None.
 
 ---
@@ -540,7 +540,7 @@ On error:
 
 **Phase:** PoC (any authenticated user) / MVP (admin only)
 **Description:** Create an engineer.
-**Request body:** Engineer fields including `capacity_fte` and `home_division_id`.
+**Request body:** Engineer fields including `capacityFte` and `home_divisionId`.
 
 ---
 
@@ -555,7 +555,7 @@ On error:
 ### `PUT /engineers/:id`
 
 **Phase:** PoC (any authenticated user) / MVP (admin only)
-**Description:** Update engineer name, `capacity_fte`, or `home_division`.
+**Description:** Update engineer name, `capacityFte`, or `home_division`.
 **Request body:** Updated fields.
 
 ---
@@ -589,7 +589,7 @@ On error:
 
 **Phase:** PoC (any authenticated user) / MVP (editors scoped to own division per §12; admins unrestricted)
 **Description:** Assign an object to an engineer.
-**Request body:** `{ object_id }`
+**Request body:** `{ objectId }`
 
 ---
 
@@ -626,7 +626,7 @@ On error:
 ### `GET /coverage/gaps`
 
 **Phase:** PoC + MVP
-**Description:** List all objects with zero assigned engineers. Optionally filter by division: `?division_id=:did`.
+**Description:** List all objects with zero assigned engineers. Optionally filter by division: `?divisionId=:did`.
 **Request body:** None.
 
 ---
@@ -737,7 +737,7 @@ On error:
 #### `GET /svod/export/pdf`
 
 **Phase:** Post-MVP — requires M-11 (S-08). Not available in PoC or MVP base.
-**Description:** Export SVOD to PDF. Defaults to active period; use `?period_id=` for historical export.
+**Description:** Export SVOD to PDF. Defaults to active period; use `?periodId=` for historical export.
 
 ---
 
@@ -859,7 +859,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 **Description:** Trigger full recalculation of all stale summaries. Admin only.
 **Request body:** None.
 
-#### `POST /svod/recalculate/:object_id`
+#### `POST /svod/recalculate/:objectId`
 
 **Phase:** MVP only (M-06)
 **Description:** Trigger recalculation for a single object. Admin only.
@@ -869,7 +869,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 **Phase:** MVP only (M-06)
 **Description:** Check background recalculation job status.
-**Response shape:** `{ total_stale, processed, remaining }`
+**Response shape:** `{ totalStale, processed, remaining }`
 
 ---
 
@@ -886,7 +886,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 **Phase:** MVP only (M-02)
 **Description:** Create a non-engineer user. Admin only.
-**Request body:** `{ name, email, role, division_id? }` where `role` is `admin`, `editor`, or `viewer`. To create an `engineer`, use `POST /engineers`.
+**Request body:** `{ name, email, role, divisionId? }` where `role` is `admin`, `editor`, or `viewer`. To create an `engineer`, use `POST /engineers`.
 **Errors:**
 - `422 INVALID_ROLE_FOR_ENDPOINT` — attempted to create role `engineer` via this endpoint.
 
@@ -899,7 +899,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 **Phase:** MVP only (M-02)
 **Description:** Update user fields. Admin only.
-**Request body:** `{ name, email, role, division_id }`
+**Request body:** `{ name, email, role, divisionId }`
 
 #### `PUT /admin/users/:id/activate`
 
@@ -964,7 +964,7 @@ The import API uses a stateless two-call pattern:
 1. **`POST /import/data` — dry-run (no writes).** The server validates the entire payload and returns a preview report. No rows are written to the database. The preview report contains:
    - `objects_valid` — count of object entries that would be created/updated.
    - `warnings` — list of entries with non-fatal issues (e.g. unresolved engineer names that would generate placeholder accounts, device type names not found in catalog).
-   - `skipped` — count of entries rejected due to fatal validation errors (missing `number`, empty `division`, invalid `system_type`, etc.) with per-entry reasons.
+   - `skipped` — count of entries rejected due to fatal validation errors (missing `number`, empty `division`, invalid `systemType`, etc.) with per-entry reasons.
    - `estimated_placeholders` — count of engineer placeholder accounts that would be created.
 
 2. **`POST /import/data/confirm` — execute (all writes).** The client re-submits the identical JSON payload. The server re-validates and executes all processing steps atomically. No server-side session or token links the two calls — the client is responsible for re-submitting the payload.
@@ -978,13 +978,13 @@ The import API uses a stateless two-call pattern:
   "device_types": [{ "name": "...", "description": "..." }],
   "device_system_contexts": [
     {
-      "device_type_name": "...",
-      "system_type": "OS" | "PS" | "Video",
-      "r1_minutes": 0,
-      "r2_minutes": 0
+      "deviceTypeName": "...",
+      "systemType": "OS" | "PS" | "Video",
+      "r1Minutes": 0,
+      "r2Minutes": 0
     }
   ],
-  "repair_types": [{ "name": "...", "time_minutes": 0 }],
+  "repair_types": [{ "name": "...", "timeMinutes": 0 }],
   "objects": [
     {
       "number": 1,
@@ -993,8 +993,8 @@ The import API uses a stateless two-call pattern:
       "name": "...",
       "engineer_name": "Александр Н Соловей",
       "equipment": [
-        { "device": "<device_type_name>", "system_type": "OS", "quantity": 5 },
-        { "device": "<device_type_name>", "system_type": "PS", "quantity": 3 }
+        { "device": "<deviceTypeName>", "systemType": "OS", "quantity": 5 },
+        { "device": "<deviceTypeName>", "systemType": "PS", "quantity": 3 }
       ],
       "records": {
         "access": 0,
@@ -1003,8 +1003,8 @@ The import API uses a stateless two-call pattern:
         "backup": 0,
         "admin": 0
       },
-      "repairs": { "<repair_type_name>": 2 },
-      "travel": { "one_way_time_min": 10 }
+      "repairs": { "<repairTypeName>": 2 },
+      "travel": { "oneWayTimeMin": 10 }
     }
   ]
 }
@@ -1015,9 +1015,9 @@ The import API uses a stateless two-call pattern:
 1. Upsert `device_types` and `device_system_contexts` from their respective arrays (seed data).
 2. Upsert `repair_types` from the array.
 3. For each entry in `objects`: create Division → Branch → Object (dedup divisions/branches by name).
-4. For each non-zero equipment entry: resolve `device_types` by name (create if not found, with warning); resolve `device_system_contexts` for (device, system_type); upsert `object_devices` (first occurrence's quantity used as `quantity_physical`; subsequent entries for the same device are skipped); create `object_system_assignments` with `quantity_maintained = quantity`.
-5. Populate `records_tasks` per object using `period_id = active_period.id`. If no period is active, returns HTTP 422.
-6. Populate `object_repairs` per object using `period_id = active_period.id`. Only non-zero count entries create rows.
+4. For each non-zero equipment entry: resolve `device_types` by name (create if not found, with warning); resolve `device_system_contexts` for (device, systemType); upsert `object_devices` (first occurrence's quantity used as `quantityPhysical`; subsequent entries for the same device are skipped); create `object_system_assignments` with `quantityMaintained = quantity`.
+5. Populate `records_tasks` per object using `periodId = active_period.id`. If no period is active, returns HTTP 422.
+6. Populate `object_repairs` per object using `periodId = active_period.id`. Only non-zero count entries create rows.
 7. Populate `travel` per object.
 8. Return validation report: objects created, warnings, skipped entries.
 9. Mark all imported object summaries stale. (PoC: immediately run synchronous bulk recalculation inline; MVP: admin triggers recalculation via `POST /svod/recalculate`.)
