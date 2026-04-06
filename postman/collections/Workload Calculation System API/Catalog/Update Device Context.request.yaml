@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Device Context
+order: 9000
+method: PUT
+url: "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}/contexts/{{catalogContextId}}"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "r1Minutes": {{catalogUpdatedContextR1Minutes}},
+      "r2Minutes": {{catalogUpdatedContextR2Minutes}}
+    }

@@ -88,10 +88,10 @@ Galaxy 512 (контроллер АСПС и СО)  [Physical qty: 1]
 - **Workflow order:** A device must be added to Section A (Physical Inventory) before it can appear in Section B (System Assignments). The "Assign to system" button in Section B is only available for devices already in the physical inventory.
 - **R1/R2 are read-only in this view.** Values shown per assignment are pulled from `device_system_contexts` and cannot be edited here. A "Edit normatives →" link navigates to the Device Catalog page for that device.
 - **System type dropdown** in "Assign to system" shows **only** system types for which a `device_system_contexts` row exists for that device. System types with no context are hidden entirely — not grayed out.
-- `quantity_maintained` is editable inline per assignment row. Saving any value marks the object summary stale. The СВОД tab shows a "Данные устарели — нажмите Пересчитать" indicator until the admin triggers recalculation via `POST /svod/recalculate`. _(PoC: saving any value immediately triggers synchronous recalculation — S-02. The СВОД tab shows updated values directly, with no stale indicator.)_
-- **Warning rule:** When `quantity_maintained > quantity_physical` for a single assignment row, display a yellow ⚠ icon and tooltip: **"Обслуживаемое количество (N) превышает физическое (M)"**. This is informational — it does not block saving.
+- `quantityMaintained` is editable inline per assignment row. Saving any value marks the object summary stale. The СВОД tab shows a "Данные устарели — нажмите Пересчитать" indicator until the admin triggers recalculation via `POST /svod/recalculate`. _(PoC: saving any value immediately triggers synchronous recalculation — S-02. The СВОД tab shows updated values directly, with no stale indicator.)_
+- **Warning rule:** When `quantityMaintained > quantityPhysical` for a single assignment row, display a yellow ⚠ icon and tooltip: **"Обслуживаемое количество (N) превышает физическое (M)"**. This is informational — it does not block saving.
 - **Cascade on removal:** Removing a device from Section A (physical inventory) cascades to remove all its system assignments at this object. A confirmation dialog lists all affected assignments (e.g., "Это удалит назначения: ОС × 1, ПС × 1. Продолжить?") before proceeding.
-- **Preventing orphaned assignments:** The API enforces that an `object_system_assignments` row cannot exist without a corresponding `object_devices` row for the same (object_id, device_type_id). Enforced at the application layer (not FK, since they are separate tables).
+- **Preventing orphaned assignments:** The API enforces that an `object_system_assignments` row cannot exist without a corresponding `object_devices` row for the same (objectId, deviceTypeId). Enforced at the application layer (not FK, since they are separate tables).
 
 ### Engineers Tab — Object Detail (§7.4)
 
@@ -109,7 +109,7 @@ Shows all engineers assigned to this object and their workload share:
   Split: 2 engineers → each gets 50% of object load (0.0323 / 2)
 ```
 
-- "Доля объекта" = `itogo_chislo_with_travel / engineer_count` for this object.
+- "Доля объекта" = `itogoChisloWithTravel / engineerCount` for this object.
 - "Загрузка" = that engineer's total load ratio across ALL their objects (not just this one). Provides context — assigns may push an already-loaded engineer into overload.
 - "+" button opens a searchable dropdown of all active engineers (not restricted by division).
 - Removing an engineer immediately marks all remaining engineers at this object as stale.
@@ -227,13 +227,13 @@ The UI pre-checks on click and shows: **"Нельзя удалить: 42 объ�
 
 | #   | Column                                   | Source                                                             |
 | --- | ---------------------------------------- | ------------------------------------------------------------------ |
-| 1   | №                                        | `object.import_seq_no`                                             |
+| 1   | №                                        | `object.importSeqNo`                                             |
 | 2   | Подразделение                            | `division.name`                                                    |
 | 3   | Филиал                                   | `branch.name`                                                      |
 | 4   | Значение                                 | `object.name`                                                      |
 | 5   | Ответственные ТО                         | `JOIN object_engineers → users.name` (comma-separated if multiple) |
 | 6   | ПЗВ                                      | `config[PZV_MINUTES]`                                              |
-| 7   | Дорога                                   | `summaries.round_trip_min`                                         |
+| 7   | Дорога                                   | `summaries.roundTripMin`                                         |
 | 8   | Пожарная сигнализация                    | `summaries.ps_monthly_avg`                                         |
 | 9   | Видео                                    | `summaries.video_monthly_avg`                                      |
 | 10  | Охрана                                   | `summaries.os_monthly_avg`                                         |
@@ -243,7 +243,7 @@ The UI pre-checks on click and shows: **"Нельзя удалить: 42 объ�
 | 14  | ИТОГО Числ (без дороги)                  | `summaries.itogo_chislo_no_travel`                                 |
 | 15  | Ремонт с дорогой                         | `summaries.repair_with_travel_monthly`                             |
 | 16  | ТО+записи+ремонт(с дорогой)+Дорога, мин  | `summaries.total_with_travel_min`                                  |
-| 17  | ИТОГО Числ (с дорогой)                   | `summaries.itogo_chislo_with_travel`                               |
+| 17  | ИТОГО Числ (с дорогой)                   | `summaries.itogoChisloWithTravel`                               |
 | 18  | Р1 на объекте всех систем                | `summaries.r1_per_visit_total`                                     |
 | 19  | Р2 на объекте всех систем                | `summaries.r2_per_visit_total`                                     |
 
@@ -310,11 +310,11 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 ### Editor Division Scoping (§4.11 / §12)
 
 Editors may assign **any active engineer** to objects in the editor's own division.
-The engineer picker is NOT filtered by the engineer's `home_division_id`.
-The editor's `division_id` scopes which **objects** the editor can see, not which
+The engineer picker is NOT filtered by the engineer's `home_divisionId`.
+The editor's `divisionId` scopes which **objects** the editor can see, not which
 engineers they can assign.
 
-**Editor scope (verbatim from §12):** `division_id` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level.
+**Editor scope (verbatim from §12):** `divisionId` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level.
 
 **Engineer scope (verbatim from §12):** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
 

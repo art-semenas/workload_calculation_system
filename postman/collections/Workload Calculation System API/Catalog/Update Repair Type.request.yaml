@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Repair Type
+order: 12000
+method: PUT
+url: "{{baseUrl}}/api/v1/catalog/repairs/{{catalogRepairTypeId}}"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{catalogUpdatedRepairName}}",
+      "timeMinutes": {{catalogUpdatedRepairMinutes}}
+    }

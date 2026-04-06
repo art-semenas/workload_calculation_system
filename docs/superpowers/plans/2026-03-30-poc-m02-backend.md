@@ -1,8 +1,8 @@
-# PoC M-02 Backend — Calculation Engine & СВОД
+# PoC M-02 Backend — Calculation Engine & Summary
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Full calculation engine (§6 pipeline), `summaries` table writes (synchronous on every source-data mutation), СВОД endpoints, aggregation endpoints, XLSX export. PAC-01 reference test passes.
+**Goal:** Full calculation engine (§6 pipeline), `summaries` table writes (synchronous on every source-data mutation), Summary endpoints, aggregation endpoints, XLSX export. PAC-01 reference test passes.
 
 **Branch:** `feature/poc-m02-backend`
 **Epic:** `docs/impl/epics/poc-m02-calculation.md`
@@ -142,7 +142,7 @@ Expected: compilation error.
 Replace `minutesPerMonth` field with:
 
 ```java
-// FTE conversion constants (§6.8) — used in ИТОГО formula:
+// FTE conversion constants (§6.8) — used in the TOTAL formula:
 // itogo = total_min / 60 / monthlyHoursFund × absenceCoefficient
 @NotNull
 @DecimalMin("0.1")
@@ -268,7 +268,7 @@ Entity requirements:
 - `@Table(name = "summaries")`
 - `@Id` UUID `id`, auto-generated
 - `@OneToOne` with `ObjectEntity`: `@JoinColumn(name = "object_id", nullable = false, unique = true)`
-- All 19 СВОД columns as `BigDecimal` fields — match column names from the `v1.0.0-5` changeset exactly:
+- All 19 Summary columns as `BigDecimal` fields — match column names from the `v1.0.0-5` changeset exactly:
 
 | Java field                | DB column                    | Type         |
 | ------------------------- | ---------------------------- | ------------ |
@@ -355,30 +355,30 @@ Unit test class using Mockito. Mock repositories: `ObjectSystemAssignmentReposit
 
 | Test                                    | What it verifies                                           | Expected value                                                                 |
 | --------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `pac01_referenceObject_itogoWithTravel` | Full pipeline for "Архив г.Брест" with reference equipment | `itogo_chislo_with_travel = 0.032327 ±0.000001`                                |
+| `pac01_referenceObject_itogoWithTravel` | Full pipeline for "Brest Archive" with reference equipment | `itogo_chislo_with_travel = 0.032327 ±0.000001`                                |
 | `pac01_referenceObject_itogoNoTravel`   | Same object, no-travel variant                             | `itogo_chislo_no_travel = 0.023961 ±0.000001`                                  |
-| `pac01_referenceObject_osMonthlyAvg`    | ОС system only                                             | `os_monthly_avg = 40.683 ±0.01`                                                |
-| `pac01_referenceObject_psMonthlyAvg`    | ПС system only                                             | `ps_monthly_avg = 30.417 ±0.01`                                                |
+| `pac01_referenceObject_osMonthlyAvg`    | Security system only                                       | `os_monthly_avg = 40.683 ±0.01`                                                |
+| `pac01_referenceObject_psMonthlyAvg`    | Fire system only                                           | `ps_monthly_avg = 30.417 ±0.01`                                                |
 | `zeroGuardTest_allComponentsZero`       | Object with no assignments, no records, no repairs         | `itogo_chislo_with_travel = 0` exactly (C-39)                                  |
 | `zeroGuardTest_onlyPzvAndTravel`        | Object with PZV and travel but zero work components        | `itogo_chislo_with_travel = 0` (PZV+travel alone must NOT produce phantom FTE) |
 | `recordsOnlyTest`                       | Object with only records (no equipment, no repairs)        | `records_monthly = SUM(count × normative) / 6`; `itogo_chislo > 0`             |
 | `osSystemOnly_singleDevice`             | Single OS device, quantity_maintained=1                    | `r1_contrib = 1 × context.r1_minutes`                                          |
 | `multiSystem_sameDeviceBothOsAndPs`     | Same device assigned to OS and PS                          | Both system contributions additive; R2 does not replace R1                     |
-| `multiDevice_sameSystem`                | Two different devices both in ОС                           | Per-visit subtotals = SUM of both contributions                                |
+| `multiDevice_sameSystem`                | Two different devices both in Security                     | Per-visit subtotals = SUM of both contributions                                |
 
-**PAC-01 test data setup** — mock the following for the reference object "Архив г.Брест, ул.Московская, 202Д":
+**PAC-01 test data setup** — mock the following for the reference object "Brest Archive, Moskovskaya St., 202D":
 
-ОС assignments (5 devices):
+Security assignments (5 devices):
 
 | Device                  | system_type | quantity_maintained | R1   | R2  |
 | ----------------------- | ----------- | ------------------- | ---- | --- |
-| серий А6, Аларм         | OS          | 2                   | 5    | 8   |
-| Устройство доступа      | OS          | 2                   | 1    | 4   |
-| Шлейфы сигнализации     | OS          | 12                  | 0.06 | 0.7 |
-| Каналы считывания       | OS          | 2                   | 0.02 | 1.5 |
-| Извещатели, оповещатели | OS          | 21                  | 0.7  | 3   |
+| Series A6, Alarm        | OS          | 2                   | 5    | 8   |
+| Access Device           | OS          | 2                   | 1    | 4   |
+| Alarm Loops             | OS          | 12                  | 0.06 | 0.7 |
+| Reader Channels         | OS          | 2                   | 0.02 | 1.5 |
+| Detectors, Notifiers    | OS          | 21                  | 0.7  | 3   |
 
-ПС assignments (use actual seed values for the reference object — specific devices TBD from Excel, but the verified result is `R1_per_visit = 10.52, R2_per_visit = 73.0`).
+Fire assignments (use actual seed values for the reference object — specific devices TBD from Excel, but the verified result is `R1_per_visit = 10.52, R2_per_visit = 73.0`).
 
 Repair data: `kvo = 8` (8 distinct repair types with count > 0), `repair_work_6months = 361 min`, `round_trip_min = 20`.
 
@@ -391,9 +391,9 @@ Config constants: use TOR defaults — `monthlyHoursFund = 142.8`, `absenceCoeff
 Verified intermediate values for PAC-01:
 
 ```
-ОС: R1_per_visit=29.14, R2_per_visit=98.4 → monthly_avg=40.683
-ПС: R1_per_visit=10.52, R2_per_visit=73.0 → monthly_avg=30.417
-Видео: monthly_avg=0 (no video devices)
+Security: R1_per_visit=29.14, R2_per_visit=98.4 → monthly_avg=40.683
+Fire: R1_per_visit=10.52, R2_per_visit=73.0 → monthly_avg=30.417
+Video: monthly_avg=0 (no video devices)
 Records: monthly=0
 Repair: repair_no_travel=72.2, repair_with_travel=136.2
 total_no_travel   = 20+20+40.683+30.417+0+0+72.2  = 183.3
@@ -554,7 +554,7 @@ recordsMonthly = recordsHelper.calculateMonthly(recordsTask, config)
 repairResult = repairHelper.calculate(objectRepairs, roundTripMin, config)
 ```
 
-**Stage 6 — СВОД aggregation and ИТОГО:**
+**Stage 6 — Summary aggregation and TOTAL:**
 
 ```
 pzv = config.getPzvMinutes()
@@ -706,7 +706,7 @@ git commit -m "feat: wire synchronous recalculation on all source-data writes (S
 
 ---
 
-## Task 6: СВОД Endpoints
+## Task 6: Summary Endpoints
 
 **Files:**
 
@@ -720,7 +720,7 @@ git commit -m "feat: wire synchronous recalculation on all source-data writes (S
 
 ### DTOs
 
-**SvodRowDto** — flat DTO for one СВОД row:
+**SvodRowDto** — flat DTO for one Summary row:
 
 | Field                     | Type       | Source                                 |
 | ------------------------- | ---------- | -------------------------------------- |
@@ -774,7 +774,7 @@ ObjectSummaryDto getObjectSummary(UUID objectId)
 
 | Method | Path                           | Description                                                                  |
 | ------ | ------------------------------ | ---------------------------------------------------------------------------- |
-| `GET`  | `/api/v1/svod`                 | Paginated СВОД table. Query params: `page`, `size`, `division_id` (optional) |
+| `GET`  | `/api/v1/svod`                 | Paginated Summary table. Query params: `page`, `size`, `division_id` (optional) |
 | `GET`  | `/api/v1/objects/{id}/summary` | Single object summary                                                        |
 
 Both return `ApiResponse<T>` envelope.
@@ -818,7 +818,7 @@ git add backend/src/main/java/com/workload/dto/SvodRowDto.java \
         backend/src/main/java/com/workload/controller/SvodController.java \
         backend/src/test/java/com/workload/service/SvodServiceTest.java \
         backend/src/test/java/com/workload/controller/SvodControllerIT.java
-git commit -m "feat: add СВОД endpoints — GET /svod (paginated) and GET /objects/:id/summary"
+git commit -m "feat: add Summary endpoints — GET /svod (paginated) and GET /objects/:id/summary"
 ```
 
 ---
@@ -1019,9 +1019,9 @@ git commit -m "feat: add aggregation and coverage gap endpoints (§16)"
 
 Behavioral spec:
 
-1. Create `XSSFWorkbook` with one sheet: "СВОД"
-2. Header row (row 0): column names in Russian matching the original template structure:
-   - "Название объекта", "Адрес", "Подразделение", "Отделение", "Охрана (мес. ОС)", "Пожарная (мес. ПС)", "Видео (мес.)", "Записи (мес.)", "Ремонт без дороги (мес.)", "Ремонт с дорогой (мес.)", "Время в оба конца", "ПЗВ", "ТО+ремонт(без) мин", "ИТОГО Числ (без)", "ТО+ремонт(с) мин", "ИТОГО Числ (с)", "Р1 за выезд всего", "Р2 за выезд всего", "Дата расчёта"
+1. Create `XSSFWorkbook` with one sheet: "Summary"
+2. Header row (row 0): column names in English matching the original template structure:
+   - "Object Name", "Address", "Division", "Branch", "Security (monthly)", "Fire (monthly)", "Video (monthly)", "Records (monthly)", "Repair without Travel (monthly)", "Repair with Travel (monthly)", "Round Trip Time", "PZV", "Maintenance+Repair(no travel) min", "TOTAL Staffing (no travel)", "Maintenance+Repair(with travel) min", "TOTAL Staffing (with travel)", "R1 per Visit Total", "R2 per Visit Total", "Calculation Date"
 3. Data rows: one per `SvodRowDto`
 4. Numeric cells use `BigDecimal.setScale(6, HALF_UP)` for FTE fields, `2` for minute fields
 5. Auto-size columns
@@ -1057,9 +1057,9 @@ void exportSvod_producesValidWorkbook() {
     // Given: list of 3 SvodRowDto with known values
     // When: exportSvod(rows)
     // Then: open byte[] as XSSFWorkbook
-    //   - sheet name = "СВОД"
+    //   - sheet name = "Summary"
     //   - row count = 4 (1 header + 3 data)
-    //   - header row(0) cell(0) = "Название объекта"
+    //   - header row(0) cell(0) = "Object Name"
     //   - data row(1) cell for itogoChisloWithTravel matches ±0.001 (AC-09, PAC-03)
 }
 
@@ -1098,7 +1098,7 @@ cd backend && mvn test -Dtest=XlsxExportServiceTest -q
 git add backend/src/main/java/com/workload/service/XlsxExportService.java \
         backend/src/main/java/com/workload/controller/SvodController.java \
         backend/src/test/java/com/workload/service/XlsxExportServiceTest.java
-git commit -m "feat: add XLSX export for СВОД (AC-09, PAC-03)"
+git commit -m "feat: add XLSX export for Summary (AC-09, PAC-03)"
 ```
 
 ---
@@ -1147,7 +1147,7 @@ git push -u origin feature/poc-m02-backend
 
 | AC             | Where verified                                                                                               |
 | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| AC-02          | `CalculationServiceTest.pac01_*` — all СВОД values match ±0.001                                              |
+| AC-02          | `CalculationServiceTest.pac01_*` — all Summary values match ±0.001                                            |
 | AC-07          | M-01 already rejects direct `round_trip_min` writes; summaries are never directly writable (no PUT endpoint) |
 | AC-09          | `XlsxExportServiceTest.exportSvod_numericPrecision`                                                          |
 | AC-10 / PAC-05 | `SvodControllerIT` — response time assertion <3s                                                             |

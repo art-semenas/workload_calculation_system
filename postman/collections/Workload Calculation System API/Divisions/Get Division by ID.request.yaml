@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Division by ID
+order: 3000
+method: GET
+url: '{{baseUrl}}/api/v1/divisions/{{divisionId}}'

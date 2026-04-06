@@ -16,7 +16,7 @@
 
 **AC-02:** All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `ps_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `itogo_chislo_no_travel`, `itogo_chislo_with_travel`, `r1_per_visit_total`, `r2_per_visit_total`.
 
-**AC-07:** API ignores or rejects attempts to set `round_trip_min`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
+**AC-07:** API ignores or rejects attempts to set `roundTripMin`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
 
 **AC-09:** XLSX export of СВОД matches original template column structure and values within ±0.001.
 
@@ -71,7 +71,7 @@ From docs/impl/api-spec.md:
 - `GET /aggregations/divisions/:id` — single division detail (on-the-fly)
 - `GET /aggregations/branches` — all branches summary list (on-the-fly)
 - `GET /aggregations/branches/:id` — single branch detail (on-the-fly)
-- `GET /coverage/gaps` — list objects with zero assigned engineers (optional `?division_id=`)
+- `GET /coverage/gaps` — list objects with zero assigned engineers (optional `?divisionId=`)
 
 > **Stale-marking note (PoC S-02):** All write endpoints that change source data (`PUT /objects/:id/devices/:dtid`, `PUT /objects/:id/assignments/:aid`, `PUT /objects/:id/records`, `PUT /objects/:id/repairs/:rtid`, `PUT /objects/:id/travel`, `PUT /catalog/devices/:id/contexts/:cid`, `PUT /catalog/repairs/:id`) trigger synchronous recalculation of the affected object's summary in the same request thread. No `is_stale` column is written. `DELETE /objects/:id` cascade-deletes child rows then synchronously recalculates engineer summaries for affected engineers.
 

@@ -12,7 +12,7 @@
 
 **AC-19:** Repair counts entered in period H1 2025 must not appear in H2 2025 calculations. After switching the active period, `GET /objects/:id/repairs` returns 0 counts for repair types with no H2 2025 rows, even if H1 2025 rows exist for the same types.
 
-**AC-30:** `POST /admin/periods` creates a new period with `name`, `start_date`, `end_date`. `PUT /admin/periods/:id/activate` sets the period as active and deactivates the previously active period — verified by `GET /admin/periods/active` returning the newly activated period. Only one period can be active at a time.
+**AC-30:** `POST /admin/periods` creates a new period with `name`, `startDate`, `endDate`. `PUT /admin/periods/:id/activate` sets the period as active and deactivates the previously active period — verified by `GET /admin/periods/active` returning the newly activated period. Only one period can be active at a time.
 
 **AC-31:** After deactivating a period, `PUT /objects/:id/records` and `PUT /objects/:id/repairs/:rtid` targeting the deactivated period return HTTP 403 or 422 with a message indicating the period is read-only. Data for the deactivated period remains unchanged and accessible via `GET` endpoints.
 
@@ -67,7 +67,7 @@ From docs/impl/api-spec.md:
 ### Planning Periods (MVP only — M-07)
 
 - `GET /admin/periods` — list all planning periods. Admin only.
-- `POST /admin/periods` — create a new planning period. Request body: `{ name, start_date, end_date }`. Admin only.
+- `POST /admin/periods` — create a new planning period. Request body: `{ name, startDate, endDate }`. Admin only.
 - `GET /admin/periods/:id` — get period details. Admin only.
 - `PUT /admin/periods/:id/activate` — set a period as active; deactivates current active period. Admin only.
 - `GET /admin/periods/active` — get the currently active planning period.
@@ -79,12 +79,12 @@ From docs/impl/api-spec.md:
 - `PUT /objects/:id/repairs/:rtid` — same period scoping and enforcement.
 
 **Records and repairs read endpoints gain period filtering:**
-- `GET /objects/:id/records` — returns records for active period by default; `?period_id=` for historical.
+- `GET /objects/:id/records` — returns records for active period by default; `?periodId=` for historical.
 - `GET /objects/:id/repairs` — same.
 
 **СВОД and export endpoints gain period filtering:**
-- `GET /svod` — `?period_id=` param for historical СВОД.
-- `GET /svod/export/xlsx` — `?period_id=` param; defaults to active period.
+- `GET /svod` — `?periodId=` param for historical СВОД.
+- `GET /svod/export/xlsx` — `?periodId=` param; defaults to active period.
 
 **Import endpoint (`POST /import/data/confirm` from M-01):**
 - `records_tasks` and `object_repairs` upsert now uses `period_id = active_period.id`. Returns `422` if no active period.

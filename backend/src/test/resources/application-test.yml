@@ -11,6 +11,10 @@ spring:
 jwt:
   secret: test-secret-key-minimum-32-characters-long-for-hmac
 
+rate-limit:
+  unauthenticated-capacity: 10000
+  authenticated-capacity: 10000
+
 workload:
   config:
     planning-period-months: 6

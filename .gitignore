@@ -1,4 +1,68 @@
-.idea/
-backend/target/.env
-
+# ========================
+# Environment / Secrets
+# ========================
 .env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ========================
+# Java / Maven
+# ========================
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# ========================
+# Node / Frontend
+# ========================
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+
+# ========================
+# IDE
+# ========================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Sensitive data
+# ========================
+docs/Шаблон_нагрузки_з_v_4_00.xlsx
+
+# ========================
+# Docker (runtime)
+# ========================
+docker-compose.override.yml
+

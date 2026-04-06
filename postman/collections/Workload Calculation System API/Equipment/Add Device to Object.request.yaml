@@ -1,0 +1,23 @@
+$kind: http-request
+name: 06 Add Device to Object
+order: 2000
+method: POST
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/devices"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "deviceTypeId": "{{deviceTypeId}}",
+      "quantityPhysical": {{quantityPhysical}}
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const deviceTypeId = body?.data?.deviceTypeId || pm.collectionVariables.get('deviceTypeId');
+        - if (deviceTypeId) { pm.collectionVariables.set('deviceTypeId', deviceTypeId); }

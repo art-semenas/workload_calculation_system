@@ -1,0 +1,5 @@
+$kind: http-request
+name: 14 Delete Object Device
+order: 2000
+method: DELETE
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/devices/{{deviceTypeId}}"

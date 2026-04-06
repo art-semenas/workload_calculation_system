@@ -1979,8 +1979,8 @@ DELETE /branches/:id                  Delete branch — admin only (MVP); blocke
   "data": {
     "id": "uuid",
     "name": "Брест ЦО",
-    "division_id": "uuid",
-    "created_at": "2026-03-16T12:00:00Z"
+    "divisionId": "uuid",
+    "createdAt": "2026-03-16T12:00:00Z"
   },
   "meta": null,
   "error": null
@@ -1996,15 +1996,15 @@ HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": 
   "data": {
     "id": "uuid",
     "name": "Брест ЦО",
-    "division_id": "uuid",
-    "division_name": "Брестское областное управление №100",
+    "divisionId": "uuid",
+    "divisionName": "Брестское областное управление №100",
     "objects": {
       "data": [
         {
           "id": "uuid",
           "name": "ул. Московская 202Д",
-          "itogo_chislo_with_travel": 0.032327,
-          "engineer_count": 1
+          "itogoChisloWithTravel": 0.032327,
+          "engineerCount": 1
         }
       ],
       "meta": { "total": 20, "page": 1, "size": 50 }
@@ -2024,8 +2024,8 @@ Empty state: `objects.data` is `[]`, `objects.meta.total` is `0`.
   "data": {
     "id": "uuid",
     "name": "Новое название",
-    "division_id": "uuid",
-    "updated_at": "2026-03-16T12:05:00Z"
+    "divisionId": "uuid",
+    "updatedAt": "2026-03-16T12:05:00Z"
   },
   "meta": null,
   "error": null
@@ -2070,7 +2070,7 @@ GET    /objects/:id/summary            Get computed summary
 
 ```
 GET    /objects/:id/devices            List physical devices
-POST   /objects/:id/devices            Add device {device_type_id, quantity_physical}
+POST   /objects/:id/devices            Add device {deviceTypeId, quantityPhysical}
 PUT    /objects/:id/devices/:dtid      Update physical quantity
 DELETE /objects/:id/devices/:dtid      Remove (cascades system assignments)
 ```
@@ -2079,8 +2079,8 @@ DELETE /objects/:id/devices/:dtid      Remove (cascades system assignments)
 
 ```
 GET    /objects/:id/assignments              List all assignments
-POST   /objects/:id/assignments             Create {device_type_id, system_type, quantity_maintained}
-PUT    /objects/:id/assignments/:aid         Update quantity_maintained
+POST   /objects/:id/assignments             Create {deviceTypeId, systemType, quantityMaintained}
+PUT    /objects/:id/assignments/:aid         Update quantityMaintained
 DELETE /objects/:id/assignments/:aid         Remove assignment
 ```
 
@@ -2122,7 +2122,7 @@ PUT    /catalog/devices/:id            Update name/description
 DELETE /catalog/devices/:id            Delete (blocked if object_devices rows exist)
 
 GET    /catalog/devices/:id/contexts   List system contexts
-POST   /catalog/devices/:id/contexts   Add context {system_type, r1_minutes, r2_minutes}
+POST   /catalog/devices/:id/contexts   Add context {systemType, r1Minutes, r2Minutes}
 PUT    /catalog/devices/:id/contexts/:cid  Update r1/r2 (marks stale for affected objects — MVP; synchronous recalc — PoC)
 DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments; returns 409)
 ```
@@ -2131,7 +2131,7 @@ DELETE /catalog/devices/:id/contexts/:cid  Delete (blocked if active assignments
 
 ```
 GET    /catalog/repairs                List all repair types
-POST   /catalog/repairs                Create {name, time_minutes}
+POST   /catalog/repairs                Create {name, timeMinutes}
 PUT    /catalog/repairs/:id            Update (marks stale for affected objects — MVP; synchronous recalc — PoC)
 DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row with count > 0 references this type; returns 409)
 ```
@@ -2142,8 +2142,8 @@ DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row
 
 ```
 GET    /svod                           All summaries (paginated, filterable)
-GET    /svod/export/xlsx               Export to XLSX (active period by default; ?period_id= for historical)
-GET    /svod/export/pdf                Export to PDF (active period by default; ?period_id= for historical) — **Post-MVP — requires M-11 (S-08)**
+GET    /svod/export/xlsx               Export to XLSX (active period by default; ?periodId= for historical)
+GET    /svod/export/pdf                Export to PDF (active period by default; ?periodId= for historical) — **Post-MVP — requires M-11 (S-08)**
 ```
 
 #### App Configuration _(MVP only — requires M-10)_
@@ -2175,7 +2175,7 @@ All violations in a single save are reported together (not fail-fast per key). S
 ```json
 {
   "data": {
-    "updated_keys": [
+    "updatedKeys": [
       "REPAIR_TRAVEL_CAP",
       "REPAIR_TRAVEL_ZERO_THRESHOLD",
       "ENGINEER_WARNING_THRESHOLD"
@@ -2218,7 +2218,7 @@ All violations in a single save are reported together (not fail-fast per key). S
 
 ```
 GET    /admin/periods                  List all periods
-POST   /admin/periods                  Create period {name, start_date, end_date}
+POST   /admin/periods                  Create period {name, startDate, endDate}
 GET    /admin/periods/:id              Get period details
 PUT    /admin/periods/:id/activate     Set as active period (deactivates current active)
 GET    /admin/periods/active           Get the currently active period
@@ -2230,8 +2230,8 @@ GET    /admin/periods/active           Get the currently active period
 
 ```
 POST   /svod/recalculate               Trigger full recalculation of all stale summaries (admin only)
-POST   /svod/recalculate/:object_id    Trigger recalculation for one object (admin only)
-GET    /svod/recalculate/status        Check background job status {total_stale, processed, remaining}
+POST   /svod/recalculate/:objectId     Trigger recalculation for one object (admin only)
+GET    /svod/recalculate/status        Check background job status {totalStale, processed, remaining}
 ```
 
 #### Engineers
@@ -2240,12 +2240,12 @@ GET    /svod/recalculate/status        Check background job status {total_stale,
 GET    /engineers                         List all engineers (paginated, filterable); when caller role = 'engineer', returns exactly one row (the calling user's own record)
 POST   /engineers                         Create engineer (admin only)
 GET    /engineers/:id                     Get engineer with summary
-PUT    /engineers/:id                     Update name, capacity_fte, home_division (admin only)
+PUT    /engineers/:id                     Update name, capacityFte, homeDivision (admin only)
 DELETE /engineers/:id                     Deactivate (blocked if active assignments) (admin only)
 
 GET    /engineers/:id/summary             Get engineer_summaries row
 GET    /engineers/:id/objects             List all assigned objects with per-object shares
-POST   /engineers/:id/objects             Assign object {object_id} to this engineer
+POST   /engineers/:id/objects             Assign object {objectId} to this engineer
 DELETE /engineers/:id/objects/:oid        Remove object assignment
 ```
 
@@ -2257,15 +2257,15 @@ DELETE /engineers/:id/objects/:oid        Remove object assignment
 
 ```
 GET    /admin/users                    List all users (all roles; paginated; filterable by ?role=&is_active=)
-POST   /admin/users                    Create non-engineer user {name, email, role, division_id?} (admin only; for engineers use POST /engineers)
+POST   /admin/users                    Create non-engineer user {name, email, role, divisionId?} (admin only; for engineers use POST /engineers)
 GET    /admin/users/:id                Get user details
-PUT    /admin/users/:id                Update {name, email, role, division_id} (admin only)
+PUT    /admin/users/:id                Update {name, email, role, divisionId} (admin only)
 PUT    /admin/users/:id/activate       Set is_active=TRUE, requires_activation=FALSE (admin only; covers placeholder activation from M-01/§11.1)
 DELETE /admin/users/:id                Deactivate — sets is_active=FALSE (admin only; blocked with 409 if engineer has active object assignments)
 ```
 
 - **RBAC:** all endpoints are `admin` only.
-- **Role constraint:** `POST /admin/users` accepts `role` values `admin`, `editor`, `viewer`. To create an `engineer`, use `POST /engineers` (which sets the extra fields `capacity_fte` and `home_division_id`). Engineers appear in `GET /admin/users` results but their engineer-specific fields are managed via `/engineers/:id`.
+- **Role constraint:** `POST /admin/users` accepts `role` values `admin`, `editor`, `viewer`. To create an `engineer`, use `POST /engineers` (which sets the extra fields `capacityFte` and `homeDivisionId`). Engineers appear in `GET /admin/users` results but their engineer-specific fields are managed via `/engineers/:id`.
 - **Placeholder activation:** `PUT /admin/users/:id/activate` is the canonical surface for activating placeholder accounts created by bulk import (M-01). It sets `is_active = TRUE` and `requires_activation = FALSE`. The admin then provides or resets the password through the standard authentication flow.
 - **Error cases:**
   - `404 { "code": "USER_NOT_FOUND" }` — user does not exist.
@@ -2276,7 +2276,7 @@ DELETE /admin/users/:id                Deactivate — sets is_active=FALSE (admi
 
 ```
 GET    /objects/:id/engineers             List engineers assigned to this object
-POST   /objects/:id/engineers             Assign engineer {engineer_id} to this object
+POST   /objects/:id/engineers             Assign engineer {engineerId} to this object
 DELETE /objects/:id/engineers/:eid        Remove engineer assignment
 ```
 
@@ -2286,7 +2286,7 @@ DELETE /objects/:id/engineers/:eid        Remove engineer assignment
 
 ```
 GET    /coverage/gaps                     List all objects with zero assigned engineers
-GET    /coverage/gaps?division_id=:did    Filtered by division
+GET    /coverage/gaps?divisionId=:did    Filtered by division
 ```
 
 #### Aggregations (on-the-fly, no cache)
@@ -2343,26 +2343,26 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 
 ```jsonc
 {
-  "device_types": [{ "name": "...", "description": "..." }],
-  "device_system_contexts": [
+  "deviceTypes": [{ "name": "...", "description": "..." }],
+  "deviceSystemContexts": [
     {
-      "device_type_name": "...",
-      "system_type": "OS" | "PS" | "Video",
-      "r1_minutes": 0,
-      "r2_minutes": 0,
+      "deviceTypeName": "...",
+      "systemType": "OS" | "PS" | "Video",
+      "r1Minutes": 0,
+      "r2Minutes": 0,
     },
   ],
-  "repair_types": [{ "name": "...", "time_minutes": 0 }],
+  "repairTypes": [{ "name": "...", "timeMinutes": 0 }],
   "objects": [
     {
       "number": 1,
       "division": "...",
       "branch": "...",
       "name": "...",
-      "engineer_name": "Александр Н Соловей",
+      "engineerName": "Александр Н Соловей",
       "equipment": [
-        { "device": "<device_type_name>", "system_type": "OS", "quantity": 5 },
-        { "device": "<device_type_name>", "system_type": "PS", "quantity": 3 }
+        { "device": "<deviceTypeName>", "systemType": "OS", "quantity": 5 },
+        { "device": "<deviceTypeName>", "systemType": "PS", "quantity": 3 }
       ],
       "records": {
         "access": 0,
@@ -2371,8 +2371,8 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
         "backup": 0,
         "admin": 0,
       },
-      "repairs": { "<repair_type_name>": 2 },
-      "travel": { "one_way_time_min": 10 },
+      "repairs": { "<repairTypeName>": 2 },
+      "travel": { "oneWayTimeMin": 10 },
     },
   ],
 }
@@ -2385,14 +2385,14 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 3. For each entry in `objects`: create Division → Branch → Object (dedup divisions/branches by name).
 4. For each non-zero equipment entry:
    - Resolve `device_types` by name (create if not found, with warning).
-   - Resolve `device_system_contexts` for (device, system_type).
-   - **Upsert** `object_devices`: if no row exists for `(object_id, device_type_id)`, INSERT with `quantity_physical = quantity`. If a row already exists (device appears in multiple equipment entries with different `system_type` values), **skip** — retain the existing `quantity_physical`. The import treats the first occurrence's quantity as the physical quantity.
-   - Create `object_system_assignments` with `quantity_maintained = quantity`.
+   - Resolve `device_system_contexts` for (device, systemType).
+   - **Upsert** `object_devices`: if no row exists for `(object_id, device_type_id)`, INSERT with `quantityPhysical = quantity`. If a row already exists (device appears in multiple equipment entries with different `systemType` values), **skip** — retain the existing `quantityPhysical`. The import treats the first occurrence's quantity as the physical quantity.
+   - Create `object_system_assignments` with `quantityMaintained = quantity`.
 
-   > **Note:** After import, editors should review `quantity_physical` for devices assigned to multiple systems, as the physical quantity is taken from the first equipment entry for that device. This matches the post-import behaviour in §4.3: `quantity_physical = quantity_maintained` initially; editors adjust manually if needed.
+   > **Note:** After import, editors should review `quantityPhysical` for devices assigned to multiple systems, as the physical quantity is taken from the first equipment entry for that device. This matches the post-import behaviour in §4.3: `quantityPhysical = quantityMaintained` initially; editors adjust manually if needed.
 
-5. Populate `records_tasks` per object from the `records` map, using `period_id = active_period.id` (the period active at import time — see §11.2). If no period is active, this step is blocked and the import returns HTTP 422.
-6. Populate `object_repairs` per object from the `repairs` map, similarly using `period_id = active_period.id`. Only repair types with a non-zero count in the payload create rows; zero-count entries are skipped.
+5. Populate `records_tasks` per object from the `records` map, using `periodId = activePeriod.id` (the period active at import time — see §11.2). If no period is active, this step is blocked and the import returns HTTP 422.
+6. Populate `object_repairs` per object from the `repairs` map, similarly using `periodId = activePeriod.id`. Only repair types with a non-zero count in the payload create rows; zero-count entries are skipped.
 7. Populate `travel` per object from the `travel` map.
 8. Return validation report: objects created, warnings, skipped entries.
 9. Mark all imported object summaries stale. _(PoC: immediately run synchronous bulk recalculation inline; MVP: admin triggers recalculation via `POST /svod/recalculate`.)_
@@ -2402,18 +2402,18 @@ The import endpoint (`POST /import/data`) accepts a single JSON payload containi
 The import API uses a stateless two-call pattern:
 
 1. **`POST /import/data` — dry-run (no writes).** The server validates the entire payload and returns a preview report. No rows are written to the database. The preview report contains:
-   - `objects_valid` — count of object entries that would be created/updated.
+   - `objectsValid` — count of object entries that would be created/updated.
    - `warnings` — list of entries with non-fatal issues (e.g. unresolved engineer names that would generate placeholder accounts, device type names not found in catalog).
-   - `skipped` — count of entries rejected due to fatal validation errors (missing `number`, empty `division`, invalid `system_type`, etc.) with per-entry reasons.
-   - `estimated_placeholders` — count of engineer placeholder accounts that would be created.
+   - `skipped` — count of entries rejected due to fatal validation errors (missing `number`, empty `division`, invalid `systemType`, etc.) with per-entry reasons.
+   - `estimatedPlaceholders` — count of engineer placeholder accounts that would be created.
 
 2. **`POST /import/data/confirm` — execute (all writes).** The client re-submits the identical JSON payload. The server re-validates and executes processing steps 1–9 atomically. No server-side session or token links the two calls — the client is responsible for re-submitting the payload.
 
 > If the payload sent to `/confirm` differs from the payload sent to `/data`, the confirm call re-validates from scratch and may produce different results. There is no stale-check between the two calls.
 
-> After import, `quantity_physical = quantity_maintained` for all records. Editors adjust `quantity_physical` manually if needed.
+> After import, `quantityPhysical = quantityMaintained` for all records. Editors adjust `quantityPhysical` manually if needed.
 
-> **Engineer resolution:** The `engineer_name` field contains a plain name string. The import attempts to match each name to an existing `users` record by `users.name` (case-insensitive). If a match is found, the engineer is assigned to the object. If no match is found, a **placeholder engineer account** is created with `role = 'engineer'`, `is_active = FALSE`, and a flag `requires_activation = TRUE`. A post-import report lists all placeholder accounts created, prompting admins to set passwords and activate them. Objects with unresolved engineers are not left unassigned — the placeholder account serves as the assignment holder until activated.
+> **Engineer resolution:** The `engineerName` field contains a plain name string. The import attempts to match each name to an existing `users` record by `users.name` (case-insensitive). If a match is found, the engineer is assigned to the object. If no match is found, a **placeholder engineer account** is created with `role = 'engineer'`, `is_active = FALSE`, and a flag `requires_activation = TRUE`. A post-import report lists all placeholder accounts created, prompting admins to set passwords and activate them. Objects with unresolved engineers are not left unassigned — the placeholder account serves as the assignment holder until activated.
 
 > **Alternative: plain text list import.** Instead of a single JSON payload, the admin may upload separate newline-delimited text files (one entity type per file) via separate calls to `POST /import/data` with a `Content-Type: text/plain` header and a `?entity=objects|devices|repairs|travel|engineers` query parameter. The server parses each file as a simple delimited list (tab or semicolon). This is provided for convenience when JSON generation is impractical.
 
@@ -2422,9 +2422,9 @@ The import API uses a stateless two-call pattern:
 - Each object entry must have a unique `number`.
 - `division`, `branch`, `name` must not be empty.
 - Equipment quantities must be non-negative; zero or missing values do not create assignment rows.
-- If a `device_type_name` doesn't match any `device_types` record: create a new device type, log a warning.
-- If R1/R2 for a (device, system_type) pair already exists in DB and differs from the import payload: keep DB value, log a warning.
-- **`system_type` accepted values:** `"OS"`, `"PS"`, `"Video"` (case-sensitive). Any other value — including Cyrillic aliases such as `"ОС"`, `"ПС"`, `"Видео"` — is rejected with HTTP 422 code `INVALID_SYSTEM_TYPE`. No aliasing or normalization is performed. The import producer must emit the canonical English values.
+- If a `deviceTypeName` doesn't match any `device_types` record: create a new device type, log a warning.
+- If R1/R2 for a (`deviceTypeName`, `systemType`) pair already exists in DB and differs from the import payload: keep DB value, log a warning.
+- **`systemType` accepted values:** `"OS"`, `"PS"`, `"Video"` (case-sensitive). Any other value — including Cyrillic aliases such as `"ОС"`, `"ПС"`, `"Видео"` — is rejected with HTTP 422 code `INVALID_SYSTEM_TYPE`. No aliasing or normalization is performed. The import producer must emit the canonical English values.
 - Engineer name matching is case-insensitive and trims whitespace. Partial matches (e.g. "А. Соловей" vs "Александр Соловей") are not attempted — only exact full-name matches. Non-matching names create placeholder accounts.
 - Import assigns all repairs and records to the **active period** at the time of import. If no period is active, import is blocked until an admin activates a period.
 
@@ -2680,15 +2680,15 @@ All computed СВОД values match source XLSX "Расчет" sheet values withi
 
 ### AC-03: Dynamic Normative Editability _(MVP — requires M-04 and M-06)_
 
-After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`.
+After an admin updates `r1Minutes` or `r2Minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`.
 
 ### AC-04: New Device Type Usable Without Code Changes
 
-Admin creates a device type, adds a system context (R1/R2), assigns it to an object, sets `quantity_maintained`. СВОД recalculates correctly. No code deployment required.
+Admin creates a device type, adds a system context (R1/R2), assigns it to an object, sets `quantityMaintained`. СВОД recalculates correctly. No code deployment required.
 
 ### AC-05: System Context Restriction Enforced
 
-UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row for the device. API rejects `POST /objects/:id/assignments` where (device_type_id, system_type) has no context row — returns HTTP 422 with code `NO_CONTEXT_FOR_SYSTEM`.
+UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row for the device. API rejects `POST /objects/:id/assignments` where (`deviceTypeId`, `systemType`) has no context row — returns HTTP 422 with code `NO_CONTEXT_FOR_SYSTEM`.
 
 ### AC-06: Context Deletion Blocked When In Use
 
@@ -2696,7 +2696,7 @@ UI "Assign to system" dropdown shows only system types with a valid `device_syst
 
 ### AC-07: Computed Fields Are Read-Only
 
-API ignores or rejects attempts to set `round_trip_min`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
+API ignores or rejects attempts to set `roundTripMin`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
 
 > **PoC note:** `total_repairs` is computed in-memory during PoC calculation and is **not** stored in the PoC `summaries` schema (§15.4) — there is no field to protect. In MVP, when `total_repairs` is added as a persisted column in `summaries`, it must also become a read-only field (computed output, not an input).
 
@@ -2716,11 +2716,11 @@ XLSX export of СВОД matches original template column structure and values wi
 
 ### AC-11: Workflow Enforcement — Assign Before Physical Inventory Is Blocked
 
-Attempting to `POST /objects/:id/assignments` for a device_type_id that has no corresponding `object_devices` row at that object returns HTTP 422 with code `DEVICE_NOT_IN_INVENTORY`.
+Attempting to `POST /objects/:id/assignments` for a `deviceTypeId` that has no corresponding `object_devices` row at that object returns HTTP 422 with code `DEVICE_NOT_IN_INVENTORY`.
 
 ### AC-12: Shared Device Multi-System Calculation Is Correct
 
-An object with one Galaxy 512 (контроллер АСПС и СО) assigned to both `OS` and `PS` with `quantity_maintained = 1` each produces:
+An object with one Galaxy 512 (контроллер АСПС и СО) assigned to both `OS` and `PS` with `quantityMaintained = 1` each produces:
 
 - `os_r1_per_visit` containing the 15 min contribution from this device
 - `ps_r1_per_visit` containing the 15 min contribution from the same device
@@ -2733,7 +2733,7 @@ In the Equipment tab, for a device that has `device_system_contexts` only for `O
 
 - "Assign to system" dropdown shows only "OS"
 - `PS` and `Video` are not present in the dropdown (not hidden/disabled — absent)
-- Attempting `POST /objects/:id/assignments` with `system_type: "PS"` returns HTTP 422 `NO_CONTEXT_FOR_SYSTEM`
+- Attempting `POST /objects/:id/assignments` with `systemType: "PS"` returns HTTP 422 `NO_CONTEXT_FOR_SYSTEM`
 
 ### AC-14: Engineer Workload Equals Sum of Object Shares
 
@@ -2745,11 +2745,11 @@ The sum of `total_load` across all engineers assigned to a given object must equ
 
 ### AC-16: Capacity and Status Logic
 
-Given engineer with `capacity_fte = 0.8` and `total_load = 0.76`:
+Given engineer with `capacityFte = 0.8` and `total_load = 0.76`:
 
-- `load_ratio = 0.76 / 0.8 = 0.95`
+- `loadRatio = 0.76 / 0.8 = 0.95`
 - With `ENGINEER_WARNING_THRESHOLD = 0.9`: status must be "warning"
-  Given `total_load = 0.84`: `load_ratio = 1.05` → status must be "overloaded"
+  Given `total_load = 0.84`: `loadRatio = 1.05` → status must be "overloaded"
 
 ### AC-17: Assignment Change Marks All Co-Engineers Stale _(MVP — requires M-06)_
 
@@ -2757,7 +2757,7 @@ When a third engineer is added to an object that previously had two, all three e
 
 ### AC-18: Coverage Gap Reporting
 
-`GET /coverage/gaps?division_id=X` returns all objects in division X that have zero rows in `object_engineers`. Verified against manual count from the object list.
+`GET /coverage/gaps?divisionId=X` returns all objects in division X that have zero rows in `object_engineers`. Verified against manual count from the object list.
 
 ### AC-19: Period Data Isolation
 
@@ -2812,11 +2812,11 @@ All 19 `app_config` keys must be present in the seed migration and must satisfy 
 
 ### AC-24: Object CRUD Lifecycle (FR-01)
 
-Creating an object via `POST /objects` with valid `branch_id`, `name`, and `address` returns HTTP 201 and the object appears in `GET /objects` filtered by the parent division. Updating the object name via `PUT /objects/:id` persists the change. `DELETE /objects/:id` removes the object and all child rows (devices, assignments, records, repairs, travel, summaries) — `GET /objects/:id` returns HTTP 404 after deletion.
+Creating an object via `POST /objects` with valid `branchId`, `name`, and `address` returns HTTP 201 and the object appears in `GET /objects` filtered by the parent division. Updating the object name via `PUT /objects/:id` persists the change. `DELETE /objects/:id` removes the object and all child rows (devices, assignments, records, repairs, travel, summaries) — `GET /objects/:id` returns HTTP 404 after deletion.
 
 ### AC-25: Object Hierarchy Enforcement (FR-01)
 
-`POST /objects` with an invalid `branch_id` (non-existent or belonging to a different division) returns HTTP 422. Every object belongs to exactly one branch, and every branch belongs to exactly one division. `GET /objects?division_id=X` returns only objects whose branch belongs to division X.
+`POST /objects` with an invalid `branchId` (non-existent or belonging to a different division) returns HTTP 422. Every object belongs to exactly one branch, and every branch belongs to exactly one division. `GET /objects?divisionId=X` returns only objects whose branch belongs to division X.
 
 ### AC-26: Records Task Data Entry and Persistence (FR-04)
 
@@ -2824,7 +2824,7 @@ Creating an object via `POST /objects` with valid `branch_id`, `name`, and `addr
 
 ### AC-27: Travel Data Entry and Round-Trip Calculation (FR-06)
 
-`PUT /objects/:id/travel` with `transport_type`, `distance_km`, and `one_way_minutes` persists all three fields. `GET /objects/:id/travel` returns the saved values plus `round_trip_min = one_way_minutes × 2` (auto-calculated, never user-editable). Attempting to set `round_trip_min` directly via the API is ignored or returns HTTP 422.
+`PUT /objects/:id/travel` with `transportType`, `distanceKm`, and `oneWayMinutes` persists all three fields. `GET /objects/:id/travel` returns the saved values plus `roundTripMin = oneWayMinutes × 2` (auto-calculated, never user-editable). Attempting to set `roundTripMin` directly via the API is ignored or returns HTTP 422.
 
 ### AC-28: PDF Export Fidelity _(MVP — requires M-11)_
 
@@ -3380,16 +3380,16 @@ Response shape for division:
 
 ```json
 {
-  "division_id": "...",
-  "division_name": "Брестское областное управление №100",
-  "object_count": 312,
-  "required_fte": 4.2831,
-  "staffing_need": 4.3,
-  "uncovered_load": 0.124,
-  "coverage_gap_count": 8,
-  "engineers_total": 4,
-  "engineers_overloaded": 1,
-  "engineers_warning": 0,
+  "divisionId": "...",
+  "divisionName": "Брестское областное управление №100",
+  "objectCount": 312,
+  "requiredFte": 4.2831,
+  "staffingNeed": 4.3,
+  "uncoveredLoad": 0.124,
+  "coverageGapCount": 8,
+  "engineersTotal": 4,
+  "engineersOverloaded": 1,
+  "engineersWarning": 0,
   "breakdown": {
     "os": 1.121,
     "ps": 0.983,
@@ -4052,13 +4052,13 @@ Storage: passwords are stored as `bcrypt` hashes with a minimum cost factor of 1
   "sub": "user-uuid",
   "email": "engineer@bank.by",
   "role": "engineer",
-  "division_id": "uuid-or-null",
+  "divisionId": "uuid-or-null",
   "iat": 1700000000,
   "exp": 1700000900
 }
 ```
 
-`division_id` is the editor's scoped division. `null` for admins (all divisions). For engineers, the `role` claim is used to gate write access in Spring Security method security annotations.
+`divisionId` is the editor's scoped division. `null` for admins (all divisions). For engineers, the `role` claim is used to gate write access in Spring Security method security annotations.
 
 #### Token Signing
 

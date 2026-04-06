@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Object
+order: 4000
+method: PUT
+url: '{{baseUrl}}/api/v1/objects/{{objectId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Object Name",
+      "importSeqNo": 1
+    }

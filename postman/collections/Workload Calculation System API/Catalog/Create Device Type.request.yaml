@@ -1,0 +1,24 @@
+$kind: http-request
+name: Create Device Type
+order: 5000
+method: POST
+url: "{{baseUrl}}/api/v1/catalog/devices"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{catalogDeviceName}}",
+      "description": "{{catalogDeviceDescription}}"
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const deviceTypeId = body?.data?.id;
+        - pm.test('catalog device type id captured', () => pm.expect(deviceTypeId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('catalogDeviceTypeId', deviceTypeId);

@@ -1,0 +1,14 @@
+$kind: http-request
+name: 05 Get All Device Types
+order: 1000
+method: GET
+url: "{{baseUrl}}/api/v1/catalog/devices"
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const firstDeviceTypeId = body?.data?.[0]?.id;
+        - pm.test('device type seed available', () => pm.expect(firstDeviceTypeId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('deviceTypeId', firstDeviceTypeId);

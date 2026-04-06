@@ -226,7 +226,7 @@
   ## Seed Data
 
   ### Device Types & Contexts
-  [Copy the seed tables from §4.2: ОС contexts, ПС contexts, Видео contexts]
+  [Copy the seed tables from §4.2: Security contexts, Fire contexts, Video contexts]
 
   ### Repair Types
   [Copy the repair types table from §4.5]
@@ -272,9 +272,9 @@
 
   Note:
   - The 5-stage calculation pipeline (§6.1)
-  - Per-system ТО formulas for ОС, ПС, Видео (§6.2–§6.4)
+  - Per-system maintenance formulas for Security, Fire, Video (§6.2–§6.4)
   - Records formula — `records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]` (§6.5)
-  - The repair count formula: К-во ремонтов = COUNT(distinct repair types with count > 0), NOT sum (§6.6)
+  - The repair count formula: Repair Count = COUNT(distinct repair types with count > 0), NOT sum (§6.6)
   - The 3-tier threshold formula for repair_travel and repair_pzv (§6.6)
 
 - [ ] **Step 2: Read §6 second half (itogo, engineer load, config keys, cache)**
@@ -286,7 +286,7 @@
   Note:
   - `itogo_chislo` and `itogo_chislo_with_travel` formulas (§6.8)
   - Zero-guard rule: itogo = 0 when all work components are zero (§6.8)
-  - ПЗВ formula (§6.9) — fixed 20 min per visit
+  - PZV formula (§6.9) — fixed 20 min per visit
   - Cache invalidation rules table (§6.10) — which writes mark which summaries stale
   - Full `app_config` keys table (§6.11) — all 19 keys with types and defaults
   - Config validation rules (§6.11.1) — per-key and cross-key constraints
@@ -316,16 +316,16 @@
 
   [Copy §6.1 pipeline stages verbatim — the 5-stage ordered list]
 
-  ## Per-System ТО Formulas
+  ## Per-System Maintenance Formulas
 
-  ### ОС (Security Alarm)
+  ### Security (Security Alarm)
   [Copy §6.2 formula: monthly_os = SUM(quantity_maintained × r1_minutes × freq_r1
    + quantity_maintained × r2_minutes × freq_r2) / WORKING_MINUTES_PER_MONTH]
 
-  ### ПС (Fire Alarm)
+  ### Fire (Fire Alarm)
   [Copy §6.3 formula]
 
-  ### Видео (Video)
+  ### Video (Video)
   [Copy §6.4 formula]
 
   ## Records Formula (§6.5)
@@ -337,13 +337,13 @@
 
   ## Repair Formulas (§6.6)
 
-  ### К-во ремонтов (Repair Count)
+  ### Repair Count
 
-  **CRITICAL:** К-во ремонтов = COUNT of distinct repair types where count > 0
+  **CRITICAL:** Repair Count = COUNT of distinct repair types where count > 0
   for the current period. This is NOT the sum of repair quantities.
 
-  Example: "Замена аккумулятора ОС × 3" and "Замена извещателя × 5"
-  → К-во ремонтов = 2 (two distinct types), NOT 8
+  Example: "Security battery replacement × 3" and "Detector replacement × 5"
+  → Repair Count = 2 (two distinct types), NOT 8
 
   ### Repair Time Formula
   [Copy the repair_time formula: SUM(count × time_minutes) for all repair types]
@@ -351,21 +351,21 @@
   ### 3-Tier Threshold Formula for repair_travel and repair_pzv
 
   [Copy the exact threshold formula from §6.6 verbatim:
-   if К-во ремонтов ≤ 5  → 0
-   if К-во ремонтов ≤ 10 → К-во ремонтов × rate
-   if К-во ремонтов > 10 → 10 × rate
+   if Repair Count ≤ 5  → 0
+   if Repair Count ≤ 10 → Repair Count × rate
+   if Repair Count > 10 → 10 × rate
    where rate comes from config keys REPAIR_TRAVEL_RATE / REPAIR_PZV_RATE]
 
-  ## ПЗВ Formula (§6.9)
+  ## PZV Formula (§6.9)
 
   [Copy §6.9 verbatim: fixed 20 min per visit, how it enters the itogo formula]
 
-  ## ИТОГО Formulas (§6.8)
+  ## TOTAL Formulas (§6.8)
 
-  itogo_chislo (без дороги) = [formula]
+  itogo_chislo (without travel) = [formula]
   itogo_chislo_with_travel  = [formula]
 
-  **Zero-guard rule:** If all work components (ТО + records + repair_time) sum to
+  **Zero-guard rule:** If all work components (maintenance + records + repair_time) sum to
   zero, itogo_chislo = 0 and itogo_chislo_with_travel = 0. This prevents phantom
   PZV/travel FTE on objects with no equipment assigned.
 
@@ -417,7 +417,7 @@
 - [ ] **Step 5: Verify completeness**
 
   ```
-  Grep "К-во ремонтов" in docs/impl/calculation-engine.md → ≥2 hits
+  Grep "Repair Count" in docs/impl/calculation-engine.md → ≥2 hits
   Grep "Zero-guard" OR "zero guard" in docs/impl/calculation-engine.md → ≥1 hit
   Grep "PLANNING_PERIOD_MONTHS" in docs/impl/calculation-engine.md → ≥1 hit
   Grep "3-[Tt]ier" OR "≤ 5" in docs/impl/calculation-engine.md → ≥1 hit
@@ -551,10 +551,10 @@
 
   Note:
   - §7.1 route list
-  - §7.2 СВОД tab description and its columns
+  - §7.2 Summary tab description and its columns
   - §7.3 stale indicator — canonical wording
   - §7.6 engineer summary stale banner wording
-  - §7.9 СВОД column 5 source (must be JOIN, not field)
+  - §7.9 Summary column 5 source (must be JOIN, not field)
   - §7.10 canonical two-state rule for is_stale
 
 - [ ] **Step 2: Read §12 Roles & Permissions**
@@ -581,11 +581,11 @@
 
   | `is_stale` value | Display text |
   |-----------------|--------------|
-  | `'TRUE'`        | "Данные устарели — нажмите Пересчитать" |
-  | `'PROCESSING'`  | "Пересчитывается..." |
+  | `'TRUE'`        | "Data is stale — click Recalculate" |
+  | `'PROCESSING'`  | "Recalculating..." |
 
   This wording applies to ALL three locations: §7.6 (engineer summary),
-  §7.9 (СВОД object row), §7.10 (object detail header).
+  §7.9 (Summary object row), §7.10 (object detail header).
 
   **PoC:** No stale banners. PoC recalculates synchronously on save — `is_stale`
   is never written. Stale UI is MVP-only (S-02).
@@ -598,9 +598,9 @@
 
   Copy all §7.x subsections verbatim.
 
-  ## СВОД Table Columns
+  ## Summary Table Columns
 
-  [Copy the СВОД column definition table verbatim from §7.2/§7.9.
+  [Copy the Summary column definition table verbatim from §7.2/§7.9.
    Column 5 source must read: engineer names via object_engineers → users.name JOIN
    (NOT a responsible_engineer field on the objects table — that field does not exist)]
 
@@ -629,8 +629,8 @@
 - [ ] **Step 4: Verify completeness**
 
   ```
-  Grep "Данные устарели" in docs/impl/ui-spec.md → exactly 1 hit
-  Grep "Пересчитывается" in docs/impl/ui-spec.md → exactly 1 hit
+  Grep "Data is stale" in docs/impl/ui-spec.md → exactly 1 hit
+  Grep "Recalculating..." in docs/impl/ui-spec.md → exactly 1 hit
   Grep "responsible_engineer" in docs/impl/ui-spec.md → 0 hits
     (this field must NOT appear — it doesn't exist, engineers are via JOIN)
   Grep "home_division_id" in docs/impl/ui-spec.md → ≥1 hit (editor scoping note)
@@ -732,7 +732,7 @@
 
   For each file, use the same template as Step 3, substituting the correct milestone data:
 
-  **`poc-m02-calculation.md`** — FR-07 СВОД, §6 formulas, summaries table writes, PoC synchronous recalc
+  **`poc-m02-calculation.md`** — FR-07 Summary, §6 formulas, summaries table writes, PoC synchronous recalc
   **`poc-m03-import.md`** — §11.1 two-step JSON import flow, FR-01 bulk import, object_devices upsert rule (§2.21 changelog — duplicate device entries skip after first)
   **`mvp-m04-auth.md`** — §21 JWT, RBAC from §12, users table MVP columns (is_active, failed_login_count, locked_until), JWT refresh token
   **`mvp-m05-engineers.md`** — FR-10 engineer management, FR-11 object-engineer assignments, §6.12–§6.14 engineer load formulas, engineer_summaries
@@ -762,10 +762,10 @@ Run after all tasks are complete:
 
 - [ ] **poc-scope.md** contains all S-xx items and all M-xx milestones
 - [ ] **db-schema.md** has the PoC schema section distinct from the MVP section; MVP-only columns are annotated
-- [ ] **calculation-engine.md** has the К-во ремонтов COUNT clarification (not SUM), the zero-guard rule, and the 3-tier repair threshold
+- [ ] **calculation-engine.md** has the Repair Count COUNT clarification (not SUM), the zero-guard rule, and the 3-tier repair threshold
 - [ ] **api-spec.md** has `PUT /admin/config` as batch (not `PUT /admin/config/:key`)
 - [ ] **ui-spec.md** does NOT contain `responsible_engineer` as a field on the objects table
-- [ ] **ui-spec.md** has the canonical stale wording: `TRUE` → "Данные устарели — нажмите Пересчитать"
+- [ ] **ui-spec.md** has the canonical stale wording: `TRUE` → "Data is stale — click Recalculate"
 - [ ] Every epic file has an "Out of Scope" section
 - [ ] No extracted document introduces new requirements or changes existing ones — all content traces back to a TOR section
 

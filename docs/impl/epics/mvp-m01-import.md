@@ -47,10 +47,10 @@ All PoC tables are prerequisites (already created in PoC baseline). Import write
 From docs/impl/api-spec.md (§11.1 Import Endpoints):
 
 - `POST /import/data` — dry-run (no writes). Validates entire payload, returns preview report:
-  - `objects_valid` — count of object entries that would be created/updated
+  - `objectsValid` — count of object entries that would be created/updated
   - `warnings` — non-fatal issues (unresolved engineer names → placeholder accounts, unknown device types)
   - `skipped` — entries rejected due to fatal validation errors with per-entry reasons
-  - `estimated_placeholders` — count of placeholder engineer accounts that would be created
+  - `estimatedPlaceholders` — count of placeholder engineer accounts that would be created
 - `POST /import/data/confirm` — execute (all writes). Client re-submits identical payload. Server re-validates and executes all processing steps atomically. No server-side session links the two calls.
 
 > **Stateless design:** If the payload sent to `/confirm` differs from `/data`, the confirm call re-validates from scratch. There is no stale-check between calls.
@@ -63,24 +63,24 @@ From docs/impl/api-spec.md (§11.1 Import Endpoints):
 
 ```jsonc
 {
-  "device_types": [{ "name": "...", "description": "..." }],
-  "device_system_contexts": [
-    { "device_type_name": "...", "system_type": "OS"|"PS"|"Video", "r1_minutes": 0, "r2_minutes": 0 }
+  "deviceTypes": [{ "name": "...", "description": "..." }],
+  "deviceSystemContexts": [
+    { "deviceTypeName": "...", "systemType": "OS"|"PS"|"Video", "r1Minutes": 0, "r2Minutes": 0 }
   ],
-  "repair_types": [{ "name": "...", "time_minutes": 0 }],
+  "repairTypes": [{ "name": "...", "timeMinutes": 0 }],
   "objects": [
     {
       "number": 1,
       "division": "...",
       "branch": "...",
       "name": "...",
-      "engineer_name": "Александр Н Соловей",
+      "engineerName": "Александр Н Соловей",
       "equipment": [
-        { "device": "<device_type_name>", "system_type": "OS", "quantity": 5 }
+        { "device": "<deviceTypeName>", "systemType": "OS", "quantity": 5 }
       ],
       "records": { "access": 0, "monitoring": 0, "footage": 0, "backup": 0, "admin": 0 },
-      "repairs": { "<repair_type_name>": 2 },
-      "travel": { "one_way_time_min": 10 }
+      "repairs": { "<repairTypeName>": 2 },
+      "travel": { "oneWayTimeMin": 10 }
     }
   ]
 }

@@ -1,0 +1,18 @@
+$kind: http-request
+name: 09 Update Object Records
+order: 2000
+method: PUT
+url: "{{baseUrl}}/api/v1/objects/{{objectId}}/records"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "accessRequests": {{recordsAccessRequests}},
+      "monitoringRequests": {{recordsMonitoringRequests}},
+      "footageRequests": {{recordsFootageRequests}},
+      "backupControl": {{recordsBackupControl}},
+      "securityAdmin": {{recordsSecurityAdmin}}
+    }

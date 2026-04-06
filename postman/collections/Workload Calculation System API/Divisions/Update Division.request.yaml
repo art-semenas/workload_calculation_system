@@ -1,0 +1,14 @@
+$kind: http-request
+name: Update Division
+order: 4000
+method: PUT
+url: '{{baseUrl}}/api/v1/divisions/{{divisionId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Division Name"
+    }

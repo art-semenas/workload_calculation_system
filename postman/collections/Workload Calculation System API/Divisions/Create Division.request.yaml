@@ -1,0 +1,26 @@
+$kind: http-request
+name: 02 Create Division
+order: 2000
+method: POST
+url: "{{baseUrl}}/api/v1/divisions"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{divisionName}}"
+    }
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const divisionId = body?.data?.id;
+        - pm.test('division id captured', () => pm.expect(divisionId).to.be.a('string').and.not.empty);
+        - pm.collectionVariables.set('divisionId', divisionId);
+        - pm.collectionVariables.unset('branchId');
+        - pm.collectionVariables.unset('objectId');
+        - pm.collectionVariables.unset('assignmentId');

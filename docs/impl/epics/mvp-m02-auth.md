@@ -39,7 +39,7 @@ From docs/impl/api-spec.md:
 - `GET /admin/users` — list all users of all roles (paginated; filterable by `?role=&is_active=`). Admin only.
 - `POST /admin/users` — create a non-engineer user (admin/editor/viewer roles). Admin only. To create an engineer, use `POST /engineers`. Returns `422 INVALID_ROLE_FOR_ENDPOINT` if role=engineer.
 - `GET /admin/users/:id` — get user details. Admin only.
-- `PUT /admin/users/:id` — update user fields (name, email, role, division_id). Admin only.
+- `PUT /admin/users/:id` — update user fields (name, email, role, divisionId). Admin only.
 - `PUT /admin/users/:id/activate` — activate placeholder account (sets `is_active = TRUE`, `requires_activation = FALSE`). Admin only.
 - `DELETE /admin/users/:id` — deactivate user (sets `is_active = FALSE`). Admin only. Blocked if engineer has active object assignments (`409 ENGINEER_HAS_ACTIVE_ASSIGNMENTS`).
 

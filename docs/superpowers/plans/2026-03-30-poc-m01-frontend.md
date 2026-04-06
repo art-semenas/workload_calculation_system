@@ -178,18 +178,18 @@ describe("Zod schemas", () => {
 
   it("TravelUpdateSchema rejects negative distance", () => {
     const result = TravelUpdateSchema.safeParse({
-      transport_type: "car",
-      distance_km: -1,
-      one_way_time_min: 10,
+      transportType: "car",
+      distanceKm: -1,
+      oneWayTimeMin: 10,
     });
     expect(result.success).toBe(false);
   });
 
   it("TravelUpdateSchema accepts valid input", () => {
     const result = TravelUpdateSchema.safeParse({
-      transport_type: "car",
-      distance_km: 15.5,
-      one_way_time_min: 20,
+      transportType: "car",
+      distanceKm: 15.5,
+      oneWayTimeMin: 20,
     });
     expect(result.success).toBe(true);
   });
@@ -217,44 +217,44 @@ Create each type file. All types must match the API response shapes from `docs/i
 
 **`src/types/division.ts`** — Types and schemas:
 
-- `Division` — `{ id: string, name: string, branch_count: number, object_count: number, created_at?: string, updated_at?: string }`.
+- `Division` — `{ id: string, name: string, branchCount: number, objectCount: number, createdAt?: string, updatedAt?: string }`.
 - `DivisionDetail` — extends Division with `branches: Branch[]`.
-- `Branch` — `{ id: string, name: string, division_id: string, division_name?: string, object_count: number, created_at?: string, updated_at?: string }`.
+- `Branch` — `{ id: string, name: string, divisionId: string, divisionName?: string, objectCount: number, createdAt?: string, updatedAt?: string }`.
 - `BranchDetail` — extends Branch with `objects: { data: BranchObjectRow[], meta: { total: number, page: number, size: number } }`.
-- `BranchObjectRow` — `{ id: string, name: string, itogo_chislo_with_travel: number | null, engineer_count: number }`.
+- `BranchObjectRow` — `{ id: string, name: string, itogoChisloWithTravel: number | null, engineerCount: number }`.
 - Export `DivisionCreateSchema` (`name` min 1), `BranchCreateSchema` (`name` min 1).
 
 **`src/types/object.ts`** — Types and schemas:
 
-- `ObjectRecord` — `{ id: string, name: string, branch_id: string, branch_name?: string, division_name?: string, address?: string, import_seq_no?: number, created_at?: string, updated_at?: string }`.
-- Export `ObjectCreateSchema` (`name` min 1, `branch_id` uuid string), `ObjectUpdateSchema`.
+- `ObjectRecord` — `{ id: string, name: string, branchId: string, branchName?: string, divisionName?: string, address?: string, importSeqNo?: number, createdAt?: string, updatedAt?: string }`.
+- Export `ObjectCreateSchema` (`name` min 1, `branchId` uuid string), `ObjectUpdateSchema`.
 
 **`src/types/equipment.ts`** — Types and schemas:
 
-- `ObjectDevice` — `{ id: string, object_id: string, device_type_id: string, device_type_name: string, quantity_physical: number }` (`quantity_maintained` is only on `object_system_assignments`, not `object_devices` — see db-schema.md).
-- `ObjectSystemAssignment` — `{ id: string, object_id: string, device_type_id: string, device_type_name: string, system_type: 'OS' | 'PS' | 'VIDEO', quantity_maintained: number, r1_minutes: number, r2_minutes: number }`.
-- Export `DeviceAddSchema` (`device_type_id` required, `quantity_physical` ≥ 1 integer), `AssignmentCreateSchema` (`device_type_id` required, `system_type` enum, `quantity_maintained` ≥ 0 integer), `AssignmentUpdateSchema` (`quantity_maintained` ≥ 0 integer).
+- `ObjectDevice` — `{ id: string, objectId: string, deviceTypeId: string, deviceTypeName: string, quantityPhysical: number }` (`quantityMaintained` is only on `object_system_assignments`, not `object_devices` — see db-schema.md).
+- `ObjectSystemAssignment` — `{ id: string, objectId: string, deviceTypeId: string, deviceTypeName: string, systemType: 'OS' | 'PS' | 'VIDEO', quantityMaintained: number, r1Minutes: number, r2Minutes: number }`.
+- Export `DeviceAddSchema` (`deviceTypeId` required, `quantityPhysical` ≥ 1 integer), `AssignmentCreateSchema` (`deviceTypeId` required, `systemType` enum, `quantityMaintained` ≥ 0 integer), `AssignmentUpdateSchema` (`quantityMaintained` ≥ 0 integer).
 
 **`src/types/records.ts`** — Types and schemas:
 
-- `RecordsTask` — `{ id?: string, object_id: string, access_requests: number, monitoring_requests: number, footage_requests: number, backup_control: number, security_admin: number }` (field names match db-schema.md `records_tasks` columns).
+- `RecordsTask` — `{ id?: string, objectId: string, accessRequests: number, monitoringRequests: number, footageRequests: number, backupControl: number, securityAdmin: number }` (field names match db-schema.md `records_tasks` columns).
 - Export `RecordsUpdateSchema` (all 5 fields ≥ 0 integers).
 
 **`src/types/repairs.ts`** — Types and schemas:
 
-- `ObjectRepair` — `{ id: string, object_id: string, repair_type_id: string, repair_type_name: string, count: number }`.
+- `ObjectRepair` — `{ id: string, objectId: string, repairTypeId: string, repairTypeName: string, count: number }`.
 - Export `RepairUpdateSchema` (`count` ≥ 0 integer).
 
 **`src/types/travel.ts`** — Types and schemas:
 
-- `Travel` — `{ id?: string, object_id: string, transport_type: string, distance_km: number, one_way_time_min: number, round_trip_min: number }` (field name `one_way_time_min` matches db-schema.md column).
-- Export `TravelUpdateSchema` (`transport_type` min 1, `distance_km` ≥ 0 number, `one_way_time_min` ≥ 0 number). Note: `round_trip_min` is never in the form — it is read-only from the API.
+- `Travel` — `{ id?: string, objectId: string, transportType: string, distanceKm: number, oneWayTimeMin: number, roundTripMin: number }` (field name `oneWayTimeMin` matches db-schema.md column).
+- Export `TravelUpdateSchema` (`transportType` min 1, `distanceKm` ≥ 0 number, `oneWayTimeMin` ≥ 0 number). Note: `roundTripMin` is never in the form — it is read-only from the API.
 
 **`src/types/catalog.ts`** — Types only (no forms — catalog is read-only in PoC per S-03):
 
 - `DeviceType` — `{ id: string, name: string, description?: string }` (db-schema.md: `device_types` has `description TEXT`, no manufacturer/model columns).
-- `DeviceSystemContext` — `{ id: string, device_type_id: string, system_type: 'OS' | 'PS' | 'VIDEO', r1_minutes: number, r2_minutes: number }`.
-- `RepairType` — `{ id: string, name: string, time_minutes: number }`.
+- `DeviceSystemContext` — `{ id: string, deviceTypeId: string, systemType: 'OS' | 'PS' | 'VIDEO', r1Minutes: number, r2Minutes: number }`.
+- `RepairType` — `{ id: string, name: string, timeMinutes: number }`.
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -368,14 +368,14 @@ describe("API modules", () => {
     });
     const { updateTravel } = await import("../api/travel");
     await updateTravel("obj-1", {
-      transport_type: "car",
-      distance_km: 10,
-      one_way_time_min: 15,
+      transportType: "car",
+      distanceKm: 10,
+      oneWayTimeMin: 15,
     });
     expect(mockApi.put).toHaveBeenCalledWith("/objects/obj-1/travel", {
-      transport_type: "car",
-      distance_km: 10,
-      one_way_time_min: 15,
+      transportType: "car",
+      distanceKm: 10,
+      oneWayTimeMin: 15,
     });
   });
 });
@@ -415,7 +415,7 @@ Each API module exports thin functions that call the axios instance and return `
 
 **`src/api/objects.ts`** — exports:
 
-- `getObjects(params?: { division_id?: string }): Promise<ObjectRecord[]>` — `GET /objects` (with optional query param)
+- `getObjects(params?: { divisionId?: string }): Promise<ObjectRecord[]>` — `GET /objects` (with optional query param)
 - `getObject(id: string): Promise<ObjectRecord>` — `GET /objects/${id}`
 - `createObject(data: ObjectCreateRequest): Promise<ObjectRecord>` — `POST /objects`
 - `updateObject(id: string, data: ObjectUpdateRequest): Promise<ObjectRecord>` — `PUT /objects/${id}`
@@ -491,7 +491,7 @@ Each hook file exports query hooks and mutation hooks for a domain. All mutation
 
 **`src/hooks/useObjects.ts`** — exports:
 
-- `useObjects(divisionId?)` — query: `queryKey: ['objects', { divisionId }]`, `queryFn: () => getObjects({ division_id: divisionId })`.
+- `useObjects(divisionId?)` — query: `queryKey: ['objects', { divisionId }]`, `queryFn: () => getObjects({ divisionId: divisionId })`.
 - `useObject(id)` — query: `queryKey: ['objects', id]`, `queryFn: () => getObject(id)`, `enabled: !!id`.
 - `useCreateObject()` — mutation, invalidates `['objects']` on success.
 - `useUpdateObject()` — mutation, invalidates `['objects']` and `['objects', id]`.
@@ -578,14 +578,14 @@ describe('ConfirmDialog', () => {
     render(
       <ConfirmDialog
         open={true}
-        title="Удалить объект?"
-        message="Будут удалены все связанные данные."
+        title="Delete object?"
+        message="All related data will be deleted."
         onConfirm={vi.fn()}
         onCancel={vi.fn()}
       />
     )
-    expect(screen.getByText('Удалить объект?')).toBeInTheDocument()
-    expect(screen.getByText('Будут удалены все связанные данные.')).toBeInTheDocument()
+    expect(screen.getByText('Delete object?')).toBeInTheDocument()
+    expect(screen.getByText('All related data will be deleted.')).toBeInTheDocument()
   })
 
   it('calls onConfirm when confirm button clicked', async () => {
@@ -599,7 +599,7 @@ describe('ConfirmDialog', () => {
         onCancel={vi.fn()}
       />
     )
-    await userEvent.click(screen.getByText('Подтвердить'))
+    await userEvent.click(screen.getByText('Confirm'))
     expect(onConfirm).toHaveBeenCalledOnce()
   })
 
@@ -614,7 +614,7 @@ describe('ConfirmDialog', () => {
         onCancel={onCancel}
       />
     )
-    await userEvent.click(screen.getByText('Отмена'))
+    await userEvent.click(screen.getByText('Cancel'))
     expect(onCancel).toHaveBeenCalledOnce()
   })
 })
@@ -632,7 +632,7 @@ Expected: import error — components do not exist.
 
 Create `frontend/src/components/common/ConfirmDialog.tsx`:
 
-A MUI `Dialog` component with props: `open: boolean`, `title: string`, `message: string`, `onConfirm: () => void`, `onCancel: () => void`, optional `confirmLabel?: string` (default "Подтвердить"), optional `cancelLabel?: string` (default "Отмена"). Uses MUI `DialogTitle`, `DialogContent`, `DialogContentText`, `DialogActions`, `Button`. Confirm button uses `color="error"` for destructive actions.
+A MUI `Dialog` component with props: `open: boolean`, `title: string`, `message: string`, `onConfirm: () => void`, `onCancel: () => void`, optional `confirmLabel?: string` (default "Confirm"), optional `cancelLabel?: string` (default "Cancel"). Uses MUI `DialogTitle`, `DialogContent`, `DialogContentText`, `DialogActions`, `Button`. Confirm button uses `color="error"` for destructive actions.
 
 - [ ] **Step 4: Implement FormTextField**
 
@@ -714,12 +714,12 @@ describe('LoginPage', () => {
   it('renders email and password fields', () => {
     renderLogin()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/пароль/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
   })
 
   it('shows validation error on empty submit', async () => {
     renderLogin()
-    await userEvent.click(screen.getByRole('button', { name: /войти/i }))
+    await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
     await waitFor(() => {
       expect(screen.getByText(/email/i)).toBeInTheDocument()
     })
@@ -731,8 +731,8 @@ describe('LoginPage', () => {
 
     renderLogin()
     await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com')
-    await userEvent.type(screen.getByLabelText(/пароль/i), 'password')
-    await userEvent.click(screen.getByRole('button', { name: /войти/i }))
+    await userEvent.type(screen.getByLabelText(/password/i), 'password')
+    await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({ email: 'a@b.com', password: 'password' })
@@ -744,11 +744,11 @@ describe('LoginPage', () => {
 
     renderLogin()
     await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com')
-    await userEvent.type(screen.getByLabelText(/пароль/i), 'wrong')
-    await userEvent.click(screen.getByRole('button', { name: /войти/i }))
+    await userEvent.type(screen.getByLabelText(/password/i), 'wrong')
+    await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/неверный email или пароль/i)).toBeInTheDocument()
+      expect(screen.getByText(/invalid email or password/i)).toBeInTheDocument()
     })
   })
 })
@@ -768,14 +768,14 @@ Replace `frontend/src/pages/LoginPage.tsx` with a full implementation:
 
 **Behavioral requirements:**
 
-- Centered MUI `Card` with the app title "Система расчёта нагрузки" and "Вход" heading.
+- Centered MUI `Card` with the app title "Workload Calculation System" and "Sign In" heading.
 - Form using React Hook Form with `zodResolver(LoginRequestSchema)`.
-- Two fields: `email` (MUI TextField, label "Email") and `password` (MUI TextField type="password", label "Пароль").
-- Submit button: "Войти" (MUI Button, full width, variant="contained").
+- Two fields: `email` (MUI TextField, label "Email") and `password` (MUI TextField type="password", label "Password").
+- Submit button: "Sign In" (MUI Button, full width, variant="contained").
 - On submit: calls `login()` from `src/api/auth.ts`.
 - On success: calls `authStore.login(token, user)` then `navigate('/')`.
-- On 401 error: displays MUI `Alert` with text "Неверный email или пароль".
-- On other errors: displays MUI `Alert` with text "Произошла ошибка. Попробуйте снова.".
+- On 401 error: displays MUI `Alert` with text "Invalid email or password".
+- On other errors: displays MUI `Alert` with text "Something went wrong. Please try again.".
 - Loading state: button shows `CircularProgress` and is disabled during API call.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -825,22 +825,22 @@ describe('AppLayout', () => {
         <AppLayout />
       </MemoryRouter>
     )
-    expect(screen.getByText('Дашборд')).toBeInTheDocument()
-    expect(screen.getByText('Объекты')).toBeInTheDocument()
-    expect(screen.getByText('Подразделения')).toBeInTheDocument()
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Objects')).toBeInTheDocument()
+    expect(screen.getByText('Divisions')).toBeInTheDocument()
   })
 
-  it('shows СВОД and Инженеры as disabled nav items in M-01', () => {
+  it('shows Summary and Engineers as disabled nav items in M-01', () => {
     render(
       <MemoryRouter>
         <AppLayout />
       </MemoryRouter>
     )
-    // СВОД link should be present but visually muted (disabled in M-01, enabled in M-02)
-    const svodItem = screen.getByText('СВОД')
+    // Summary link should be present but visually muted (disabled in M-01, enabled in M-02)
+    const svodItem = screen.getByText('Summary')
     expect(svodItem).toBeInTheDocument()
-    // Инженеры link present but disabled (enabled in M-03)
-    const engItem = screen.getByText('Инженеры')
+    // Engineers link present but disabled (enabled in M-03)
+    const engItem = screen.getByText('Engineers')
     expect(engItem).toBeInTheDocument()
   })
 })
@@ -860,8 +860,8 @@ Update `frontend/src/components/layout/AppLayout.tsx`:
 
 **Changes:**
 
-- Add `disabled?: boolean` property to `navItems`. Set `disabled: true` for "СВОД" (enabled in M-02) and "Инженеры" (enabled in M-03).
-- Disabled items: render with `sx={{ opacity: 0.5, pointerEvents: 'none' }}` and add a tooltip "Доступно в следующей версии".
+- Add `disabled?: boolean` property to `navItems`. Set `disabled: true` for "Summary" (enabled in M-02) and "Engineers" (enabled in M-03).
+- Disabled items: render with `sx={{ opacity: 0.5, pointerEvents: 'none' }}` and add a tooltip "Available in the next version".
 - Show currently logged-in user's name in the AppBar (from `authStore.user.name`).
 - Leave all other behavior (Drawer, Outlet, logout button) unchanged.
 
@@ -945,24 +945,24 @@ describe('DivisionListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetDivisions.mockResolvedValue([
-      { id: '1', name: 'Подразделение 1', branch_count: 3, object_count: 50 },
-      { id: '2', name: 'Подразделение 2', branch_count: 1, object_count: 10 },
+      { id: '1', name: 'Division 1', branchCount: 3, objectCount: 50 },
+      { id: '2', name: 'Division 2', branchCount: 1, objectCount: 10 },
     ])
   })
 
   it('renders division list with data', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Подразделение 1')).toBeInTheDocument()
-      expect(screen.getByText('Подразделение 2')).toBeInTheDocument()
+      expect(screen.getByText('Division 1')).toBeInTheDocument()
+      expect(screen.getByText('Division 2')).toBeInTheDocument()
     })
   })
 
   it('opens create dialog when button clicked', async () => {
     renderPage()
-    await waitFor(() => expect(screen.getByText('Подразделение 1')).toBeInTheDocument())
-    await userEvent.click(screen.getByText('Добавить подразделение'))
-    expect(screen.getByLabelText(/название/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Division 1')).toBeInTheDocument())
+    await userEvent.click(screen.getByText('Add division'))
+    expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
   })
 })
 ```
@@ -981,13 +981,13 @@ Replace `frontend/src/pages/DivisionListPage.tsx`:
 
 **Behavioral requirements:**
 
-- Page heading: "Подразделения".
+- Page heading: "Divisions".
 - MUI `Table` (or `DataGrid`) listing all divisions from `useDivisions()` hook.
-- Columns: Название (name), Филиалов (branch_count), Объектов (object_count).
+- Columns: Name (`name`), Branches (`branchCount`), Objects (`objectCount`).
 - Row click navigates to `/divisions/:id`.
-- "Добавить подразделение" MUI `Button` above the table. Opens a MUI `Dialog` with a single "Название" field (React Hook Form + `DivisionCreateSchema`). Confirm creates via `useCreateDivision()` mutation. On success: dialog closes, list refreshes via query invalidation.
+- "Add division" MUI `Button` above the table. Opens a MUI `Dialog` with a single "Name" field (React Hook Form + `DivisionCreateSchema`). Confirm creates via `useCreateDivision()` mutation. On success: dialog closes, list refreshes via query invalidation.
 - Loading state: MUI `CircularProgress` while fetching.
-- Empty state: "Нет подразделений" message when list is empty.
+- Empty state: "No divisions" message when list is empty.
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -1021,8 +1021,8 @@ Test setup: mock `useDivision(id)` returning a division with branches. Mock `use
 **Tests:**
 
 - `renders division name as heading` — verifies the division name appears in an `h` element.
-- `renders branch table with object counts` — verifies branch rows show name and object_count.
-- `opens create branch dialog` — clicks "Добавить филиал" button, verifies dialog with name field appears.
+- `renders branch table with object counts` — verifies branch rows show name and objectCount.
+- `opens create branch dialog` — clicks "Add branch" button, verifies dialog with name field appears.
 - `navigates to branch detail on row click` — clicks a branch row, verifies `navigate('/branches/branch-1')` called.
 - `allows inline editing of division name` — clicks edit icon, changes name, saves, verifies `updateDivision` mutation called.
 
@@ -1043,10 +1043,10 @@ Replace `frontend/src/pages/DivisionDetailPage.tsx`:
 - Reads `id` from `useParams()`.
 - Uses `useDivision(id)` to fetch division detail (includes branches).
 - Page heading: division name with an edit icon button. Clicking edit: name becomes an inline text field, save/cancel buttons appear. Save calls `useUpdateDivision()`.
-- Breadcrumb: "Подразделения" (link to `/divisions`) > "Division Name".
-- Branch list: MUI `Table` with columns: Название (name), Объектов (object_count). Row click navigates to `/branches/:id`.
-- "Добавить филиал" button opens dialog with "Название" field (RHF + `BranchCreateSchema`). Confirm calls `useCreateBranch(divisionId)`.
-- Loading state: `CircularProgress`. 404: "Подразделение не найдено" message.
+- Breadcrumb: "Divisions" (link to `/divisions`) > "Division Name".
+- Branch list: MUI `Table` with columns: Name (`name`), Objects (`objectCount`). Row click navigates to `/branches/:id`.
+- "Add branch" button opens dialog with "Name" field (RHF + `BranchCreateSchema`). Confirm calls `useCreateBranch(divisionId)`.
+- Loading state: `CircularProgress`. 404: "Division not found" message.
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -1079,9 +1079,9 @@ Test setup: mock `useBranch(id)` returning a branch with `objects.data` list. Mo
 
 **Tests:**
 
-- `renders branch name and division breadcrumb` — verifies branch name heading and "Подразделения > Division Name > Branch Name" breadcrumb.
-- `renders object list table` — verifies object rows with name and ИТОГО column (shows "-" in M-01 since summaries don't exist yet).
-- `opens create object form` — clicks "Добавить объект" button, verifies form appears with name field.
+- `renders branch name and division breadcrumb` — verifies branch name heading and "Divisions > Division Name > Branch Name" breadcrumb.
+- `renders object list table` — verifies object rows with name and TOTAL column (shows "-" in M-01 since summaries don't exist yet).
+- `opens create object form` — clicks "Add object" button, verifies form appears with name field.
 - `navigates to object detail on row click` — clicks object row, verifies navigation to `/objects/:id`.
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -1098,10 +1098,10 @@ Replace `frontend/src/pages/BranchDetailPage.tsx`:
 
 - Reads `id` from `useParams()`.
 - Uses `useBranch(id)` to fetch branch detail with paginated objects.
-- Breadcrumb: "Подразделения" > division name (link to `/divisions/:divisionId`) > branch name.
+- Breadcrumb: "Divisions" > division name (link to `/divisions/:divisionId`) > branch name.
 - Branch name heading with edit icon. Inline edit saves via `useUpdateBranch()`.
-- Object table: columns: Название (name), ИТОГО Числ (с дорогой) — shows `itogo_chislo_with_travel` if available, else "-" (no summaries until M-02). Row click navigates to `/objects/:id`.
-- "Добавить объект" button opens a dialog/form with "Название" field and branch is pre-selected (this branch). Confirm calls `useCreateObject()` with `branch_id = this branch's id`.
+- Object table: columns: Name (`name`), TOTAL Staffing (with travel) — shows `itogoChisloWithTravel` if available, else "-" (no summaries until M-02). Row click navigates to `/objects/:id`.
+- "Add object" button opens a dialog/form with "Name" field and branch is pre-selected (this branch). Confirm calls `useCreateObject()` with `branchId = this branch's id`.
 - Loading/error/empty states.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -1134,9 +1134,9 @@ Test setup: mock `useObjects()` returning a list of objects. Mock `useDivisions(
 **Tests:**
 
 - `renders object table with name and address` — verifies object rows appear.
-- `filters by division` — selects a division in the filter dropdown, verifies `getObjects` called with `division_id`.
+- `filters by division` — selects a division in the filter dropdown, verifies `getObjects` called with `divisionId`.
 - `navigates to object detail on row click` — clicks row, verifies navigation.
-- `opens create object dialog` — clicks "Добавить объект", verifies form with name and branch selection fields.
+- `opens create object dialog` — clicks "Add object", verifies form with name and branch selection fields.
 
 - [ ] **Step 2: Run — expect FAIL**
 
@@ -1150,10 +1150,10 @@ Replace `frontend/src/pages/ObjectListPage.tsx`:
 
 **Behavioral requirements:**
 
-- Page heading: "Объекты".
-- Division filter dropdown above the table. Uses `useDivisions()` for options. "Все подразделения" default. Selecting a division passes `division_id` to `useObjects(divisionId)`.
-- MUI DataGrid with columns: Название (name), Подразделение (division_name), Филиал (branch_name), ИТОГО Числ — shows "-" in M-01. Sortable columns. Row click navigates to `/objects/:id`.
-- "Добавить объект" button opens a dialog with fields: Название (text, required), Филиал (dropdown of all branches grouped by division — use `useDivisions()` and expand each to get branches). Confirm calls `useCreateObject()`.
+- Page heading: "Objects".
+- Division filter dropdown above the table. Uses `useDivisions()` for options. "All divisions" default. Selecting a division passes `divisionId` to `useObjects(divisionId)`.
+- MUI DataGrid with columns: Name (`name`), Division (`divisionName`), Branch (`branchName`), TOTAL Staffing — shows "-" in M-01. Sortable columns. Row click navigates to `/objects/:id`.
+- "Add object" button opens a dialog with fields: Name (text, required), Branch (dropdown of all branches grouped by division — use `useDivisions()` and expand each to get branches). Confirm calls `useCreateObject()`.
 - Loading/empty states.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -1186,11 +1186,11 @@ Test setup: mock `useObject(id)` returning an object. Mock `useParams` to return
 **Tests:**
 
 - `renders object name as heading` — verifies the object name appears.
-- `renders 6 tabs` — verifies tab labels: "Оборудование", "Записи", "Ремонт", "Дорога", "Инженеры", "СВОД".
-- `defaults to Equipment tab` — Оборудование tab is active by default.
-- `shows placeholder for Engineers tab` — clicking Инженеры tab shows "Доступно в M-03" placeholder.
-- `shows placeholder for СВОД tab` — clicking СВОД tab shows "Доступно в M-02" placeholder.
-- `shows delete button` — verifies a "Удалить объект" button is present.
+- `renders 6 tabs` — verifies tab labels: "Equipment", "Records", "Repairs", "Travel", "Engineers", "Summary".
+- `defaults to Equipment tab` — Equipment tab is active by default.
+- `shows placeholder for Engineers tab` — clicking Engineers tab shows "Available in M-03" placeholder.
+- `shows placeholder for Summary tab` — clicking Summary tab shows "Available in M-02" placeholder.
+- `shows delete button` — verifies a "Delete object" button is present.
 - `confirms before deleting` — clicking delete opens ConfirmDialog; confirming calls `useDeleteObject()`.
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -1209,16 +1209,16 @@ Replace `frontend/src/pages/ObjectDetailPage.tsx`:
 - If route is `/objects/new`, renders create form instead of detail tabs (RHF + `ObjectCreateSchema`).
 - If route is `/objects/:id/edit`, renders edit form (RHF + `ObjectUpdateSchema`, prefilled).
 - Otherwise (`/objects/:id`): renders detail view with:
-  - Breadcrumb: "Объекты" > object name.
+  - Breadcrumb: "Objects" > object name.
   - Object name heading with inline edit.
-  - "Удалить объект" button (MUI Button, color="error"). Opens `ConfirmDialog` with message "Будут удалены все связанные данные: оборудование, записи, ремонт, дорога. Продолжить?". Confirm calls `useDeleteObject()`, on success navigates to `/objects`.
+  - "Delete object" button (MUI Button, color="error"). Opens `ConfirmDialog` with message "All related data will be deleted: equipment, records, repairs, travel. Continue?". Confirm calls `useDeleteObject()`, on success navigates to `/objects`.
   - MUI `Tabs` with 6 tabs:
-    1. **Оборудование** — renders `EquipmentTab` component (Task 11).
-    2. **Записи** — renders `RecordsTab` component (Task 12).
-    3. **Ремонт** — renders `RepairsTab` component (Task 13).
-    4. **Дорога** — renders `TravelTab` component (Task 14).
-    5. **Инженеры** — placeholder: `Typography` "Доступно в M-03".
-    6. **СВОД** — placeholder: `Typography` "Доступно в M-02".
+    1. **Equipment** — renders `EquipmentTab` component (Task 11).
+    2. **Records** — renders `RecordsTab` component (Task 12).
+    3. **Repairs** — renders `RepairsTab` component (Task 13).
+    4. **Travel** — renders `TravelTab` component (Task 14).
+    5. **Engineers** — placeholder: `Typography` "Available in M-03".
+    6. **Summary** — placeholder: `Typography` "Available in M-02".
 - Loading/404 states.
 
 Note: Tab content components (EquipmentTab, RecordsTab, etc.) are stub imports in this task — they will be implemented in Tasks 11–14. Create minimal stub components that export a named function returning a `<div>` with the tab name, so the page compiles.
@@ -1227,10 +1227,10 @@ Note: Tab content components (EquipmentTab, RecordsTab, etc.) are stub imports i
 
 Create minimal stubs so ObjectDetailPage compiles:
 
-- `frontend/src/components/equipment/EquipmentTab.tsx` — `export function EquipmentTab({ objectId }: { objectId: string }) { return <div>Оборудование — loading...</div> }`
-- `frontend/src/components/records/RecordsTab.tsx` — `export function RecordsTab({ objectId }: { objectId: string }) { return <div>Записи — loading...</div> }`
-- `frontend/src/components/repairs/RepairsTab.tsx` — `export function RepairsTab({ objectId }: { objectId: string }) { return <div>Ремонт — loading...</div> }`
-- `frontend/src/components/travel/TravelTab.tsx` — `export function TravelTab({ objectId }: { objectId: string }) { return <div>Дорога — loading...</div> }`
+- `frontend/src/components/equipment/EquipmentTab.tsx` — `export function EquipmentTab({ objectId }: { objectId: string }) { return <div>Equipment - loading...</div> }`
+- `frontend/src/components/records/RecordsTab.tsx` — `export function RecordsTab({ objectId }: { objectId: string }) { return <div>Records - loading...</div> }`
+- `frontend/src/components/repairs/RepairsTab.tsx` — `export function RepairsTab({ objectId }: { objectId: string }) { return <div>Repairs - loading...</div> }`
+- `frontend/src/components/travel/TravelTab.tsx` — `export function TravelTab({ objectId }: { objectId: string }) { return <div>Travel - loading...</div> }`
 
 - [ ] **Step 5: Run tests — expect PASS**
 
@@ -1270,19 +1270,19 @@ Test setup: mock all equipment and catalog hooks. Provide test data:
 
 **Tests (Section A — Physical Inventory):**
 
-- `renders device inventory table` — verifies device name, quantity_physical columns shown.
-- `add device dropdown shows only devices NOT already in inventory` — clicks "+ Добавить устройство", dropdown options exclude devices already in inventory. Only the 3rd unassigned device appears.
+- `renders device inventory table` — verifies device name, quantityPhysical columns shown.
+- `add device dropdown shows only devices NOT already in inventory` — clicks "+ Add device", dropdown options exclude devices already in inventory. Only the 3rd unassigned device appears.
 - `add device calls useAddDevice mutation` — selects a device from dropdown, enters quantity, clicks add. Verifies `addDevice` API called with correct payload.
-- `delete device shows confirmation listing affected assignments` — device with an assignment: delete button shows ConfirmDialog message "Это удалит назначения: ОС × 1. Продолжить?".
+- `delete device shows confirmation listing affected assignments` — device with an assignment: delete button shows ConfirmDialog message "This will remove assignments: Security × 1. Continue?".
 - `delete device disabled when assignments exist` — (if design choice is to disable) OR shows warning dialog.
 
 **Tests (Section B — System Assignments):**
 
-- `renders assignments grouped by device` — verifies assignment rows show device name, system type, quantity_maintained, R1/R2 read-only values.
-- `assign-to-system dropdown shows only valid system types` — for a device with contexts only for OS and PS, dropdown shows only "ОС" and "ПС" (not "Видео"). If OS already assigned, only "ПС" remains (AC-13).
-- `shows error on DEVICE_NOT_IN_INVENTORY` — when `addAssignment` returns 422 `DEVICE_NOT_IN_INVENTORY`, displays "Устройство не в инвентаре".
-- `shows error on NO_CONTEXT_FOR_SYSTEM` — when `addAssignment` returns 422 `NO_CONTEXT_FOR_SYSTEM`, displays "Нет нормативов для этой системы".
-- `shows warning when quantity_maintained > quantity_physical` — assignment row with quantity_maintained=2 but device's quantity_physical=1 shows a warning icon with tooltip "Обслуживаемое количество (2) превышает физическое (1)".
+- `renders assignments grouped by device` — verifies assignment rows show device name, system type, quantityMaintained, R1/R2 read-only values.
+- `assign-to-system dropdown shows only valid system types` — for a device with contexts only for OS and PS, dropdown shows only "Security" and "Fire" (not "Video"). If OS already assigned, only "Fire" remains (AC-13).
+- `shows error on DEVICE_NOT_IN_INVENTORY` — when `addAssignment` returns 422 `DEVICE_NOT_IN_INVENTORY`, displays "Device is not in inventory".
+- `shows error on NO_CONTEXT_FOR_SYSTEM` — when `addAssignment` returns 422 `NO_CONTEXT_FOR_SYSTEM`, displays "No norms configured for this system".
+- `shows warning when quantityMaintained > quantityPhysical` — assignment row with quantityMaintained=2 but device's quantityPhysical=1 shows a warning icon with tooltip "Maintained quantity (2) exceeds physical quantity (1)".
 
 - [ ] **Step 2: Run — expect FAIL**
 
@@ -1300,13 +1300,13 @@ Create `frontend/src/components/equipment/PhysicalInventory.tsx`:
 
 - Uses `useDevices(objectId)` for current inventory.
 - Uses `useCatalogDevices()` for the full device catalog.
-- Renders a MUI `Table` with columns: Устройство (device name), Физ. кол-во (quantity_physical), Действия. (`quantity_maintained` is on `object_system_assignments`, shown in Section B — not on `object_devices`.)
-- "+ Добавить устройство" button above the table. Opens inline form or dialog:
+- Renders a MUI `Table` with columns: Device (device name), Physical Qty (quantityPhysical), Actions. (`quantityMaintained` is on `object_system_assignments`, shown in Section B — not on `object_devices`.)
+- "+ Add device" button above the table. Opens inline form or dialog:
   - Device dropdown: MUI `Autocomplete` searchable. Options = catalog devices filtered to exclude those already in inventory at this object.
   - Quantity field: integer ≥ 1.
-  - Confirm calls `useAddDevice(objectId)` with `{ device_type_id, quantity_physical }`.
-- Inline editing of `quantity_physical` per row. Save on blur or enter. Calls `useUpdateDevice(objectId)`. (`quantity_maintained` is edited per assignment in Section B.)
-- Remove button per row. If device has any assignments (check `useAssignments(objectId)` data), show `ConfirmDialog` listing affected assignments: "Это удалит назначения: {list}. Продолжить?". Confirm calls `useRemoveDevice(objectId, deviceTypeId)`.
+  - Confirm calls `useAddDevice(objectId)` with `{ deviceTypeId, quantityPhysical }`.
+- Inline editing of `quantityPhysical` per row. Save on blur or enter. Calls `useUpdateDevice(objectId)`. (`quantityMaintained` is edited per assignment in Section B.)
+- Remove button per row. If device has any assignments (check `useAssignments(objectId)` data), show `ConfirmDialog` listing affected assignments: "This will remove assignments: {list}. Continue?". Confirm calls `useRemoveDevice(objectId, deviceTypeId)`.
 
 - [ ] **Step 4: Implement SystemAssignments component**
 
@@ -1318,14 +1318,14 @@ Create `frontend/src/components/equipment/SystemAssignments.tsx`:
 
 - Uses `useAssignments(objectId)` for current assignments.
 - Uses `useDevices(objectId)` for the physical inventory (determines which devices can be assigned).
-- Groups assignments by device_type_id. For each device in inventory, shows its assignments and an "+ Назначить в систему" action.
+- Groups assignments by deviceTypeId. For each device in inventory, shows its assignments and a "+ Assign to system" action.
 - System type dropdown (per device): shows only system types that have a valid `device_system_contexts` row (uses `useCatalogDeviceContexts(deviceTypeId)`) AND are not already assigned for this device at this object. Hidden entirely if no valid options remain.
-- Each assignment row shows: Система (ОС/ПС/Видео), Кол-во обсл. (quantity_maintained, editable), Р1 (read-only from context), Р2 (read-only from context), Действия (remove button).
-- quantity_maintained editable inline. Save calls `useUpdateAssignment(objectId)`.
+- Each assignment row shows: System (Security/Fire/Video), Maintained Qty (quantityMaintained, editable), R1 (read-only from context), R2 (read-only from context), Actions (remove button).
+- quantityMaintained editable inline. Save calls `useUpdateAssignment(objectId)`.
 - Remove button calls `useRemoveAssignment(objectId, assignmentId)`.
-- **Warning rule:** When `quantity_maintained > quantity_physical` for the parent device, show yellow ⚠ icon with MUI `Tooltip`: "Обслуживаемое количество (N) превышает физическое (M)".
-- **Error handling:** On 422 `DEVICE_NOT_IN_INVENTORY`: MUI `Alert` "Устройство не в инвентаре". On 422 `NO_CONTEXT_FOR_SYSTEM`: MUI `Alert` "Нет нормативов для этой системы".
-- **System type display mapping:** `OS` → "ОС", `PS` → "ПС", `VIDEO` → "Видео".
+- **Warning rule:** When `quantityMaintained > quantityPhysical` for the parent device, show yellow ⚠ icon with MUI `Tooltip`: "Maintained quantity (N) exceeds physical quantity (M)".
+- **Error handling:** On 422 `DEVICE_NOT_IN_INVENTORY`: MUI `Alert` "Device is not in inventory". On 422 `NO_CONTEXT_FOR_SYSTEM`: MUI `Alert` "No norms configured for this system".
+- **System type display mapping:** `OS` → "Security", `PS` → "Fire", `VIDEO` → "Video".
 
 - [ ] **Step 5: Replace EquipmentTab stub**
 
@@ -1340,12 +1340,12 @@ export function EquipmentTab({ objectId }: { objectId: string }) {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Физическое оборудование
+        Physical Equipment
       </Typography>
       <PhysicalInventory objectId={objectId} />
       <Divider sx={{ my: 3 }} />
       <Typography variant="h6" gutterBottom>
-        Назначения в системы
+        System Assignments
       </Typography>
       <SystemAssignments objectId={objectId} />
     </Box>
@@ -1384,9 +1384,9 @@ Test setup: mock `useRecords(objectId)` returning records data. Mock `useUpdateR
 
 **Tests:**
 
-- `renders 5 numeric fields with current values` — verifies fields for access_requests, monitoring_requests, footage_requests, backup_control, security_admin are rendered and show current values.
+- `renders 5 numeric fields with current values` — verifies fields for accessRequests, monitoringRequests, footageRequests, backupControl, securityAdmin are rendered and show current values.
 - `validates non-negative integers` — enters -1 in a field, verifies validation error shown.
-- `save button calls updateRecords mutation` — fills valid values, clicks "Сохранить", verifies mutation called with correct payload.
+- `save button calls updateRecords mutation` — fills valid values, clicks "Save", verifies mutation called with correct payload.
 - `shows loading state while fetching` — verifies CircularProgress shown when data is loading.
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -1405,15 +1405,15 @@ Replace `frontend/src/components/records/RecordsTab.tsx`:
 
 - Uses `useRecords(objectId)` to fetch current data. Uses `useUpdateRecords(objectId)` for saves.
 - Form using React Hook Form with `zodResolver(RecordsUpdateSchema)`.
-- 5 MUI `TextField` fields (type="number"), each labeled in Russian:
-  - "Доступ" (access_requests)
-  - "Мониторинг" (monitoring_requests)
-  - "Видеонаблюдение" (footage_requests)
-  - "Резервное копирование" (backup_control)
-  - "Администрирование" (security_admin)
+- 5 MUI `TextField` fields (type="number"), each labeled in English:
+  - "Access" (accessRequests)
+  - "Monitoring" (monitoringRequests)
+  - "Video Surveillance" (footageRequests)
+  - "Backup Control" (backupControl)
+  - "Administration" (securityAdmin)
 - All fields require integers ≥ 0.
-- "Сохранить" button. On submit: calls `useUpdateRecords(objectId)` with form values.
-- On success: MUI `Snackbar` "Данные сохранены".
+- "Save" button. On submit: calls `useUpdateRecords(objectId)` with form values.
+- On success: MUI `Snackbar` "Data saved".
 - Form is pre-filled with current values from API (via `useEffect` + `reset()` when data loads).
 - Loading: `CircularProgress` while fetching. Shows empty form if no records exist yet (all zeros).
 
@@ -1468,11 +1468,11 @@ Replace `frontend/src/components/repairs/RepairsTab.tsx`:
 - Uses `useCatalogRepairs()` to get the full list of repair types (seed data, read-only).
 - Uses `useRepairs(objectId)` to get current counts for this object.
 - Uses `useUpdateRepair(objectId)` for saving.
-- Renders a MUI `Table` with columns: Вид ремонта (repair type name), Время (мин) (time_minutes, read-only from catalog), Количество (count, editable integer input ≥ 0).
+- Renders a MUI `Table` with columns: Repair Type (repair type name), Time (min) (timeMinutes, read-only from catalog), Quantity (count, editable integer input ≥ 0).
 - Each row corresponds to a repair type from the catalog. The count field shows the existing `object_repairs.count` for that type, or 0 if no row exists.
-- "Сохранить" button at the bottom (or per-row save). On click: for each changed row, calls `PUT /objects/{objectId}/repairs/{repairTypeId}` with `{ count }`.
+- "Save" button at the bottom (or per-row save). On click: for each changed row, calls `PUT /objects/{objectId}/repairs/{repairTypeId}` with `{ count }`.
 - Alternatively: save-per-row — each row has a small save icon that appears when the value changes.
-- Shows "Нет видов ремонта" if catalog is empty (shouldn't happen with seed data).
+- Shows "No repair types" if catalog is empty (shouldn't happen with seed data).
 
 - [ ] **Step 4: Run tests — expect PASS**
 
@@ -1503,11 +1503,11 @@ Test setup: mock `useTravel(objectId)` and `useUpdateTravel`.
 
 **Tests:**
 
-- `renders 3 editable fields and 1 read-only field` — verifies "Тип транспорта", "Расстояние (км)", "Время в одну сторону (мин)" are editable, and "Время в оба конца (мин)" is read-only.
-- `round_trip_min is never editable` — the round_trip_min field has no input, just a display value. Verifies it is not an input element.
-- `round_trip_min shows computed value from API` — when travel data has `one_way_time_min: 15`, shows "30 мин (авторасчёт)" for round trip.
+- `renders 3 editable fields and 1 read-only field` — verifies "Transport Type", "Distance (km)", "One-way Time (min)" are editable, and "Round Trip Time (min)" is read-only.
+- `roundTripMin is never editable` — the roundTripMin field has no input, just a display value. Verifies it is not an input element.
+- `roundTripMin shows computed value from API` — when travel data has `oneWayTimeMin: 15`, shows "30 min (auto-calculated)" for round trip.
 - `validates non-negative values` — enters negative distance, verifies error.
-- `save calls updateTravel mutation` — fills valid data, saves. Verifies mutation payload has `transport_type`, `distance_km`, `one_way_time_min` but NOT `round_trip_min`.
+- `save calls updateTravel mutation` — fills valid data, saves. Verifies mutation payload has `transportType`, `distanceKm`, `oneWayTimeMin` but NOT `roundTripMin`.
 - `shows empty form when no travel data exists` — all fields empty/zero when API returns null.
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -1527,12 +1527,12 @@ Replace `frontend/src/components/travel/TravelTab.tsx`:
 - Uses `useTravel(objectId)` and `useUpdateTravel(objectId)`.
 - Form using React Hook Form with `zodResolver(TravelUpdateSchema)`.
 - Fields:
-  - "Тип транспорта" — MUI `TextField` (text input).
-  - "Расстояние (км)" — MUI `TextField` (type="number", ≥ 0).
-  - "Время в одну сторону (мин)" — MUI `TextField` (type="number", ≥ 0).
-  - "Время в оба конца (мин)" — **read-only display only**: `Typography` showing `round_trip_min` value from API response + " (авторасчёт)". This is NEVER an input field. round_trip_min is never sent to the API (AC-27).
-- "Сохранить" button. Payload: `{ transport_type, distance_km, one_way_time_min }` (no `round_trip_min`).
-- On success: `Snackbar` "Данные сохранены". Form refreshes with updated data including new `round_trip_min` from API.
+  - "Transport Type" — MUI `TextField` (text input).
+  - "Distance (km)" — MUI `TextField` (type="number", ≥ 0).
+  - "One-way Time (min)" — MUI `TextField` (type="number", ≥ 0).
+  - "Round Trip Time (min)" — **read-only display only**: `Typography` showing `roundTripMin` value from API response + " (auto-calculated)". This is NEVER an input field. roundTripMin is never sent to the API (AC-27).
+- "Save" button. Payload: `{ transportType, distanceKm, oneWayTimeMin }` (no `roundTripMin`).
+- On success: `Snackbar` "Data saved". Form refreshes with updated data including new `roundTripMin` from API.
 - Pre-filled from API data. Empty form if no travel data exists yet.
 
 - [ ] **Step 4: Run tests — expect PASS**
@@ -1545,7 +1545,7 @@ npx vitest run src/test/TravelTab.test.tsx
 
 ```bash
 git add frontend/src/components/travel/ frontend/src/test/TravelTab.test.tsx
-git commit -m "feat: implement travel tab with read-only round_trip_min"
+git commit -m "feat: implement travel tab with read-only roundTripMin"
 ```
 
 ---
@@ -1562,9 +1562,9 @@ Create `frontend/src/test/DashboardPage.test.tsx`:
 
 **Tests:**
 
-- `renders welcome heading` — verifies page shows "Дашборд" heading.
+- `renders welcome heading` — verifies page shows "Dashboard" heading.
 - `renders division summary table` — uses `useDivisions()` to show a simple table with division names and object counts.
-- `shows placeholder for M-02 aggregation data` — before M-02 backend exists, aggregation endpoints don't exist. Dashboard shows division list from `GET /divisions` as a basic overview. Areas that will show FTE data display "Данные будут доступны после расчёта".
+- `shows placeholder for M-02 aggregation data` — before M-02 backend exists, aggregation endpoints don't exist. Dashboard shows division list from `GET /divisions` as a basic overview. Areas that will show FTE data display "Data will be available after calculation".
 
 - [ ] **Step 2: Run — expect FAIL**
 
@@ -1578,10 +1578,10 @@ Replace `frontend/src/pages/DashboardPage.tsx`:
 
 **Behavioral requirements (M-01 version — minimal):**
 
-- Page heading: "Дашборд".
-- Section 1: "Подразделения" — simple table from `useDivisions()`: Division name, Branch count, Object count. Row click navigates to `/divisions/:id`.
-- Section 2: placeholder MUI `Paper`: "FTE по подразделениям — доступно после M-02".
-- Section 3: placeholder MUI `Paper`: "Непокрытые объекты — доступно после M-03".
+- Page heading: "Dashboard".
+- Section 1: "Divisions" — simple table from `useDivisions()`: Division name, Branch count, Object count. Row click navigates to `/divisions/:id`.
+- Section 2: placeholder MUI `Paper`: "FTE by division — available after M-02".
+- Section 3: placeholder MUI `Paper`: "Uncovered objects — available after M-03".
 - This page will be significantly enhanced in M-02 (aggregation data) and M-03 (engineer gaps). The M-01 version provides basic navigation value only.
 
 - [ ] **Step 4: Run tests — expect PASS**

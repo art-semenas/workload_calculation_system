@@ -1,0 +1,12 @@
+$kind: http-request
+name: Delete Device Type
+order: 7000
+method: DELETE
+url: "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}"
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - pm.collectionVariables.unset('catalogDeviceTypeId');
+        - pm.collectionVariables.unset('catalogContextId');

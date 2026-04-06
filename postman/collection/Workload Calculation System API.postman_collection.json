@@ -1,0 +1,1178 @@
+{
+  "info": {
+    "_postman_id": "ed264c3b-04b0-40a6-91dc-57b82ab96ca5",
+    "name": "Workload Calculation System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "divisionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "objectId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deviceTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "repairTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalogDeviceTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalogContextId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalogRepairTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "divisionName",
+      "value": "Postman Smoke Division",
+      "type": "string"
+    },
+    {
+      "key": "branchName",
+      "value": "Postman Smoke Branch",
+      "type": "string"
+    },
+    {
+      "key": "objectName",
+      "value": "Postman Smoke Object",
+      "type": "string"
+    },
+    {
+      "key": "objectImportSeqNo",
+      "value": "9001",
+      "type": "string"
+    },
+    {
+      "key": "quantityPhysical",
+      "value": "1.00",
+      "type": "string"
+    },
+    {
+      "key": "quantityMaintained",
+      "value": "1.00",
+      "type": "string"
+    },
+    {
+      "key": "assignmentSystemType",
+      "value": "OS",
+      "type": "string"
+    },
+    {
+      "key": "recordsAccessRequests",
+      "value": "10.00",
+      "type": "string"
+    },
+    {
+      "key": "recordsMonitoringRequests",
+      "value": "5.00",
+      "type": "string"
+    },
+    {
+      "key": "recordsFootageRequests",
+      "value": "3.00",
+      "type": "string"
+    },
+    {
+      "key": "recordsBackupControl",
+      "value": "2.00",
+      "type": "string"
+    },
+    {
+      "key": "recordsSecurityAdmin",
+      "value": "1.00",
+      "type": "string"
+    },
+    {
+      "key": "repairCount",
+      "value": "5",
+      "type": "string"
+    },
+    {
+      "key": "travelTransportType",
+      "value": "CAR",
+      "type": "string"
+    },
+    {
+      "key": "travelDistanceKm",
+      "value": "25.50",
+      "type": "string"
+    },
+    {
+      "key": "travelOneWayTimeMin",
+      "value": "30.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogDeviceName",
+      "value": "Postman Smoke Device Type",
+      "type": "string"
+    },
+    {
+      "key": "catalogDeviceDescription",
+      "value": "Created by Postman smoke flow",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedDeviceName",
+      "value": "Postman Smoke Device Type Updated",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedDeviceDescription",
+      "value": "Updated by Postman smoke flow",
+      "type": "string"
+    },
+    {
+      "key": "catalogContextSystemType",
+      "value": "MAIN",
+      "type": "string"
+    },
+    {
+      "key": "catalogContextR1Minutes",
+      "value": "10.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogContextR2Minutes",
+      "value": "5.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedContextR1Minutes",
+      "value": "12.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedContextR2Minutes",
+      "value": "6.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogRepairName",
+      "value": "Postman Smoke Repair Type",
+      "type": "string"
+    },
+    {
+      "key": "catalogRepairMinutes",
+      "value": "45.00",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedRepairName",
+      "value": "Postman Smoke Repair Type Updated",
+      "type": "string"
+    },
+    {
+      "key": "catalogUpdatedRepairMinutes",
+      "value": "60.00",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "01 Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "auth": {
+              "type": "noauth",
+              "noauth": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\"email\": \"{{authEmail}}\",\n\"password\": \"{{authPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const token = body?.data?.token;",
+                  "pm.test('login returns token', () => pm.expect(token).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('authToken', token);",
+                  "pm.collectionVariables.unset('divisionId');",
+                  "pm.collectionVariables.unset('branchId');",
+                  "pm.collectionVariables.unset('objectId');",
+                  "pm.collectionVariables.unset('deviceTypeId');",
+                  "pm.collectionVariables.unset('repairTypeId');",
+                  "pm.collectionVariables.unset('assignmentId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Branches",
+      "item": [
+        {
+          "name": "Get Branch by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/branches/{{branchId}}"
+          }
+        },
+        {
+          "name": "Update Branch",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/branches/{{branchId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Branch Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "item": [
+        {
+          "name": "05 Get All Device Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/devices"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const firstDeviceTypeId = body?.data?.[0]?.id;",
+                  "pm.test('device type seed available', () => pm.expect(firstDeviceTypeId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('deviceTypeId', firstDeviceTypeId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Device Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{deviceTypeId}}"
+          }
+        },
+        {
+          "name": "Get Device Type Contexts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{deviceTypeId}}/contexts"
+          }
+        },
+        {
+          "name": "08 Get All Repair Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/repairs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const firstRepairTypeId = body?.data?.[0]?.id;",
+                  "if (firstRepairTypeId) { pm.collectionVariables.set('repairTypeId', firstRepairTypeId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Device Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/devices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{catalogDeviceName}}\",\n  \"description\": \"{{catalogDeviceDescription}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const deviceTypeId = body?.data?.id;",
+                  "pm.test('catalog device type id captured', () => pm.expect(deviceTypeId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('catalogDeviceTypeId', deviceTypeId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Device Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{catalogUpdatedDeviceName}}\",\n  \"description\": \"{{catalogUpdatedDeviceDescription}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Device Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('catalogDeviceTypeId');",
+                  "pm.collectionVariables.unset('catalogContextId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Device Context",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}/contexts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"systemType\": \"{{catalogContextSystemType}}\",\n  \"r1Minutes\": {{catalogContextR1Minutes}},\n  \"r2Minutes\": {{catalogContextR2Minutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const contextId = body?.data?.id;",
+                  "pm.test('catalog context id captured', () => pm.expect(contextId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('catalogContextId', contextId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Device Context",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}/contexts/{{catalogContextId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"r1Minutes\": {{catalogUpdatedContextR1Minutes}},\n  \"r2Minutes\": {{catalogUpdatedContextR2Minutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Device Context",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/devices/{{catalogDeviceTypeId}}/contexts/{{catalogContextId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('catalogContextId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Repair Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/repairs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{catalogRepairName}}\",\n  \"timeMinutes\": {{catalogRepairMinutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const repairTypeId = body?.data?.id;",
+                  "pm.test('catalog repair type id captured', () => pm.expect(repairTypeId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('catalogRepairTypeId', repairTypeId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Repair Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/repairs/{{catalogRepairTypeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{catalogUpdatedRepairName}}\",\n  \"timeMinutes\": {{catalogUpdatedRepairMinutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Repair Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalog/repairs/{{catalogRepairTypeId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('catalogRepairTypeId');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "13 Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments/{{assignmentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('assignmentId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Delete Object Device",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/devices/{{deviceTypeId}}"
+          }
+        },
+        {
+          "name": "15 Delete Object",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('objectId');",
+                  "pm.collectionVariables.unset('assignmentId');",
+                  "pm.collectionVariables.unset('deviceTypeId');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Divisions",
+      "item": [
+        {
+          "name": "Get All Divisions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/divisions"
+          }
+        },
+        {
+          "name": "02 Create Division",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/divisions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{divisionName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const divisionId = body?.data?.id;",
+                  "pm.test('division id captured', () => pm.expect(divisionId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('divisionId', divisionId);",
+                  "pm.collectionVariables.unset('branchId');",
+                  "pm.collectionVariables.unset('objectId');",
+                  "pm.collectionVariables.unset('assignmentId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Division by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/divisions/{{divisionId}}"
+          }
+        },
+        {
+          "name": "Update Division",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/divisions/{{divisionId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Division Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Division Branches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/divisions/{{divisionId}}/branches"
+          }
+        },
+        {
+          "name": "03 Create Branch in Division",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/divisions/{{divisionId}}/branches",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{branchName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const branchId = body?.data?.id;",
+                  "pm.test('branch id captured', () => pm.expect(branchId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('branchId', branchId);",
+                  "pm.collectionVariables.unset('objectId');",
+                  "pm.collectionVariables.unset('assignmentId');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Equipment",
+      "item": [
+        {
+          "name": "Get Object Devices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/devices"
+          }
+        },
+        {
+          "name": "06 Add Device to Object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/devices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceTypeId\": \"{{deviceTypeId}}\",\n  \"quantityPhysical\": {{quantityPhysical}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const deviceTypeId = body?.data?.deviceTypeId || pm.collectionVariables.get('deviceTypeId');",
+                  "if (deviceTypeId) { pm.collectionVariables.set('deviceTypeId', deviceTypeId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Object Device",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/devices/{{deviceTypeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceTypeId\": \"{{deviceTypeId}}\",\n  \"quantityPhysical\": 2.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Object Device",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/devices/{{deviceTypeId}}"
+          }
+        },
+        {
+          "name": "Get Object Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments"
+          }
+        },
+        {
+          "name": "07 Create Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceTypeId\": \"{{deviceTypeId}}\",\n  \"systemType\": \"{{assignmentSystemType}}\",\n  \"quantityMaintained\": {{quantityMaintained}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const assignmentId = body?.data?.id;",
+                  "if (assignmentId) { pm.collectionVariables.set('assignmentId', assignmentId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments/{{assignmentId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantityMaintained\": 2.00\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/assignments/{{assignmentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Objects",
+      "item": [
+        {
+          "name": "Get All Objects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "query": [
+                {
+                  "key": "division_id",
+                  "value": "{{divisionId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "04 Create Object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"name\": \"{{objectName}}\",\n  \"importSeqNo\": {{objectImportSeqNo}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const objectId = body?.data?.id;",
+                  "const divisionId = body?.data?.divisionId;",
+                  "pm.test('object id captured', () => pm.expect(objectId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('objectId', objectId);",
+                  "if (divisionId) { pm.collectionVariables.set('divisionId', divisionId); }",
+                  "pm.collectionVariables.unset('assignmentId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Object by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}"
+          }
+        },
+        {
+          "name": "Update Object",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Object Name\",\n  \"importSeqNo\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Object",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}"
+          }
+        },
+        {
+          "name": "12 Get Object Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Records",
+      "item": [
+        {
+          "name": "Get Object Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/records"
+          }
+        },
+        {
+          "name": "09 Update Object Records",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/records",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessRequests\": {{recordsAccessRequests}},\n  \"monitoringRequests\": {{recordsMonitoringRequests}},\n  \"footageRequests\": {{recordsFootageRequests}},\n  \"backupControl\": {{recordsBackupControl}},\n  \"securityAdmin\": {{recordsSecurityAdmin}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Repairs",
+      "item": [
+        {
+          "name": "Get Object Repairs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/repairs"
+          }
+        },
+        {
+          "name": "10 Update Repair",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/repairs/{{repairTypeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": {{repairCount}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Travel",
+      "item": [
+        {
+          "name": "Get Object Travel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/travel"
+          }
+        },
+        {
+          "name": "11 Update Object Travel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/travel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transportType\": \"{{travelTransportType}}\",\n  \"distanceKm\": {{travelDistanceKm}},\n  \"oneWayTimeMin\": {{travelOneWayTimeMin}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

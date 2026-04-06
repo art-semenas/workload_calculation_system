@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="v1.0.4-1" author="workload">
+    <comment>
+      Change records_tasks count fields from INTEGER to DECIMAL(10,2)
+      to match db-schema.md and align with BigDecimal calculation inputs (TOR §4.4).
+    </comment>
+
+    <modifyDataType tableName="records_tasks" columnName="access_requests"    newDataType="DECIMAL(10,2)"/>
+    <modifyDataType tableName="records_tasks" columnName="monitoring_requests" newDataType="DECIMAL(10,2)"/>
+    <modifyDataType tableName="records_tasks" columnName="footage_requests"    newDataType="DECIMAL(10,2)"/>
+    <modifyDataType tableName="records_tasks" columnName="backup_control"      newDataType="DECIMAL(10,2)"/>
+    <modifyDataType tableName="records_tasks" columnName="security_admin"      newDataType="DECIMAL(10,2)"/>
+
+    <rollback>
+      <modifyDataType tableName="records_tasks" columnName="access_requests"    newDataType="INTEGER"/>
+      <modifyDataType tableName="records_tasks" columnName="monitoring_requests" newDataType="INTEGER"/>
+      <modifyDataType tableName="records_tasks" columnName="footage_requests"    newDataType="INTEGER"/>
+      <modifyDataType tableName="records_tasks" columnName="backup_control"      newDataType="INTEGER"/>
+      <modifyDataType tableName="records_tasks" columnName="security_admin"      newDataType="INTEGER"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

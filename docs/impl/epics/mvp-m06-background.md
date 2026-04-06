@@ -13,7 +13,7 @@
 
 ## Acceptance Criteria In Scope
 
-**AC-03:** After an admin updates `r1_minutes` or `r2_minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`. _(Requires M-04 and M-06.)_
+**AC-03:** After an admin updates `r1Minutes` or `r2Minutes` on any `device_system_contexts` row, all affected object summaries are marked stale — without code deployment. UI shows "Данные устарели — нажмите Пересчитать" indicator. Values update only after the admin explicitly triggers `POST /svod/recalculate`. _(Requires M-04 and M-06.)_
 
 **AC-17:** When a third engineer is added to an object that previously had two, all three engineers' `engineer_summaries.is_stale` must be set to TRUE in the same transaction. After admin-triggered recalculation (`POST /svod/recalculate`), each engineer's share of that object must equal `itogo_chislo_with_travel / 3`.
 
@@ -62,8 +62,8 @@ From docs/impl/api-spec.md:
 ### Background recalculation (MVP only — M-06)
 
 - `POST /svod/recalculate` — trigger full recalculation of all stale summaries. Admin only. Enqueues background job via Redis.
-- `POST /svod/recalculate/:object_id` — trigger recalculation for a single object. Admin only.
-- `GET /svod/recalculate/status` — check background recalculation job status. Response: `{ total_stale, processed, remaining }`
+- `POST /svod/recalculate/:objectId` — trigger recalculation for a single object. Admin only.
+- `GET /svod/recalculate/status` — check background recalculation job status. Response: `{ totalStale, processed, remaining }`
 
 ### Behaviour changes on existing endpoints (stale-marking replaces synchronous recalculation)
 

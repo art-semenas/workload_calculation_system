@@ -1,0 +1,13 @@
+$kind: http-request
+name: 08 Get All Repair Types
+order: 4000
+method: GET
+url: "{{baseUrl}}/api/v1/catalog/repairs"
+event:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - const body = pm.response.json();
+        - const firstRepairTypeId = body?.data?.[0]?.id;
+        - if (firstRepairTypeId) { pm.collectionVariables.set('repairTypeId', firstRepairTypeId); }
