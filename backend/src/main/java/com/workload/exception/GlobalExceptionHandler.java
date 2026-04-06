@@ -46,7 +46,9 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(EntityNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("ENTITY_NOT_FOUND", ex.getMessage(), null)));
+        .body(
+            ApiResponse.error(
+                new ApiError("NOT_FOUND", getEntityNotFoundMessage(ex.getEntityType()), null)));
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
@@ -162,5 +164,15 @@ public class GlobalExceptionHandler {
         .body(
             ApiResponse.error(
                 new ApiError("INTERNAL_ERROR", "An unexpected error occurred", null)));
+  }
+
+  private String getEntityNotFoundMessage(String entityType) {
+    return switch (entityType) {
+      case "DeviceType" -> "Device type not found";
+      case "Context" -> "Context not found";
+      case "RepairType" -> "Repair type not found";
+      case "Assignment" -> "Assignment not found";
+      default -> "Resource not found";
+    };
   }
 }
