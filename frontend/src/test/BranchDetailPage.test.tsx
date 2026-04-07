@@ -1,0 +1,120 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import BranchDetailPage from '../pages/BranchDetailPage'
+
+const mockUseBranch = vi.fn()
+const mockUseUpdateBranch = vi.fn()
+const mockUseCreateObject = vi.fn()
+
+vi.mock('../hooks/useBranches', () => ({
+  useBranch: (...args: unknown[]) => mockUseBranch(...args),
+  useUpdateBranch: (...args: unknown[]) => mockUseUpdateBranch(...args),
+}))
+
+vi.mock('../hooks/useObjects', () => ({
+  useCreateObject: (...args: unknown[]) => mockUseCreateObject(...args),
+}))
+
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
+
+function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/branches/br-1']}>
+        <Routes>
+          <Route path="/branches/:id" element={<BranchDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
+describe('BranchDetailPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseBranch.mockReturnValue({
+      data: {
+        id: 'br-1',
+        name: 'Branch 1',
+        divisionId: 'div-1',
+        divisionName: 'Division 1',
+        objectCount: 2,
+        objects: {
+          data: [
+            { id: 'obj-1', name: 'Object 1', itogoChisloWithTravel: null, engineerCount: 0 },
+            { id: 'obj-2', name: 'Object 2', itogoChisloWithTravel: 0.5, engineerCount: 1 },
+          ],
+          meta: { total: 2, page: 1, size: 10 },
+        },
+      },
+      isLoading: false,
+    })
+    mockUseUpdateBranch.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({}),
+      isPending: false,
+    })
+    mockUseCreateObject.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({
+        id: 'obj-3',
+        name: 'Object 3',
+        branchId: 'br-1',
+      }),
+      isPending: false,
+    })
+  })
+
+  it('renders branch name and division breadcrumb', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+    })
+
+    expect(screen.getByText('Division 1')).toBeInTheDocument()
+  })
+
+  it('renders object list table', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+    })
+
+    expect(screen.getByText('Object 1')).toBeInTheDocument()
+    expect(screen.getByText('Object 2')).toBeInTheDocument()
+  })
+
+  it('opens create object form', async () => {
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+    )
+
+    await userEvent.click(screen.getByText('Add object'))
+    expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
+  })
+
+  it('navigates to object detail on row click', async () => {
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+    )
+
+    const objectCell = screen.getByText('Object 1')
+    const objectRow = objectCell.closest('tr')!
+    await userEvent.click(objectRow)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/objects/obj-1')
+  })
+})
