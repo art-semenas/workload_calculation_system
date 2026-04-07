@@ -269,6 +269,52 @@ describe('EquipmentTab', () => {
     expect(screen.getByText('3')).toBeInTheDocument()
   })
 
+  it('shows backend error NO_CONTEXT_FOR_SYSTEM as alert', async () => {
+    const axiosError = {
+      response: { data: { error: { code: 'NO_CONTEXT_FOR_SYSTEM' } } },
+    }
+    mockUseAddAssignment.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(axiosError),
+      isPending: false,
+    })
+
+    renderTab()
+
+    await waitFor(() => expect(screen.getByText('Add assignment')).toBeInTheDocument())
+
+    // Open add assignment dialog
+    await userEvent.click(screen.getByText('Add assignment'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Add Assignment')).toBeInTheDocument()
+    })
+
+    // Select the device (Camera = dtype-1)
+    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
+
+    // After selecting device, wait for system type select to be enabled
+    await waitFor(() => {
+      const systemTypeSelect = screen.getByRole('combobox', { name: 'System Type' })
+      expect(systemTypeSelect).not.toBeDisabled()
+    })
+
+    // Select system type VIDEO
+    await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'VIDEO' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('option', { name: 'VIDEO' }))
+
+    // Submit
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('No catalog context exists for this device and system type.')
+      ).toBeInTheDocument()
+    })
+  })
+
   it('shows backend error DEVICE_NOT_IN_INVENTORY as alert', async () => {
     const axiosError = {
       response: { data: { error: { code: 'DEVICE_NOT_IN_INVENTORY' } } },

@@ -45,6 +45,13 @@ interface EditDeviceFormValues {
 
 const EditDeviceSchema = DeviceAddSchema.pick({ quantityPhysical: true })
 
+function mapErrorCode(code: string | undefined): string {
+  if (code === 'DEVICE_NOT_IN_INVENTORY') return 'Device is not in the physical inventory.'
+  if (code === 'NO_CONTEXT_FOR_SYSTEM')
+    return 'No catalog context exists for this device and system type.'
+  return 'An unexpected error occurred.'
+}
+
 export function PhysicalInventory({ objectId }: { objectId: string }) {
   const { data: devices = [], isLoading } = useDevices(objectId)
   const { data: assignments = [] } = useAssignments(objectId)
@@ -104,7 +111,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(code ?? 'An error occurred while adding the device.')
+      setMutationError(mapErrorCode(code))
     }
   }
 
@@ -129,7 +136,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(code ?? 'An error occurred while updating the device.')
+      setMutationError(mapErrorCode(code))
     }
   }
 
@@ -141,7 +148,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(code ?? 'An error occurred while removing the device.')
+      setMutationError(mapErrorCode(code))
       setRemoveDevice(null)
     }
   }

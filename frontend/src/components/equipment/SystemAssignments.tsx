@@ -39,6 +39,7 @@ import {
   type ObjectSystemAssignment,
   type SystemType,
 } from '../../types/equipment'
+import { ConfirmDialog } from '../common/ConfirmDialog'
 
 interface AddAssignmentFormValues {
   deviceTypeId: string
@@ -442,30 +443,14 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       </Dialog>
 
       {/* Remove Confirm Dialog */}
-      <Dialog
+      <ConfirmDialog
         open={!!removeAssignment_}
-        onClose={() => setRemoveAssignment(null)}
-        aria-labelledby="remove-assignment-dialog-title"
-      >
-        <DialogTitle id="remove-assignment-dialog-title">Remove Assignment?</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Remove assignment for {removeAssignment_?.deviceTypeName} /{' '}
-            {removeAssignment_?.systemType}? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRemoveAssignment(null)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => void handleConfirmRemove()}
-            disabled={removeAssignment.isPending}
-          >
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Remove Assignment?"
+        message={`Remove assignment for ${removeAssignment_?.deviceTypeName} / ${removeAssignment_?.systemType}? This action cannot be undone.`}
+        onConfirm={() => void handleConfirmRemove()}
+        onCancel={() => setRemoveAssignment(null)}
+        confirmLabel="Remove"
+      />
     </Box>
   )
 }
