@@ -33,6 +33,7 @@ import {
 import { DeviceAddSchema, type DeviceAdd, type ObjectDevice } from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
+import { mapEquipmentErrorCode } from '../../utils/errorMessages'
 
 interface AddDeviceFormValues {
   deviceTypeId: string
@@ -45,13 +46,6 @@ interface EditDeviceFormValues {
 
 const EditDeviceSchema = DeviceAddSchema.pick({ quantityPhysical: true })
 
-function mapErrorCode(code: string | undefined): string {
-  if (code === 'DEVICE_NOT_IN_INVENTORY') return 'Device is not in the physical inventory.'
-  if (code === 'NO_CONTEXT_FOR_SYSTEM')
-    return 'No catalog context exists for this device and system type.'
-  return 'An unexpected error occurred.'
-}
-
 export function PhysicalInventory({ objectId }: { objectId: string }) {
   const { data: devices = [], isLoading } = useDevices(objectId)
   const { data: assignments = [] } = useAssignments(objectId)
@@ -62,7 +56,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
 
   const [addOpen, setAddOpen] = useState(false)
   const [editDevice, setEditDevice] = useState<ObjectDevice | null>(null)
-  const [removeDevice_, setRemoveDevice] = useState<ObjectDevice | null>(null)
+  const [deviceToRemove, setDeviceToRemove] = useState<ObjectDevice | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
 
   const availableDeviceTypes = catalogDevices.filter(
@@ -111,7 +105,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
+      setMutationError(mapEquipmentErrorCode(code))
     }
   }
 
@@ -136,20 +130,20 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
+      setMutationError(mapEquipmentErrorCode(code))
     }
   }
 
   async function handleConfirmRemove() {
-    if (!removeDevice_) return
+    if (!deviceToRemove) return
     try {
-      await removeDevice.mutateAsync(removeDevice_.deviceTypeId)
-      setRemoveDevice(null)
+      await removeDevice.mutateAsync(deviceToRemove.deviceTypeId)
+      setDeviceToRemove(null)
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
-      setRemoveDevice(null)
+      setMutationError(mapEquipmentErrorCode(code))
+      setDeviceToRemove(null)
     }
   }
 
@@ -195,7 +189,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
                 <IconButton
                   size="small"
                   aria-label={`remove ${device.deviceTypeName}`}
-                  onClick={() => setRemoveDevice(device)}
+                  onClick={() => setDeviceToRemove(device)}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
@@ -313,11 +307,11 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
 
       {/* Remove Confirm Dialog */}
       <ConfirmDialog
-        open={!!removeDevice_}
+        open={!!deviceToRemove}
         title="Remove Device?"
-        message={`Remove "${removeDevice_?.deviceTypeName}" from the inventory? All assignments for this device will also be removed.`}
+        message={`Remove "${deviceToRemove?.deviceTypeName}" from the inventory? All assignments for this device will also be removed.`}
         onConfirm={() => void handleConfirmRemove()}
-        onCancel={() => setRemoveDevice(null)}
+        onCancel={() => setDeviceToRemove(null)}
         confirmLabel="Remove"
       />
     </Box>

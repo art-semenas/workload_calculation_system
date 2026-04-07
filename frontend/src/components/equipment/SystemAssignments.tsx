@@ -40,6 +40,8 @@ import {
   type SystemType,
 } from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
+import { FormTextField } from '../common/FormTextField'
+import { mapEquipmentErrorCode } from '../../utils/errorMessages'
 
 interface AddAssignmentFormValues {
   deviceTypeId: string
@@ -55,13 +57,6 @@ const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
   OS: 'OS',
   PS: 'PS',
   VIDEO: 'VIDEO',
-}
-
-function mapErrorCode(code: string | undefined): string {
-  if (code === 'DEVICE_NOT_IN_INVENTORY') return 'Device is not in the physical inventory.'
-  if (code === 'NO_CONTEXT_FOR_SYSTEM')
-    return 'No catalog context exists for this device and system type.'
-  return 'An error occurred.'
 }
 
 // Sub-component for add dialog — needs access to catalog contexts based on selected device
@@ -172,27 +167,15 @@ function AddAssignmentDialog({
             )}
           />
 
-          <Controller
+          <FormTextField
             name="quantityMaintained"
             control={form.control}
-            render={({ field, fieldState }) => (
-              <Box>
-                <Typography variant="caption">Quantity Maintained</Typography>
-                <input
-                  type="number"
-                  {...field}
-                  aria-label="Quantity Maintained"
-                  min={0}
-                  style={{ display: 'block', width: '100%' }}
-                  onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                />
-                {fieldState.error && (
-                  <Typography variant="caption" color="error">
-                    {fieldState.error.message}
-                  </Typography>
-                )}
-              </Box>
-            )}
+            label="Quantity Maintained"
+            type="number"
+            size="small"
+            inputProps={{ min: 0 }}
+            fullWidth
+            onChange={(e) => form.setValue('quantityMaintained', Number(e.target.value))}
           />
         </DialogContent>
         <DialogActions>
@@ -215,7 +198,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
 
   const [addOpen, setAddOpen] = useState(false)
   const [editAssignment, setEditAssignment] = useState<ObjectSystemAssignment | null>(null)
-  const [removeAssignment_, setRemoveAssignment] = useState<ObjectSystemAssignment | null>(null)
+  const [assignmentToRemove, setAssignmentToRemove] = useState<ObjectSystemAssignment | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
 
   const editForm = useForm<EditAssignmentFormValues>({
@@ -260,7 +243,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
+      setMutationError(mapEquipmentErrorCode(code))
     }
   }
 
@@ -283,20 +266,20 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
+      setMutationError(mapEquipmentErrorCode(code))
     }
   }
 
   async function handleConfirmRemove() {
-    if (!removeAssignment_) return
+    if (!assignmentToRemove) return
     try {
-      await removeAssignment.mutateAsync(removeAssignment_.id)
-      setRemoveAssignment(null)
+      await removeAssignment.mutateAsync(assignmentToRemove.id)
+      setAssignmentToRemove(null)
     } catch (err) {
       const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
         ?.error?.code
-      setMutationError(mapErrorCode(code))
-      setRemoveAssignment(null)
+      setMutationError(mapEquipmentErrorCode(code))
+      setAssignmentToRemove(null)
     }
   }
 
@@ -357,7 +340,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
                     <IconButton
                       size="small"
                       aria-label={`remove assignment ${assignment.systemType}`}
-                      onClick={() => setRemoveAssignment(assignment)}
+                      onClick={() => setAssignmentToRemove(assignment)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -410,27 +393,15 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
           }}
         >
           <DialogContent sx={{ pt: 1 }}>
-            <Controller
+            <FormTextField
               name="quantityMaintained"
               control={editForm.control}
-              render={({ field, fieldState }) => (
-                <Box>
-                  <Typography variant="caption">Quantity Maintained</Typography>
-                  <input
-                    type="number"
-                    {...field}
-                    aria-label="Quantity Maintained"
-                    min={0}
-                    style={{ display: 'block', width: '100%' }}
-                    onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                  />
-                  {fieldState.error && (
-                    <Typography variant="caption" color="error">
-                      {fieldState.error.message}
-                    </Typography>
-                  )}
-                </Box>
-              )}
+              label="Quantity Maintained"
+              type="number"
+              size="small"
+              inputProps={{ min: 0 }}
+              fullWidth
+              onChange={(e) => editForm.setValue('quantityMaintained', Number(e.target.value))}
             />
           </DialogContent>
           <DialogActions>
@@ -444,11 +415,11 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
 
       {/* Remove Confirm Dialog */}
       <ConfirmDialog
-        open={!!removeAssignment_}
+        open={!!assignmentToRemove}
         title="Remove Assignment?"
-        message={`Remove assignment for ${removeAssignment_?.deviceTypeName} / ${removeAssignment_?.systemType}? This action cannot be undone.`}
+        message={`Remove assignment for ${assignmentToRemove?.deviceTypeName} / ${assignmentToRemove?.systemType}? This action cannot be undone.`}
         onConfirm={() => void handleConfirmRemove()}
-        onCancel={() => setRemoveAssignment(null)}
+        onCancel={() => setAssignmentToRemove(null)}
         confirmLabel="Remove"
       />
     </Box>
