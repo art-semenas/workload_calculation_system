@@ -11,6 +11,7 @@ export function TravelTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useTravel(objectId)
   const updateMutation = useUpdateTravel(objectId)
   const [successOpen, setSuccessOpen] = useState(false)
+  const [errorOpen, setErrorOpen] = useState(false)
 
   const { control, handleSubmit, reset } = useForm<TravelUpdate>({
     resolver: zodResolver(TravelUpdateSchema),
@@ -32,8 +33,12 @@ export function TravelTab({ objectId }: { objectId: string }) {
   }, [data, reset])
 
   const onValid = async (values: TravelUpdate) => {
-    await updateMutation.mutateAsync(values)
-    setSuccessOpen(true)
+    try {
+      await updateMutation.mutateAsync(values)
+      setSuccessOpen(true)
+    } catch {
+      setErrorOpen(true)
+    }
   }
 
   if (isLoading) {
@@ -82,6 +87,11 @@ export function TravelTab({ objectId }: { objectId: string }) {
       <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
         <Alert severity="success" onClose={() => setSuccessOpen(false)}>
           Travel saved successfully.
+        </Alert>
+      </Snackbar>
+      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
+        <Alert severity="error" onClose={() => setErrorOpen(false)}>
+          Failed to save travel.
         </Alert>
       </Snackbar>
     </Box>

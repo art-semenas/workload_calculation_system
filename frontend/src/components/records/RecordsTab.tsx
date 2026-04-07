@@ -11,6 +11,7 @@ export function RecordsTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useRecords(objectId)
   const updateMutation = useUpdateRecords(objectId)
   const [successOpen, setSuccessOpen] = useState(false)
+  const [errorOpen, setErrorOpen] = useState(false)
 
   const { control, handleSubmit, reset } = useForm<RecordsUpdate>({
     resolver: zodResolver(RecordsUpdateSchema),
@@ -36,8 +37,12 @@ export function RecordsTab({ objectId }: { objectId: string }) {
   }, [data, reset])
 
   const onValid = async (values: RecordsUpdate) => {
-    await updateMutation.mutateAsync(values)
-    setSuccessOpen(true)
+    try {
+      await updateMutation.mutateAsync(values)
+      setSuccessOpen(true)
+    } catch {
+      setErrorOpen(true)
+    }
   }
 
   if (isLoading) {
@@ -101,6 +106,11 @@ export function RecordsTab({ objectId }: { objectId: string }) {
       <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
         <Alert severity="success" onClose={() => setSuccessOpen(false)}>
           Records saved successfully.
+        </Alert>
+      </Snackbar>
+      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
+        <Alert severity="error" onClose={() => setErrorOpen(false)}>
+          Failed to save records.
         </Alert>
       </Snackbar>
     </Box>

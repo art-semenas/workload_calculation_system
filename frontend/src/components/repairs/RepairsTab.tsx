@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Box,
   Button,
@@ -33,6 +33,10 @@ function RepairRow({
   const [error, setError] = useState<string | null>(null)
   const updateMutation = useUpdateRepair(objectId)
 
+  useEffect(() => {
+    setCountStr(String(initialCount))
+  }, [initialCount])
+
   const handleSave = async () => {
     const parsed = Number(countStr)
     if (!Number.isInteger(parsed) || parsed < 0) {
@@ -40,7 +44,11 @@ function RepairRow({
       return
     }
     setError(null)
-    await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: parsed } })
+    try {
+      await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: parsed } })
+    } catch {
+      setError('Failed to save.')
+    }
   }
 
   return (
