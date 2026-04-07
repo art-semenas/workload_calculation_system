@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Button,
@@ -32,7 +32,6 @@ export default function ObjectListPage() {
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
   const [dialogDivisionId, setDialogDivisionId] = useState<string>('')
-  const [selectedBranchId, setSelectedBranchId] = useState<string>('')
 
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
@@ -45,6 +44,8 @@ export default function ObjectListPage() {
     control,
     handleSubmit: handleObjectSubmit,
     reset,
+    setValue,
+    watch,
   } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
     defaultValues: {
@@ -53,15 +54,16 @@ export default function ObjectListPage() {
     },
   })
 
+  const watchedBranchId = watch('branchId')
+
   const handleCloseObjectDialog = () => {
     setOpenObjectDialog(false)
     setDialogDivisionId('')
-    setSelectedBranchId('')
     reset()
   }
 
   const handleCreateObject = handleObjectSubmit(async (formData) => {
-    await createObject.mutateAsync({ ...formData, branchId: selectedBranchId })
+    await createObject.mutateAsync(formData)
     handleCloseObjectDialog()
   })
 
@@ -165,9 +167,14 @@ export default function ObjectListPage() {
                 label="Division"
                 onChange={(e) => {
                   setDialogDivisionId(e.target.value)
-                  setSelectedBranchId('')
+                  setValue('branchId', '', { shouldValidate: false })
                 }}
                 inputProps={{ 'data-testid': 'dialog-division-select' }}
+                SelectDisplayProps={
+                  {
+                    'data-testid': 'dialog-division-select-btn',
+                  } as React.HTMLAttributes<HTMLDivElement>
+                }
               >
                 <MenuItem value="">Select division</MenuItem>
                 {divisions &&
@@ -181,10 +188,15 @@ export default function ObjectListPage() {
             <FormControl fullWidth disabled={!dialogDivisionId || dialogDivisionLoading}>
               <InputLabel>Branch</InputLabel>
               <Select
-                value={selectedBranchId}
+                value={watchedBranchId}
                 label="Branch"
-                onChange={(e) => setSelectedBranchId(e.target.value)}
+                onChange={(e) => setValue('branchId', e.target.value, { shouldValidate: true })}
                 inputProps={{ 'data-testid': 'dialog-branch-select' }}
+                SelectDisplayProps={
+                  {
+                    'data-testid': 'dialog-branch-select-btn',
+                  } as React.HTMLAttributes<HTMLDivElement>
+                }
               >
                 <MenuItem value="">Select branch</MenuItem>
                 {dialogDivisionDetail?.branches.map((branch) => (
@@ -200,7 +212,7 @@ export default function ObjectListPage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={createObject.isPending || !selectedBranchId}
+              disabled={createObject.isPending || !watchedBranchId}
             >
               Create
             </Button>

@@ -163,12 +163,7 @@ describe('ObjectListPage', () => {
 
     await userEvent.click(screen.getByText('Add object'))
 
-    // After dialog opens, the MUI portal renders 2 comboboxes in the DOM:
-    //   combobox[0] = dialog division select (not aria-disabled)
-    //   combobox[1] = dialog branch select (aria-disabled until a division is chosen)
-    // The page-level filter select is visually present but does not surface as a
-    // combobox role while the dialog's focus trap is active.
-    const [dialogDivisionSelect] = screen.getAllByRole('combobox')
+    const dialogDivisionSelect = screen.getByTestId('dialog-division-select-btn')
 
     await userEvent.click(dialogDivisionSelect)
 
@@ -178,7 +173,7 @@ describe('ObjectListPage', () => {
 
     // Now dialogDivisionId is 'div-1', useDivision mock returns branches.
     // Open the branch select (it becomes enabled after division selection).
-    const branchSelect = screen.getAllByRole('combobox')[1]
+    const branchSelect = screen.getByTestId('dialog-branch-select-btn')
     await userEvent.click(branchSelect)
 
     expect(await screen.findByRole('option', { name: 'Branch 1A' })).toBeInTheDocument()
