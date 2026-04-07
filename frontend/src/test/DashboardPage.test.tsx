@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from '../pages/DashboardPage'
@@ -67,6 +68,28 @@ describe('DashboardPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Data will be available after M-02')).toBeInTheDocument()
+    })
+  })
+
+  it('navigates to division detail on row click', async () => {
+    mockUseDivisions.mockReturnValue({
+      data: [{ id: 'div-1', name: 'Division Alpha', branchCount: 2, objectCount: 10 }],
+      isLoading: false,
+    })
+
+    renderPage()
+
+    const row = await screen.findByText('Division Alpha')
+    await userEvent.click(row)
+
+    expect(mockNavigate).toHaveBeenCalledWith('/divisions/div-1')
+  })
+
+  it('shows placeholder for M-03 data', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByText('Data will be available after M-03')).toBeInTheDocument()
     })
   })
 })
