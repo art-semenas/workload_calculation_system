@@ -166,5 +166,28 @@ describe('RepairsTab', () => {
         data: { count: 3 },
       })
     })
+
+    expect(screen.getByText('Repairs saved successfully.')).toBeInTheDocument()
+  })
+
+  it('shows error snackbar when save fails', async () => {
+    const mockMutateAsync = vi.fn().mockRejectedValue(new Error('save failed'))
+    mockUseUpdateRepair.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
+
+    const user = userEvent.setup()
+    renderTab()
+
+    await waitFor(() => expect(screen.getByText('Battery Swap')).toBeInTheDocument())
+
+    const batteryField = screen.getByLabelText('count-Battery Swap')
+    await user.clear(batteryField)
+    await user.type(batteryField, '3')
+
+    const saveButtons = screen.getAllByRole('button', { name: /save/i })
+    await user.click(saveButtons[1])
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to save repairs.')).toBeInTheDocument()
+    })
   })
 })

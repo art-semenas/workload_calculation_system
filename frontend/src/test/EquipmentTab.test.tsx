@@ -226,7 +226,7 @@ describe('EquipmentTab', () => {
   })
 
   it('shows warning when quantityMaintained > quantityPhysical', async () => {
-    // Camera has quantityPhysical=5, but assignment has quantityMaintained=10
+    // Camera has quantityPhysical=5, but assignment total is 10
     mockUseDevices.mockReturnValue({
       data: [
         {
@@ -258,8 +258,53 @@ describe('EquipmentTab', () => {
     renderTab()
 
     await waitFor(() => {
-      expect(screen.getByLabelText('over-capacity warning')).toBeInTheDocument()
+      expect(screen.getByTestId('over-capacity-warning')).toBeInTheDocument()
     })
+  })
+
+  it('shows warning when combined assignments exceed physical quantity', async () => {
+    mockUseDevices.mockReturnValue({
+      data: [
+        {
+          id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          objectId: OBJ_ID,
+          deviceTypeId: DTYPE_CAMERA,
+          deviceTypeName: 'Camera',
+          quantityPhysical: 6,
+        },
+      ],
+      isLoading: false,
+    })
+    mockUseAssignments.mockReturnValue({
+      data: [
+        {
+          id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+          objectId: OBJ_ID,
+          deviceTypeId: DTYPE_CAMERA,
+          deviceTypeName: 'Camera',
+          systemType: 'OS' as const,
+          quantityMaintained: 4,
+          r1Minutes: 10,
+          r2Minutes: 5,
+        },
+        {
+          id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          objectId: OBJ_ID,
+          deviceTypeId: DTYPE_CAMERA,
+          deviceTypeName: 'Camera',
+          systemType: 'PS' as const,
+          quantityMaintained: 5,
+          r1Minutes: 8,
+          r2Minutes: 4,
+        },
+      ],
+      isLoading: false,
+    })
+
+    renderTab()
+
+    const warning = await screen.findByTestId('over-capacity-warning')
+    expect(warning).toBeInTheDocument()
   })
 
   it('renders system assignments grouped by device', async () => {

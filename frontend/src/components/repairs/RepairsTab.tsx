@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -24,10 +26,14 @@ function RepairRow({
   repairType,
   initialCount,
   objectId,
+  onSaveSuccess,
+  onSaveError,
 }: {
   repairType: RepairType
   initialCount: number
   objectId: string
+  onSaveSuccess: () => void
+  onSaveError: () => void
 }) {
   const [countStr, setCountStr] = useState(String(initialCount))
   const [error, setError] = useState<string | null>(null)
@@ -46,8 +52,10 @@ function RepairRow({
     setError(null)
     try {
       await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: parsed } })
+      onSaveSuccess()
     } catch {
       setError('Failed to save.')
+      onSaveError()
     }
   }
 
@@ -86,6 +94,8 @@ function RepairRow({
 export function RepairsTab({ objectId }: { objectId: string }) {
   const { data: catalogRepairs, isLoading: catalogLoading } = useCatalogRepairs()
   const { data: repairs, isLoading: repairsLoading } = useRepairs(objectId)
+  const [successOpen, setSuccessOpen] = useState(false)
+  const [errorOpen, setErrorOpen] = useState(false)
 
   if (catalogLoading || repairsLoading) {
     return (
@@ -118,10 +128,22 @@ export function RepairsTab({ objectId }: { objectId: string }) {
               repairType={repairType}
               initialCount={getCount(repairList, repairType.id)}
               objectId={objectId}
+              onSaveSuccess={() => setSuccessOpen(true)}
+              onSaveError={() => setErrorOpen(true)}
             />
           ))}
         </TableBody>
       </Table>
+      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
+        <Alert severity="success" onClose={() => setSuccessOpen(false)}>
+          Repairs saved successfully.
+        </Alert>
+      </Snackbar>
+      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
+        <Alert severity="error" onClose={() => setErrorOpen(false)}>
+          Failed to save repairs.
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

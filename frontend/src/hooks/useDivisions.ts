@@ -3,6 +3,7 @@ import {
   createBranch,
   createDivision,
   getDivision,
+  getDivisionBranches,
   getDivisions,
   updateDivision,
 } from '../api/divisions'
@@ -18,6 +19,14 @@ export function useDivision(id: string | undefined) {
   return useQuery({
     queryKey: ['divisions', id],
     queryFn: () => getDivision(id as string),
+    enabled: !!id,
+  })
+}
+
+export function useDivisionBranches(id: string | undefined) {
+  return useQuery({
+    queryKey: ['divisions', id, 'branches'],
+    queryFn: () => getDivisionBranches(id as string),
     enabled: !!id,
   })
 }
@@ -53,6 +62,7 @@ export function useCreateBranch(divisionId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['divisions'] })
       void queryClient.invalidateQueries({ queryKey: ['divisions', divisionId] })
+      void queryClient.invalidateQueries({ queryKey: ['divisions', divisionId, 'branches'] })
     },
   })
 }

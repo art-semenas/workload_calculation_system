@@ -23,7 +23,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
-import { useCreateBranch, useDivision, useUpdateDivision } from '../hooks/useDivisions'
+import {
+  useCreateBranch,
+  useDivision,
+  useDivisionBranches,
+  useUpdateDivision,
+} from '../hooks/useDivisions'
 import { BranchCreateSchema, type BranchCreate } from '../types/division'
 
 export default function DivisionDetailPage() {
@@ -34,6 +39,7 @@ export default function DivisionDetailPage() {
   const [openBranchDialog, setOpenBranchDialog] = useState(false)
 
   const { data: division, isLoading } = useDivision(id || '')
+  const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id || '')
   const updateDivision = useUpdateDivision()
   const createBranch = useCreateBranch(id || '')
 
@@ -77,7 +83,7 @@ export default function DivisionDetailPage() {
     handleCloseBranchDialog()
   })
 
-  if (isLoading) {
+  if (isLoading || branchesLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
         <CircularProgress />
@@ -142,7 +148,7 @@ export default function DivisionDetailPage() {
       </Box>
 
       {/* Branches Table */}
-      {division.branches && division.branches.length > 0 ? (
+      {branches.length > 0 ? (
         <Paper>
           <Table>
             <TableHead>
@@ -152,7 +158,7 @@ export default function DivisionDetailPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {division.branches.map((branch) => (
+              {branches.map((branch) => (
                 <TableRow
                   key={branch.id}
                   hover

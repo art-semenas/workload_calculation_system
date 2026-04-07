@@ -24,7 +24,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useBranch, useUpdateBranch } from '../hooks/useBranches'
-import { useCreateObject } from '../hooks/useObjects'
+import { useCreateObject, useObjects } from '../hooks/useObjects'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 
 export default function BranchDetailPage() {
@@ -35,8 +35,11 @@ export default function BranchDetailPage() {
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
 
   const { data: branch, isLoading } = useBranch(id || '')
+  const { data: objects = [], isLoading: objectsLoading } = useObjects()
   const updateBranch = useUpdateBranch()
   const createObject = useCreateObject()
+
+  const branchObjects = id ? objects.filter((object) => object.branchId === id) : []
 
   const {
     control,
@@ -79,7 +82,7 @@ export default function BranchDetailPage() {
     handleCloseObjectDialog()
   })
 
-  if (isLoading) {
+  if (isLoading || objectsLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
         <CircularProgress />
@@ -154,7 +157,7 @@ export default function BranchDetailPage() {
       </Box>
 
       {/* Objects Table */}
-      {branch.objects && branch.objects.data && branch.objects.data.length > 0 ? (
+      {branchObjects.length > 0 ? (
         <Paper>
           <Table>
             <TableHead>
@@ -164,7 +167,7 @@ export default function BranchDetailPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {branch.objects.data.map((obj) => (
+              {branchObjects.map((obj) => (
                 <TableRow
                   key={obj.id}
                   hover
@@ -172,11 +175,7 @@ export default function BranchDetailPage() {
                   sx={{ cursor: 'pointer' }}
                 >
                   <TableCell>{obj.name}</TableCell>
-                  <TableCell>
-                    {obj.itogoChisloWithTravel !== null
-                      ? obj.itogoChisloWithTravel.toFixed(4)
-                      : '-'}
-                  </TableCell>
+                  <TableCell>-</TableCell>
                 </TableRow>
               ))}
             </TableBody>

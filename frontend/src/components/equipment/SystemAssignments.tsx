@@ -175,25 +175,28 @@ function AddAssignmentDialog({
 }
 
 function AssignmentWarning({
-  quantityMaintained,
+  totalQuantityMaintained,
   quantityPhysical,
 }: {
-  quantityMaintained: number
+  totalQuantityMaintained: number
   quantityPhysical: number
 }) {
-  if (quantityMaintained <= quantityPhysical) {
+  if (totalQuantityMaintained <= quantityPhysical) {
     return null
   }
 
   return (
     <Tooltip
-      title={`Maintained quantity (${quantityMaintained}) exceeds physical quantity (${quantityPhysical})`}
+      title={`Maintained quantity (${totalQuantityMaintained}) exceeds physical quantity (${quantityPhysical})`}
     >
-      <WarningAmberOutlinedIcon
-        color="warning"
-        fontSize="small"
+      <Box
+        component="span"
         aria-label="over-capacity warning"
-      />
+        data-testid="over-capacity-warning"
+        sx={{ display: 'inline-flex' }}
+      >
+        <WarningAmberOutlinedIcon color="warning" fontSize="small" />
+      </Box>
     </Tooltip>
   )
 }
@@ -215,11 +218,21 @@ function DeviceAssignmentsGroup({
   const availableSystemTypes = contexts
     .map((context) => context.systemType)
     .filter((systemType) => !assignments.some((assignment) => assignment.systemType === systemType))
+  const totalQuantityMaintained = assignments.reduce(
+    (sum, assignment) => sum + assignment.quantityMaintained,
+    0
+  )
 
   return (
     <Box sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="subtitle2">{device.deviceTypeName}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle2">{device.deviceTypeName}</Typography>
+          <AssignmentWarning
+            totalQuantityMaintained={totalQuantityMaintained}
+            quantityPhysical={device.quantityPhysical}
+          />
+        </Box>
         <Button
           size="small"
           variant="outlined"
@@ -244,15 +257,9 @@ function DeviceAssignmentsGroup({
           {assignments.map((assignment) => (
             <TableRow key={assignment.id}>
               <TableCell>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography component="span">
-                    {SYSTEM_TYPE_LABELS[assignment.systemType]}
-                  </Typography>
-                  <AssignmentWarning
-                    quantityMaintained={assignment.quantityMaintained}
-                    quantityPhysical={device.quantityPhysical}
-                  />
-                </Box>
+                <Typography component="span">
+                  {SYSTEM_TYPE_LABELS[assignment.systemType]}
+                </Typography>
               </TableCell>
               <TableCell>{assignment.quantityMaintained}</TableCell>
               <TableCell>{assignment.r1Minutes}</TableCell>

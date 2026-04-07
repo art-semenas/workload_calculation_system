@@ -6,12 +6,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import DivisionDetailPage from '../pages/DivisionDetailPage'
 
 const mockUseDivision = vi.fn()
+const mockUseDivisionBranches = vi.fn()
 const mockUseUpdateDivision = vi.fn()
 const mockUseCreateBranch = vi.fn()
 
 vi.mock('../hooks/useDivisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivision: (...args: unknown[]) => mockUseDivision(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useDivisionBranches: (...args: unknown[]) => mockUseDivisionBranches(...args),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useUpdateDivision: (...args: unknown[]) => mockUseUpdateDivision(...args),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -47,11 +50,14 @@ describe('DivisionDetailPage', () => {
         name: 'Division 1',
         branchCount: 2,
         objectCount: 10,
-        branches: [
-          { id: 'br-1', name: 'Branch 1', divisionId: 'div-1', objectCount: 5 },
-          { id: 'br-2', name: 'Branch 2', divisionId: 'div-1', objectCount: 5 },
-        ],
       },
+      isLoading: false,
+    })
+    mockUseDivisionBranches.mockReturnValue({
+      data: [
+        { id: 'br-1', name: 'Branch 1', divisionId: 'div-1', objectCount: 5 },
+        { id: 'br-2', name: 'Branch 2', divisionId: 'div-1', objectCount: 5 },
+      ],
       isLoading: false,
     })
     mockUseUpdateDivision.mockReturnValue({
