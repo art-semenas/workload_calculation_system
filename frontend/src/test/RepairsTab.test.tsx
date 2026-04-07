@@ -121,6 +121,9 @@ describe('RepairsTab', () => {
   })
 
   it('validates non-negative integers (rejects negative)', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue({})
+    mockUseUpdateRepair.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
+
     const user = userEvent.setup()
     renderTab()
 
@@ -136,7 +139,7 @@ describe('RepairsTab', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Must be a non-negative integer')).toBeInTheDocument()
-      expect(mockUseUpdateRepair().mutateAsync).not.toHaveBeenCalled()
+      expect(mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 

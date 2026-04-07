@@ -90,6 +90,9 @@ describe('RecordsTab', () => {
   })
 
   it('rejects negative values (Zod validation)', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue({})
+    mockUseUpdateRecords.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
+
     const user = userEvent.setup()
     renderTab()
 
@@ -104,7 +107,7 @@ describe('RecordsTab', () => {
     await waitFor(() => {
       // Zod should report validation error — field should show error state
       // The form should NOT call mutateAsync with invalid data
-      expect(mockUseUpdateRecords().mutateAsync).not.toHaveBeenCalled()
+      expect(mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 

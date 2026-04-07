@@ -94,19 +94,11 @@ export function RecordsTab({ objectId }: { objectId: string }) {
           type="number"
           inputProps={{ min: 0 }}
         />
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={updateMutation.isPending}
-        >
+        <Button type="submit" variant="contained" disabled={updateMutation.isPending}>
           Save
         </Button>
       </Stack>
-      <Snackbar
-        open={successOpen}
-        autoHideDuration={3000}
-        onClose={() => setSuccessOpen(false)}
-      >
+      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
         <Alert severity="success" onClose={() => setSuccessOpen(false)}>
           Records saved successfully.
         </Alert>
