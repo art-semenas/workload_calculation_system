@@ -102,7 +102,12 @@ export default function DivisionListPage() {
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>Add division</DialogTitle>
-        <Box component="form" onSubmit={handleCreate}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void handleCreate(e)
+          }}
+        >
           <DialogContent>
             <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
           </DialogContent>

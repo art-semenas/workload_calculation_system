@@ -1,8 +1,18 @@
 import { useState } from 'react'
-import { Box, Button, CircularProgress, Link, Tab, Tabs, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useObject, useDeleteObject } from '../hooks/useObjects'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
+import { useDeleteObject, useObject, useUpdateObject } from '../hooks/useObjects'
 import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import { EquipmentTab } from '../components/equipment/EquipmentTab'
 import { RecordsTab } from '../components/records/RecordsTab'
@@ -36,9 +46,12 @@ export default function ObjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [newName, setNewName] = useState('')
 
   const { data: object, isLoading } = useObject(id || '')
   const deleteObject = useDeleteObject()
+  const updateObject = useUpdateObject()
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
@@ -49,6 +62,25 @@ export default function ObjectDetailPage() {
       await deleteObject.mutateAsync(id)
       navigate('/objects')
     }
+  }
+
+  const handleEditName = () => {
+    if (object) {
+      setNewName(object.name)
+      setEditingName(true)
+    }
+  }
+
+  const handleSaveName = async () => {
+    if (id && newName.trim()) {
+      await updateObject.mutateAsync({ id, data: { name: newName } })
+      setEditingName(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingName(false)
+    setNewName('')
   }
 
   if (isLoading) {
@@ -67,28 +99,14 @@ export default function ObjectDetailPage() {
     <Box>
       {/* Breadcrumb */}
       <Box sx={{ mb: 2 }}>
-        <Link href="/divisions" underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
-          Divisions
-        </Link>
-        <Typography component="span" sx={{ mr: 1 }}>
-          &gt;
-        </Typography>
-        <Link href={`/divisions`} underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
-          {object.divisionName}
-        </Link>
-        <Typography component="span" sx={{ mr: 1 }}>
-          &gt;
-        </Typography>
-        <Link href={`/branches`} underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
-          {object.branchName}
-        </Link>
-        <Typography component="span" sx={{ mr: 1 }}>
-          &gt;
-        </Typography>
+        <RouterLink to="/divisions">Divisions</RouterLink>
+        {' > '}
+        <RouterLink to={`/branches/${object.branchId}`}>{object.branchName}</RouterLink>
+        {' > '}
         <Typography component="span">{object.name}</Typography>
       </Box>
 
-      {/* Object Name */}
+      {/* Object Name with Edit */}
       <Box
         sx={{
           display: 'flex',
@@ -98,7 +116,36 @@ export default function ObjectDetailPage() {
           gap: 2,
         }}
       >
-        <Typography variant="h4">{object.name}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {editingName ? (
+            <>
+              <TextField
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                autoFocus
+                size="small"
+              />
+              <Button
+                size="small"
+                onClick={() => {
+                  void handleSaveName()
+                }}
+              >
+                Save
+              </Button>
+              <Button size="small" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              <Typography variant="h4">{object.name}</Typography>
+              <IconButton size="small" aria-label="Edit name" onClick={handleEditName}>
+                <EditOutlinedIcon />
+              </IconButton>
+            </>
+          )}
+        </Box>
         <Button
           variant="outlined"
           color="error"
@@ -146,7 +193,9 @@ export default function ObjectDetailPage() {
         open={openDeleteDialog}
         title="Delete object?"
         message={`Are you sure you want to delete "${object.name}"? This action cannot be undone.`}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          void handleDeleteConfirm()
+        }}
         onCancel={() => setOpenDeleteDialog(false)}
         confirmLabel="Delete"
       />

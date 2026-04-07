@@ -1,3 +1,5 @@
+import { Box } from '@mui/material'
+
 export function PhysicalInventory({ objectId }: { objectId: string }) {
-  return <div>Physical Inventory - {objectId}</div>
+  return <Box>Physical Inventory - {objectId}</Box>
 }

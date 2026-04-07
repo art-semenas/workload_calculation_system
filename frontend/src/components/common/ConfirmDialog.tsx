@@ -11,7 +11,7 @@ interface ConfirmDialogProps {
   open: boolean
   title: string
   message: string
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   onCancel: () => void
   confirmLabel?: string
   cancelLabel?: string
@@ -36,7 +36,14 @@ export function ConfirmDialog({
         <Button onClick={onCancel} disableRipple>
           {cancelLabel}
         </Button>
-        <Button onClick={onConfirm} color="error" variant="contained" disableRipple>
+        <Button
+          onClick={() => {
+            void onConfirm()
+          }}
+          color="error"
+          variant="contained"
+          disableRipple
+        >
           {confirmLabel}
         </Button>
       </DialogActions>

@@ -10,8 +10,11 @@ const mockUseUpdateDivision = vi.fn()
 const mockUseCreateBranch = vi.fn()
 
 vi.mock('../hooks/useDivisions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivision: (...args: unknown[]) => mockUseDivision(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useUpdateDivision: (...args: unknown[]) => mockUseUpdateDivision(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useCreateBranch: (...args: unknown[]) => mockUseCreateBranch(...args),
 }))
 
@@ -108,5 +111,34 @@ describe('DivisionDetailPage', () => {
     await userEvent.click(branchRow)
 
     expect(mockNavigate).toHaveBeenCalledWith('/branches/br-1')
+  })
+
+  it('allows inline editing of division name', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue({})
+    mockUseUpdateDivision.mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+    })
+
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+
+    const textField = screen.getByRole('textbox')
+    await userEvent.clear(textField)
+    await userEvent.type(textField, 'Division Renamed')
+
+    await userEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        id: 'div-1',
+        data: { name: 'Division Renamed' },
+      })
+    })
   })
 })

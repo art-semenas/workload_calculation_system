@@ -10,11 +10,14 @@ const mockUseDivisions = vi.fn()
 const mockUseCreateObject = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useObjects: (...args: unknown[]) => mockUseObjects(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useCreateObject: (...args: unknown[]) => mockUseCreateObject(...args),
 }))
 
 vi.mock('../hooks/useDivisions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivisions: (...args: unknown[]) => mockUseDivisions(...args),
 }))
 
@@ -98,5 +101,21 @@ describe('ObjectListPage', () => {
 
     await userEvent.click(screen.getByText('Add object'))
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
+  })
+
+  it('filters by division', async () => {
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
+
+    const select = screen.getByRole('combobox')
+    await userEvent.click(select)
+
+    const option = await screen.findByRole('option', { name: 'Division 1' })
+    await userEvent.click(option)
+
+    await waitFor(() => {
+      expect(mockUseObjects).toHaveBeenCalledWith('div-1')
+    })
   })
 })

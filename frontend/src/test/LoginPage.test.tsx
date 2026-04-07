@@ -7,6 +7,7 @@ import LoginPage from '../pages/LoginPage'
 
 const mockLogin = vi.fn()
 vi.mock('../api/auth', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   login: (...args: unknown[]) => mockLogin(...args),
 }))
 

@@ -112,7 +112,12 @@ export default function DivisionDetailPage() {
               autoFocus
               size="small"
             />
-            <Button size="small" onClick={handleSaveName}>
+            <Button
+              size="small"
+              onClick={() => {
+                void handleSaveName()
+              }}
+            >
               Save
             </Button>
             <Button size="small" onClick={handleCancelEdit}>
@@ -122,7 +127,7 @@ export default function DivisionDetailPage() {
         ) : (
           <>
             <Typography variant="h4">{division.name}</Typography>
-            <IconButton size="small" onClick={handleEditName}>
+            <IconButton size="small" aria-label="Edit" onClick={handleEditName}>
               <EditOutlinedIcon />
             </IconButton>
           </>
@@ -168,7 +173,12 @@ export default function DivisionDetailPage() {
       {/* Create Branch Dialog */}
       <Dialog open={openBranchDialog} onClose={handleCloseBranchDialog} fullWidth maxWidth="sm">
         <DialogTitle>Add branch</DialogTitle>
-        <Box component="form" onSubmit={handleCreateBranch}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void handleCreateBranch(e)
+          }}
+        >
           <DialogContent>
             <FormTextField
               name="name"

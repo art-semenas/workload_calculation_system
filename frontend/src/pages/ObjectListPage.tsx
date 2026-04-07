@@ -136,7 +136,12 @@ export default function ObjectListPage() {
 
       <Dialog open={openObjectDialog} onClose={handleCloseObjectDialog} fullWidth maxWidth="sm">
         <DialogTitle>Add object</DialogTitle>
-        <Box component="form" onSubmit={handleCreateObject}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void handleCreateObject(e)
+          }}
+        >
           <DialogContent>
             <FormTextField
               name="name"

@@ -1,3 +1,5 @@
+import { Box } from '@mui/material'
+
 export function SystemAssignments({ objectId }: { objectId: string }) {
-  return <div>System Assignments - {objectId}</div>
+  return <Box>System Assignments - {objectId}</Box>
 }

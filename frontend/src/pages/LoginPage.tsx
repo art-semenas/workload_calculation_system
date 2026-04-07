@@ -77,7 +77,14 @@ export default function LoginPage() {
             </Alert>
           ) : null}
 
-          <Box component="form" onSubmit={onSubmit} noValidate sx={{ mt: 2 }}>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              void onSubmit(e)
+            }}
+            noValidate
+            sx={{ mt: 2 }}
+          >
             <FormTextField
               name="email"
               control={control}

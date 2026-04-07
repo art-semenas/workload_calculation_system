@@ -7,10 +7,15 @@ import ObjectDetailPage from '../pages/ObjectDetailPage'
 
 const mockUseObject = vi.fn()
 const mockUseDeleteObject = vi.fn()
+const mockUseUpdateObject = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useObject: (...args: unknown[]) => mockUseObject(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDeleteObject: (...args: unknown[]) => mockUseDeleteObject(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useUpdateObject: (...args: unknown[]) => mockUseUpdateObject(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -48,6 +53,10 @@ describe('ObjectDetailPage', () => {
       isLoading: false,
     })
     mockUseDeleteObject.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({}),
+      isPending: false,
+    })
+    mockUseUpdateObject.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({}),
       isPending: false,
     })
@@ -104,5 +113,31 @@ describe('ObjectDetailPage', () => {
 
     await userEvent.click(screen.getByText('Summary'))
     expect(screen.getByText(/Available in M-02/i)).toBeInTheDocument()
+  })
+
+  it('confirms before deleting', async () => {
+    const mockMutateAsync = vi.fn().mockResolvedValue({})
+    mockUseDeleteObject.mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+    })
+
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+    )
+
+    await userEvent.click(screen.getByText('Delete object'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Delete object?')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith('obj-1')
+    })
   })
 })

@@ -9,9 +9,11 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import { useDivisions } from '../hooks/useDivisions'
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const { data: divisions, isLoading } = useDivisions()
 
   if (isLoading) {
@@ -44,7 +46,14 @@ export default function DashboardPage() {
             </TableHead>
             <TableBody>
               {divisions.map((div) => (
-                <TableRow key={div.id}>
+                <TableRow
+                  key={div.id}
+                  hover
+                  onClick={() => {
+                    navigate(`/divisions/${div.id}`)
+                  }}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>{div.name}</TableCell>
                   <TableCell>{div.branchCount}</TableCell>
                   <TableCell>{div.objectCount}</TableCell>

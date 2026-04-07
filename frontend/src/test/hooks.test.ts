@@ -18,6 +18,7 @@ describe('API modules', () => {
   })
 
   it('getDivisions calls GET /divisions', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce({
       data: { data: [], meta: { total: 0 }, error: null },
     })
@@ -27,6 +28,7 @@ describe('API modules', () => {
   })
 
   it('createDivision calls POST /divisions', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.post.mockResolvedValueOnce({
       data: { data: { id: '1', name: 'Test' }, meta: null, error: null },
     })
@@ -36,6 +38,7 @@ describe('API modules', () => {
   })
 
   it('login calls POST /auth/login', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.post.mockResolvedValueOnce({
       data: { data: { token: 'jwt', user: {} }, meta: null, error: null },
     })
@@ -48,6 +51,7 @@ describe('API modules', () => {
   })
 
   it('getTravel calls GET /objects/:id/travel', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce({
       data: { data: null, meta: null, error: null },
     })
@@ -57,6 +61,7 @@ describe('API modules', () => {
   })
 
   it('updateTravel calls PUT /objects/:id/travel', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.put.mockResolvedValueOnce({
       data: { data: {}, meta: null, error: null },
     })

@@ -124,7 +124,12 @@ export default function BranchDetailPage() {
               autoFocus
               size="small"
             />
-            <Button size="small" onClick={handleSaveName}>
+            <Button
+              size="small"
+              onClick={() => {
+                void handleSaveName()
+              }}
+            >
               Save
             </Button>
             <Button size="small" onClick={handleCancelEdit}>
@@ -184,7 +189,12 @@ export default function BranchDetailPage() {
       {/* Create Object Dialog */}
       <Dialog open={openObjectDialog} onClose={handleCloseObjectDialog} fullWidth maxWidth="sm">
         <DialogTitle>Add object</DialogTitle>
-        <Box component="form" onSubmit={handleCreateObject}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void handleCreateObject(e)
+          }}
+        >
           <DialogContent>
             <FormTextField
               name="name"

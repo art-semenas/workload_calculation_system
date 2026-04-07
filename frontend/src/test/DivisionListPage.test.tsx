@@ -9,7 +9,9 @@ const mockGetDivisions = vi.fn()
 const mockCreateDivision = vi.fn()
 
 vi.mock('../api/divisions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   getDivisions: (...args: unknown[]) => mockGetDivisions(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   createDivision: (...args: unknown[]) => mockCreateDivision(...args),
 }))
 

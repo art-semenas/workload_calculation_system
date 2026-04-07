@@ -10,11 +10,14 @@ const mockUseUpdateBranch = vi.fn()
 const mockUseCreateObject = vi.fn()
 
 vi.mock('../hooks/useBranches', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useBranch: (...args: unknown[]) => mockUseBranch(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useUpdateBranch: (...args: unknown[]) => mockUseUpdateBranch(...args),
 }))
 
 vi.mock('../hooks/useObjects', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useCreateObject: (...args: unknown[]) => mockUseCreateObject(...args),
 }))
 
