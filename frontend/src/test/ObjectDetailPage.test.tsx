@@ -8,6 +8,9 @@ import ObjectDetailPage from '../pages/ObjectDetailPage'
 const mockUseObject = vi.fn()
 const mockUseDeleteObject = vi.fn()
 const mockUseUpdateObject = vi.fn()
+const mockUseCreateObject = vi.fn()
+const mockUseDivisions = vi.fn()
+const mockUseDivision = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -16,6 +19,15 @@ vi.mock('../hooks/useObjects', () => ({
   useDeleteObject: (...args: unknown[]) => mockUseDeleteObject(...args),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useUpdateObject: (...args: unknown[]) => mockUseUpdateObject(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useCreateObject: (...args: unknown[]) => mockUseCreateObject(...args),
+}))
+
+vi.mock('../hooks/useDivisions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useDivisions: (...args: unknown[]) => mockUseDivisions(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useDivision: (...args: unknown[]) => mockUseDivision(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -24,14 +36,42 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
-function renderPage() {
+function renderDetailPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/objects/obj-1']}>
         <Routes>
-          <Route path="/objects/:id" element={<ObjectDetailPage />} />
+          <Route path="/objects/:id" element={<ObjectDetailPage mode="detail" />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
+function renderCreatePage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/objects/new']}>
+        <Routes>
+          <Route path="/objects/new" element={<ObjectDetailPage mode="create" />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
+  )
+}
+
+function renderEditPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/objects/obj-1/edit']}>
+        <Routes>
+          <Route path="/objects/:id/edit" element={<ObjectDetailPage mode="edit" />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -60,10 +100,22 @@ describe('ObjectDetailPage', () => {
       mutateAsync: vi.fn().mockResolvedValue({}),
       isPending: false,
     })
+    mockUseCreateObject.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ id: 'new-obj-1' }),
+      isPending: false,
+    })
+    mockUseDivisions.mockReturnValue({
+      data: [{ id: 'div-1', name: 'Division 1', branchCount: 1, objectCount: 0 }],
+      isLoading: false,
+    })
+    mockUseDivision.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+    })
   })
 
   it('renders object name as heading', async () => {
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -71,7 +123,7 @@ describe('ObjectDetailPage', () => {
   })
 
   it('shows tab navigation', async () => {
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -84,7 +136,7 @@ describe('ObjectDetailPage', () => {
   })
 
   it('shows delete button', async () => {
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -94,7 +146,7 @@ describe('ObjectDetailPage', () => {
   })
 
   it('shows placeholder for Engineers tab', async () => {
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -105,7 +157,7 @@ describe('ObjectDetailPage', () => {
   })
 
   it('shows placeholder for Summary tab', async () => {
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -122,7 +174,7 @@ describe('ObjectDetailPage', () => {
       isPending: false,
     })
 
-    renderPage()
+    renderDetailPage()
 
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
@@ -139,5 +191,46 @@ describe('ObjectDetailPage', () => {
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith('obj-1')
     })
+  })
+
+  it('delete confirmation shows updated message text', async () => {
+    renderDetailPage()
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+    )
+
+    await userEvent.click(screen.getByText('Delete object'))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          /Deleting "Object 1" will also delete all related equipment, records, repairs, and travel data\. This action cannot be undone\./
+        )
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('create mode renders a form, not "Object not found"', async () => {
+    renderCreatePage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('New Object')
+    })
+
+    expect(screen.queryByText('Object not found')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).toBeInTheDocument()
+  })
+
+  it('edit mode renders a prefilled form', async () => {
+    renderEditPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Edit Object')
+    })
+
+    expect(screen.queryByText('Object not found')).not.toBeInTheDocument()
+
+    expect(screen.getByLabelText<HTMLInputElement>('Name').value).toBe('Object 1')
   })
 })

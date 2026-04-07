@@ -23,9 +23,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <DashboardPage /> },
       { path: '/objects', element: <ObjectListPage /> },
-      { path: '/objects/new', element: <ObjectDetailPage /> },
-      { path: '/objects/:id', element: <ObjectDetailPage /> },
-      { path: '/objects/:id/edit', element: <ObjectDetailPage /> },
+      { path: '/objects/new', element: <ObjectDetailPage mode="create" /> },
+      { path: '/objects/:id', element: <ObjectDetailPage mode="detail" /> },
+      { path: '/objects/:id/edit', element: <ObjectDetailPage mode="edit" /> },
       { path: '/engineers', element: <EngineerListPage /> },
       { path: '/engineers/:id', element: <EngineerDetailPage /> },
       { path: '/engineers/:id/edit', element: <EngineerDetailPage /> },
