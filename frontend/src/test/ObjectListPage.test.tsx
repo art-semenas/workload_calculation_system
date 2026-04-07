@@ -7,6 +7,7 @@ import ObjectListPage from '../pages/ObjectListPage'
 
 const mockUseObjects = vi.fn()
 const mockUseDivisions = vi.fn()
+const mockUseDivision = vi.fn()
 const mockUseCreateObject = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
@@ -19,6 +20,8 @@ vi.mock('../hooks/useObjects', () => ({
 vi.mock('../hooks/useDivisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivisions: (...args: unknown[]) => mockUseDivisions(...args),
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useDivision: (...args: unknown[]) => mockUseDivision(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -67,6 +70,10 @@ describe('ObjectListPage', () => {
       ],
       isLoading: false,
     })
+    mockUseDivision.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+    })
     mockUseCreateObject.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({ id: 'obj-3', name: 'Object 3' }),
       isPending: false,
@@ -108,8 +115,8 @@ describe('ObjectListPage', () => {
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
-    const select = screen.getByRole('combobox')
-    await userEvent.click(select)
+    const [filterSelect] = screen.getAllByRole('combobox')
+    await userEvent.click(filterSelect)
 
     const option = await screen.findByRole('option', { name: 'Division 1' })
     await userEvent.click(option)
@@ -117,5 +124,74 @@ describe('ObjectListPage', () => {
     await waitFor(() => {
       expect(mockUseObjects).toHaveBeenCalledWith('div-1')
     })
+  })
+
+  it('shows TOTAL Staffing column header and dash placeholder for each row', async () => {
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
+
+    expect(screen.getByText('TOTAL Staffing')).toBeInTheDocument()
+    const dashes = screen.getAllByText('-')
+    expect(dashes).toHaveLength(2)
+  })
+
+  it('populates branch selector after selecting a division in the dialog', async () => {
+    // Pre-load the mock so useDivision('div-1') already returns branches
+    mockUseDivision.mockImplementation((id: unknown) => {
+      if (id === 'div-1') {
+        return {
+          data: {
+            id: 'div-1',
+            name: 'Division 1',
+            branchCount: 2,
+            objectCount: 2,
+            branches: [
+              { id: 'branch-1a', name: 'Branch 1A', divisionId: 'div-1', objectCount: 1 },
+              { id: 'branch-1b', name: 'Branch 1B', divisionId: 'div-1', objectCount: 1 },
+            ],
+          },
+          isLoading: false,
+        }
+      }
+      return { data: undefined, isLoading: false }
+    })
+
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
+
+    await userEvent.click(screen.getByText('Add object'))
+
+    // After dialog opens, the MUI portal renders 2 comboboxes in the DOM:
+    //   combobox[0] = dialog division select (not aria-disabled)
+    //   combobox[1] = dialog branch select (aria-disabled until a division is chosen)
+    // The page-level filter select is visually present but does not surface as a
+    // combobox role while the dialog's focus trap is active.
+    const [dialogDivisionSelect] = screen.getAllByRole('combobox')
+
+    await userEvent.click(dialogDivisionSelect)
+
+    // Options for the division select are rendered in a MUI portal
+    const divOption = await screen.findByRole('option', { name: 'Division 1' })
+    await userEvent.click(divOption)
+
+    // Now dialogDivisionId is 'div-1', useDivision mock returns branches.
+    // Open the branch select (it becomes enabled after division selection).
+    const branchSelect = screen.getAllByRole('combobox')[1]
+    await userEvent.click(branchSelect)
+
+    expect(await screen.findByRole('option', { name: 'Branch 1A' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Branch 1B' })).toBeInTheDocument()
+  })
+
+  it('keeps Create button disabled until a branch is selected', async () => {
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
+
+    await userEvent.click(screen.getByText('Add object'))
+
+    expect(screen.getByRole('button', { name: /create/i })).toBeDisabled()
   })
 })

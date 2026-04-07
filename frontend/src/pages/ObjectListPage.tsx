@@ -24,17 +24,21 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useCreateObject, useObjects } from '../hooks/useObjects'
-import { useDivisions } from '../hooks/useDivisions'
+import { useDivision, useDivisions } from '../hooks/useDivisions'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 
 export default function ObjectListPage() {
   const navigate = useNavigate()
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
+  const [dialogDivisionId, setDialogDivisionId] = useState<string>('')
   const [selectedBranchId, setSelectedBranchId] = useState<string>('')
 
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
+  const { data: dialogDivisionDetail, isLoading: dialogDivisionLoading } = useDivision(
+    dialogDivisionId || undefined
+  )
   const createObject = useCreateObject()
 
   const {
@@ -51,6 +55,7 @@ export default function ObjectListPage() {
 
   const handleCloseObjectDialog = () => {
     setOpenObjectDialog(false)
+    setDialogDivisionId('')
     setSelectedBranchId('')
     reset()
   }
@@ -112,6 +117,7 @@ export default function ObjectListPage() {
                 <TableCell>Name</TableCell>
                 <TableCell>Division</TableCell>
                 <TableCell>Branch</TableCell>
+                <TableCell>TOTAL Staffing</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -125,6 +131,7 @@ export default function ObjectListPage() {
                   <TableCell>{obj.name}</TableCell>
                   <TableCell>{obj.divisionName}</TableCell>
                   <TableCell>{obj.branchName}</TableCell>
+                  <TableCell>-</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -151,20 +158,40 @@ export default function ObjectListPage() {
               autoFocus
               sx={{ mt: 2, mb: 2 }}
             />
-            <FormControl fullWidth>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Division</InputLabel>
+              <Select
+                value={dialogDivisionId}
+                label="Division"
+                onChange={(e) => {
+                  setDialogDivisionId(e.target.value)
+                  setSelectedBranchId('')
+                }}
+                inputProps={{ 'data-testid': 'dialog-division-select' }}
+              >
+                <MenuItem value="">Select division</MenuItem>
+                {divisions &&
+                  divisions.map((div) => (
+                    <MenuItem key={div.id} value={div.id}>
+                      {div.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth disabled={!dialogDivisionId || dialogDivisionLoading}>
               <InputLabel>Branch</InputLabel>
               <Select
                 value={selectedBranchId}
                 label="Branch"
                 onChange={(e) => setSelectedBranchId(e.target.value)}
+                inputProps={{ 'data-testid': 'dialog-branch-select' }}
               >
                 <MenuItem value="">Select branch</MenuItem>
-                {divisions &&
-                  divisions.map((div) => [
-                    <MenuItem key={`header-${div.id}`} disabled value={`header-${div.id}`}>
-                      {div.name}
-                    </MenuItem>,
-                  ])}
+                {dialogDivisionDetail?.branches.map((branch) => (
+                  <MenuItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </DialogContent>
