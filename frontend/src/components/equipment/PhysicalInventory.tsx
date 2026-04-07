@@ -35,6 +35,17 @@ import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
 import { mapEquipmentErrorCode } from '../../utils/errorMessages'
 
+function getSystemTypeLabel(systemType: 'OS' | 'PS' | 'VIDEO') {
+  switch (systemType) {
+    case 'OS':
+      return 'Security'
+    case 'PS':
+      return 'Fire'
+    case 'VIDEO':
+      return 'Video'
+  }
+}
+
 interface AddDeviceFormValues {
   deviceTypeId: string
   quantityPhysical: number
@@ -61,17 +72,6 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
 
   const availableDeviceTypes = catalogDevices.filter(
     (ct) => !devices.some((d) => d.deviceTypeId === ct.id)
-  )
-
-  const overCapacityDeviceIds = new Set(
-    devices
-      .filter((device) =>
-        assignments.some(
-          (a) =>
-            a.deviceTypeId === device.deviceTypeId && a.quantityMaintained > device.quantityPhysical
-        )
-      )
-      .map((d) => d.deviceTypeId)
   )
 
   const addForm = useForm<AddDeviceFormValues>({
@@ -151,17 +151,34 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     return <CircularProgress size={24} />
   }
 
+  const removalMessage = (() => {
+    if (!deviceToRemove) {
+      return 'Remove this device from the inventory?'
+    }
+
+    const deviceAssignments = assignments.filter(
+      (assignment) => assignment.deviceTypeId === deviceToRemove.deviceTypeId
+    )
+
+    if (deviceAssignments.length === 0) {
+      return `Remove "${deviceToRemove.deviceTypeName}" from the inventory?`
+    }
+
+    const details = deviceAssignments
+      .map(
+        (assignment) =>
+          `${getSystemTypeLabel(assignment.systemType)} x ${assignment.quantityMaintained}`
+      )
+      .join(', ')
+
+    return `This will remove assignments: ${details}. Continue?`
+  })()
+
   return (
     <Box>
       {mutationError && (
         <Alert severity="error" onClose={() => setMutationError(null)} sx={{ mb: 2 }}>
           {mutationError}
-        </Alert>
-      )}
-
-      {overCapacityDeviceIds.size > 0 && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          One or more devices have assignments where quantity maintained exceeds quantity physical.
         </Alert>
       )}
 
@@ -309,7 +326,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       <ConfirmDialog
         open={!!deviceToRemove}
         title="Remove Device?"
-        message={`Remove "${deviceToRemove?.deviceTypeName}" from the inventory? All assignments for this device will also be removed.`}
+        message={removalMessage}
         onConfirm={() => void handleConfirmRemove()}
         onCancel={() => setDeviceToRemove(null)}
         confirmLabel="Remove"

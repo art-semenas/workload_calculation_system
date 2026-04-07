@@ -1,9 +1,9 @@
 export function mapEquipmentErrorCode(code: string | undefined): string {
   switch (code) {
     case 'DEVICE_NOT_IN_INVENTORY':
-      return 'Device is not in the physical inventory.'
+      return 'Device is not in inventory'
     case 'NO_CONTEXT_FOR_SYSTEM':
-      return 'No catalog context exists for this device and system type.'
+      return 'No norms configured for this system'
     default:
       return 'An unexpected error occurred.'
   }

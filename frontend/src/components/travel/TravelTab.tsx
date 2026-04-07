@@ -76,9 +76,12 @@ export function TravelTab({ objectId }: { objectId: string }) {
           inputProps={{ min: 0 }}
         />
         {data != null && (
-          <Typography variant="body2" color="text.secondary">
-            Round Trip: {data.roundTripMin} min
-          </Typography>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Round Trip Time (min)
+            </Typography>
+            <Typography variant="body1">{data.roundTripMin} min (auto-calculated)</Typography>
+          </Box>
         )}
         <Button type="submit" variant="contained" disabled={updateMutation.isPending}>
           Save

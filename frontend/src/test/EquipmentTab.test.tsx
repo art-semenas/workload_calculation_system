@@ -95,6 +95,13 @@ const sampleContexts = [
     r1Minutes: 10,
     r2Minutes: 5,
   },
+  {
+    id: 'ddddcccc-cccc-cccc-cccc-cccccccccccc',
+    deviceTypeId: DTYPE_CAMERA,
+    systemType: 'OS' as const,
+    r1Minutes: 8,
+    r2Minutes: 4,
+  },
 ]
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -188,6 +195,10 @@ describe('EquipmentTab', () => {
     await waitFor(() => {
       expect(screen.getByText('Remove Device?')).toBeInTheDocument()
     })
+
+    expect(
+      screen.getByText('This will remove assignments: Video x 3. Continue?')
+    ).toBeInTheDocument()
   })
 
   it('filtered device options: already-in-inventory devices excluded from add dialog', async () => {
@@ -247,12 +258,8 @@ describe('EquipmentTab', () => {
     renderTab()
 
     await waitFor(() => {
-      expect(screen.getAllByRole('alert')).not.toHaveLength(0)
+      expect(screen.getByLabelText('over-capacity warning')).toBeInTheDocument()
     })
-
-    const alerts = screen.getAllByRole('alert')
-    const warningAlert = alerts.find((el) => el.textContent?.includes('exceed'))
-    expect(warningAlert).toBeInTheDocument()
   })
 
   it('renders system assignments grouped by device', async () => {
@@ -264,9 +271,30 @@ describe('EquipmentTab', () => {
       expect(cameraEls.length).toBeGreaterThanOrEqual(2)
     })
 
-    // The assignment row: system type VIDEO and qty 3
-    expect(screen.getByText('VIDEO')).toBeInTheDocument()
+    expect(screen.getByText('Video')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('shows only unassigned system options for a device', async () => {
+    renderTab()
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: 'Security' })).toBeInTheDocument()
+    })
+
+    expect(screen.queryByRole('option', { name: 'Video' })).not.toBeInTheDocument()
   })
 
   it('shows backend error NO_CONTEXT_FOR_SYSTEM as alert', async () => {
@@ -280,38 +308,26 @@ describe('EquipmentTab', () => {
 
     renderTab()
 
-    await waitFor(() => expect(screen.getByText('Add assignment')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+    )
 
-    // Open add assignment dialog
-    await userEvent.click(screen.getByText('Add assignment'))
+    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Add Assignment')).toBeInTheDocument()
+      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
     })
 
-    // Select the device (Camera = dtype-1)
-    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
-
-    // After selecting device, wait for system type select to be enabled
-    await waitFor(() => {
-      const systemTypeSelect = screen.getByRole('combobox', { name: 'System Type' })
-      expect(systemTypeSelect).not.toBeDisabled()
-    })
-
-    // Select system type VIDEO
     await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
-    await waitFor(() => expect(screen.getByRole('option', { name: 'VIDEO' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('option', { name: 'VIDEO' }))
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: 'Security' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('option', { name: 'Security' }))
 
-    // Submit
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('No catalog context exists for this device and system type.')
-      ).toBeInTheDocument()
+      expect(screen.getByText('No norms configured for this system')).toBeInTheDocument()
     })
   })
 
@@ -326,36 +342,26 @@ describe('EquipmentTab', () => {
 
     renderTab()
 
-    await waitFor(() => expect(screen.getByText('Add assignment')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+    )
 
-    // Open add assignment dialog
-    await userEvent.click(screen.getByText('Add assignment'))
+    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Add Assignment')).toBeInTheDocument()
+      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
     })
 
-    // Select the device (Camera = dtype-1)
-    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
-
-    // After selecting device, wait for system type select to be enabled
-    await waitFor(() => {
-      const systemTypeSelect = screen.getByRole('combobox', { name: 'System Type' })
-      expect(systemTypeSelect).not.toBeDisabled()
-    })
-
-    // Select system type VIDEO
     await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
-    await waitFor(() => expect(screen.getByRole('option', { name: 'VIDEO' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('option', { name: 'VIDEO' }))
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: 'Security' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('option', { name: 'Security' }))
 
-    // Submit
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Device is not in the physical inventory.')).toBeInTheDocument()
+      expect(screen.getByText('Device is not in inventory')).toBeInTheDocument()
     })
   })
 })

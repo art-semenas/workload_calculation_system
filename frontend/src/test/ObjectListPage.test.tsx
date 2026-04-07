@@ -7,8 +7,8 @@ import ObjectListPage from '../pages/ObjectListPage'
 
 const mockUseObjects = vi.fn()
 const mockUseDivisions = vi.fn()
-const mockUseDivision = vi.fn()
 const mockUseCreateObject = vi.fn()
+const mockGetDivisionBranches = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -20,8 +20,11 @@ vi.mock('../hooks/useObjects', () => ({
 vi.mock('../hooks/useDivisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivisions: (...args: unknown[]) => mockUseDivisions(...args),
+}))
+
+vi.mock('../api/divisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
-  useDivision: (...args: unknown[]) => mockUseDivision(...args),
+  getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -70,9 +73,21 @@ describe('ObjectListPage', () => {
       ],
       isLoading: false,
     })
-    mockUseDivision.mockReturnValue({
-      data: undefined,
-      isLoading: false,
+    mockGetDivisionBranches.mockImplementation((id: unknown) => {
+      if (id === 'div-1') {
+        return Promise.resolve([
+          { id: 'branch-1a', name: 'Branch 1A', divisionId: 'div-1', objectCount: 1 },
+          { id: 'branch-1b', name: 'Branch 1B', divisionId: 'div-1', objectCount: 1 },
+        ])
+      }
+
+      if (id === 'div-2') {
+        return Promise.resolve([
+          { id: 'branch-2a', name: 'Branch 2A', divisionId: 'div-2', objectCount: 1 },
+        ])
+      }
+
+      return Promise.resolve(undefined)
     })
     mockUseCreateObject.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({ id: 'obj-3', name: 'Object 3' }),
@@ -136,48 +151,22 @@ describe('ObjectListPage', () => {
     expect(dashes).toHaveLength(2)
   })
 
-  it('populates branch selector after selecting a division in the dialog', async () => {
-    // Pre-load the mock so useDivision('div-1') already returns branches
-    mockUseDivision.mockImplementation((id: unknown) => {
-      if (id === 'div-1') {
-        return {
-          data: {
-            id: 'div-1',
-            name: 'Division 1',
-            branchCount: 2,
-            objectCount: 2,
-            branches: [
-              { id: 'branch-1a', name: 'Branch 1A', divisionId: 'div-1', objectCount: 1 },
-              { id: 'branch-1b', name: 'Branch 1B', divisionId: 'div-1', objectCount: 1 },
-            ],
-          },
-          isLoading: false,
-        }
-      }
-      return { data: undefined, isLoading: false }
-    })
-
+  it('populates grouped branch selector in the dialog', async () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
     await userEvent.click(screen.getByText('Add object'))
 
-    const dialogDivisionSelect = screen.getByTestId('dialog-division-select-btn')
-
-    await userEvent.click(dialogDivisionSelect)
-
-    // Options for the division select are rendered in a MUI portal
-    const divOption = await screen.findByRole('option', { name: 'Division 1' })
-    await userEvent.click(divOption)
-
-    // Now dialogDivisionId is 'div-1', useDivision mock returns branches.
-    // Open the branch select (it becomes enabled after division selection).
     const branchSelect = screen.getByTestId('dialog-branch-select-btn')
     await userEvent.click(branchSelect)
 
     expect(await screen.findByRole('option', { name: 'Branch 1A' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Branch 1B' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Branch 2A' })).toBeInTheDocument()
+
+    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-1')
+    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-2')
   })
 
   it('keeps Create button disabled until a branch is selected', async () => {

@@ -69,13 +69,11 @@ describe('TravelTab', () => {
     renderTab()
 
     await waitFor(() => {
-      expect(screen.getByText(/round trip/i)).toBeInTheDocument()
-      // The value 60 should appear as text
-      expect(screen.getByText(/60/)).toBeInTheDocument()
+      expect(screen.getByText('Round Trip Time (min)')).toBeInTheDocument()
+      expect(screen.getByText('60 min (auto-calculated)')).toBeInTheDocument()
     })
 
-    // There should be no input with label roundTripMin
-    expect(screen.queryByLabelText(/round trip/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/round trip time/i)).not.toBeInTheDocument()
   })
 
   it('prefills from API data', async () => {
@@ -124,8 +122,7 @@ describe('TravelTab', () => {
       expect(screen.getByLabelText(/one-way time/i)).toHaveValue(0)
     })
 
-    // roundTripMin label should not appear when data is null
-    expect(screen.queryByText(/round trip/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Round Trip Time (min)')).not.toBeInTheDocument()
   })
 
   it('shows loading state', () => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import {
   Box,
   Button,
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   FormControl,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Paper,
   Select,
@@ -22,23 +24,38 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { getDivisionBranches } from '../api/divisions'
 import { FormTextField } from '../components/common/FormTextField'
 import { useCreateObject, useObjects } from '../hooks/useObjects'
-import { useDivision, useDivisions } from '../hooks/useDivisions'
+import { useDivisions } from '../hooks/useDivisions'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
+import type { Branch } from '../types/division'
+
+interface GroupedBranchOption {
+  branchId: string
+  branchName: string
+  divisionId: string
+  divisionName: string
+}
 
 export default function ObjectListPage() {
   const navigate = useNavigate()
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
-  const [dialogDivisionId, setDialogDivisionId] = useState<string>('')
 
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
-  const { data: dialogDivisionDetail, isLoading: dialogDivisionLoading } = useDivision(
-    dialogDivisionId || undefined
-  )
   const createObject = useCreateObject()
+
+  const divisionDetailQueries = useQueries({
+    queries: openObjectDialog
+      ? (divisions ?? []).map((division) => ({
+          queryKey: ['divisions', division.id, 'branches'],
+          queryFn: () => getDivisionBranches(division.id),
+          enabled: openObjectDialog,
+        }))
+      : [],
+  })
 
   const {
     control,
@@ -56,9 +73,29 @@ export default function ObjectListPage() {
 
   const watchedBranchId = watch('branchId')
 
+  const groupedBranchOptions: GroupedBranchOption[] = divisionDetailQueries.flatMap(
+    (query, index) => {
+      const division = divisions?.[index]
+      const branches = query.data
+
+      if (!division || !Array.isArray(branches)) {
+        return []
+      }
+
+      return branches.map((branch: Branch) => ({
+        branchId: branch.id,
+        branchName: branch.name,
+        divisionId: division.id,
+        divisionName: division.name,
+      }))
+    }
+  )
+
+  const branchSelectLoading =
+    openObjectDialog && divisionDetailQueries.some((query) => query.isLoading)
+
   const handleCloseObjectDialog = () => {
     setOpenObjectDialog(false)
-    setDialogDivisionId('')
     reset()
   }
 
@@ -160,32 +197,7 @@ export default function ObjectListPage() {
               autoFocus
               sx={{ mt: 2, mb: 2 }}
             />
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Division</InputLabel>
-              <Select
-                value={dialogDivisionId}
-                label="Division"
-                onChange={(e) => {
-                  setDialogDivisionId(e.target.value)
-                  setValue('branchId', '', { shouldValidate: false })
-                }}
-                inputProps={{ 'data-testid': 'dialog-division-select' }}
-                SelectDisplayProps={
-                  {
-                    'data-testid': 'dialog-division-select-btn',
-                  } as React.HTMLAttributes<HTMLDivElement>
-                }
-              >
-                <MenuItem value="">Select division</MenuItem>
-                {divisions &&
-                  divisions.map((div) => (
-                    <MenuItem key={div.id} value={div.id}>
-                      {div.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl fullWidth disabled={!dialogDivisionId || dialogDivisionLoading}>
+            <FormControl fullWidth disabled={branchSelectLoading}>
               <InputLabel>Branch</InputLabel>
               <Select
                 value={watchedBranchId}
@@ -199,11 +211,21 @@ export default function ObjectListPage() {
                 }
               >
                 <MenuItem value="">Select branch</MenuItem>
-                {dialogDivisionDetail?.branches.map((branch) => (
-                  <MenuItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </MenuItem>
-                ))}
+                {groupedBranchOptions.map((option, index) => {
+                  const previousOption = groupedBranchOptions[index - 1]
+                  const startsNewGroup = previousOption?.divisionId !== option.divisionId
+
+                  return [
+                    startsNewGroup ? (
+                      <ListSubheader key={`group-${option.divisionId}`}>
+                        {option.divisionName}
+                      </ListSubheader>
+                    ) : null,
+                    <MenuItem key={option.branchId} value={option.branchId}>
+                      {option.branchName}
+                    </MenuItem>,
+                  ]
+                })}
               </Select>
             </FormControl>
           </DialogContent>
