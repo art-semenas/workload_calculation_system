@@ -37,7 +37,11 @@ export default function ObjectListPage() {
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
   const createObject = useCreateObject()
 
-  const { control, handleSubmit: handleObjectSubmit, reset } = useForm<ObjectCreate>({
+  const {
+    control,
+    handleSubmit: handleObjectSubmit,
+    reset,
+  } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
     defaultValues: {
       name: '',
@@ -66,7 +70,15 @@ export default function ObjectListPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          gap: 2,
+        }}
+      >
         <Typography variant="h4">Objects</Typography>
         <Button variant="contained" onClick={() => setOpenObjectDialog(true)}>
           Add object

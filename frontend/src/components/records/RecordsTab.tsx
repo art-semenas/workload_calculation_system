@@ -1,5 +1,9 @@
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 export function RecordsTab({ objectId }: { objectId: string }) {
-  return <Box>Records - loading...</Box>
+  return (
+    <Box>
+      <Typography>Records Tab - {objectId}</Typography>
+    </Box>
+  )
 }

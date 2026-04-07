@@ -1,9 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  getCatalogDeviceContexts,
-  getCatalogDevices,
-  getCatalogRepairs,
-} from '../api/catalog'
+import { getCatalogDeviceContexts, getCatalogDevices, getCatalogRepairs } from '../api/catalog'
 
 export function useCatalogDevices() {
   return useQuery({

@@ -37,7 +37,11 @@ export default function DivisionDetailPage() {
   const updateDivision = useUpdateDivision()
   const createBranch = useCreateBranch(id || '')
 
-  const { control, handleSubmit: handleBranchSubmit, reset } = useForm<BranchCreate>({
+  const {
+    control,
+    handleSubmit: handleBranchSubmit,
+    reset,
+  } = useForm<BranchCreate>({
     resolver: zodResolver(BranchCreateSchema),
     defaultValues: {
       name: '',

@@ -99,7 +99,9 @@ describe('DivisionDetailPage', () => {
   it('navigates to branch detail on row click', async () => {
     renderPage()
 
-    await waitFor(() => expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1'))
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+    )
 
     const branchCell = screen.getByText('Branch 1')
     const branchRow = branchCell.closest('tr')!

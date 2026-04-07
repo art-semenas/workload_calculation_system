@@ -12,7 +12,9 @@ export async function getCatalogDevice(id: string): Promise<DeviceType> {
   return response.data.data as DeviceType
 }
 
-export async function getCatalogDeviceContexts(deviceTypeId: string): Promise<DeviceSystemContext[]> {
+export async function getCatalogDeviceContexts(
+  deviceTypeId: string
+): Promise<DeviceSystemContext[]> {
   const response = await api.get<ApiResponse<DeviceSystemContext[]>>(
     `/catalog/devices/${deviceTypeId}/contexts`
   )

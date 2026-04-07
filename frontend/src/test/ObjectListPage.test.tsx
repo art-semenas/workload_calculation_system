@@ -40,8 +40,20 @@ describe('ObjectListPage', () => {
     vi.clearAllMocks()
     mockUseObjects.mockReturnValue({
       data: [
-        { id: 'obj-1', name: 'Object 1', divisionName: 'Division 1', branchName: 'Branch 1', address: '123 Street' },
-        { id: 'obj-2', name: 'Object 2', divisionName: 'Division 2', branchName: 'Branch 2', address: '456 Ave' },
+        {
+          id: 'obj-1',
+          name: 'Object 1',
+          divisionName: 'Division 1',
+          branchName: 'Branch 1',
+          address: '123 Street',
+        },
+        {
+          id: 'obj-2',
+          name: 'Object 2',
+          divisionName: 'Division 2',
+          branchName: 'Branch 2',
+          address: '456 Ave',
+        },
       ],
       isLoading: false,
     })

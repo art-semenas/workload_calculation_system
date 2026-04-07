@@ -38,7 +38,11 @@ export default function BranchDetailPage() {
   const updateBranch = useUpdateBranch()
   const createObject = useCreateObject()
 
-  const { control, handleSubmit: handleObjectSubmit, reset } = useForm<ObjectCreate>({
+  const {
+    control,
+    handleSubmit: handleObjectSubmit,
+    reset,
+  } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
     defaultValues: {
       name: '',
@@ -97,7 +101,11 @@ export default function BranchDetailPage() {
         <Typography component="span" sx={{ mr: 1 }}>
           &gt;
         </Typography>
-        <Link href={`/divisions/${branch.divisionId}`} underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
+        <Link
+          href={`/divisions/${branch.divisionId}`}
+          underline="hover"
+          sx={{ cursor: 'pointer', mr: 1 }}
+        >
           {branch.divisionName}
         </Link>
         <Typography component="span" sx={{ mr: 1 }}>
@@ -159,7 +167,11 @@ export default function BranchDetailPage() {
                   sx={{ cursor: 'pointer' }}
                 >
                   <TableCell>{obj.name}</TableCell>
-                  <TableCell>{obj.itogoChisloWithTravel !== null ? obj.itogoChisloWithTravel.toFixed(4) : '-'}</TableCell>
+                  <TableCell>
+                    {obj.itogoChisloWithTravel !== null
+                      ? obj.itogoChisloWithTravel.toFixed(4)
+                      : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

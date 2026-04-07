@@ -1,13 +1,5 @@
 import { useState } from 'react'
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Link,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material'
+import { Box, Button, CircularProgress, Link, Tab, Tabs, Typography } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useObject, useDeleteObject } from '../hooks/useObjects'
@@ -97,7 +89,15 @@ export default function ObjectDetailPage() {
       </Box>
 
       {/* Object Name */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          gap: 2,
+        }}
+      >
         <Typography variant="h4">{object.name}</Typography>
         <Button
           variant="outlined"
