@@ -112,7 +112,7 @@ frontend/src/
 
 - No file changes in this task
 
-- [ ] **Step 1: Check out the branch for this plan**
+- [x] **Step 1: Check out the branch for this plan**
 
 ```bash
 git checkout feature/implementation
@@ -122,7 +122,7 @@ git checkout -b feature/poc-m01-frontend
 
 Expected: Git switches to `feature/poc-m01-frontend` with no merge conflicts.
 
-- [ ] **Step 2: Verify working tree is clean**
+- [x] **Step 2: Verify working tree is clean**
 
 ```bash
 git status --short
@@ -147,7 +147,7 @@ Expected: no unexpected modified frontend files.
 
 This task defines all TypeScript interfaces and Zod validation schemas for M-01 entities. Zod schemas are used both for API response parsing and form validation (via `@hookform/resolvers/zod`).
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 Create `frontend/src/test/types.test.ts`:
 
@@ -196,7 +196,7 @@ describe("Zod schemas", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 ```bash
 cd frontend && npx vitest run src/test/types.test.ts
@@ -204,7 +204,7 @@ cd frontend && npx vitest run src/test/types.test.ts
 
 Expected: import error — type modules do not exist yet.
 
-- [ ] **Step 3: Create all type files**
+- [x] **Step 3: Create all type files**
 
 Create each type file. All types must match the API response shapes from `docs/impl/api-spec.md` exactly. All Zod schemas for forms enforce the validation rules below.
 
@@ -256,7 +256,7 @@ Create each type file. All types must match the API response shapes from `docs/i
 - `DeviceSystemContext` — `{ id: string, deviceTypeId: string, systemType: 'OS' | 'PS' | 'VIDEO', r1Minutes: number, r2Minutes: number }`.
 - `RepairType` — `{ id: string, name: string, timeMinutes: number }`.
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
 ```bash
 npx vitest run src/test/types.test.ts
@@ -264,7 +264,7 @@ npx vitest run src/test/types.test.ts
 
 Expected: all 5 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/types/ frontend/src/test/types.test.ts
@@ -298,7 +298,7 @@ git commit -m "feat: add M-01 TypeScript types and Zod validation schemas"
 
 This task creates thin API call functions (one per endpoint) and TanStack Query hooks that wrap them.
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 Create `frontend/src/test/hooks.test.ts`:
 
@@ -381,7 +381,7 @@ describe("API modules", () => {
 });
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 ```bash
 npx vitest run src/test/hooks.test.ts
@@ -389,7 +389,7 @@ npx vitest run src/test/hooks.test.ts
 
 Expected: import errors — API modules do not exist yet.
 
-- [ ] **Step 3: Create all API modules**
+- [x] **Step 3: Create all API modules**
 
 Each API module exports thin functions that call the axios instance and return `response.data.data`. All functions are typed with return types from the `src/types/` modules.
 
@@ -466,7 +466,7 @@ export async function getDivisions(): Promise<Division[]> {
 }
 ```
 
-- [ ] **Step 4: Create all TanStack Query hooks**
+- [x] **Step 4: Create all TanStack Query hooks**
 
 Each hook file exports query hooks and mutation hooks for a domain. All mutations call `queryClient.invalidateQueries` on relevant query keys after success.
 
@@ -529,7 +529,7 @@ Each hook file exports query hooks and mutation hooks for a domain. All mutation
 - `useCatalogDeviceContexts(deviceTypeId)` — query: `queryKey: ['catalog', 'devices', deviceTypeId, 'contexts']`, `enabled: !!deviceTypeId`, `staleTime: Infinity`.
 - `useCatalogRepairs()` — query: `queryKey: ['catalog', 'repairs']`, `staleTime: Infinity`.
 
-- [ ] **Step 5: Run tests — expect PASS**
+- [x] **Step 5: Run tests — expect PASS**
 
 ```bash
 npx vitest run src/test/hooks.test.ts
@@ -537,7 +537,7 @@ npx vitest run src/test/hooks.test.ts
 
 Expected: all 5 API module tests pass.
 
-- [ ] **Step 6: Run TypeScript check**
+- [x] **Step 6: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
@@ -545,7 +545,7 @@ npx tsc --noEmit
 
 Expected: 0 errors. All types resolve correctly.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/api/ frontend/src/hooks/ frontend/src/test/hooks.test.ts
@@ -563,7 +563,7 @@ git commit -m "feat: add API modules and TanStack Query hooks for M-01"
 
 These are small reusable components used across multiple pages.
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 Create `frontend/src/test/common-components.test.tsx`:
 
@@ -620,7 +620,7 @@ describe('ConfirmDialog', () => {
 })
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 ```bash
 npx vitest run src/test/common-components.test.tsx
@@ -628,19 +628,19 @@ npx vitest run src/test/common-components.test.tsx
 
 Expected: import error — components do not exist.
 
-- [ ] **Step 3: Implement ConfirmDialog**
+- [x] **Step 3: Implement ConfirmDialog**
 
 Create `frontend/src/components/common/ConfirmDialog.tsx`:
 
 A MUI `Dialog` component with props: `open: boolean`, `title: string`, `message: string`, `onConfirm: () => void`, `onCancel: () => void`, optional `confirmLabel?: string` (default "Confirm"), optional `cancelLabel?: string` (default "Cancel"). Uses MUI `DialogTitle`, `DialogContent`, `DialogContentText`, `DialogActions`, `Button`. Confirm button uses `color="error"` for destructive actions.
 
-- [ ] **Step 4: Implement FormTextField**
+- [x] **Step 4: Implement FormTextField**
 
 Create `frontend/src/components/common/FormTextField.tsx`:
 
 A wrapper component connecting MUI `TextField` with React Hook Form's `Controller`. Props: `name: string`, `control: Control<any>`, `label: string`, and all remaining MUI `TextFieldProps`. Displays field error text from RHF validation state automatically via `helperText`.
 
-- [ ] **Step 5: Run tests — expect PASS**
+- [x] **Step 5: Run tests — expect PASS**
 
 ```bash
 npx vitest run src/test/common-components.test.tsx
@@ -648,7 +648,7 @@ npx vitest run src/test/common-components.test.tsx
 
 Expected: all 3 tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/components/common/ frontend/src/test/common-components.test.tsx
@@ -663,7 +663,7 @@ git commit -m "feat: add ConfirmDialog and FormTextField shared components"
 
 - Replace: `frontend/src/pages/LoginPage.tsx`
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 Create `frontend/src/test/LoginPage.test.tsx`:
 
@@ -754,7 +754,7 @@ describe('LoginPage', () => {
 })
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 ```bash
 npx vitest run src/test/LoginPage.test.tsx
@@ -762,7 +762,7 @@ npx vitest run src/test/LoginPage.test.tsx
 
 Expected: LoginPage is a placeholder, tests fail.
 
-- [ ] **Step 3: Implement LoginPage**
+- [x] **Step 3: Implement LoginPage**
 
 Replace `frontend/src/pages/LoginPage.tsx` with a full implementation:
 
@@ -778,7 +778,7 @@ Replace `frontend/src/pages/LoginPage.tsx` with a full implementation:
 - On other errors: displays MUI `Alert` with text "Something went wrong. Please try again.".
 - Loading state: button shows `CircularProgress` and is disabled during API call.
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
 ```bash
 npx vitest run src/test/LoginPage.test.tsx
@@ -786,7 +786,7 @@ npx vitest run src/test/LoginPage.test.tsx
 
 Expected: all 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/pages/LoginPage.tsx frontend/src/test/LoginPage.test.tsx
@@ -803,7 +803,7 @@ git commit -m "feat: implement login page with RHF + Zod validation"
 - Create: `frontend/src/components/layout/ProtectedRoute.tsx`
 - Update: `frontend/src/router/index.tsx`
 
-- [ ] **Step 1: Write the failing test first**
+- [x] **Step 1: Write the failing test first**
 
 Create `frontend/src/test/AppLayout.test.tsx`:
 
@@ -846,7 +846,7 @@ describe('AppLayout', () => {
 })
 ```
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 ```bash
 npx vitest run src/test/AppLayout.test.tsx
@@ -854,7 +854,7 @@ npx vitest run src/test/AppLayout.test.tsx
 
 Expected: fails because AppLayout nav items don't have disabled state yet.
 
-- [ ] **Step 3: Update AppLayout**
+- [x] **Step 3: Update AppLayout**
 
 Update `frontend/src/components/layout/AppLayout.tsx`:
 
@@ -865,7 +865,7 @@ Update `frontend/src/components/layout/AppLayout.tsx`:
 - Show currently logged-in user's name in the AppBar (from `authStore.user.name`).
 - Leave all other behavior (Drawer, Outlet, logout button) unchanged.
 
-- [ ] **Step 4: Extract ProtectedRoute**
+- [x] **Step 4: Extract ProtectedRoute**
 
 Create `frontend/src/components/layout/ProtectedRoute.tsx`:
 
@@ -873,7 +873,7 @@ Extract the inline `ProtectedRoute` function from `router/index.tsx` into its ow
 
 Update `frontend/src/router/index.tsx` to import `ProtectedRoute` from the new location instead of defining it inline.
 
-- [ ] **Step 5: Run tests — expect PASS**
+- [x] **Step 5: Run tests — expect PASS**
 
 ```bash
 npx vitest run src/test/AppLayout.test.tsx
@@ -881,7 +881,7 @@ npx vitest run src/test/AppLayout.test.tsx
 
 Expected: all tests pass.
 
-- [ ] **Step 6: Run TypeScript check**
+- [x] **Step 6: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
@@ -889,7 +889,7 @@ npx tsc --noEmit
 
 Expected: 0 errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/components/layout/ frontend/src/router/index.tsx frontend/src/test/AppLayout.test.tsx
