@@ -120,6 +120,23 @@ describe('RepairsTab', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
+  it('shows Zod validation error when count is cleared and Save is clicked', async () => {
+    const user = userEvent.setup()
+    renderTab()
+
+    await waitFor(() => expect(screen.getByText('Screen Replacement')).toBeInTheDocument())
+
+    const input = screen.getByLabelText('count-Screen Replacement')
+    await user.clear(input)
+    await user.click(screen.getAllByRole('button', { name: 'Save' })[0])
+
+    // Currently FAILS: raw useState + manual guard silently does nothing on empty input
+    // After fix: RHF+Zod shows "Must be a whole number" error
+    await waitFor(() => {
+      expect(screen.getByText('Must be a whole number')).toBeInTheDocument()
+    })
+  })
+
   it('validates non-negative integers (rejects negative)', async () => {
     const mockMutateAsync = vi.fn().mockResolvedValue({})
     mockUseUpdateRepair.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
