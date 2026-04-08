@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { LoginRequestSchema } from '../types/auth'
 import { DivisionCreateSchema } from '../types/division'
 import { TravelUpdateSchema } from '../types/travel'
+import { RepairUpdateSchema } from '../types/repairs'
+import { RecordsUpdateSchema } from '../types/records'
 
 describe('Zod schemas', () => {
   it('LoginRequestSchema rejects empty email', () => {
@@ -38,5 +40,33 @@ describe('Zod schemas', () => {
       oneWayTimeMin: 20,
     })
     expect(result.success).toBe(true)
+  })
+
+  it("RepairUpdateSchema error is 'Must be a whole number' for NaN input", () => {
+    const result = RepairUpdateSchema.safeParse({ count: NaN })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0].message).toBe('Must be a whole number')
+  })
+
+  it("RecordsUpdateSchema error is 'Must be a whole number' for NaN accessRequests", () => {
+    const result = RecordsUpdateSchema.safeParse({
+      accessRequests: NaN,
+      monitoringRequests: 0,
+      footageRequests: 0,
+      backupControl: 0,
+      securityAdmin: 0,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0].message).toBe('Must be a whole number')
+  })
+
+  it("TravelUpdateSchema error is 'Enter a valid number' for NaN distanceKm", () => {
+    const result = TravelUpdateSchema.safeParse({
+      transportType: 'car',
+      distanceKm: NaN,
+      oneWayTimeMin: 10,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0].message).toBe('Enter a valid number')
   })
 })

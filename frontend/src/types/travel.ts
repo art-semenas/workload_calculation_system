@@ -10,9 +10,19 @@ export const TravelSchema = z.object({
 })
 
 export const TravelUpdateSchema = z.object({
-  transportType: z.string().min(1),
-  distanceKm: z.number().min(0),
-  oneWayTimeMin: z.number().min(0),
+  transportType: z.string().min(1, 'Required'),
+  distanceKm: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Enter a valid number', invalid_type_error: 'Enter a number' })
+      .min(0, 'Must be ≥ 0')
+  ),
+  oneWayTimeMin: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Enter a valid number', invalid_type_error: 'Enter a number' })
+      .min(0, 'Must be ≥ 0')
+  ),
 })
 
 export type Travel = z.infer<typeof TravelSchema>

@@ -35,9 +35,9 @@ export function FormTextField<TFieldValues extends FieldValues>({
             value={safeValue}
             onChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
               if (type === 'number') {
-                const nextValue: number | '' =
-                  event.target.value === '' ? '' : Number(event.target.value)
-                field.onChange(nextValue)
+                // valueAsNumber gives NaN for empty input, which Zod's .finite() / .int() handle
+                // with the custom error messages defined in each schema.
+                field.onChange(event.target.valueAsNumber)
               } else {
                 field.onChange(event)
               }

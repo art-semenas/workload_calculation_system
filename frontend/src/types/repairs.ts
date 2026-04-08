@@ -9,7 +9,13 @@ export const ObjectRepairSchema = z.object({
 })
 
 export const RepairUpdateSchema = z.object({
-  count: z.number().int().min(0),
+  count: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Must be a whole number', invalid_type_error: 'Enter a number' })
+      .int('Must be a whole number')
+      .min(0, 'Must be ≥ 0')
+  ),
 })
 
 export type ObjectRepair = z.infer<typeof ObjectRepairSchema>

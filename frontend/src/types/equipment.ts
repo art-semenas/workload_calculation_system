@@ -23,17 +23,35 @@ export const ObjectSystemAssignmentSchema = z.object({
 
 export const DeviceAddSchema = z.object({
   deviceTypeId: z.string().uuid(),
-  quantityPhysical: z.number().int().min(1),
+  quantityPhysical: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Must be a whole number', invalid_type_error: 'Enter a number' })
+      .int('Must be a whole number')
+      .min(1, 'Must be ≥ 1')
+  ),
 })
 
 export const AssignmentCreateSchema = z.object({
   deviceTypeId: z.string().uuid(),
   systemType: SystemTypeSchema,
-  quantityMaintained: z.number().int().min(0),
+  quantityMaintained: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Must be a whole number', invalid_type_error: 'Enter a number' })
+      .int('Must be a whole number')
+      .min(0, 'Must be ≥ 0')
+  ),
 })
 
 export const AssignmentUpdateSchema = z.object({
-  quantityMaintained: z.number().int().min(0),
+  quantityMaintained: z.preprocess(
+    (v) => (typeof v === 'number' && isNaN(v) ? undefined : v),
+    z
+      .number({ required_error: 'Must be a whole number', invalid_type_error: 'Enter a number' })
+      .int('Must be a whole number')
+      .min(0, 'Must be ≥ 0')
+  ),
 })
 
 export type SystemType = z.infer<typeof SystemTypeSchema>
