@@ -1,7 +1,32 @@
 import { expect, test } from '@playwright/test'
-import { fetchRouteSeed, loginAsAdmin } from './helpers/auth'
+import { fetchAdminToken, loginAsAdmin } from './helpers/auth'
+import { cleanupHierarchyByPrefix, createHierarchy, makeE2ePrefix } from './helpers/data'
+
+// Shared fixture created once for all data-dependent smoke tests.
+// The fresh CI database has no divisions/objects (catalog seed only),
+// so we create a known hierarchy in beforeAll and clean it up in afterAll.
+let smokePrefix: string
+let smokeDivisionId: string
+let smokeDivisionName: string
+let smokeObjectId: string
+let smokeObjectName: string
 
 test.describe('PoC M-01 smoke', () => {
+  test.beforeAll(async ({ request }) => {
+    smokePrefix = makeE2ePrefix('smoke')
+    const token = await fetchAdminToken(request)
+    const hierarchy = await createHierarchy(request, smokePrefix, token)
+    smokeDivisionId = hierarchy.division.id
+    smokeDivisionName = hierarchy.division.name
+    smokeObjectId = hierarchy.object.id
+    smokeObjectName = hierarchy.object.name
+  })
+
+  test.afterAll(() => {
+    cleanupHierarchyByPrefix(smokePrefix)
+  })
+
+  // 1.1
   test('login page loads directly', async ({ page }) => {
     await page.goto('/login')
 
@@ -10,6 +35,7 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByLabel(/password/i)).toBeVisible()
   })
 
+  // 1.3
   test('invalid credentials keep the user on login with a visible error', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('admin@workload.local')
@@ -26,6 +52,7 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 
+  // 1.4
   test('valid login reaches dashboard and shows core navigation', async ({ page }) => {
     await loginAsAdmin(page)
 
@@ -39,6 +66,7 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByText('Data will be available after M-03')).toBeVisible()
   })
 
+  // 1.5
   test('refresh after login keeps the app usable', async ({ page }) => {
     await loginAsAdmin(page)
     await page.reload()
@@ -47,11 +75,13 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByRole('heading', { name: 'Divisions' })).toBeVisible()
   })
 
+  // 6.1, 6.2, 6.4, 6.5
   test('object list shows filter, total staffing placeholder, and grouped branch dialog', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/objects')
 
     await expect(page.getByRole('heading', { name: 'Objects' })).toBeVisible()
+    // TOTAL Staffing column header is only rendered when objects exist (beforeAll creates one)
     await expect(page.getByText('TOTAL Staffing')).toBeVisible()
     await expect(page.getByRole('combobox').first()).toBeVisible()
 
@@ -104,7 +134,7 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page).toHaveURL(/\/login/)
   })
 
-  // 3.2
+  // 3.2 — dashboard division table only renders when divisions exist (beforeAll creates one)
   test('dashboard division overview table shows Name, Branches, and Objects columns', async ({
     page,
   }) => {
@@ -115,46 +145,34 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByRole('columnheader', { name: 'Objects' })).toBeVisible()
   })
 
-  // 3.3
+  // 3.3 — click the smoke division row by its known name, not by index
   test('clicking division row on dashboard navigates to division detail', async ({ page }) => {
     await loginAsAdmin(page)
 
-    // nth(0) is the header row; nth(1) is the first data row
-    await page.getByRole('row').nth(1).click()
-    await expect(page).toHaveURL(/\/divisions\/[0-9a-f-]+$/)
+    await page.getByRole('cell', { name: new RegExp(smokePrefix) }).click()
+    await expect(page).toHaveURL(new RegExp(`/divisions/${smokeDivisionId}`))
   })
 
   // 6.3
-  test('division filter on object list scopes results to selected division', async ({
-    page,
-    request,
-  }) => {
-    const seed = await fetchRouteSeed(request)
-
+  test('division filter on object list scopes results to selected division', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/objects')
 
-    // Open the Division combobox and pick the first real division (not "All divisions")
+    // Open the Division combobox and select the smoke division by name
     await page.getByRole('combobox').first().click()
-    const firstDivisionOption = page.getByRole('option').filter({ hasNot: page.getByText('All divisions') }).first()
-    await firstDivisionOption.click()
+    await page.getByRole('option', { name: smokeDivisionName }).click()
 
-    // The seed object belongs to a division and must still be visible after filtering
-    await expect(page.getByText(seed.objectName)).toBeVisible()
+    // The smoke object belongs to this division and must still be visible after filtering
+    await expect(page.getByText(smokeObjectName)).toBeVisible()
   })
 
   // 6.7
-  test('clicking object row on object list navigates to object detail', async ({
-    page,
-    request,
-  }) => {
-    const seed = await fetchRouteSeed(request)
-
+  test('clicking object row on object list navigates to object detail', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/objects')
 
-    await page.getByRole('row', { name: new RegExp(seed.objectName) }).click()
-    await expect(page).toHaveURL(new RegExp(`/objects/${seed.objectId}`))
-    await expect(page.getByRole('heading', { name: seed.objectName })).toBeVisible()
+    await page.getByRole('row', { name: new RegExp(smokeObjectName) }).click()
+    await expect(page).toHaveURL(new RegExp(`/objects/${smokeObjectId}`))
+    await expect(page.getByRole('heading', { name: smokeObjectName })).toBeVisible()
   })
 })
