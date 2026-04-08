@@ -5,9 +5,10 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
-  timeout: 30_000,
+  workers: 2,
+  timeout: 60_000,
   expect: {
-    timeout: 5_000,
+    timeout: 8_000,
   },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {

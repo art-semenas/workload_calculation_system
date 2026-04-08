@@ -109,7 +109,7 @@ describe('BranchDetailPage', () => {
     )
 
     await userEvent.click(screen.getByText('Add object'))
-    expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).toBeInTheDocument()
   })
 
   it('navigates to object detail on row click', async () => {

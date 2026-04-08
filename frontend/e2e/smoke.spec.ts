@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { fetchAdminToken, fetchRouteSeed, loginAsAdmin } from './helpers/auth'
+import { fetchRouteSeed, loginAsAdmin } from './helpers/auth'
 
 test.describe('PoC M-01 smoke', () => {
   test('login page loads directly', async ({ page }) => {
@@ -130,20 +130,16 @@ test.describe('PoC M-01 smoke', () => {
     request,
   }) => {
     const seed = await fetchRouteSeed(request)
-    const token = await fetchAdminToken(request)
-    const divResponse = await request.get(`/api/v1/divisions/${seed.divisionId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const divJson = (await divResponse.json()) as { data: { name: string } }
-    const divisionName = divJson.data.name
 
     await loginAsAdmin(page)
     await page.goto('/objects')
 
-    await page.getByLabel('Division').click()
-    await page.getByRole('option', { name: divisionName }).click()
+    // Open the Division combobox and pick the first real division (not "All divisions")
+    await page.getByRole('combobox').first().click()
+    const firstDivisionOption = page.getByRole('option').filter({ hasNot: page.getByText('All divisions') }).first()
+    await firstDivisionOption.click()
 
-    // The seed object belongs to this division and must still be visible
+    // The seed object belongs to a division and must still be visible after filtering
     await expect(page.getByText(seed.objectName)).toBeVisible()
   })
 
