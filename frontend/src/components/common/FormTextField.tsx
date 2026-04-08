@@ -24,7 +24,9 @@ export function FormTextField<TFieldValues extends FieldValues>({
       render={({ field, fieldState }) => {
         const fieldValue = field.value
         const safeValue =
-          fieldValue == null ? '' : (fieldValue as string | number | readonly string[] | undefined)
+          fieldValue == null || (typeof fieldValue === 'number' && isNaN(fieldValue))
+            ? ''
+            : (fieldValue as string | number | readonly string[] | undefined)
 
         return (
           <TextField

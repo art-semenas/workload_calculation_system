@@ -156,7 +156,6 @@ function AddAssignmentDialog({
             size="small"
             inputProps={{ min: 0 }}
             fullWidth
-            onChange={(e) => form.setValue('quantityMaintained', Number(e.target.value))}
           />
         </DialogContent>
         <DialogActions>
@@ -438,7 +437,6 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
               size="small"
               inputProps={{ min: 0 }}
               fullWidth
-              onChange={(e) => editForm.setValue('quantityMaintained', Number(e.target.value))}
             />
           </DialogContent>
           <DialogActions>

@@ -277,9 +277,6 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               size="small"
               inputProps={{ min: 1 }}
               fullWidth
-              onChange={(e) =>
-                addForm.setValue('quantityPhysical', parseInt(e.target.value, 10) || 1)
-              }
             />
           </DialogContent>
           <DialogActions>
@@ -308,9 +305,6 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               size="small"
               inputProps={{ min: 1 }}
               fullWidth
-              onChange={(e) =>
-                editForm.setValue('quantityPhysical', parseInt(e.target.value, 10) || 1)
-              }
             />
           </DialogContent>
           <DialogActions>
