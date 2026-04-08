@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { loginAsAdmin } from './helpers/auth'
+import { fetchAdminToken, fetchRouteSeed, loginAsAdmin } from './helpers/auth'
 
 test.describe('PoC M-01 smoke', () => {
   test('login page loads directly', async ({ page }) => {
@@ -10,13 +10,19 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByLabel(/password/i)).toBeVisible()
   })
 
-  test.fixme('invalid credentials keep the user on login with a visible error', async ({ page }) => {
+  test('invalid credentials keep the user on login with a visible error', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('admin@workload.local')
     await page.getByLabel(/password/i).fill('wrongpassword')
-    await page.getByRole('button', { name: /sign in/i }).click()
 
-    await expect(page.getByText(/invalid email or password/i)).toBeVisible()
+    const failedLoginResponse = page.waitForResponse(
+      (response) => response.url().includes('/api/v1/auth/login') && response.status() === 401
+    )
+
+    await page.getByRole('button', { name: /sign in/i }).click()
+    await failedLoginResponse
+
+    await expect(page.getByRole('alert')).toContainText(/invalid email or password/i)
     await expect(page).toHaveURL(/\/login$/)
   })
 
@@ -55,5 +61,104 @@ test.describe('PoC M-01 smoke', () => {
 
     await page.getByTestId('dialog-branch-select-btn').click()
     await expect(page.getByText('Select branch')).toBeVisible()
+  })
+
+  // 1.2
+  test('empty login form shows field validation errors', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('button', { name: /sign in/i }).click()
+
+    await expect(page.getByText('Required').first()).toBeVisible()
+    await expect(page).toHaveURL(/\/login$/)
+  })
+
+  // 2.2
+  test('disabled navigation items are visible with tooltip', async ({ page }) => {
+    await loginAsAdmin(page)
+
+    const engineersButton = page.getByRole('button', { name: 'Engineers' })
+    const summaryButton = page.getByRole('button', { name: 'Summary' })
+    await expect(engineersButton).toBeVisible()
+    await expect(summaryButton).toBeVisible()
+
+    await engineersButton.hover({ force: true })
+    await expect(page.getByText('Available in the next version')).toBeVisible()
+  })
+
+  // 2.3
+  test('user name is displayed in app bar after login', async ({ page, request }) => {
+    const response = await request.post('/api/v1/auth/login', {
+      data: { email: 'admin@workload.local', password: 'password' },
+    })
+    const json = (await response.json()) as { data: { user: { name: string } } }
+    const userName = json.data.user.name
+
+    await loginAsAdmin(page)
+    await expect(page.getByText(userName)).toBeVisible()
+  })
+
+  // 2.4
+  test('logout returns user to login page', async ({ page }) => {
+    await loginAsAdmin(page)
+    await page.getByRole('button', { name: /logout/i }).click()
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  // 3.2
+  test('dashboard division overview table shows Name, Branches, and Objects columns', async ({
+    page,
+  }) => {
+    await loginAsAdmin(page)
+
+    await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Branches' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Objects' })).toBeVisible()
+  })
+
+  // 3.3
+  test('clicking division row on dashboard navigates to division detail', async ({ page }) => {
+    await loginAsAdmin(page)
+
+    // nth(0) is the header row; nth(1) is the first data row
+    await page.getByRole('row').nth(1).click()
+    await expect(page).toHaveURL(/\/divisions\/[0-9a-f-]+$/)
+  })
+
+  // 6.3
+  test('division filter on object list scopes results to selected division', async ({
+    page,
+    request,
+  }) => {
+    const seed = await fetchRouteSeed(request)
+    const token = await fetchAdminToken(request)
+    const divResponse = await request.get(`/api/v1/divisions/${seed.divisionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const divJson = (await divResponse.json()) as { data: { name: string } }
+    const divisionName = divJson.data.name
+
+    await loginAsAdmin(page)
+    await page.goto('/objects')
+
+    await page.getByLabel('Division').click()
+    await page.getByRole('option', { name: divisionName }).click()
+
+    // The seed object belongs to this division and must still be visible
+    await expect(page.getByText(seed.objectName)).toBeVisible()
+  })
+
+  // 6.7
+  test('clicking object row on object list navigates to object detail', async ({
+    page,
+    request,
+  }) => {
+    const seed = await fetchRouteSeed(request)
+
+    await loginAsAdmin(page)
+    await page.goto('/objects')
+
+    await page.getByRole('row', { name: new RegExp(seed.objectName) }).click()
+    await expect(page).toHaveURL(new RegExp(`/objects/${seed.objectId}`))
+    await expect(page.getByRole('heading', { name: seed.objectName })).toBeVisible()
   })
 })

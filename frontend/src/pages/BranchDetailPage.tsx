@@ -142,7 +142,7 @@ export default function BranchDetailPage() {
         ) : (
           <>
             <Typography variant="h4">{branch.name}</Typography>
-            <IconButton size="small" onClick={handleEditName}>
+            <IconButton size="small" aria-label="Edit branch name" onClick={handleEditName}>
               <EditOutlinedIcon />
             </IconButton>
           </>

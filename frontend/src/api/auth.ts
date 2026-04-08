@@ -3,7 +3,9 @@ import type { ApiResponse } from '../types/api'
 import type { LoginRequest, LoginResponse, User } from '../types/auth'
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', data)
+  const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', data, {
+    skipAuthRedirect: true,
+  })
   return response.data.data as LoginResponse
 }
 

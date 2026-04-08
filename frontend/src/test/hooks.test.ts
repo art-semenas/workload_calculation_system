@@ -44,10 +44,16 @@ describe('API modules', () => {
     })
     const { login } = await import('../api/auth')
     await login({ email: 'a@b.com', password: 'x' })
-    expect(mockApi.post).toHaveBeenCalledWith('/auth/login', {
-      email: 'a@b.com',
-      password: 'x',
-    })
+    expect(mockApi.post).toHaveBeenCalledWith(
+      '/auth/login',
+      {
+        email: 'a@b.com',
+        password: 'x',
+      },
+      {
+        skipAuthRedirect: true,
+      }
+    )
   })
 
   it('getTravel calls GET /objects/:id/travel', async () => {

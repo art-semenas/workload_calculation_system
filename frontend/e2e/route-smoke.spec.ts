@@ -25,7 +25,7 @@ test.describe('PoC M-01 direct route smoke', () => {
       }
 
       if (route.text) {
-        await expect(page.getByText(route.text)).toBeVisible()
+        await expect(page.getByText(route.text).first()).toBeVisible()
       }
     }
   })
