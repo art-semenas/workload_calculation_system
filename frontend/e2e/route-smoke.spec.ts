@@ -1,20 +1,40 @@
 import { expect, test } from '@playwright/test'
-import { fetchRouteSeed, loginAsAdmin } from './helpers/auth'
+import { fetchAdminToken, loginAsAdmin } from './helpers/auth'
+import { cleanupHierarchyByPrefix, createHierarchy, makeE2ePrefix } from './helpers/data'
+
+let routePrefix: string
+let routeObjectId: string
+let routeObjectName: string
+let routeBranchId: string
+let routeDivisionId: string
 
 test.describe('PoC M-01 direct route smoke', () => {
-  test('protected routes load after login', async ({ page, request }) => {
-    const seed = await fetchRouteSeed(request)
+  test.beforeAll(async ({ request }) => {
+    routePrefix = makeE2ePrefix('route-smoke')
+    const token = await fetchAdminToken(request)
+    const hierarchy = await createHierarchy(request, routePrefix, token)
+    routeDivisionId = hierarchy.division.id
+    routeBranchId = hierarchy.branch.id
+    routeObjectId = hierarchy.object.id
+    routeObjectName = hierarchy.object.name
+  })
+
+  test.afterAll(() => {
+    cleanupHierarchyByPrefix(routePrefix)
+  })
+
+  test('protected routes load after login', async ({ page }) => {
     await loginAsAdmin(page)
 
     const routes = [
       { path: '/', heading: 'Dashboard' },
       { path: '/divisions', heading: 'Divisions' },
-      { path: `/divisions/${seed.divisionId}`, text: /divisions/i },
-      { path: `/branches/${seed.branchId}`, text: /divisions/i },
+      { path: `/divisions/${routeDivisionId}`, text: /divisions/i },
+      { path: `/branches/${routeBranchId}`, text: /divisions/i },
       { path: '/objects', heading: 'Objects' },
       { path: '/objects/new', heading: 'New Object' },
-      { path: `/objects/${seed.objectId}`, heading: seed.objectName },
-      { path: `/objects/${seed.objectId}/edit`, heading: 'Edit Object' },
+      { path: `/objects/${routeObjectId}`, heading: routeObjectName },
+      { path: `/objects/${routeObjectId}/edit`, heading: 'Edit Object' },
     ]
 
     for (const route of routes) {
@@ -30,10 +50,9 @@ test.describe('PoC M-01 direct route smoke', () => {
     }
   })
 
-  test('object detail shows placeholder tabs and delete confirmation text', async ({ page, request }) => {
-    const seed = await fetchRouteSeed(request)
+  test('object detail shows placeholder tabs and delete confirmation text', async ({ page }) => {
     await loginAsAdmin(page)
-    await page.goto(`/objects/${seed.objectId}`)
+    await page.goto(`/objects/${routeObjectId}`)
 
     await expect(page.getByRole('tab', { name: 'Equipment' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Records' })).toBeVisible()
