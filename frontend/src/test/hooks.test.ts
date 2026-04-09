@@ -30,7 +30,16 @@ describe('API modules', () => {
   it('createDivision calls POST /divisions', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.post.mockResolvedValueOnce({
-      data: { data: { id: '1', name: 'Test' }, meta: null, error: null },
+      data: {
+        data: {
+          id: '00000000-0000-0000-0000-000000000001',
+          name: 'Test',
+          branchCount: 0,
+          objectCount: 0,
+        },
+        meta: null,
+        error: null,
+      },
     })
     const { createDivision } = await import('../api/divisions')
     await createDivision({ name: 'Test' })
@@ -40,7 +49,19 @@ describe('API modules', () => {
   it('login calls POST /auth/login', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.post.mockResolvedValueOnce({
-      data: { data: { token: 'jwt', user: {} }, meta: null, error: null },
+      data: {
+        data: {
+          token: 'jwt',
+          user: {
+            id: '00000000-0000-0000-0000-000000000001',
+            email: 'a@b.com',
+            name: 'Test',
+            role: 'viewer',
+          },
+        },
+        meta: null,
+        error: null,
+      },
     })
     const { login } = await import('../api/auth')
     await login({ email: 'a@b.com', password: 'x' })
@@ -82,5 +103,19 @@ describe('API modules', () => {
       distanceKm: 10,
       oneWayTimeMin: 15,
     })
+  })
+
+  it('getDivisions throws ZodError when response data has wrong shape', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
+    mockApi.get.mockResolvedValueOnce({
+      data: {
+        // branchCount is a string — invalid per DivisionSchema
+        data: [{ id: 'not-a-uuid', name: 'X', branchCount: 'wrong', objectCount: 0 }],
+        error: null,
+      },
+    })
+    const { getDivisions } = await import('../api/divisions')
+    // Currently FAILS: 'as Division[]' silently returns the bad data without throwing
+    await expect(getDivisions()).rejects.toThrow()
   })
 })

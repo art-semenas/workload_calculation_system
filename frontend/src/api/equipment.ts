@@ -1,67 +1,50 @@
 import api from './axios'
 import type { ApiResponse } from '../types/api'
-import type {
-  AssignmentCreate,
-  AssignmentUpdate,
-  DeviceAdd,
-  ObjectDevice,
-  ObjectSystemAssignment,
-} from '../types/equipment'
+import { ObjectDeviceSchema, ObjectSystemAssignmentSchema } from '../types/equipment'
+import type { AssignmentCreate, AssignmentUpdate, DeviceAdd } from '../types/equipment'
 
-export async function getDevices(objectId: string): Promise<ObjectDevice[]> {
-  const response = await api.get<ApiResponse<ObjectDevice[]>>(`/objects/${objectId}/devices`)
-  return response.data.data as ObjectDevice[]
+export async function getDevices(objectId: string) {
+  const response = await api.get<ApiResponse<unknown>>(`/objects/${objectId}/devices`)
+  return ObjectDeviceSchema.array().parse(response.data.data)
 }
 
-export async function addDevice(objectId: string, data: DeviceAdd): Promise<ObjectDevice> {
-  const response = await api.post<ApiResponse<ObjectDevice>>(`/objects/${objectId}/devices`, data)
-  return response.data.data as ObjectDevice
+export async function addDevice(objectId: string, data: DeviceAdd) {
+  const response = await api.post<ApiResponse<unknown>>(`/objects/${objectId}/devices`, data)
+  return ObjectDeviceSchema.parse(response.data.data)
 }
 
-export async function updateDevice(
-  objectId: string,
-  deviceTypeId: string,
-  data: DeviceAdd
-): Promise<ObjectDevice> {
-  const response = await api.put<ApiResponse<ObjectDevice>>(
+export async function updateDevice(objectId: string, deviceTypeId: string, data: DeviceAdd) {
+  const response = await api.put<ApiResponse<unknown>>(
     `/objects/${objectId}/devices/${deviceTypeId}`,
     data
   )
-  return response.data.data as ObjectDevice
+  return ObjectDeviceSchema.parse(response.data.data)
 }
 
 export async function removeDevice(objectId: string, deviceTypeId: string): Promise<void> {
   await api.delete(`/objects/${objectId}/devices/${deviceTypeId}`)
 }
 
-export async function getAssignments(objectId: string): Promise<ObjectSystemAssignment[]> {
-  const response = await api.get<ApiResponse<ObjectSystemAssignment[]>>(
-    `/objects/${objectId}/assignments`
-  )
-  return response.data.data as ObjectSystemAssignment[]
+export async function getAssignments(objectId: string) {
+  const response = await api.get<ApiResponse<unknown>>(`/objects/${objectId}/assignments`)
+  return ObjectSystemAssignmentSchema.array().parse(response.data.data)
 }
 
-export async function addAssignment(
-  objectId: string,
-  data: AssignmentCreate
-): Promise<ObjectSystemAssignment> {
-  const response = await api.post<ApiResponse<ObjectSystemAssignment>>(
-    `/objects/${objectId}/assignments`,
-    data
-  )
-  return response.data.data as ObjectSystemAssignment
+export async function addAssignment(objectId: string, data: AssignmentCreate) {
+  const response = await api.post<ApiResponse<unknown>>(`/objects/${objectId}/assignments`, data)
+  return ObjectSystemAssignmentSchema.parse(response.data.data)
 }
 
 export async function updateAssignment(
   objectId: string,
   assignmentId: string,
   data: AssignmentUpdate
-): Promise<ObjectSystemAssignment> {
-  const response = await api.put<ApiResponse<ObjectSystemAssignment>>(
+) {
+  const response = await api.put<ApiResponse<unknown>>(
     `/objects/${objectId}/assignments/${assignmentId}`,
     data
   )
-  return response.data.data as ObjectSystemAssignment
+  return ObjectSystemAssignmentSchema.parse(response.data.data)
 }
 
 export async function removeAssignment(objectId: string, assignmentId: string): Promise<void> {

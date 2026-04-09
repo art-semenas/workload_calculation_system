@@ -1,20 +1,17 @@
 import api from './axios'
 import type { ApiResponse } from '../types/api'
-import type { ObjectRepair, RepairUpdate } from '../types/repairs'
+import { ObjectRepairSchema } from '../types/repairs'
+import type { RepairUpdate } from '../types/repairs'
 
-export async function getRepairs(objectId: string): Promise<ObjectRepair[]> {
-  const response = await api.get<ApiResponse<ObjectRepair[]>>(`/objects/${objectId}/repairs`)
-  return response.data.data as ObjectRepair[]
+export async function getRepairs(objectId: string) {
+  const response = await api.get<ApiResponse<unknown>>(`/objects/${objectId}/repairs`)
+  return ObjectRepairSchema.array().parse(response.data.data)
 }
 
-export async function updateRepair(
-  objectId: string,
-  repairTypeId: string,
-  data: RepairUpdate
-): Promise<ObjectRepair> {
-  const response = await api.put<ApiResponse<ObjectRepair>>(
+export async function updateRepair(objectId: string, repairTypeId: string, data: RepairUpdate) {
+  const response = await api.put<ApiResponse<unknown>>(
     `/objects/${objectId}/repairs/${repairTypeId}`,
     data
   )
-  return response.data.data as ObjectRepair
+  return ObjectRepairSchema.parse(response.data.data)
 }
