@@ -16,9 +16,9 @@ export const ObjectSystemAssignmentSchema = z.object({
   deviceTypeId: z.string().uuid(),
   deviceTypeName: z.string(),
   systemType: SystemTypeSchema,
-  quantityMaintained: z.number().int(),
-  r1Minutes: z.number(),
-  r2Minutes: z.number(),
+  quantityMaintained: z.number(),
+  r1Minutes: z.number().optional(),
+  r2Minutes: z.number().optional(),
 })
 
 export const DeviceAddSchema = z.object({
