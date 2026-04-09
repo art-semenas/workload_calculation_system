@@ -4,7 +4,7 @@ import { SystemTypeSchema } from './equipment'
 export const DeviceTypeSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullish(),
 })
 
 export const DeviceSystemContextSchema = z.object({
