@@ -8,7 +8,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
   IconButton,
+  InputLabel,
   MenuItem,
   Select,
   Table,
@@ -239,15 +242,13 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               name="deviceTypeId"
               control={addForm.control}
               render={({ field, fieldState }) => (
-                <Box>
-                  <Typography variant="caption">Device Type</Typography>
+                <FormControl fullWidth size="small" error={!!fieldState.error}>
+                  <InputLabel id="add-device-type-label">Device Type</InputLabel>
                   <Select
                     {...field}
-                    fullWidth
+                    labelId="add-device-type-label"
+                    label="Device Type"
                     displayEmpty
-                    size="small"
-                    error={!!fieldState.error}
-                    SelectDisplayProps={{ 'aria-label': 'Device Type' }}
                   >
                     <MenuItem value="">
                       <em>Select device type</em>
@@ -258,12 +259,8 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
                       </MenuItem>
                     ))}
                   </Select>
-                  {fieldState.error && (
-                    <Typography variant="caption" color="error">
-                      {fieldState.error.message}
-                    </Typography>
-                  )}
-                </Box>
+                  {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
+                </FormControl>
               )}
             />
             <FormTextField
