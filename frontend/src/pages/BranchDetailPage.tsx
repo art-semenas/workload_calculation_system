@@ -23,7 +23,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useBranch, useUpdateBranch } from '../hooks/useBranches'
-import { useCreateObject } from '../hooks/useObjects'
+import { useCreateObject, useObjects } from '../hooks/useObjects'
 import { BranchCreateSchema, type BranchCreate } from '../types/division'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 
@@ -34,6 +34,7 @@ export default function BranchDetailPage() {
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
 
   const { data: branch, isLoading } = useBranch(id || '')
+  const { data: allObjects = [] } = useObjects()
   const updateBranch = useUpdateBranch()
   const createObject = useCreateObject()
 
@@ -91,7 +92,7 @@ export default function BranchDetailPage() {
     return <Typography color="error">Branch not found</Typography>
   }
 
-  const branchObjects = branch.objects.data
+  const branchObjects = allObjects.filter((o) => o.branchId === id)
 
   return (
     <Box>
@@ -176,9 +177,7 @@ export default function BranchDetailPage() {
                   sx={{ cursor: 'pointer' }}
                 >
                   <TableCell>{obj.name}</TableCell>
-                  <TableCell>
-                    {obj.itogoChisloWithTravel !== null ? obj.itogoChisloWithTravel : '-'}
-                  </TableCell>
+                  <TableCell>-</TableCell>
                 </TableRow>
               ))}
             </TableBody>

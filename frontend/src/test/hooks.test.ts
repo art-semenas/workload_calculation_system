@@ -34,8 +34,8 @@ describe('API modules', () => {
         data: {
           id: '00000000-0000-0000-0000-000000000001',
           name: 'Test',
-          branchCount: 0,
-          objectCount: 0,
+          branch_count: 0,
+          object_count: 0,
         },
         meta: null,
         error: null,
@@ -109,8 +109,8 @@ describe('API modules', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce({
       data: {
-        // branchCount is a string — invalid per DivisionSchema
-        data: [{ id: 'not-a-uuid', name: 'X', branchCount: 'wrong', objectCount: 0 }],
+        // branch_count is a string — invalid per DivisionSchema
+        data: [{ id: 'not-a-uuid', name: 'X', branch_count: 'wrong', object_count: 0 }],
         error: null,
       },
     })

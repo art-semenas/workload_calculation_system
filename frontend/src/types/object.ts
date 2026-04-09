@@ -7,7 +7,7 @@ export const ObjectRecordSchema = z.object({
   branchName: z.string().optional(),
   divisionName: z.string().optional(),
   address: z.string().optional(),
-  importSeqNo: z.number().int().optional(),
+  importSeqNo: z.number().int().nullish(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 })

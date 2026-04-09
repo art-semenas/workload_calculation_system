@@ -1,11 +1,5 @@
 import { z } from 'zod'
 
-const BranchObjectsMetaSchema = z.object({
-  total: z.number(),
-  page: z.number(),
-  size: z.number(),
-})
-
 export const BranchObjectRowSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -23,25 +17,33 @@ export const BranchSchema = z.object({
   updatedAt: z.string().optional(),
 })
 
-export const DivisionSchema = z.object({
+// Internal schema matching the actual backend snake_case JSON keys from DivisionDto
+const DivisionRawSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  branchCount: z.number().int(),
-  objectCount: z.number().int(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  branch_count: z.number().int(),
+  object_count: z.number().int(),
 })
 
-export const DivisionDetailSchema = DivisionSchema.extend({
-  branches: z.array(BranchSchema),
-})
+export const DivisionSchema = DivisionRawSchema.transform((d) => ({
+  id: d.id,
+  name: d.name,
+  branchCount: d.branch_count,
+  objectCount: d.object_count,
+}))
 
-export const BranchDetailSchema = BranchSchema.extend({
-  objects: z.object({
-    data: z.array(BranchObjectRowSchema),
-    meta: BranchObjectsMetaSchema,
-  }),
-})
+export const DivisionDetailSchema = DivisionRawSchema.extend({
+  branches: z.array(BranchSchema).optional().default([]),
+}).transform((d) => ({
+  id: d.id,
+  name: d.name,
+  branchCount: d.branch_count,
+  objectCount: d.object_count,
+  branches: d.branches,
+}))
+
+// BranchDetailSchema matches the actual BranchDto response (no embedded objects)
+export const BranchDetailSchema = BranchSchema
 
 export const DivisionCreateSchema = z.object({
   name: z.string().min(1),
