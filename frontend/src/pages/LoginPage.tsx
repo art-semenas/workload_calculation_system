@@ -3,10 +3,9 @@ import { Alert, Box, Button, Card, CardContent, CircularProgress, Typography } f
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { login } from '../api/auth'
 import { FormTextField } from '../components/common/FormTextField'
+import { useLogin } from '../hooks/useAuth'
 import { LoginRequestSchema, type LoginRequest } from '../types/auth'
-import { useAuthStore } from '../store/authStore'
 
 function isUnauthorizedError(error: unknown): boolean {
   return (
@@ -20,30 +19,24 @@ function isUnauthorizedError(error: unknown): boolean {
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const storeLogin = useAuthStore((state) => state.login)
+  const loginMutation = useLogin()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const { control, handleSubmit, formState } = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   })
 
   const onSubmit = handleSubmit(async (data) => {
     setErrorMessage(null)
-
     try {
-      const response = await login(data)
-      storeLogin(response.token, response.user)
+      await loginMutation.mutateAsync(data)
       navigate('/')
     } catch (error: unknown) {
       if (isUnauthorizedError(error)) {
         setErrorMessage('Invalid email or password')
         return
       }
-
       setErrorMessage('Something went wrong. Please try again.')
     }
   })
