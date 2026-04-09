@@ -28,6 +28,8 @@ import { RepairsTab } from '../components/repairs/RepairsTab'
 import { TravelTab } from '../components/travel/TravelTab'
 import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
+import { DivisionCreateSchema } from '../types/division'
+import type { DivisionCreate } from '../types/division'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -245,7 +247,9 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [editingName, setEditingName] = useState(false)
-  const [newName, setNewName] = useState('')
+  const nameForm = useForm<DivisionCreate>({
+    resolver: zodResolver(DivisionCreateSchema),
+  })
 
   const { data: object, isLoading } = useObject(mode !== 'create' ? id : undefined)
   const deleteObject = useDeleteObject()
@@ -264,24 +268,24 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
 
   const handleEditName = () => {
     if (object) {
-      setNewName(object.name)
+      nameForm.reset({ name: object.name })
       setEditingName(true)
     }
   }
 
-  const handleSaveName = async () => {
-    if (id && newName.trim()) {
+  const handleSaveName = nameForm.handleSubmit(async (data) => {
+    if (id && object) {
       await updateObject.mutateAsync({
         id,
-        data: { name: newName, branchId: object?.branchId ?? '' },
+        data: { name: data.name, branchId: object.branchId },
       })
       setEditingName(false)
     }
-  }
+  })
 
   const handleCancelEdit = () => {
     setEditingName(false)
-    setNewName('')
+    nameForm.reset()
   }
 
   if (mode === 'create') {
@@ -328,29 +332,31 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {editingName ? (
-            <>
-              <TextField
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+            <Box
+              component="form"
+              onSubmit={(e) => {
+                void handleSaveName(e)
+              }}
+              sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+            >
+              <FormTextField
+                name="name"
+                control={nameForm.control}
+                label="Object name"
+                size="small"
                 autoFocus
-                size="small"
               />
-              <Button
-                size="small"
-                onClick={() => {
-                  void handleSaveName()
-                }}
-              >
+              <Button size="small" type="submit" disabled={updateObject.isPending}>
                 Save
               </Button>
               <Button size="small" onClick={handleCancelEdit}>
                 Cancel
               </Button>
-            </>
+            </Box>
           ) : (
             <>
               <Typography variant="h4">{object.name}</Typography>
-              <IconButton size="small" aria-label="Edit name" onClick={handleEditName}>
+              <IconButton size="small" aria-label="Edit object name" onClick={handleEditName}>
                 <EditOutlinedIcon />
               </IconButton>
             </>

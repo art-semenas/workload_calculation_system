@@ -7,7 +7,6 @@ import BranchDetailPage from '../pages/BranchDetailPage'
 
 const mockUseBranch = vi.fn()
 const mockUseUpdateBranch = vi.fn()
-const mockUseObjects = vi.fn()
 const mockUseCreateObject = vi.fn()
 
 vi.mock('../hooks/useBranches', () => ({
@@ -18,8 +17,6 @@ vi.mock('../hooks/useBranches', () => ({
 }))
 
 vi.mock('../hooks/useObjects', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
-  useObjects: (...args: unknown[]) => mockUseObjects(...args),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useCreateObject: (...args: unknown[]) => mockUseCreateObject(...args),
 }))
@@ -54,15 +51,14 @@ describe('BranchDetailPage', () => {
         divisionId: 'div-1',
         divisionName: 'Division 1',
         objectCount: 2,
+        objects: {
+          data: [
+            { id: 'obj-1', name: 'Object 1', itogoChisloWithTravel: null, engineerCount: 0 },
+            { id: 'obj-2', name: 'Object 2', itogoChisloWithTravel: 1.5, engineerCount: 1 },
+          ],
+          meta: { total: 2, page: 1, size: 20 },
+        },
       },
-      isLoading: false,
-    })
-    mockUseObjects.mockReturnValue({
-      data: [
-        { id: 'obj-1', name: 'Object 1', branchId: 'br-1', branchName: 'Branch 1' },
-        { id: 'obj-2', name: 'Object 2', branchId: 'br-1', branchName: 'Branch 1' },
-        { id: 'obj-3', name: 'Other Branch Object', branchId: 'br-2', branchName: 'Branch 2' },
-      ],
       isLoading: false,
     })
     mockUseUpdateBranch.mockReturnValue({
@@ -98,7 +94,6 @@ describe('BranchDetailPage', () => {
 
     expect(screen.getByText('Object 1')).toBeInTheDocument()
     expect(screen.getByText('Object 2')).toBeInTheDocument()
-    expect(screen.queryByText('Other Branch Object')).not.toBeInTheDocument()
   })
 
   it('opens create object form', async () => {

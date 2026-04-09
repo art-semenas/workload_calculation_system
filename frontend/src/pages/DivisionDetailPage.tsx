@@ -15,7 +15,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -29,13 +28,17 @@ import {
   useDivisionBranches,
   useUpdateDivision,
 } from '../hooks/useDivisions'
-import { BranchCreateSchema, type BranchCreate } from '../types/division'
+import {
+  BranchCreateSchema,
+  DivisionCreateSchema,
+  type BranchCreate,
+  type DivisionCreate,
+} from '../types/division'
 
 export default function DivisionDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [editingName, setEditingName] = useState(false)
-  const [newName, setNewName] = useState('')
   const [openBranchDialog, setOpenBranchDialog] = useState(false)
 
   const { data: division, isLoading } = useDivision(id || '')
@@ -43,39 +46,41 @@ export default function DivisionDetailPage() {
   const updateDivision = useUpdateDivision()
   const createBranch = useCreateBranch(id || '')
 
+  const nameForm = useForm<DivisionCreate>({
+    resolver: zodResolver(DivisionCreateSchema),
+  })
+
   const {
     control,
     handleSubmit: handleBranchSubmit,
-    reset,
+    reset: resetBranchForm,
   } = useForm<BranchCreate>({
     resolver: zodResolver(BranchCreateSchema),
-    defaultValues: {
-      name: '',
-    },
+    defaultValues: { name: '' },
   })
 
   const handleEditName = () => {
     if (division) {
-      setNewName(division.name)
+      nameForm.reset({ name: division.name })
       setEditingName(true)
     }
   }
 
-  const handleSaveName = async () => {
-    if (id && newName.trim()) {
-      await updateDivision.mutateAsync({ id, data: { name: newName } })
+  const handleSaveName = nameForm.handleSubmit(async (data) => {
+    if (id) {
+      await updateDivision.mutateAsync({ id, data: { name: data.name } })
       setEditingName(false)
     }
-  }
+  })
 
   const handleCancelEdit = () => {
     setEditingName(false)
-    setNewName('')
+    nameForm.reset()
   }
 
   const handleCloseBranchDialog = () => {
     setOpenBranchDialog(false)
-    reset()
+    resetBranchForm()
   }
 
   const handleCreateBranch = handleBranchSubmit(async (formData) => {
@@ -111,25 +116,27 @@ export default function DivisionDetailPage() {
       {/* Division Name with Edit */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
         {editingName ? (
-          <>
-            <TextField
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              void handleSaveName(e)
+            }}
+            sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+          >
+            <FormTextField
+              name="name"
+              control={nameForm.control}
+              label="Division name"
+              size="small"
               autoFocus
-              size="small"
             />
-            <Button
-              size="small"
-              onClick={() => {
-                void handleSaveName()
-              }}
-            >
+            <Button size="small" type="submit" disabled={updateDivision.isPending}>
               Save
             </Button>
             <Button size="small" onClick={handleCancelEdit}>
               Cancel
             </Button>
-          </>
+          </Box>
         ) : (
           <>
             <Typography variant="h4">{division.name}</Typography>

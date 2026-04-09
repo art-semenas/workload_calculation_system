@@ -15,7 +15,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -24,57 +23,55 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useBranch, useUpdateBranch } from '../hooks/useBranches'
-import { useCreateObject, useObjects } from '../hooks/useObjects'
+import { useCreateObject } from '../hooks/useObjects'
+import { BranchCreateSchema, type BranchCreate } from '../types/division'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 
 export default function BranchDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [editingName, setEditingName] = useState(false)
-  const [newName, setNewName] = useState('')
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
 
   const { data: branch, isLoading } = useBranch(id || '')
-  const { data: objects = [], isLoading: objectsLoading } = useObjects()
   const updateBranch = useUpdateBranch()
   const createObject = useCreateObject()
 
-  const branchObjects = id ? objects.filter((object) => object.branchId === id) : []
+  const nameForm = useForm<BranchCreate>({
+    resolver: zodResolver(BranchCreateSchema),
+  })
 
   const {
     control,
     handleSubmit: handleObjectSubmit,
-    reset,
+    reset: resetObjectForm,
   } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
-    defaultValues: {
-      name: '',
-      branchId: id || '',
-    },
+    defaultValues: { name: '', branchId: id || '' },
   })
 
   const handleEditName = () => {
     if (branch) {
-      setNewName(branch.name)
+      nameForm.reset({ name: branch.name })
       setEditingName(true)
     }
   }
 
-  const handleSaveName = async () => {
-    if (id && newName.trim()) {
-      await updateBranch.mutateAsync({ id, data: { name: newName } })
+  const handleSaveName = nameForm.handleSubmit(async (data) => {
+    if (id) {
+      await updateBranch.mutateAsync({ id, data: { name: data.name } })
       setEditingName(false)
     }
-  }
+  })
 
   const handleCancelEdit = () => {
     setEditingName(false)
-    setNewName('')
+    nameForm.reset()
   }
 
   const handleCloseObjectDialog = () => {
     setOpenObjectDialog(false)
-    reset()
+    resetObjectForm()
   }
 
   const handleCreateObject = handleObjectSubmit(async (formData) => {
@@ -82,7 +79,7 @@ export default function BranchDetailPage() {
     handleCloseObjectDialog()
   })
 
-  if (isLoading || objectsLoading) {
+  if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
         <CircularProgress />
@@ -93,6 +90,8 @@ export default function BranchDetailPage() {
   if (!branch) {
     return <Typography color="error">Branch not found</Typography>
   }
+
+  const branchObjects = branch.objects.data
 
   return (
     <Box>
@@ -120,25 +119,27 @@ export default function BranchDetailPage() {
       {/* Branch Name with Edit */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
         {editingName ? (
-          <>
-            <TextField
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              void handleSaveName(e)
+            }}
+            sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+          >
+            <FormTextField
+              name="name"
+              control={nameForm.control}
+              label="Branch name"
+              size="small"
               autoFocus
-              size="small"
             />
-            <Button
-              size="small"
-              onClick={() => {
-                void handleSaveName()
-              }}
-            >
+            <Button size="small" type="submit" disabled={updateBranch.isPending}>
               Save
             </Button>
             <Button size="small" onClick={handleCancelEdit}>
               Cancel
             </Button>
-          </>
+          </Box>
         ) : (
           <>
             <Typography variant="h4">{branch.name}</Typography>
@@ -175,7 +176,9 @@ export default function BranchDetailPage() {
                   sx={{ cursor: 'pointer' }}
                 >
                   <TableCell>{obj.name}</TableCell>
-                  <TableCell>-</TableCell>
+                  <TableCell>
+                    {obj.itogoChisloWithTravel !== null ? obj.itogoChisloWithTravel : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
