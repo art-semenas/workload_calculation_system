@@ -356,7 +356,7 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
           ) : (
             <>
               <Typography variant="h4">{object.name}</Typography>
-              <IconButton size="small" aria-label="Edit object name" onClick={handleEditName}>
+              <IconButton size="small" aria-label="Edit name" onClick={handleEditName}>
                 <EditOutlinedIcon />
               </IconButton>
             </>

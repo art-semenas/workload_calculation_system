@@ -247,7 +247,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
                     displayEmpty
                     size="small"
                     error={!!fieldState.error}
-                    inputProps={{ 'aria-label': 'Device Type' }}
+                    SelectDisplayProps={{ 'aria-label': 'Device Type' }}
                   >
                     <MenuItem value="">
                       <em>Select device type</em>
