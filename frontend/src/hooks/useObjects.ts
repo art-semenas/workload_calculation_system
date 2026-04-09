@@ -24,6 +24,8 @@ export function useCreateObject() {
     mutationFn: (data: ObjectCreate) => createObject(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects'] })
+      // Also invalidate the branch query so BranchDetailPage refreshes its embedded object list
+      void queryClient.invalidateQueries({ queryKey: ['branches'] })
     },
   })
 }
