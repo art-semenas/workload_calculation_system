@@ -43,7 +43,7 @@ import {
 } from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
-import { mapEquipmentErrorCode } from '../../utils/errorMessages'
+import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
 
 interface AddAssignmentFormValues {
   deviceTypeId: string
@@ -334,8 +334,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await addAssignment.mutateAsync(data)
       setAddDeviceTypeId(null)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
     }
   }
@@ -357,8 +356,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await updateAssignment.mutateAsync({ assignmentId: editAssignment.id, data })
       setEditAssignment(null)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
     }
   }
@@ -369,8 +367,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await removeAssignment.mutateAsync(assignmentToRemove.id)
       setAssignmentToRemove(null)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
       setAssignmentToRemove(null)
     }

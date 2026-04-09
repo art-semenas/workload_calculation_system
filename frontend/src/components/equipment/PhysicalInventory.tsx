@@ -33,7 +33,7 @@ import {
 import { DeviceAddSchema, type DeviceAdd, type ObjectDevice } from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
-import { mapEquipmentErrorCode } from '../../utils/errorMessages'
+import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
 
 function getSystemTypeLabel(systemType: 'OS' | 'PS' | 'VIDEO') {
   switch (systemType) {
@@ -103,8 +103,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       await addDevice.mutateAsync(data)
       setAddOpen(false)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
     }
   }
@@ -128,8 +127,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       })
       setEditDevice(null)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
     }
   }
@@ -140,8 +138,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       await removeDevice.mutateAsync(deviceToRemove.deviceTypeId)
       setDeviceToRemove(null)
     } catch (err) {
-      const code = (err as { response?: { data?: { error?: { code?: string } } } }).response?.data
-        ?.error?.code
+      const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
       setDeviceToRemove(null)
     }
