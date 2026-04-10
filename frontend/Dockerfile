@@ -9,5 +9,5 @@ RUN npm run build
 # Stage 2: Nginx serves static files
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# Nginx config is provided via docker-compose volume mount (nginx.poc.conf)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

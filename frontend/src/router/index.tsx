@@ -1,6 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { createBrowserRouter } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
+import ProtectedRoute from '../components/layout/ProtectedRoute'
 import LoginPage from '../pages/LoginPage'
 import DashboardPage from '../pages/DashboardPage'
 import ObjectListPage from '../pages/ObjectListPage'
@@ -11,12 +11,6 @@ import SvodPage from '../pages/SvodPage'
 import DivisionListPage from '../pages/DivisionListPage'
 import DivisionDetailPage from '../pages/DivisionDetailPage'
 import BranchDetailPage from '../pages/BranchDetailPage'
-
-// eslint-disable-next-line react-refresh/only-export-components
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />
-}
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -29,9 +23,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <DashboardPage /> },
       { path: '/objects', element: <ObjectListPage /> },
-      { path: '/objects/new', element: <ObjectDetailPage /> },
-      { path: '/objects/:id', element: <ObjectDetailPage /> },
-      { path: '/objects/:id/edit', element: <ObjectDetailPage /> },
+      { path: '/objects/new', element: <ObjectDetailPage mode="create" /> },
+      { path: '/objects/:id', element: <ObjectDetailPage mode="detail" /> },
+      { path: '/objects/:id/edit', element: <ObjectDetailPage mode="edit" /> },
       { path: '/engineers', element: <EngineerListPage /> },
       { path: '/engineers/:id', element: <EngineerDetailPage /> },
       { path: '/engineers/:id/edit', element: <EngineerDetailPage /> },

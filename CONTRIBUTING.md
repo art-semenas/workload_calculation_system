@@ -37,6 +37,7 @@ Skipping the failing-test step is not allowed. Tests written after implementatio
 - One logical change per commit. A passing TDD cycle is one commit.
 - Format: `type: short description` — types are `feat`, `fix`, `test`, `refactor`, `chore`, `docs`
 - Examples: `feat: add division CRUD endpoints`, `test: verify repair threshold band B (kvo=8)`
+- Commit messages must contain only information relevant to the committed changes. Do not include tool names, AI model references, generator signatures, or external links.
 - Never commit broken code to any branch
 - No direct commits to `main` — all changes go through a PR
 
@@ -56,6 +57,16 @@ npm run format            # auto-format with Prettier
 npm run lint              # ESLint — must exit 0
 npx tsc --noEmit          # TypeScript type check — must exit 0
 npm test                  # Vitest — all tests must pass
+```
+
+**E2E (Playwright):**
+
+After any code change, rebuild the Docker images before running E2E tests. Stale images will test old code.
+
+```bash
+docker compose -f docker-compose.poc.yml up --build   # rebuild all images and start the stack
+cd frontend
+npx playwright test                                    # run E2E suite against the rebuilt stack
 ```
 
 If any gate fails, fix it before pushing. Do not add `// eslint-disable`, `@SuppressWarnings`, or Spotless `spotless:off` markers without a comment explaining why.
