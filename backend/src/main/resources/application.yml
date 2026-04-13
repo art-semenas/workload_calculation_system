@@ -56,4 +56,5 @@ workload:
     records-footage-minutes: ${WORKLOAD_CONFIG_RECORDS_FOOTAGE_MINUTES}
     records-backup-minutes: ${WORKLOAD_CONFIG_RECORDS_BACKUP_MINUTES}
     records-admin-minutes: ${WORKLOAD_CONFIG_RECORDS_ADMIN_MINUTES}
-    minutes-per-month: ${WORKLOAD_CONFIG_MINUTES_PER_MONTH}
+    monthly-hours-fund: ${WORKLOAD_CONFIG_MONTHLY_HOURS_FUND:142.8}
+    absence-coefficient: ${WORKLOAD_CONFIG_ABSENCE_COEFFICIENT:1.12}

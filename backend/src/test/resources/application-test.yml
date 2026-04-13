@@ -35,4 +35,5 @@ workload:
     records-footage-minutes: 180
     records-backup-minutes: 120
     records-admin-minutes: 60
-    minutes-per-month: 166
+    monthly-hours-fund: 142.8
+    absence-coefficient: 1.12

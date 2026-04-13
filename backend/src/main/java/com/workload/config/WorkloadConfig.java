@@ -96,8 +96,13 @@ public class WorkloadConfig {
   @Min(0)
   private Integer recordsAdminMinutes;
 
-  // Working minutes per month — used for FTE conversion (§6.8)
+  // FTE conversion constants (§6.8) — used in the TOTAL formula:
+  // itogo = total_min / 60 / monthlyHoursFund × absenceCoefficient
   @NotNull
-  @Min(1)
-  private Integer minutesPerMonth;
+  @DecimalMin("0.1")
+  private BigDecimal monthlyHoursFund;
+
+  @NotNull
+  @DecimalMin("0.01")
+  private BigDecimal absenceCoefficient;
 }
