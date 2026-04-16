@@ -56,10 +56,8 @@ public class CalculationService {
     BigDecimal videoR2PerVisit = BigDecimal.ZERO;
 
     for (ObjectSystemAssignment osa : assignments) {
-      BigDecimal r1Contrib =
-          osa.getQuantityMaintained().multiply(osa.getContext().getR1Minutes());
-      BigDecimal r2Contrib =
-          osa.getQuantityMaintained().multiply(osa.getContext().getR2Minutes());
+      BigDecimal r1Contrib = osa.getQuantityMaintained().multiply(osa.getContext().getR1Minutes());
+      BigDecimal r2Contrib = osa.getQuantityMaintained().multiply(osa.getContext().getR2Minutes());
 
       SystemType systemType = osa.getSystemType();
       if (systemType == SystemType.OS) {
@@ -81,15 +79,13 @@ public class CalculationService {
         osR1PerVisit.multiply(BigDecimal.valueOf(config.getOsR1VisitsPerYear()));
     BigDecimal osR2Annual =
         osR2PerVisit.multiply(BigDecimal.valueOf(config.getOsR2VisitsPerYear()));
-    BigDecimal osMonthlyAvg =
-        osR1Annual.add(osR2Annual).divide(twelve, 10, RoundingMode.HALF_UP);
+    BigDecimal osMonthlyAvg = osR1Annual.add(osR2Annual).divide(twelve, 10, RoundingMode.HALF_UP);
 
     BigDecimal psR1Annual =
         psR1PerVisit.multiply(BigDecimal.valueOf(config.getPsR1VisitsPerYear()));
     BigDecimal psR2Annual =
         psR2PerVisit.multiply(BigDecimal.valueOf(config.getPsR2VisitsPerYear()));
-    BigDecimal psMonthlyAvg =
-        psR1Annual.add(psR2Annual).divide(twelve, 10, RoundingMode.HALF_UP);
+    BigDecimal psMonthlyAvg = psR1Annual.add(psR2Annual).divide(twelve, 10, RoundingMode.HALF_UP);
 
     BigDecimal videoR1Annual =
         videoR1PerVisit.multiply(BigDecimal.valueOf(config.getVideoR1VisitsPerYear()));
@@ -99,8 +95,7 @@ public class CalculationService {
         videoR1Annual.add(videoR2Annual).divide(twelve, 10, RoundingMode.HALF_UP);
 
     // Stage 5 — Records and repairs
-    BigDecimal recordsMonthly =
-        recordsHelper.calculateMonthly(recordsOpt.orElse(null), config);
+    BigDecimal recordsMonthly = recordsHelper.calculateMonthly(recordsOpt.orElse(null), config);
 
     BigDecimal roundTripMin =
         travelOpt
@@ -165,7 +160,8 @@ public class CalculationService {
     }
 
     // Resolve object reference from available data
-    ObjectEntity objectRef = resolveObjectRef(objectId, assignments, repairs, recordsOpt, travelOpt);
+    ObjectEntity objectRef =
+        resolveObjectRef(objectId, assignments, repairs, recordsOpt, travelOpt);
     summary.setObject(objectRef);
 
     summary.setOsR1PerVisit(osR1PerVisit);
@@ -190,10 +186,7 @@ public class CalculationService {
     summary.setItogoChisloWithTravel(itogoWithTravel);
     summary.setComputedAt(OffsetDateTime.now());
 
-    log.info(
-        "Workload recalculated for object {}: itogoWithTravel={}",
-        objectId,
-        itogoWithTravel);
+    log.info("Workload recalculated for object {}: itogoWithTravel={}", objectId, itogoWithTravel);
 
     return summaryRepo.save(summary);
   }

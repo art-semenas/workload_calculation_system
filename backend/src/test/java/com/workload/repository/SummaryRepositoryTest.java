@@ -64,6 +64,10 @@ class SummaryRepositoryTest {
     summaryRepository.saveAndFlush(summary);
 
     UUID objectId = obj.getId();
+    // @OnDelete(CASCADE) is a DB-level FK cascade. Clear the first-level cache first
+    // so that no managed entity holds a stale reference to ObjectEntity during flush,
+    // then delete via a direct JPQL query to avoid Hibernate's JPA-level cascade walk.
+    entityManager.clear();
     objectRepository.deleteById(objectId);
     entityManager.flush();
     entityManager.clear();
