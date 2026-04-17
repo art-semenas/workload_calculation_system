@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RecordsService {
@@ -49,6 +50,7 @@ public class RecordsService {
                 BigDecimal.ZERO));
   }
 
+  @Transactional
   public RecordsDto update(UUID objectId, RecordsUpdateRequest request) {
     ObjectEntity object = findObject(objectId);
     RecordsTask task =

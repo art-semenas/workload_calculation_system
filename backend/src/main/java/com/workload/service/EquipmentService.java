@@ -62,6 +62,7 @@ public class EquipmentService {
         .toList();
   }
 
+  @Transactional
   public ObjectDeviceDto upsertDevice(UUID objectId, ObjectDeviceUpsertRequest request) {
     ObjectEntity object = findObject(objectId);
     DeviceType deviceType =
@@ -89,6 +90,7 @@ public class EquipmentService {
     return equipmentMapper.toDeviceDto(device);
   }
 
+  @Transactional
   public ObjectDeviceDto upsertDevice(
       UUID objectId, UUID deviceTypeId, ObjectDeviceUpsertRequest request) {
     ObjectEntity object = findObject(objectId);
@@ -133,6 +135,7 @@ public class EquipmentService {
         .toList();
   }
 
+  @Transactional
   public AssignmentDto addAssignment(UUID objectId, AssignmentCreateRequest request) {
     ObjectEntity object = findObject(objectId);
 
@@ -170,6 +173,7 @@ public class EquipmentService {
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
+  @Transactional
   public AssignmentDto updateAssignment(
       UUID objectId, UUID assignmentId, AssignmentUpdateRequest request) {
     ObjectSystemAssignment assignment =
@@ -187,6 +191,7 @@ public class EquipmentService {
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
+  @Transactional
   public void deleteAssignment(UUID objectId, UUID assignmentId) {
     ObjectSystemAssignment assignment =
         assignmentRepository

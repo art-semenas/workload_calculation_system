@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TravelService {
@@ -42,6 +43,7 @@ public class TravelService {
             new TravelDto(null, objectId, null, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
   }
 
+  @Transactional
   public TravelDto update(UUID objectId, TravelUpdateRequest request) {
     ObjectEntity object = findObject(objectId);
     Travel travel =
