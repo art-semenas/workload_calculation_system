@@ -4,6 +4,7 @@ import com.workload.dto.SvodRowDto;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -53,20 +54,20 @@ public class XlsxExportService {
         dataRow.createCell(1).setCellValue(row.divisionName() != null ? row.divisionName() : "");
         dataRow.createCell(2).setCellValue(row.branchName() != null ? row.branchName() : "");
         // Numeric columns
-        dataRow.createCell(3).setCellValue(numericValue(row.osMonthlyAvg()));
-        dataRow.createCell(4).setCellValue(numericValue(row.psMonthlyAvg()));
-        dataRow.createCell(5).setCellValue(numericValue(row.videoMonthlyAvg()));
-        dataRow.createCell(6).setCellValue(numericValue(row.recordsMonthly()));
-        dataRow.createCell(7).setCellValue(numericValue(row.repairNoTravelMonthly()));
-        dataRow.createCell(8).setCellValue(numericValue(row.repairWithTravelMonthly()));
-        dataRow.createCell(9).setCellValue(numericValue(row.roundTripMin()));
-        dataRow.createCell(10).setCellValue(numericValue(row.pzvMinutes()));
-        dataRow.createCell(11).setCellValue(numericValue(row.totalNoTravelMin()));
-        dataRow.createCell(12).setCellValue(numericValue(row.itogoChisloNoTravel()));
-        dataRow.createCell(13).setCellValue(numericValue(row.totalWithTravelMin()));
-        dataRow.createCell(14).setCellValue(numericValue(row.itogoChisloWithTravel()));
-        dataRow.createCell(15).setCellValue(numericValue(row.r1PerVisitTotal()));
-        dataRow.createCell(16).setCellValue(numericValue(row.r2PerVisitTotal()));
+        dataRow.createCell(3).setCellValue(scaledDouble(row.osMonthlyAvg(), 2));
+        dataRow.createCell(4).setCellValue(scaledDouble(row.psMonthlyAvg(), 2));
+        dataRow.createCell(5).setCellValue(scaledDouble(row.videoMonthlyAvg(), 2));
+        dataRow.createCell(6).setCellValue(scaledDouble(row.recordsMonthly(), 2));
+        dataRow.createCell(7).setCellValue(scaledDouble(row.repairNoTravelMonthly(), 2));
+        dataRow.createCell(8).setCellValue(scaledDouble(row.repairWithTravelMonthly(), 2));
+        dataRow.createCell(9).setCellValue(scaledDouble(row.roundTripMin(), 2));
+        dataRow.createCell(10).setCellValue(scaledDouble(row.pzvMinutes(), 2));
+        dataRow.createCell(11).setCellValue(scaledDouble(row.totalNoTravelMin(), 2));
+        dataRow.createCell(12).setCellValue(scaledDouble(row.itogoChisloNoTravel(), 6));
+        dataRow.createCell(13).setCellValue(scaledDouble(row.totalWithTravelMin(), 2));
+        dataRow.createCell(14).setCellValue(scaledDouble(row.itogoChisloWithTravel(), 6));
+        dataRow.createCell(15).setCellValue(scaledDouble(row.r1PerVisitTotal(), 2));
+        dataRow.createCell(16).setCellValue(scaledDouble(row.r2PerVisitTotal(), 2));
         // Date column
         dataRow
             .createCell(17)
@@ -85,7 +86,7 @@ public class XlsxExportService {
     }
   }
 
-  private double numericValue(BigDecimal value) {
-    return value != null ? value.doubleValue() : 0.0;
+  private double scaledDouble(BigDecimal value, int scale) {
+    return value != null ? value.setScale(scale, RoundingMode.HALF_UP).doubleValue() : 0.0;
   }
 }

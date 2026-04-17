@@ -68,7 +68,7 @@ class XlsxExportServiceTest {
       // itogoChisloWithTravel is column index 14 (0-based, after skipping objectId)
       Row dataRow = sheet.getRow(1);
       double fteValue = dataRow.getCell(14).getNumericCellValue();
-      assertThat(fteValue).isCloseTo(0.032327, within(0.001));
+      assertThat(fteValue).isCloseTo(0.032327, within(0.000001));
     }
   }
 
