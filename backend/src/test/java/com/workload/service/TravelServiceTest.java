@@ -13,6 +13,7 @@ import com.workload.exception.ObjectNotFoundException;
 import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.TravelRepository;
+import com.workload.service.calculation.CalculationService;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,7 @@ class TravelServiceTest {
   @Mock private TravelRepository travelRepository;
   @Mock private ObjectRepository objectRepository;
   @Mock private EquipmentMapper equipmentMapper;
+  @Mock private CalculationService calculationService;
 
   @InjectMocks private TravelService travelService;
 

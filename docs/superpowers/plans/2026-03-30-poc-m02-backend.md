@@ -102,7 +102,7 @@ git checkout -b feature/poc-m02-backend
 - Edit: `backend/src/test/resources/application-test.yml`
 - Edit: `backend/src/main/resources/application.yml`
 
-- [ ] **Step 1: Update the failing test first**
+- [x] **Step 1: Update the failing test first**
 
 Edit `WorkloadConfigTest.java`:
 
@@ -129,7 +129,7 @@ Final key list (20 keys):
 | 19    | `monthlyHoursFund`          | BigDecimal | 142.8             |
 | 20    | `absenceCoefficient`        | BigDecimal | 1.12              |
 
-- [ ] **Step 2: Run test — expect FAIL** (field `minutesPerMonth` removed, new fields don't exist yet)
+- [x] **Step 2: Run test — expect FAIL** (field `minutesPerMonth` removed, new fields don't exist yet)
 
 ```bash
 cd backend && mvn test -Dtest=WorkloadConfigTest -q
@@ -137,7 +137,7 @@ cd backend && mvn test -Dtest=WorkloadConfigTest -q
 
 Expected: compilation error.
 
-- [ ] **Step 3: Update WorkloadConfig.java**
+- [x] **Step 3: Update WorkloadConfig.java**
 
 Replace `minutesPerMonth` field with:
 
@@ -153,7 +153,7 @@ private BigDecimal monthlyHoursFund;
 private BigDecimal absenceCoefficient;
 ```
 
-- [ ] **Step 4: Update application-test.yml**
+- [x] **Step 4: Update application-test.yml**
 
 Replace `minutes-per-month: 166` with:
 
@@ -162,7 +162,7 @@ monthly-hours-fund: 142.8
 absence-coefficient: 1.12
 ```
 
-- [ ] **Step 5: Update application.yml**
+- [x] **Step 5: Update application.yml**
 
 Replace the `minutes-per-month` env var binding with the two new keys:
 
@@ -171,7 +171,7 @@ monthly-hours-fund: ${WORKLOAD_CONFIG_MONTHLY_HOURS_FUND:142.8}
 absence-coefficient: ${WORKLOAD_CONFIG_ABSENCE_COEFFICIENT:1.12}
 ```
 
-- [ ] **Step 6: Run test — expect PASS**
+- [x] **Step 6: Run test — expect PASS**
 
 ```bash
 cd backend && mvn test -Dtest=WorkloadConfigTest -q
@@ -179,7 +179,7 @@ cd backend && mvn test -Dtest=WorkloadConfigTest -q
 
 Expected: `BUILD SUCCESS`, all assertions pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/java/com/workload/config/WorkloadConfig.java \

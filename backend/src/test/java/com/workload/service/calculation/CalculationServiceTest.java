@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import com.workload.config.WorkloadConfig;
 import com.workload.entity.DeviceSystemContext;
-import com.workload.entity.ObjectEntity;
 import com.workload.entity.ObjectRepair;
 import com.workload.entity.ObjectSystemAssignment;
 import com.workload.entity.RecordsTask;
@@ -20,7 +19,6 @@ import com.workload.repository.RecordsTaskRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.TravelRepository;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -76,16 +74,21 @@ class CalculationServiceTest {
 
     calculationService =
         new CalculationService(
-            assignmentRepo, recordsRepo, repairRepo, travelRepo, summaryRepo,
-            config, repairHelper, recordsHelper);
+            assignmentRepo,
+            recordsRepo,
+            repairRepo,
+            travelRepo,
+            summaryRepo,
+            config,
+            repairHelper,
+            recordsHelper);
   }
 
   // --- PAC-01 reference test data setup helpers ---
 
   /**
-   * Builds the OS assignment for PAC-01.
-   * Single device: qty=1, R1=48.81996, R2=0
-   * → os_monthly_avg = (48.81996×10 + 0×2) / 12 = 40.6833
+   * Builds the OS assignment for PAC-01. Single device: qty=1, R1=48.81996, R2=0 → os_monthly_avg =
+   * (48.81996×10 + 0×2) / 12 = 40.6833
    */
   private ObjectSystemAssignment buildOsAssignment() {
     DeviceSystemContext ctx =
@@ -104,9 +107,8 @@ class CalculationServiceTest {
   }
 
   /**
-   * Builds the PS assignment for PAC-01.
-   * Single device: qty=1, R1=45.6255, R2=0
-   * → ps_monthly_avg = (45.6255×8 + 0×4) / 12 = 30.417
+   * Builds the PS assignment for PAC-01. Single device: qty=1, R1=45.6255, R2=0 → ps_monthly_avg =
+   * (45.6255×8 + 0×4) / 12 = 30.417
    */
   private ObjectSystemAssignment buildPsAssignment() {
     DeviceSystemContext ctx =
@@ -125,11 +127,9 @@ class CalculationServiceTest {
   }
 
   /**
-   * Builds 8 repair records for PAC-01.
-   * kvo=8, repairWork6months=361: 7 repairs × 50min + 1 repair × 11min = 361
-   * → repairNoTravelMonthly = 361/5 = 72.2
-   * → effectiveTrips=8 (5 < 8 <= 10); travel=8×20=160; pzv=8×20=160
-   * → repairWithTravelMonthly = (361+160+160)/5 = 136.2
+   * Builds 8 repair records for PAC-01. kvo=8, repairWork6months=361: 7 repairs × 50min + 1 repair
+   * × 11min = 361 → repairNoTravelMonthly = 361/5 = 72.2 → effectiveTrips=8 (5 < 8 <= 10);
+   * travel=8×20=160; pzv=8×20=160 → repairWithTravelMonthly = (361+160+160)/5 = 136.2
    */
   private List<ObjectRepair> buildPac01Repairs() {
     List<ObjectRepair> repairs = new ArrayList<>();
@@ -140,12 +140,7 @@ class CalculationServiceTest {
               .name("RepairType" + i)
               .timeMinutes(new BigDecimal("50"))
               .build();
-      repairs.add(
-          ObjectRepair.builder()
-              .id(UUID.randomUUID())
-              .repairType(rt)
-              .count(1)
-              .build());
+      repairs.add(ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt).count(1).build());
     }
     // 8th repair: 11 minutes → total = 7×50 + 11 = 361
     RepairType rt7 =
@@ -154,20 +149,12 @@ class CalculationServiceTest {
             .name("RepairType7")
             .timeMinutes(new BigDecimal("11"))
             .build();
-    repairs.add(
-        ObjectRepair.builder()
-            .id(UUID.randomUUID())
-            .repairType(rt7)
-            .count(1)
-            .build());
+    repairs.add(ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt7).count(1).build());
     return repairs;
   }
 
   private Travel buildTravel() {
-    return Travel.builder()
-        .id(UUID.randomUUID())
-        .oneWayTimeMin(new BigDecimal("10"))
-        .build();
+    return Travel.builder().id(UUID.randomUUID()).oneWayTimeMin(new BigDecimal("10")).build();
   }
 
   private void stubPac01Mocks() {

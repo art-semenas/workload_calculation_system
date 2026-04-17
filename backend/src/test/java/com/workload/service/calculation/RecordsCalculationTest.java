@@ -78,9 +78,7 @@ class RecordsCalculationTest {
 
     BigDecimal result = helper.calculateMonthly(records, config);
 
-    assertThat(result)
-        .usingComparator(BigDecimal::compareTo)
-        .isEqualByComparingTo(BigDecimal.ZERO);
+    assertThat(result).usingComparator(BigDecimal::compareTo).isEqualByComparingTo(BigDecimal.ZERO);
   }
 
   @Test
@@ -133,8 +131,6 @@ class RecordsCalculationTest {
   void nullRecords_returnsZero() {
     BigDecimal result = helper.calculateMonthly(null, config);
 
-    assertThat(result)
-        .usingComparator(BigDecimal::compareTo)
-        .isEqualByComparingTo(BigDecimal.ZERO);
+    assertThat(result).usingComparator(BigDecimal::compareTo).isEqualByComparingTo(BigDecimal.ZERO);
   }
 }

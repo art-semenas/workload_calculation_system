@@ -13,6 +13,7 @@ import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepairRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.RepairTypeRepository;
+import com.workload.service.calculation.CalculationService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,7 @@ class RepairServiceTest {
   @Mock private ObjectRepository objectRepository;
   @Mock private RepairTypeRepository repairTypeRepository;
   @Mock private EquipmentMapper equipmentMapper;
+  @Mock private CalculationService calculationService;
 
   @InjectMocks private RepairService repairService;
 

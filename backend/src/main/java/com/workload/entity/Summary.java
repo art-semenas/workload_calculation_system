@@ -14,6 +14,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "summaries")
@@ -28,6 +30,7 @@ public class Summary {
 
   @OneToOne
   @JoinColumn(name = "object_id", nullable = false, unique = true)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private ObjectEntity object;
 
   @Column(name = "os_r1_per_visit")
