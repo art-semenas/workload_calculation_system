@@ -1,6 +1,7 @@
 package com.workload.service.calculation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -470,5 +471,60 @@ class CalculationServiceTest {
     assertThat(result.getOsMonthlyAvg())
         .usingComparator(BigDecimal::compareTo)
         .isEqualByComparingTo(new BigDecimal("20"));
+  }
+
+  // --- Multi-device accumulation test using plan-table device data ---
+
+  @Test
+  void multiDevice_osAccumulation_fiveDevicesFromPlanTable() {
+    // Five OS devices from plan table §3A — verifies per-device R1/R2 accumulation (Stages 1-3)
+    // R1_per_visit = 2×5 + 2×1 + 12×0.06 + 2×0.02 + 21×0.7
+    //              = 10 + 2 + 0.72 + 0.04 + 14.7 = 27.46
+    // R2_per_visit = 2×8 + 2×4 + 12×0.7 + 2×1.5 + 21×3
+    //              = 16 + 8 + 8.4 + 3 + 63 = 98.4
+    // os_monthly_avg = (27.46×10 + 98.4×2) / 12 = 471.4 / 12 ≈ 39.2833
+    List<ObjectSystemAssignment> assignments =
+        List.of(
+            buildOsAssignmentRaw(new BigDecimal("2"), new BigDecimal("5"), new BigDecimal("8")),
+            buildOsAssignmentRaw(new BigDecimal("2"), new BigDecimal("1"), new BigDecimal("4")),
+            buildOsAssignmentRaw(
+                new BigDecimal("12"), new BigDecimal("0.06"), new BigDecimal("0.7")),
+            buildOsAssignmentRaw(
+                new BigDecimal("2"), new BigDecimal("0.02"), new BigDecimal("1.5")),
+            buildOsAssignmentRaw(
+                new BigDecimal("21"), new BigDecimal("0.7"), new BigDecimal("3")));
+
+    when(assignmentRepo.findAllByObjectId(objectId)).thenReturn(assignments);
+    when(recordsRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(repairRepo.findAllByObjectId(objectId)).thenReturn(List.of());
+    when(travelRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(summaryRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(summaryRepo.save(any(Summary.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Summary result = calculationService.recalculate(objectId);
+
+    assertThat(result.getOsMonthlyAvg())
+        .usingComparator(BigDecimal::compareTo)
+        .isCloseTo(new BigDecimal("39.2833"), within(new BigDecimal("0.001")));
+    assertThat(result.getPsMonthlyAvg())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(BigDecimal.ZERO);
+  }
+
+  private ObjectSystemAssignment buildOsAssignmentRaw(
+      BigDecimal qty, BigDecimal r1, BigDecimal r2) {
+    DeviceSystemContext ctx =
+        DeviceSystemContext.builder()
+            .id(UUID.randomUUID())
+            .systemType(SystemType.OS)
+            .r1Minutes(r1)
+            .r2Minutes(r2)
+            .build();
+    return ObjectSystemAssignment.builder()
+        .id(UUID.randomUUID())
+        .systemType(SystemType.OS)
+        .quantityMaintained(qty)
+        .context(ctx)
+        .build();
   }
 }
