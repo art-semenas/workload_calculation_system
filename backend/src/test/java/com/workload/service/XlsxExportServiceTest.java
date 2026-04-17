@@ -28,6 +28,7 @@ class XlsxExportServiceTest {
     return new SvodRowDto(
         UUID.randomUUID(),
         "Test Object",
+        null,
         "Test Division",
         "Test Branch",
         new BigDecimal("10.00"),
@@ -67,8 +68,21 @@ class XlsxExportServiceTest {
 
       // itogoChisloWithTravel is column index 14 (0-based, after skipping objectId)
       Row dataRow = sheet.getRow(1);
-      double fteValue = dataRow.getCell(14).getNumericCellValue();
+      double fteValue = dataRow.getCell(15).getNumericCellValue();
       assertThat(fteValue).isCloseTo(0.032327, within(0.000001));
+    }
+  }
+
+  @Test
+  void exportSvod_hasAddressColumn() throws Exception {
+    List<SvodRowDto> rows = List.of(buildRow(new BigDecimal("0.010000")));
+
+    byte[] bytes = service.exportSvod(rows);
+
+    try (XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+      Sheet sheet = wb.getSheetAt(0);
+      Row header = sheet.getRow(0);
+      assertThat(header.getCell(1).getStringCellValue()).isEqualTo("Address");
     }
   }
 
@@ -91,7 +105,7 @@ class XlsxExportServiceTest {
     try (XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
       Sheet sheet = wb.getSheetAt(0);
       Row dataRow = sheet.getRow(1);
-      double fteValue = dataRow.getCell(14).getNumericCellValue();
+      double fteValue = dataRow.getCell(15).getNumericCellValue();
       assertThat(fteValue).isCloseTo(0.032327, within(0.000001));
     }
   }

@@ -66,6 +66,7 @@ public class SvodService {
     return new SvodRowDto(
         o.getId(),
         o.getName(),
+        o.getAddress(),
         d.getName(),
         b.getName(),
         s.getOsMonthlyAvg(),

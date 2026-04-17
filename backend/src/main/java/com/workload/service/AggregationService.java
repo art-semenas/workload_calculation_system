@@ -139,6 +139,7 @@ public class AggregationService {
                 new CoverageGapDto(
                     s.getObject().getId(),
                     s.getObject().getName(),
+                    s.getObject().getAddress(),
                     s.getObject().getBranch().getDivision().getName(),
                     s.getObject().getBranch().getName(),
                     s.getItogoChisloWithTravel()))

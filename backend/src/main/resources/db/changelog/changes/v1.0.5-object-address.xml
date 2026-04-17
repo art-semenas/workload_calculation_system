@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="v1.0.5-1" author="a.semenas">
+    <addColumn tableName="objects">
+      <column name="address" type="TEXT"/>
+    </addColumn>
+    <rollback>
+      <dropColumn tableName="objects" columnName="address"/>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

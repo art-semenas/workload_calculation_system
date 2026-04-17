@@ -7,6 +7,7 @@ import java.util.UUID;
 public record SvodRowDto(
     UUID objectId,
     String objectName,
+    String address,
     String divisionName,
     String branchName,
     BigDecimal osMonthlyAvg,

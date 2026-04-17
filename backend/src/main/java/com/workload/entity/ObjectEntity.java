@@ -32,6 +32,9 @@ public class ObjectEntity {
   @Column(nullable = false, length = 500)
   private String name;
 
+  @Column(name = "address")
+  private String address;
+
   @Column(name = "import_seq_no")
   private Integer importSeqNo;
 

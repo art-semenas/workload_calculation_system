@@ -16,6 +16,7 @@ public class XlsxExportService {
 
   private static final String[] HEADERS = {
     "Object Name",
+    "Address",
     "Division",
     "Branch",
     "Security (monthly avg)",
@@ -51,26 +52,28 @@ public class XlsxExportService {
         Row dataRow = sheet.createRow(rowNum++);
         // String columns
         dataRow.createCell(0).setCellValue(row.objectName() != null ? row.objectName() : "");
-        dataRow.createCell(1).setCellValue(row.divisionName() != null ? row.divisionName() : "");
-        dataRow.createCell(2).setCellValue(row.branchName() != null ? row.branchName() : "");
-        // Numeric columns
-        dataRow.createCell(3).setCellValue(scaledDouble(row.osMonthlyAvg(), 2));
-        dataRow.createCell(4).setCellValue(scaledDouble(row.psMonthlyAvg(), 2));
-        dataRow.createCell(5).setCellValue(scaledDouble(row.videoMonthlyAvg(), 2));
-        dataRow.createCell(6).setCellValue(scaledDouble(row.recordsMonthly(), 2));
-        dataRow.createCell(7).setCellValue(scaledDouble(row.repairNoTravelMonthly(), 2));
-        dataRow.createCell(8).setCellValue(scaledDouble(row.repairWithTravelMonthly(), 2));
-        dataRow.createCell(9).setCellValue(scaledDouble(row.roundTripMin(), 2));
-        dataRow.createCell(10).setCellValue(scaledDouble(row.pzvMinutes(), 2));
-        dataRow.createCell(11).setCellValue(scaledDouble(row.totalNoTravelMin(), 2));
-        dataRow.createCell(12).setCellValue(scaledDouble(row.itogoChisloNoTravel(), 6));
-        dataRow.createCell(13).setCellValue(scaledDouble(row.totalWithTravelMin(), 2));
-        dataRow.createCell(14).setCellValue(scaledDouble(row.itogoChisloWithTravel(), 6));
-        dataRow.createCell(15).setCellValue(scaledDouble(row.r1PerVisitTotal(), 2));
-        dataRow.createCell(16).setCellValue(scaledDouble(row.r2PerVisitTotal(), 2));
+        dataRow.createCell(1).setCellValue(row.address() != null ? row.address() : "");
+        dataRow.createCell(2).setCellValue(row.divisionName() != null ? row.divisionName() : "");
+        dataRow.createCell(3).setCellValue(row.branchName() != null ? row.branchName() : "");
+        // Numeric columns — minute/average fields use scale 2
+        dataRow.createCell(4).setCellValue(scaledDouble(row.osMonthlyAvg(), 2));
+        dataRow.createCell(5).setCellValue(scaledDouble(row.psMonthlyAvg(), 2));
+        dataRow.createCell(6).setCellValue(scaledDouble(row.videoMonthlyAvg(), 2));
+        dataRow.createCell(7).setCellValue(scaledDouble(row.recordsMonthly(), 2));
+        dataRow.createCell(8).setCellValue(scaledDouble(row.repairNoTravelMonthly(), 2));
+        dataRow.createCell(9).setCellValue(scaledDouble(row.repairWithTravelMonthly(), 2));
+        dataRow.createCell(10).setCellValue(scaledDouble(row.roundTripMin(), 2));
+        dataRow.createCell(11).setCellValue(scaledDouble(row.pzvMinutes(), 2));
+        dataRow.createCell(12).setCellValue(scaledDouble(row.totalNoTravelMin(), 2));
+        // FTE fields use scale 6
+        dataRow.createCell(13).setCellValue(scaledDouble(row.itogoChisloNoTravel(), 6));
+        dataRow.createCell(14).setCellValue(scaledDouble(row.totalWithTravelMin(), 2));
+        dataRow.createCell(15).setCellValue(scaledDouble(row.itogoChisloWithTravel(), 6));
+        dataRow.createCell(16).setCellValue(scaledDouble(row.r1PerVisitTotal(), 2));
+        dataRow.createCell(17).setCellValue(scaledDouble(row.r2PerVisitTotal(), 2));
         // Date column
         dataRow
-            .createCell(17)
+            .createCell(18)
             .setCellValue(
                 row.computedAt() != null ? row.computedAt().toLocalDate().toString() : "");
       }
