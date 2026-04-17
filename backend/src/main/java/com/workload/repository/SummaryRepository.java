@@ -29,4 +29,13 @@ public interface SummaryRepository extends JpaRepository<Summary, UUID> {
           + " WHERE d.id = :divisionId"
           + " ORDER BY s.itogoChisloWithTravel DESC NULLS LAST")
   List<Summary> findAllByDivisionIdWithOrgHierarchy(@Param("divisionId") UUID divisionId);
+
+  @Query(
+      "SELECT s FROM Summary s"
+          + " JOIN FETCH s.object o"
+          + " JOIN FETCH o.branch b"
+          + " JOIN FETCH b.division d"
+          + " WHERE b.id = :branchId"
+          + " ORDER BY s.itogoChisloWithTravel DESC NULLS LAST")
+  List<Summary> findAllByBranchIdWithOrgHierarchy(@Param("branchId") UUID branchId);
 }
