@@ -56,7 +56,7 @@ public class TravelService {
     travel.setOneWayTimeMin(request.oneWayTimeMin());
     travel.setUpdatedAt(OffsetDateTime.now());
     travel = travelRepository.save(travel);
-    // PoC (S-02): synchronous recalculation after travel change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toTravelDto(travel);
   }

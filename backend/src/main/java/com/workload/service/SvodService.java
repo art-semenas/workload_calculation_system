@@ -30,6 +30,8 @@ public class SvodService {
 
   @Transactional(readOnly = true)
   public Page<SvodRowDto> getSvod(Pageable pageable, UUID divisionId) {
+    // PoC: loads all summaries in memory for in-process pagination.
+    // Replace with JPQL Page<Summary> query in MVP for DB-level pagination.
     List<Summary> all =
         divisionId != null
             ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)

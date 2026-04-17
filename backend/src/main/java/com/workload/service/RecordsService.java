@@ -70,7 +70,7 @@ public class RecordsService {
         request.securityAdmin() != null ? request.securityAdmin() : BigDecimal.ZERO);
     task.setUpdatedAt(OffsetDateTime.now());
     task = recordsTaskRepository.save(task);
-    // PoC (S-02): synchronous recalculation after records change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toRecordsDto(task);
   }

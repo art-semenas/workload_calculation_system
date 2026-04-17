@@ -85,7 +85,7 @@ public class EquipmentService {
     device.setQuantityPhysical(request.quantityPhysical());
     device.setUpdatedAt(OffsetDateTime.now());
     device = objectDeviceRepository.save(device);
-    // PoC (S-02): synchronous recalculation after device inventory change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toDeviceDto(device);
   }
@@ -113,7 +113,7 @@ public class EquipmentService {
     device.setQuantityPhysical(request.quantityPhysical());
     device.setUpdatedAt(OffsetDateTime.now());
     device = objectDeviceRepository.save(device);
-    // PoC (S-02): synchronous recalculation after device inventory change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toDeviceDto(device);
   }
@@ -124,7 +124,7 @@ public class EquipmentService {
     // TOR §7.3: cascade-delete all system assignments before removing the device
     assignmentRepository.deleteAllByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
     objectDeviceRepository.deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
-    // PoC (S-02): synchronous recalculation after device deletion
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
   }
 
@@ -168,7 +168,7 @@ public class EquipmentService {
     assignment.setQuantityMaintained(request.quantityMaintained());
     assignment.setUpdatedAt(OffsetDateTime.now());
     assignment = assignmentRepository.save(assignment);
-    // PoC (S-02): synchronous recalculation after assignment change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toAssignmentDto(assignment);
   }
@@ -186,7 +186,7 @@ public class EquipmentService {
     assignment.setQuantityMaintained(request.quantityMaintained());
     assignment.setUpdatedAt(OffsetDateTime.now());
     assignment = assignmentRepository.save(assignment);
-    // PoC (S-02): synchronous recalculation after assignment update
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toAssignmentDto(assignment);
   }
@@ -201,7 +201,7 @@ public class EquipmentService {
       throw new EntityNotFoundException("Assignment", assignmentId.toString());
     }
     assignmentRepository.deleteById(assignmentId);
-    // PoC (S-02): synchronous recalculation after assignment deletion
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
   }
 

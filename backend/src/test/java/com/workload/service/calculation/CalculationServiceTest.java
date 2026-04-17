@@ -491,8 +491,7 @@ class CalculationServiceTest {
                 new BigDecimal("12"), new BigDecimal("0.06"), new BigDecimal("0.7")),
             buildOsAssignmentRaw(
                 new BigDecimal("2"), new BigDecimal("0.02"), new BigDecimal("1.5")),
-            buildOsAssignmentRaw(
-                new BigDecimal("21"), new BigDecimal("0.7"), new BigDecimal("3")));
+            buildOsAssignmentRaw(new BigDecimal("21"), new BigDecimal("0.7"), new BigDecimal("3")));
 
     when(assignmentRepo.findAllByObjectId(objectId)).thenReturn(assignments);
     when(recordsRepo.findByObjectId(objectId)).thenReturn(Optional.empty());

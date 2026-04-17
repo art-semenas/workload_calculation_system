@@ -69,7 +69,7 @@ public class RepairService {
     repair.setCount(request.count());
     repair.setUpdatedAt(OffsetDateTime.now());
     repair = repairRepository.save(repair);
-    // PoC (S-02): synchronous recalculation after repair change
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
     calculationService.recalculate(objectId);
     return equipmentMapper.toRepairDto(repair);
   }
