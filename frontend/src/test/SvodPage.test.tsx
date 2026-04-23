@@ -107,4 +107,15 @@ describe('SvodPage', () => {
     await userEvent.click(exportBtn)
     expect(mockExport).toHaveBeenCalled()
   })
+
+  it('renders error alert when fetch fails', () => {
+    mockUseSvod.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    } as ReturnType<typeof useSvod>)
+
+    renderPage()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
 })

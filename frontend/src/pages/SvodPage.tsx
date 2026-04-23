@@ -18,6 +18,8 @@ import { exportSvodXlsx } from '../api/svod'
 import { getDivisions } from '../api/divisions'
 import type { SvodRow } from '../types/m02'
 
+type NumericFormatterParams = { value: number }
+
 function formatDecimal(value: number, places: number): string {
   if (value === 0) return ''
   return value.toFixed(places)
@@ -30,7 +32,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'left',
     headerAlign: 'left',
     width: 60,
-    valueFormatter: ({ value }: { value: number | null | undefined }) =>
+    valueFormatter: ({ value }: NumericFormatterParams | { value: number | null | undefined }) =>
       value != null ? String(value) : '',
   },
   {
@@ -72,7 +74,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 80,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 2),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
   },
   {
     field: 'round_trip_min',
@@ -80,7 +82,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 80,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 2),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
   },
   {
     field: 'ps_monthly_avg',
@@ -88,7 +90,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 100,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'video_monthly_avg',
@@ -96,7 +98,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 100,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'os_monthly_avg',
@@ -104,7 +106,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 100,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'records_monthly',
@@ -112,7 +114,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 100,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'repair_no_travel_monthly',
@@ -120,7 +122,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 160,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'total_no_travel_min',
@@ -128,7 +130,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 260,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'itogo_chislo_no_travel',
@@ -136,7 +138,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 200,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'repair_with_travel_monthly',
@@ -144,7 +146,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 140,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'total_with_travel_min',
@@ -152,7 +154,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 260,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'itogo_chislo_with_travel',
@@ -160,7 +162,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 200,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
     cellClassName: 'bold-cell',
   },
   {
@@ -169,7 +171,7 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 220,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
     field: 'r2_per_visit_total',
@@ -177,13 +179,13 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'right',
     headerAlign: 'right',
     width: 220,
-    valueFormatter: ({ value }: { value: number }) => formatDecimal(value, 6),
+    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
 ]
 
 export default function SvodPage() {
   const [page, setPage] = useState(0)
-  const [pageSize] = useState(100)
+  const pageSize = 100
   const [divisionId, setDivisionId] = useState<string>('')
 
   const { data: divisions = [] } = useQuery({
@@ -209,7 +211,7 @@ export default function SvodPage() {
         URL.revokeObjectURL(url)
       })
       .catch(() => {
-        // export error — silent for PoC
+        // PoC: export errors are silently ignored. Add user feedback in MVP.
       })
   }
 
@@ -273,7 +275,7 @@ export default function SvodPage() {
           onPaginationModelChange={handlePaginationModelChange}
           pageSizeOptions={[100]}
           disableRowSelectionOnClick
-          disableVirtualization
+          disableVirtualization={process.env.NODE_ENV === 'test'}
         />
       </Box>
     </Box>
