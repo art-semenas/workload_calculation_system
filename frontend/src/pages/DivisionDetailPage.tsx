@@ -44,13 +44,13 @@ export default function DivisionDetailPage() {
   const [editingName, setEditingName] = useState(false)
   const [openBranchDialog, setOpenBranchDialog] = useState(false)
 
-  const { data: division, isLoading } = useDivision(id || '')
-  const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id || '')
+  const { data: division, isLoading } = useDivision(id ?? '')
+  const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id ?? '')
   const updateDivision = useUpdateDivision()
-  const createBranch = useCreateBranch(id || '')
+  const createBranch = useCreateBranch(id ?? '')
 
   const { data: divAgg } = useDivisionAggregation(id ?? '')
-  const { data: gaps } = useCoverageGaps(id ?? '')
+  const { data: gaps } = useCoverageGaps(id)
 
   const nameForm = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
@@ -153,7 +153,7 @@ export default function DivisionDetailPage() {
         )}
       </Box>
 
-      {/* FTE Summary Card */}
+      {/* PoC: no error state for divAgg — card simply absent on error/loading */}
       {divAgg !== undefined && (
         <Card sx={{ mb: 3 }}>
           <CardContent>

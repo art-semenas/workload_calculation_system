@@ -10,6 +10,11 @@ const mockUseDivisionBranches = vi.fn()
 const mockUseUpdateDivision = vi.fn()
 const mockUseCreateBranch = vi.fn()
 
+vi.mock('../hooks/useAggregations', () => ({
+  useDivisionAggregation: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
+  useCoverageGaps: vi.fn().mockReturnValue({ data: [], isLoading: false }),
+}))
+
 vi.mock('../hooks/useDivisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   useDivision: (...args: unknown[]) => mockUseDivision(...args),
