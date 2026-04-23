@@ -11,6 +11,7 @@ import com.workload.entity.RecordsTask;
 import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.RecordsTaskRepository;
+import com.workload.service.calculation.CalculationService;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +27,7 @@ class RecordsServiceTest {
   @Mock private RecordsTaskRepository recordsTaskRepository;
   @Mock private ObjectRepository objectRepository;
   @Mock private EquipmentMapper equipmentMapper;
+  @Mock private CalculationService calculationService;
 
   @InjectMocks private RecordsService recordsService;
 

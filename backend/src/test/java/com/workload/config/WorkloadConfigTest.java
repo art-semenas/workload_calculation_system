@@ -32,7 +32,8 @@ import org.springframework.test.context.TestPropertySource;
       "workload.config.records-footage-minutes=180",
       "workload.config.records-backup-minutes=120",
       "workload.config.records-admin-minutes=60",
-      "workload.config.minutes-per-month=166",
+      "workload.config.monthly-hours-fund=142.8",
+      "workload.config.absence-coefficient=1.12",
       "workload.config.engineer-overload-threshold=1.0"
     })
 class WorkloadConfigTest {
@@ -61,7 +62,8 @@ class WorkloadConfigTest {
     assertThat(config.getRecordsFootageMinutes()).isEqualTo(180);
     assertThat(config.getRecordsBackupMinutes()).isEqualTo(120);
     assertThat(config.getRecordsAdminMinutes()).isEqualTo(60);
-    assertThat(config.getMinutesPerMonth()).isEqualTo(166);
+    assertThat(config.getMonthlyHoursFund()).isEqualByComparingTo(new BigDecimal("142.8"));
+    assertThat(config.getAbsenceCoefficient()).isEqualByComparingTo(new BigDecimal("1.12"));
     assertThat(config.getEngineerOverloadThreshold()).isEqualByComparingTo(BigDecimal.ONE);
   }
 }

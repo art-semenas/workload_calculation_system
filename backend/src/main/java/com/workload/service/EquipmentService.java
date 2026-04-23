@@ -20,6 +20,7 @@ import com.workload.repository.DeviceTypeRepository;
 import com.workload.repository.ObjectDeviceRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.ObjectSystemAssignmentRepository;
+import com.workload.service.calculation.CalculationService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class EquipmentService {
   private final DeviceTypeRepository deviceTypeRepository;
   private final DeviceSystemContextRepository contextRepository;
   private final EquipmentMapper equipmentMapper;
+  private final CalculationService calculationService;
 
   public EquipmentService(
       ObjectRepository objectRepository,
@@ -42,13 +44,15 @@ public class EquipmentService {
       ObjectSystemAssignmentRepository assignmentRepository,
       DeviceTypeRepository deviceTypeRepository,
       DeviceSystemContextRepository contextRepository,
-      EquipmentMapper equipmentMapper) {
+      EquipmentMapper equipmentMapper,
+      CalculationService calculationService) {
     this.objectRepository = objectRepository;
     this.objectDeviceRepository = objectDeviceRepository;
     this.assignmentRepository = assignmentRepository;
     this.deviceTypeRepository = deviceTypeRepository;
     this.contextRepository = contextRepository;
     this.equipmentMapper = equipmentMapper;
+    this.calculationService = calculationService;
   }
 
   public List<ObjectDeviceDto> getDevices(UUID objectId) {
@@ -58,6 +62,7 @@ public class EquipmentService {
         .toList();
   }
 
+  @Transactional
   public ObjectDeviceDto upsertDevice(UUID objectId, ObjectDeviceUpsertRequest request) {
     ObjectEntity object = findObject(objectId);
     DeviceType deviceType =
@@ -80,9 +85,12 @@ public class EquipmentService {
     device.setQuantityPhysical(request.quantityPhysical());
     device.setUpdatedAt(OffsetDateTime.now());
     device = objectDeviceRepository.save(device);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
     return equipmentMapper.toDeviceDto(device);
   }
 
+  @Transactional
   public ObjectDeviceDto upsertDevice(
       UUID objectId, UUID deviceTypeId, ObjectDeviceUpsertRequest request) {
     ObjectEntity object = findObject(objectId);
@@ -105,6 +113,8 @@ public class EquipmentService {
     device.setQuantityPhysical(request.quantityPhysical());
     device.setUpdatedAt(OffsetDateTime.now());
     device = objectDeviceRepository.save(device);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
     return equipmentMapper.toDeviceDto(device);
   }
 
@@ -114,6 +124,8 @@ public class EquipmentService {
     // TOR §7.3: cascade-delete all system assignments before removing the device
     assignmentRepository.deleteAllByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
     objectDeviceRepository.deleteByObjectIdAndDeviceTypeId(objectId, deviceTypeId);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
   }
 
   public List<AssignmentDto> getAssignments(UUID objectId) {
@@ -123,6 +135,7 @@ public class EquipmentService {
         .toList();
   }
 
+  @Transactional
   public AssignmentDto addAssignment(UUID objectId, AssignmentCreateRequest request) {
     ObjectEntity object = findObject(objectId);
 
@@ -155,9 +168,12 @@ public class EquipmentService {
     assignment.setQuantityMaintained(request.quantityMaintained());
     assignment.setUpdatedAt(OffsetDateTime.now());
     assignment = assignmentRepository.save(assignment);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
+  @Transactional
   public AssignmentDto updateAssignment(
       UUID objectId, UUID assignmentId, AssignmentUpdateRequest request) {
     ObjectSystemAssignment assignment =
@@ -170,9 +186,12 @@ public class EquipmentService {
     assignment.setQuantityMaintained(request.quantityMaintained());
     assignment.setUpdatedAt(OffsetDateTime.now());
     assignment = assignmentRepository.save(assignment);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
     return equipmentMapper.toAssignmentDto(assignment);
   }
 
+  @Transactional
   public void deleteAssignment(UUID objectId, UUID assignmentId) {
     ObjectSystemAssignment assignment =
         assignmentRepository
@@ -182,6 +201,8 @@ public class EquipmentService {
       throw new EntityNotFoundException("Assignment", assignmentId.toString());
     }
     assignmentRepository.deleteById(assignmentId);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
   }
 
   private ObjectEntity findObject(UUID objectId) {

@@ -30,6 +30,7 @@
     <google-java-format.version>1.22.0</google-java-format.version>
     <spotbugs.plugin.version>4.8.6.4</spotbugs.plugin.version>
     <jacoco.version>0.8.14</jacoco.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
   </properties>
 
   <dependencies>
@@ -227,6 +228,13 @@
             <include>**/*Test.java</include>
             <include>**/*IT.java</include>
           </includes>
+          <!-- Docker 29+ raised its minimum API version to 1.44.
+               Testcontainers 1.x falls back to 1.32, causing
+               "Could not find a valid Docker environment".
+               See: https://github.com/testcontainers/testcontainers-java/issues/11212 -->
+          <systemPropertyVariables>
+            <api.version>1.44</api.version>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 

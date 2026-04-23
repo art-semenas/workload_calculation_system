@@ -11,10 +11,12 @@ import com.workload.mapper.EquipmentMapper;
 import com.workload.repository.ObjectRepairRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.RepairTypeRepository;
+import com.workload.service.calculation.CalculationService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RepairService {
@@ -23,16 +25,19 @@ public class RepairService {
   private final ObjectRepository objectRepository;
   private final RepairTypeRepository repairTypeRepository;
   private final EquipmentMapper equipmentMapper;
+  private final CalculationService calculationService;
 
   public RepairService(
       ObjectRepairRepository repairRepository,
       ObjectRepository objectRepository,
       RepairTypeRepository repairTypeRepository,
-      EquipmentMapper equipmentMapper) {
+      EquipmentMapper equipmentMapper,
+      CalculationService calculationService) {
     this.repairRepository = repairRepository;
     this.objectRepository = objectRepository;
     this.repairTypeRepository = repairTypeRepository;
     this.equipmentMapper = equipmentMapper;
+    this.calculationService = calculationService;
   }
 
   public List<RepairDto> getAll(UUID objectId) {
@@ -42,6 +47,7 @@ public class RepairService {
         .toList();
   }
 
+  @Transactional
   public RepairDto update(UUID objectId, UUID repairTypeId, RepairUpdateRequest request) {
     ObjectEntity object = findObject(objectId);
     RepairType repairType =
@@ -63,6 +69,8 @@ public class RepairService {
     repair.setCount(request.count());
     repair.setUpdatedAt(OffsetDateTime.now());
     repair = repairRepository.save(repair);
+    // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
+    calculationService.recalculate(objectId);
     return equipmentMapper.toRepairDto(repair);
   }
 

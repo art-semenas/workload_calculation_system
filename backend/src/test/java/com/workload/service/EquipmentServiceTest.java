@@ -26,6 +26,7 @@ import com.workload.repository.DeviceTypeRepository;
 import com.workload.repository.ObjectDeviceRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.ObjectSystemAssignmentRepository;
+import com.workload.service.calculation.CalculationService;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -46,6 +47,7 @@ class EquipmentServiceTest {
   @Mock private DeviceTypeRepository deviceTypeRepository;
   @Mock private DeviceSystemContextRepository contextRepository;
   @Mock private EquipmentMapper equipmentMapper;
+  @Mock private CalculationService calculationService;
 
   @InjectMocks private EquipmentService equipmentService;
 
