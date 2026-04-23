@@ -2,6 +2,8 @@ import { useState } from 'react'
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -28,6 +30,7 @@ import {
   useDivisionBranches,
   useUpdateDivision,
 } from '../hooks/useDivisions'
+import { useDivisionAggregation, useCoverageGaps } from '../hooks/useAggregations'
 import {
   BranchCreateSchema,
   DivisionCreateSchema,
@@ -45,6 +48,9 @@ export default function DivisionDetailPage() {
   const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id || '')
   const updateDivision = useUpdateDivision()
   const createBranch = useCreateBranch(id || '')
+
+  const { data: divAgg } = useDivisionAggregation(id ?? '')
+  const { data: gaps } = useCoverageGaps(id ?? '')
 
   const nameForm = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
@@ -147,6 +153,37 @@ export default function DivisionDetailPage() {
         )}
       </Box>
 
+      {/* FTE Summary Card */}
+      {divAgg !== undefined && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Division Summary
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 4 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Total FTE
+                </Typography>
+                <Typography variant="body1">{divAgg.total_fte.toFixed(4)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Objects
+                </Typography>
+                <Typography variant="body1">{divAgg.object_count}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Coverage Gaps
+                </Typography>
+                <Typography variant="body1">{divAgg.gap_count}</Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Add Branch Button */}
       <Box sx={{ mb: 3 }}>
         <Button variant="contained" onClick={() => setOpenBranchDialog(true)}>
@@ -181,6 +218,33 @@ export default function DivisionDetailPage() {
         </Paper>
       ) : (
         <Typography color="text.secondary">No branches</Typography>
+      )}
+
+      {/* Coverage Gaps Section */}
+      {gaps !== undefined && gaps.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Objects without an assigned engineer
+          </Typography>
+          <Paper>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Object</TableCell>
+                  <TableCell>Load</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {gaps.map((gap) => (
+                  <TableRow key={gap.object_id}>
+                    <TableCell>{gap.object_name}</TableCell>
+                    <TableCell>{gap.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Box>
       )}
 
       {/* Create Branch Dialog */}
