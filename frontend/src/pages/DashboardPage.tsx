@@ -10,19 +10,17 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { useDivisions } from '../hooks/useDivisions'
+import { useDivisionsAggregation, useCoverageGaps } from '../hooks/useAggregations'
+import { useSvod } from '../hooks/useSvod'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { data: divisions, isLoading } = useDivisions()
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
+  const { data: divisions, isLoading: divisionsLoading } = useDivisionsAggregation()
+  const { data: svodPage, isLoading: svodLoading } = useSvod(0, 10)
+  const { data: gaps, isLoading: gapsLoading } = useCoverageGaps()
+
+  const topObjects = svodPage?.content ?? []
 
   return (
     <Box>
@@ -30,55 +28,120 @@ export default function DashboardPage() {
         Dashboard
       </Typography>
 
-      {/* Divisions Overview */}
+      {/* Section 1: FTE by division */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Divisions
+          FTE by division
         </Typography>
-        {divisions && divisions.length > 0 ? (
+        {divisionsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Branches</TableCell>
+                <TableCell>Division</TableCell>
+                <TableCell>TOTAL FTE</TableCell>
                 <TableCell>Objects</TableCell>
+                <TableCell>Without Engineer</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {divisions.map((div) => (
+              {(divisions ?? []).map((div) => (
                 <TableRow
-                  key={div.id}
+                  key={div.division_id}
                   hover
                   onClick={() => {
-                    navigate(`/divisions/${div.id}`)
+                    navigate(`/divisions/${div.division_id}`)
                   }}
                   sx={{ cursor: 'pointer' }}
                 >
-                  <TableCell>{div.name}</TableCell>
-                  <TableCell>{div.branchCount}</TableCell>
-                  <TableCell>{div.objectCount}</TableCell>
+                  <TableCell>{div.division_name}</TableCell>
+                  <TableCell>{div.total_fte.toFixed(4)}</TableCell>
+                  <TableCell>{div.object_count}</TableCell>
+                  <TableCell>{div.gap_count}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        ) : (
-          <Typography color="text.secondary">No divisions</Typography>
         )}
       </Paper>
 
-      {/* Placeholder sections */}
+      {/* Section 2: Top 10 objects by workload */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          FTE by Division
+          Top 10 objects by workload
         </Typography>
-        <Typography color="text.secondary">Data will be available after M-02</Typography>
+        {svodLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Object</TableCell>
+                <TableCell>Division</TableCell>
+                <TableCell>TOTAL Staffing</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {topObjects.map((row) => (
+                <TableRow key={row.object_id}>
+                  <TableCell>
+                    <Box
+                      component="span"
+                      sx={{ cursor: 'pointer', color: 'primary.main' }}
+                      onClick={() => {
+                        navigate(`/objects/${row.object_id}`)
+                      }}
+                    >
+                      {row.object_name}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{row.division_name}</TableCell>
+                  <TableCell>{row.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Paper>
 
-      <Paper sx={{ p: 2 }}>
+      {/* Section 3: Uncovered objects */}
+      <Paper sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Uncovered Objects
+          Uncovered objects
         </Typography>
-        <Typography color="text.secondary">Data will be available after M-03</Typography>
+        {gapsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : (gaps ?? []).length === 0 ? (
+          <Typography>No uncovered objects</Typography>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Object</TableCell>
+                <TableCell>Division</TableCell>
+                <TableCell>Branch</TableCell>
+                <TableCell>TOTAL FTE</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(gaps ?? []).map((gap) => (
+                <TableRow key={gap.object_id}>
+                  <TableCell>{gap.object_name}</TableCell>
+                  <TableCell>{gap.division_name}</TableCell>
+                  <TableCell>{gap.branch_name}</TableCell>
+                  <TableCell>{gap.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Paper>
     </Box>
   )
