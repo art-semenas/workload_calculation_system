@@ -34,7 +34,7 @@ export async function getBranchAggregation(id: string) {
 
 export async function getCoverageGaps(divisionId?: string) {
   const params: Record<string, string> = {}
-  if (divisionId) {
+  if (divisionId !== undefined) {
     params.division_id = divisionId
   }
   const response = await api.get<ApiResponse<unknown>>('/coverage/gaps', {

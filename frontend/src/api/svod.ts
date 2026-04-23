@@ -10,7 +10,7 @@ interface SvodParams {
 
 export async function getSvod({ page, size, divisionId }: SvodParams) {
   const params: Record<string, unknown> = { page, size }
-  if (divisionId) {
+  if (divisionId !== undefined) {
     params.division_id = divisionId
   }
   const response = await api.get<ApiResponse<unknown>>('/svod', { params })
