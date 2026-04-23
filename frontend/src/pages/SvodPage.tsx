@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
   Box,
@@ -15,7 +16,6 @@ import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data
 import { useSvod } from '../hooks/useSvod'
 import { exportSvodXlsx } from '../api/svod'
 import { getDivisions } from '../api/divisions'
-import type { Division } from '../types/division'
 import type { SvodRow } from '../types/m02'
 
 function formatDecimal(value: number, places: number): string {
@@ -185,15 +185,11 @@ export default function SvodPage() {
   const [page, setPage] = useState(0)
   const [pageSize] = useState(100)
   const [divisionId, setDivisionId] = useState<string>('')
-  const [divisions, setDivisions] = useState<Division[]>([])
 
-  useEffect(() => {
-    getDivisions()
-      .then(setDivisions)
-      .catch(() => {
-        // divisions list failure is non-critical — filter simply stays empty
-      })
-  }, [])
+  const { data: divisions = [] } = useQuery({
+    queryKey: ['divisions'],
+    queryFn: getDivisions,
+  })
 
   const { data, isLoading, isError } = useSvod(page, pageSize, divisionId || undefined)
 
