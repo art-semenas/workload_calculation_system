@@ -103,6 +103,7 @@ export type AggregationBranch = z.infer<typeof AggregationBranchSchema>
 export const CoverageGapSchema = z.object({
   object_id: z.string().uuid(),
   object_name: z.string(),
+  address: z.string().optional(),
   division_name: z.string(),
   branch_name: z.string(),
   itogo_chislo_with_travel: z.number(),

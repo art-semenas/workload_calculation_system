@@ -5,6 +5,7 @@ import {
   ObjectSummarySchema,
   AggregationDivisionSchema,
   AggregationCompanySchema,
+  AggregationBranchSchema,
   CoverageGapSchema,
 } from '../types/m02'
 
@@ -99,5 +100,17 @@ describe('M-02 Zod schemas', () => {
     }
     const result = CoverageGapSchema.parse(raw)
     expect(result.itogo_chislo_with_travel).toBeCloseTo(0.008)
+  })
+
+  it('AggregationBranchSchema parses a branch aggregation row', () => {
+    const raw = {
+      branch_id: '550e8400-e29b-41d4-a716-446655440000',
+      branch_name: 'Branch 1',
+      division_name: 'Brest',
+      total_fte: 3.75,
+      object_count: 42,
+    }
+    const result = AggregationBranchSchema.parse(raw)
+    expect(result.object_count).toBe(42)
   })
 })
