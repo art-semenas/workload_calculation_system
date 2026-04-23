@@ -5,16 +5,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import DivisionDetailPage from '../pages/DivisionDetailPage'
 
 vi.mock('../hooks/useDivisions', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock
   useDivision: vi.fn().mockReturnValue({
     data: { id: 'div-1', name: 'Brest', branchCount: 1, objectCount: 245 },
     isLoading: false,
   }),
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock
   useDivisionBranches: vi.fn().mockReturnValue({ data: [], isLoading: false }),
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock
   useUpdateDivision: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock
   useCreateBranch: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
 }))
 

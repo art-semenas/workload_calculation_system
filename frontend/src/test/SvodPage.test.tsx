@@ -15,7 +15,7 @@ vi.mock('../api/svod', () => ({
 }))
 
 // Mock divisions for filter dropdown
-vi.mock('../api/divisions', async () => ({
+vi.mock('../api/divisions', () => ({
   getDivisions: vi.fn().mockResolvedValue([]),
 }))
 

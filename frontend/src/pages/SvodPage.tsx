@@ -275,7 +275,7 @@ export default function SvodPage() {
           onPaginationModelChange={handlePaginationModelChange}
           pageSizeOptions={[100]}
           disableRowSelectionOnClick
-          disableVirtualization={process.env.NODE_ENV === 'test'}
+          disableVirtualization={import.meta.env.MODE === 'test'}
         />
       </Box>
     </Box>
