@@ -4,6 +4,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  Grid,
   IconButton,
   InputLabel,
   MenuItem,
@@ -30,6 +31,7 @@ import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
 import { DivisionCreateSchema } from '../types/division'
 import type { DivisionCreate } from '../types/division'
+import { useObjectSummary } from '../hooks/useSummary'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -50,6 +52,109 @@ function TabPanel(props: TabPanelProps) {
     >
       {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
+  )
+}
+
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <>
+      <Grid item xs={6}>
+        <Typography variant="body2" color="text.secondary">
+          {label}
+        </Typography>
+      </Grid>
+      <Grid item xs={6}>
+        <Typography variant="body2">{value}</Typography>
+      </Grid>
+    </>
+  )
+}
+
+function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+        {title}
+      </Typography>
+      <Grid container spacing={1}>
+        {children}
+      </Grid>
+    </Box>
+  )
+}
+
+function SummaryTab({ objectId }: { objectId: string }) {
+  const { data, isLoading } = useObjectSummary(objectId)
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (!data) {
+    return <Typography>No data</Typography>
+  }
+
+  const fmt6 = (v: number) => v.toFixed(6)
+  const fmt2 = (v: number) => v.toFixed(2)
+
+  return (
+    <Box>
+      <SummaryGroup title="Per-visit breakdown">
+        <SummaryRow label="Security R1" value={fmt6(data.os_r1_per_visit)} />
+        <SummaryRow label="Security R2" value={fmt6(data.os_r2_per_visit)} />
+        <SummaryRow label="Fire R1" value={fmt6(data.ps_r1_per_visit)} />
+        <SummaryRow label="Fire R2" value={fmt6(data.ps_r2_per_visit)} />
+        <SummaryRow label="Video R1" value={fmt6(data.video_r1_per_visit)} />
+        <SummaryRow label="Video R2" value={fmt6(data.video_r2_per_visit)} />
+        <SummaryRow label="R1 total" value={fmt6(data.r1_per_visit_total)} />
+        <SummaryRow label="R2 total" value={fmt6(data.r2_per_visit_total)} />
+      </SummaryGroup>
+
+      <SummaryGroup title="Monthly averages">
+        <SummaryRow label="Security" value={fmt6(data.os_monthly_avg)} />
+        <SummaryRow label="Fire" value={fmt6(data.ps_monthly_avg)} />
+        <SummaryRow label="Video" value={fmt6(data.video_monthly_avg)} />
+        <SummaryRow label="Records" value={fmt6(data.records_monthly)} />
+        <SummaryRow label="Repair without Travel" value={fmt6(data.repair_no_travel_monthly)} />
+        <SummaryRow label="Repair with Travel" value={fmt6(data.repair_with_travel_monthly)} />
+      </SummaryGroup>
+
+      <SummaryGroup title="Travel">
+        <SummaryRow label="PZV" value={fmt2(data.pzv_minutes)} />
+        <SummaryRow label="Travel (round-trip)" value={fmt2(data.round_trip_min)} />
+      </SummaryGroup>
+
+      <SummaryGroup title="Totals">
+        <SummaryRow
+          label="Maintenance+records+repair(without travel)+Travel, min"
+          value={fmt6(data.total_no_travel_min)}
+        />
+        <SummaryRow
+          label="TOTAL Staffing (without travel)"
+          value={fmt6(data.itogo_chislo_no_travel)}
+        />
+        <SummaryRow
+          label="Maintenance+records+repair(with travel)+Travel, min"
+          value={fmt6(data.total_with_travel_min)}
+        />
+        <SummaryRow
+          label="TOTAL Staffing (with travel)"
+          value={
+            <Typography variant="body2" component="span" sx={{ fontWeight: 700 }}>
+              {fmt6(data.itogo_chislo_with_travel)}
+            </Typography>
+          }
+        />
+      </SummaryGroup>
+
+      <SummaryGroup title="Computed at">
+        <SummaryRow label="Computed at" value={data.computed_at ?? '—'} />
+      </SummaryGroup>
+    </Box>
   )
 }
 
@@ -401,7 +506,7 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         <Typography>Available in M-03</Typography>
       </TabPanel>
       <TabPanel value={tabValue} index={5}>
-        <Typography>Available in M-02</Typography>
+        <SummaryTab objectId={id ?? ''} />
       </TabPanel>
 
       {/* Delete Confirmation Dialog */}

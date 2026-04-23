@@ -30,6 +30,11 @@ vi.mock('../hooks/useDivisions', () => ({
   useDivision: (...args: unknown[]) => mockUseDivision(...args),
 }))
 
+vi.mock('../hooks/useSummary', () => ({
+  useObjectSummary: vi.fn().mockReturnValue({ data: undefined, isLoading: false, isError: false }),
+  SUMMARY_QUERY_KEY: 'object-summary',
+}))
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -156,7 +161,7 @@ describe('ObjectDetailPage', () => {
     expect(screen.getByText(/Available in M-03/i)).toBeInTheDocument()
   })
 
-  it('shows placeholder for Summary tab', async () => {
+  it('shows Summary tab with no data message when no summary exists', async () => {
     renderDetailPage()
 
     await waitFor(() =>
@@ -164,7 +169,7 @@ describe('ObjectDetailPage', () => {
     )
 
     await userEvent.click(screen.getByText('Summary'))
-    expect(screen.getByText(/Available in M-02/i)).toBeInTheDocument()
+    expect(screen.getByText('No data')).toBeInTheDocument()
   })
 
   it('confirms before deleting', async () => {
