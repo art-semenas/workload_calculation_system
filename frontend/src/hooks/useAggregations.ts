@@ -52,6 +52,6 @@ export function useCoverageGaps(divisionId?: string) {
   return useQuery({
     queryKey: [COVERAGE_QUERY_KEY, 'gaps', divisionId ?? null],
     queryFn: () => getCoverageGaps(divisionId),
-    enabled: !!divisionId || divisionId === undefined,
+    enabled: divisionId === undefined || divisionId.length > 0,
   })
 }
