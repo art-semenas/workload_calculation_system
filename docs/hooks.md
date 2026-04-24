@@ -4,7 +4,7 @@ This project uses Git hooks to enforce code quality standards before pushing cod
 
 ## Pre-Push Hook
 
-The `.git/hooks/pre-push` hook runs all quality gates defined in `CONTRIBUTING.md` before allowing a push to the remote repository.
+The pre-push hook (stored in `docs/hooks/pre-push` and installed to `.git/hooks/pre-push`) runs all quality gates defined in `CONTRIBUTING.md` before allowing a push to the remote repository.
 
 ### What it checks
 
@@ -19,12 +19,15 @@ The `.git/hooks/pre-push` hook runs all quality gates defined in `CONTRIBUTING.m
 
 ### Installation
 
-The hook is already in the repository at `.git/hooks/pre-push` and should be executable by default.
+After cloning the repository, install the hooks:
 
-If it's not executable on your machine:
 ```bash
-chmod +x .git/hooks/pre-push
+./install-hooks.sh
 ```
+
+This copies the hook scripts from `docs/hooks/` into `.git/hooks/` and makes them executable.
+
+**One-time setup** — run once after cloning, then the hook will run automatically on every `git push`.
 
 ### Bypassing the hook
 

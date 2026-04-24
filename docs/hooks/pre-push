@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# Pre-push hook: Run all quality gates before allowing push to remote.
+# Enforces CONTRIBUTING.md standards: TypeScript, ESLint, Prettier, Vitest, Maven verify.
+#
+# Bypass with: git push --no-verify (not recommended — use only for emergencies)
+
+set -e
+
+echo "🔍 Running quality gates before push..."
+echo ""
+
+# Determine which parts of the code changed
+FRONTEND_CHANGED=false
+BACKEND_CHANGED=false
+
+# Check what files are staged or committed since origin/main
+if git diff --name-only origin/main...HEAD | grep -q '^frontend/'; then
+  FRONTEND_CHANGED=true
+fi
+
+if git diff --name-only origin/main...HEAD | grep -q '^backend/'; then
+  BACKEND_CHANGED=true
+fi
+
+EXIT_CODE=0
+
+# ============================================================================
+# Frontend Quality Gates
+# ============================================================================
+
+if [ "$FRONTEND_CHANGED" = true ]; then
+  echo "📦 Frontend code changed. Running frontend quality gates..."
+  echo ""
+
+  cd frontend
+
+  # TypeScript type check
+  echo "  ✓ TypeScript type check..."
+  if ! npx tsc --noEmit; then
+    echo "  ✗ TypeScript check failed!"
+    EXIT_CODE=1
+  fi
+
+  # ESLint
+  echo "  ✓ ESLint..."
+  if ! npm run lint; then
+    echo "  ✗ ESLint check failed!"
+    EXIT_CODE=1
+  fi
+
+  # Prettier format check
+  echo "  ✓ Prettier (format check)..."
+  if ! npm run format:check; then
+    echo "  ✗ Prettier check failed! Run: npm run format"
+    EXIT_CODE=1
+  fi
+
+  # Vitest unit tests
+  echo "  ✓ Vitest (unit tests)..."
+  if ! npm test -- --run; then
+    echo "  ✗ Unit tests failed!"
+    EXIT_CODE=1
+  fi
+
+  cd ..
+  echo ""
+fi
+
+# ============================================================================
+# Backend Quality Gates
+# ============================================================================
+
+if [ "$BACKEND_CHANGED" = true ]; then
+  echo "📦 Backend code changed. Running backend quality gates..."
+  echo ""
+
+  cd backend
+
+  # Maven verify (format check + compile + tests + static analysis)
+  echo "  ✓ Maven verify (format, tests, analysis)..."
+  if ! mvn verify -q; then
+    echo "  ✗ Maven verify failed!"
+    EXIT_CODE=1
+  fi
+
+  cd ..
+  echo ""
+fi
+
+# ============================================================================
+# Exit
+# ============================================================================
+
+if [ $EXIT_CODE -eq 0 ]; then
+  echo "✅ All quality gates passed! Proceeding with push."
+  exit 0
+else
+  echo "❌ Quality gates failed. Fix the above issues before pushing."
+  echo ""
+  echo "To skip these checks (NOT RECOMMENDED):"
+  echo "  git push --no-verify"
+  exit 1
+fi
