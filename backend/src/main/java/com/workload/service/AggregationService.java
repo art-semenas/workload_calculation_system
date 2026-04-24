@@ -21,35 +21,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class AggregationService {
-
-  private static final Logger log = LoggerFactory.getLogger(AggregationService.class);
 
   private final SummaryRepository summaryRepository;
   private final DivisionRepository divisionRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
   private final WorkloadConfig config;
-
-  public AggregationService(
-      SummaryRepository summaryRepository,
-      DivisionRepository divisionRepository,
-      BranchRepository branchRepository,
-      UserRepository userRepository,
-      WorkloadConfig config) {
-    this.summaryRepository = summaryRepository;
-    this.divisionRepository = divisionRepository;
-    this.branchRepository = branchRepository;
-    this.userRepository = userRepository;
-    this.config = config;
-  }
 
   public AggregationCompanyDto getCompany() {
     List<Summary> summaries = summaryRepository.findAllWithOrgHierarchy();
