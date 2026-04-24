@@ -492,7 +492,7 @@ test.describe('Object Detail — Summary tab', () => {
     await page.getByRole('tab', { name: /summary/i }).click()
 
     await expect(page.getByText(/no data/i)).not.toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/total staffing/i)).toBeVisible()
+    await expect(page.getByText(/total staffing/i).first()).toBeVisible()
   })
 
   // Checklist 3.11 — PAC-04: Summary tab updates after saving records (no page reload)
