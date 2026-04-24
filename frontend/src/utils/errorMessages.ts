@@ -16,3 +16,14 @@ export function mapEquipmentErrorCode(code: string | undefined): string {
       return 'An unexpected error occurred.'
   }
 }
+
+export function mapSaveErrorCode(code: string | undefined): string {
+  switch (code) {
+    case 'OBJECT_NOT_FOUND':
+      return 'Object no longer exists. Refresh the page.'
+    case 'ROUND_TRIP_NOT_EDITABLE':
+      return 'Round-trip time is calculated automatically and cannot be set directly.'
+    default:
+      return 'Failed to save. Please try again.'
+  }
+}

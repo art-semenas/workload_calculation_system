@@ -204,7 +204,7 @@ describe('RepairsTab', () => {
     await user.click(saveButtons[1])
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to save repairs.')).toBeInTheDocument()
+      expect(screen.getByText('Failed to save. Please try again.')).toBeInTheDocument()
     })
   })
 })
