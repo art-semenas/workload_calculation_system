@@ -69,8 +69,10 @@ describe('M-02 Zod schemas', () => {
   it('AggregationCompanySchema parses company-wide totals', () => {
     const raw = {
       requiredFte: 45.123,
+      staffingNeed: 2.5,
       objectCount: 2935,
       divisionCount: 7,
+      breakdown: { os: 10.1, ps: 5.2, video: 3.3, records: 1.1, repair: 0.9 },
     }
     expect(AggregationCompanySchema.parse(raw).requiredFte).toBeCloseTo(45.123)
   })
@@ -81,7 +83,13 @@ describe('M-02 Zod schemas', () => {
       divisionName: 'Brest',
       objectCount: 245,
       requiredFte: 12.5,
+      staffingNeed: 1.0,
+      uncoveredLoad: 0.5,
       coverageGapCount: 12,
+      engineersTotal: 8,
+      engineersOverloaded: 2,
+      engineersWarning: 1,
+      breakdown: { os: 5.0, ps: 2.5, video: 1.5, records: 0.5, repair: 0.3 },
     }
     const result = AggregationDivisionSchema.parse(raw)
     expect(result.coverageGapCount).toBe(12)
@@ -106,7 +114,9 @@ describe('M-02 Zod schemas', () => {
       divisionId: '660e8400-e29b-41d4-a716-446655440000',
       divisionName: 'Brest',
       requiredFte: 3.75,
+      staffingNeed: 0.25,
       objectCount: 42,
+      breakdown: { os: 2.0, ps: 1.0, video: 0.5, records: 0.1, repair: 0.05 },
     }
     const result = AggregationBranchSchema.parse(raw)
     expect(result.objectCount).toBe(42)

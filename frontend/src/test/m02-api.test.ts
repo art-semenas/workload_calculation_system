@@ -68,7 +68,15 @@ describe('aggregations API', () => {
   it('getCompanyAggregation calls GET /aggregations/company', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce({
-      data: { data: { requiredFte: 45.0, objectCount: 100, divisionCount: 7 } },
+      data: {
+        data: {
+          requiredFte: 45.0,
+          staffingNeed: 2.5,
+          objectCount: 100,
+          divisionCount: 7,
+          breakdown: { os: 10.0, ps: 5.0, video: 3.0, records: 1.0, repair: 0.5 },
+        },
+      },
     })
 
     await getCompanyAggregation()
@@ -92,7 +100,13 @@ describe('aggregations API', () => {
           divisionName: 'Test Division',
           objectCount: 100,
           requiredFte: 10.5,
+          staffingNeed: 1.0,
+          uncoveredLoad: 0.5,
           coverageGapCount: 5,
+          engineersTotal: 6,
+          engineersOverloaded: 1,
+          engineersWarning: 2,
+          breakdown: { os: 5.0, ps: 2.5, video: 1.5, records: 0.5, repair: 0.3 },
         },
       },
     })
@@ -119,7 +133,9 @@ describe('aggregations API', () => {
           divisionId: '550e8400-e29b-41d4-a716-446655440000',
           divisionName: 'Test Division',
           requiredFte: 5.25,
+          staffingNeed: 0.5,
           objectCount: 50,
+          breakdown: { os: 2.0, ps: 1.0, video: 0.5, records: 0.1, repair: 0.05 },
         },
       },
     })

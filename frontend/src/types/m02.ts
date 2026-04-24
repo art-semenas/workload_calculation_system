@@ -67,12 +67,25 @@ export const ObjectSummarySchema = z.object({
 })
 export type ObjectSummary = z.infer<typeof ObjectSummarySchema>
 
+// --- Component breakdown (ComponentBreakdownDto) ---
+
+export const ComponentBreakdownSchema = z.object({
+  os: z.number(),
+  ps: z.number(),
+  video: z.number(),
+  records: z.number(),
+  repair: z.number(),
+})
+export type ComponentBreakdown = z.infer<typeof ComponentBreakdownSchema>
+
 // --- Aggregation: company level (AggregationCompanyDto) ---
 
 export const AggregationCompanySchema = z.object({
   requiredFte: z.number(),
+  staffingNeed: z.number(),
   objectCount: z.number(),
   divisionCount: z.number(),
+  breakdown: ComponentBreakdownSchema,
 })
 export type AggregationCompany = z.infer<typeof AggregationCompanySchema>
 
@@ -83,7 +96,13 @@ export const AggregationDivisionSchema = z.object({
   divisionName: z.string(),
   objectCount: z.number(),
   requiredFte: z.number(),
+  staffingNeed: z.number(),
+  uncoveredLoad: z.number(),
   coverageGapCount: z.number(),
+  engineersTotal: z.number(),
+  engineersOverloaded: z.number(),
+  engineersWarning: z.number(),
+  breakdown: ComponentBreakdownSchema,
 })
 export type AggregationDivision = z.infer<typeof AggregationDivisionSchema>
 
@@ -96,6 +115,8 @@ export const AggregationBranchSchema = z.object({
   divisionName: z.string(),
   objectCount: z.number(),
   requiredFte: z.number(),
+  staffingNeed: z.number(),
+  breakdown: ComponentBreakdownSchema,
 })
 export type AggregationBranch = z.infer<typeof AggregationBranchSchema>
 
