@@ -26,7 +26,7 @@ beforeEach(() => {
 describe('svod API', () => {
   it('getSvod calls GET /svod with page and division_id params', async () => {
     const mockData = {
-      data: { data: { content: [], total_elements: 0, total_pages: 0, page: 0, size: 100 } },
+      data: { data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 100 } },
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce(mockData)
@@ -39,7 +39,7 @@ describe('svod API', () => {
 
   it('getSvod omits division_id when not provided', async () => {
     const mockData = {
-      data: { data: { content: [], total_elements: 0, total_pages: 0, page: 0, size: 100 } },
+      data: { data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 100 } },
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce(mockData)
@@ -68,7 +68,7 @@ describe('aggregations API', () => {
   it('getCompanyAggregation calls GET /aggregations/company', async () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- vi.mocked result, no safe generic available
     mockApi.get.mockResolvedValueOnce({
-      data: { data: { total_fte: 45.0, total_objects: 100, division_count: 7 } },
+      data: { data: { requiredFte: 45.0, objectCount: 100, divisionCount: 7 } },
     })
 
     await getCompanyAggregation()
@@ -88,11 +88,11 @@ describe('aggregations API', () => {
     mockApi.get.mockResolvedValueOnce({
       data: {
         data: {
-          division_id: '550e8400-e29b-41d4-a716-446655440000',
-          division_name: 'Test Division',
-          total_fte: 10.5,
-          object_count: 100,
-          gap_count: 5,
+          divisionId: '550e8400-e29b-41d4-a716-446655440000',
+          divisionName: 'Test Division',
+          objectCount: 100,
+          requiredFte: 10.5,
+          coverageGapCount: 5,
         },
       },
     })
@@ -114,11 +114,12 @@ describe('aggregations API', () => {
     mockApi.get.mockResolvedValueOnce({
       data: {
         data: {
-          branch_id: '550e8400-e29b-41d4-a716-446655440001',
-          branch_name: 'Test Branch',
-          division_name: 'Test Division',
-          total_fte: 5.25,
-          object_count: 50,
+          branchId: '550e8400-e29b-41d4-a716-446655440001',
+          branchName: 'Test Branch',
+          divisionId: '550e8400-e29b-41d4-a716-446655440000',
+          divisionName: 'Test Division',
+          requiredFte: 5.25,
+          objectCount: 50,
         },
       },
     })
@@ -152,28 +153,28 @@ describe('summaries API', () => {
     mockApi.get.mockResolvedValueOnce({
       data: {
         data: {
-          object_id: '550e8400-e29b-41d4-a716-446655440000',
-          os_r1_per_visit: 0.1,
-          os_r2_per_visit: 0.2,
-          ps_r1_per_visit: 0.0,
-          ps_r2_per_visit: 0.0,
-          video_r1_per_visit: 0.0,
-          video_r2_per_visit: 0.0,
-          r1_per_visit_total: 0.1,
-          r2_per_visit_total: 0.2,
-          os_monthly_avg: 0.5,
-          ps_monthly_avg: 0.0,
-          video_monthly_avg: 0.0,
-          records_monthly: 0.03,
-          repair_no_travel_monthly: 0.01,
-          repair_with_travel_monthly: 0.02,
-          round_trip_min: 40.0,
-          pzv_minutes: 20.0,
-          total_no_travel_min: 1.0,
-          itogo_chislo_no_travel: 0.02,
-          total_with_travel_min: 2.0,
-          itogo_chislo_with_travel: 0.03,
-          computed_at: '2026-03-30T12:00:00Z',
+          objectId: '550e8400-e29b-41d4-a716-446655440000',
+          osR1PerVisit: 0.1,
+          osR2PerVisit: 0.2,
+          psR1PerVisit: 0.0,
+          psR2PerVisit: 0.0,
+          videoR1PerVisit: 0.0,
+          videoR2PerVisit: 0.0,
+          r1PerVisitTotal: 0.1,
+          r2PerVisitTotal: 0.2,
+          osMonthlyAvg: 0.5,
+          psMonthlyAvg: 0.0,
+          videoMonthlyAvg: 0.0,
+          recordsMonthly: 0.03,
+          repairNoTravelMonthly: 0.01,
+          repairWithTravelMonthly: 0.02,
+          roundTripMin: 40.0,
+          pzvMinutes: 20.0,
+          totalNoTravelMin: 1.0,
+          itogoChisloNoTravel: 0.02,
+          totalWithTravelMin: 2.0,
+          itogoChisloWithTravel: 0.03,
+          computedAt: '2026-03-30T12:00:00Z',
         },
       },
     })

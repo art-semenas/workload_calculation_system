@@ -104,55 +104,55 @@ function SummaryTab({ objectId }: { objectId: string }) {
   return (
     <Box>
       <SummaryGroup title="Per-visit breakdown">
-        <SummaryRow label="Security R1" value={fmt6(data.os_r1_per_visit)} />
-        <SummaryRow label="Security R2" value={fmt6(data.os_r2_per_visit)} />
-        <SummaryRow label="Fire R1" value={fmt6(data.ps_r1_per_visit)} />
-        <SummaryRow label="Fire R2" value={fmt6(data.ps_r2_per_visit)} />
-        <SummaryRow label="Video R1" value={fmt6(data.video_r1_per_visit)} />
-        <SummaryRow label="Video R2" value={fmt6(data.video_r2_per_visit)} />
-        <SummaryRow label="R1 total" value={fmt6(data.r1_per_visit_total)} />
-        <SummaryRow label="R2 total" value={fmt6(data.r2_per_visit_total)} />
+        <SummaryRow label="Security R1" value={fmt6(data.osR1PerVisit)} />
+        <SummaryRow label="Security R2" value={fmt6(data.osR2PerVisit)} />
+        <SummaryRow label="Fire R1" value={fmt6(data.psR1PerVisit)} />
+        <SummaryRow label="Fire R2" value={fmt6(data.psR2PerVisit)} />
+        <SummaryRow label="Video R1" value={fmt6(data.videoR1PerVisit)} />
+        <SummaryRow label="Video R2" value={fmt6(data.videoR2PerVisit)} />
+        <SummaryRow label="R1 total" value={fmt6(data.r1PerVisitTotal)} />
+        <SummaryRow label="R2 total" value={fmt6(data.r2PerVisitTotal)} />
       </SummaryGroup>
 
       <SummaryGroup title="Monthly averages">
-        <SummaryRow label="Security" value={fmt6(data.os_monthly_avg)} />
-        <SummaryRow label="Fire" value={fmt6(data.ps_monthly_avg)} />
-        <SummaryRow label="Video" value={fmt6(data.video_monthly_avg)} />
-        <SummaryRow label="Records" value={fmt6(data.records_monthly)} />
-        <SummaryRow label="Repair without Travel" value={fmt6(data.repair_no_travel_monthly)} />
-        <SummaryRow label="Repair with Travel" value={fmt6(data.repair_with_travel_monthly)} />
+        <SummaryRow label="Security" value={fmt6(data.osMonthlyAvg)} />
+        <SummaryRow label="Fire" value={fmt6(data.psMonthlyAvg)} />
+        <SummaryRow label="Video" value={fmt6(data.videoMonthlyAvg)} />
+        <SummaryRow label="Records" value={fmt6(data.recordsMonthly)} />
+        <SummaryRow label="Repair without Travel" value={fmt6(data.repairNoTravelMonthly)} />
+        <SummaryRow label="Repair with Travel" value={fmt6(data.repairWithTravelMonthly)} />
       </SummaryGroup>
 
       <SummaryGroup title="Travel">
-        <SummaryRow label="PZV" value={fmt2(data.pzv_minutes)} />
-        <SummaryRow label="Travel (round-trip)" value={fmt2(data.round_trip_min)} />
+        <SummaryRow label="PZV" value={fmt2(data.pzvMinutes)} />
+        <SummaryRow label="Travel (round-trip)" value={fmt2(data.roundTripMin)} />
       </SummaryGroup>
 
       <SummaryGroup title="Totals">
         <SummaryRow
           label="Maintenance+records+repair(without travel)+Travel, min"
-          value={fmt6(data.total_no_travel_min)}
+          value={fmt6(data.totalNoTravelMin)}
         />
         <SummaryRow
           label="TOTAL Staffing (without travel)"
-          value={fmt6(data.itogo_chislo_no_travel)}
+          value={fmt6(data.itogoChisloNoTravel)}
         />
         <SummaryRow
           label="Maintenance+records+repair(with travel)+Travel, min"
-          value={fmt6(data.total_with_travel_min)}
+          value={fmt6(data.totalWithTravelMin)}
         />
         <SummaryRow
           label="TOTAL Staffing (with travel)"
           value={
             <Typography variant="body2" component="span" sx={{ fontWeight: 700 }}>
-              {fmt6(data.itogo_chislo_with_travel)}
+              {fmt6(data.itogoChisloWithTravel)}
             </Typography>
           }
         />
       </SummaryGroup>
 
       <SummaryGroup title="Computed at">
-        <SummaryRow label="Computed at" value={data.computed_at ?? '—'} />
+        <SummaryRow label="Computed at" value={data.computedAt ?? '—'} />
       </SummaryGroup>
     </Box>
   )

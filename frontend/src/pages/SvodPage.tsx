@@ -27,36 +27,27 @@ function formatDecimal(value: number, places: number): string {
 
 const columns: GridColDef<SvodRow>[] = [
   {
-    field: 'import_seq_no',
-    headerName: '№',
-    align: 'left',
-    headerAlign: 'left',
-    width: 60,
-    valueFormatter: ({ value }: NumericFormatterParams | { value: number | null | undefined }) =>
-      value != null ? String(value) : '',
-  },
-  {
-    field: 'division_name',
+    field: 'divisionName',
     headerName: 'Division',
     align: 'left',
     headerAlign: 'left',
     width: 120,
   },
   {
-    field: 'branch_name',
+    field: 'branchName',
     headerName: 'Branch',
     align: 'left',
     headerAlign: 'left',
     width: 120,
   },
   {
-    field: 'object_name',
+    field: 'objectName',
     headerName: 'Object',
     align: 'left',
     headerAlign: 'left',
     width: 200,
     renderCell: ({ row }: { row: SvodRow }) => (
-      <Link to={`/objects/${row.object_id}`}>{row.object_name}</Link>
+      <Link to={`/objects/${row.objectId}`}>{row.objectName}</Link>
     ),
   },
   {
@@ -65,11 +56,11 @@ const columns: GridColDef<SvodRow>[] = [
     align: 'left',
     headerAlign: 'left',
     width: 180,
-    valueFormatter: ({ value }: { value: string[] }) =>
+    valueFormatter: ({ value }: { value: string[] | undefined }) =>
       Array.isArray(value) ? value.join(', ') : '',
   },
   {
-    field: 'pzv_minutes',
+    field: 'pzvMinutes',
     headerName: 'PZV',
     align: 'right',
     headerAlign: 'right',
@@ -77,7 +68,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
   },
   {
-    field: 'round_trip_min',
+    field: 'roundTripMin',
     headerName: 'Travel',
     align: 'right',
     headerAlign: 'right',
@@ -85,7 +76,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
   },
   {
-    field: 'ps_monthly_avg',
+    field: 'psMonthlyAvg',
     headerName: 'Fire Alarm',
     align: 'right',
     headerAlign: 'right',
@@ -93,7 +84,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'video_monthly_avg',
+    field: 'videoMonthlyAvg',
     headerName: 'Video',
     align: 'right',
     headerAlign: 'right',
@@ -101,7 +92,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'os_monthly_avg',
+    field: 'osMonthlyAvg',
     headerName: 'Security',
     align: 'right',
     headerAlign: 'right',
@@ -109,7 +100,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'records_monthly',
+    field: 'recordsMonthly',
     headerName: 'Records',
     align: 'right',
     headerAlign: 'right',
@@ -117,7 +108,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'repair_no_travel_monthly',
+    field: 'repairNoTravelMonthly',
     headerName: 'Repair without Travel',
     align: 'right',
     headerAlign: 'right',
@@ -125,7 +116,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'total_no_travel_min',
+    field: 'totalNoTravelMin',
     headerName: 'Maintenance+records+repair(without travel)+Travel, min',
     align: 'right',
     headerAlign: 'right',
@@ -133,7 +124,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'itogo_chislo_no_travel',
+    field: 'itogoChisloNoTravel',
     headerName: 'TOTAL Staffing (without travel)',
     align: 'right',
     headerAlign: 'right',
@@ -141,7 +132,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'repair_with_travel_monthly',
+    field: 'repairWithTravelMonthly',
     headerName: 'Repair with Travel',
     align: 'right',
     headerAlign: 'right',
@@ -149,7 +140,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'total_with_travel_min',
+    field: 'totalWithTravelMin',
     headerName: 'Maintenance+records+repair(with travel)+Travel, min',
     align: 'right',
     headerAlign: 'right',
@@ -157,7 +148,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'itogo_chislo_with_travel',
+    field: 'itogoChisloWithTravel',
     headerName: 'TOTAL Staffing (with travel)',
     align: 'right',
     headerAlign: 'right',
@@ -166,7 +157,7 @@ const columns: GridColDef<SvodRow>[] = [
     cellClassName: 'bold-cell',
   },
   {
-    field: 'r1_per_visit_total',
+    field: 'r1PerVisitTotal',
     headerName: 'R1 across all systems on the object',
     align: 'right',
     headerAlign: 'right',
@@ -174,7 +165,7 @@ const columns: GridColDef<SvodRow>[] = [
     valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
   },
   {
-    field: 'r2_per_visit_total',
+    field: 'r2PerVisitTotal',
     headerName: 'R2 across all systems on the object',
     align: 'right',
     headerAlign: 'right',
@@ -268,9 +259,9 @@ export default function SvodPage() {
         <DataGrid
           rows={data?.content ?? []}
           columns={columns}
-          getRowId={(row: SvodRow) => row.object_id}
+          getRowId={(row: SvodRow) => row.objectId}
           paginationMode="server"
-          rowCount={data?.total_elements ?? 0}
+          rowCount={data?.totalElements ?? 0}
           paginationModel={{ page, pageSize }}
           onPaginationModelChange={handlePaginationModelChange}
           pageSizeOptions={[100]}

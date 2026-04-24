@@ -36,18 +36,19 @@ describe('DashboardPage', () => {
     mockDivisions.mockReturnValue({
       data: [
         {
-          division_id: '1',
-          division_name: 'Brest',
-          total_fte: 12.5,
-          object_count: 245,
-          gap_count: 12,
+          divisionId: '1',
+          divisionName: 'Brest',
+          requiredFte: 12.5,
+          objectCount: 245,
+          coverageGapCount: 12,
         },
       ],
       isLoading: false,
     } as ReturnType<typeof useDivisionsAggregation>)
-    mockSvod.mockReturnValue({ data: { content: [] }, isLoading: false } as ReturnType<
-      typeof useSvod
-    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
     mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
     renderPage()
@@ -61,9 +62,10 @@ describe('DashboardPage', () => {
     mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
       typeof useDivisionsAggregation
     >)
-    mockSvod.mockReturnValue({ data: { content: [] }, isLoading: false } as ReturnType<
-      typeof useSvod
-    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
     mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
     renderPage()
@@ -80,31 +82,31 @@ describe('DashboardPage', () => {
       data: {
         content: [
           {
-            object_id: 'obj-1',
-            object_name: 'CBU Brest',
-            division_name: 'Brest',
-            branch_name: 'Branch 1',
-            itogo_chislo_with_travel: 0.064,
+            objectId: 'obj-1',
+            objectName: 'CBU Brest',
+            divisionName: 'Brest',
+            branchName: 'Branch 1',
+            itogoChisloWithTravel: 0.064,
             engineers: [],
-            os_monthly_avg: 0,
-            ps_monthly_avg: 0,
-            video_monthly_avg: 0,
-            records_monthly: 0,
-            repair_no_travel_monthly: 0,
-            repair_with_travel_monthly: 0,
-            round_trip_min: 0,
-            pzv_minutes: 0,
-            total_no_travel_min: 0,
-            itogo_chislo_no_travel: 0,
-            total_with_travel_min: 0,
-            r1_per_visit_total: 0,
-            r2_per_visit_total: 0,
-            computed_at: null,
+            osMonthlyAvg: 0,
+            psMonthlyAvg: 0,
+            videoMonthlyAvg: 0,
+            recordsMonthly: 0,
+            repairNoTravelMonthly: 0,
+            repairWithTravelMonthly: 0,
+            roundTripMin: 0,
+            pzvMinutes: 0,
+            totalNoTravelMin: 0,
+            itogoChisloNoTravel: 0,
+            totalWithTravelMin: 0,
+            r1PerVisitTotal: 0,
+            r2PerVisitTotal: 0,
+            computedAt: null,
           },
         ],
-        total_elements: 1,
-        total_pages: 1,
-        page: 0,
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
         size: 10,
       },
       isLoading: false,

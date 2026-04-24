@@ -11,105 +11,104 @@ import {
 describe('M-02 Zod schemas', () => {
   it('SvodRowSchema parses a valid SVOD row', () => {
     const raw = {
-      object_id: '550e8400-e29b-41d4-a716-446655440000',
-      object_name: 'Brest Archive',
+      objectId: '550e8400-e29b-41d4-a716-446655440000',
+      objectName: 'Brest Archive',
       address: 'Moskovskaya St., 202D',
-      division_name: 'Brest',
-      branch_name: 'Branch 1',
-      import_seq_no: 1,
-      engineers: ['Ivanov P.S.'],
-      os_monthly_avg: 0.123456,
-      ps_monthly_avg: 0.0,
-      video_monthly_avg: 0.0,
-      records_monthly: 0.05,
-      repair_no_travel_monthly: 0.01,
-      repair_with_travel_monthly: 0.02,
-      round_trip_min: 40.0,
-      pzv_minutes: 20.0,
-      total_no_travel_min: 1.5,
-      itogo_chislo_no_travel: 0.03,
-      total_with_travel_min: 2.0,
-      itogo_chislo_with_travel: 0.032327,
-      r1_per_visit_total: 0.5,
-      r2_per_visit_total: 0.3,
-      computed_at: '2026-03-30T12:00:00Z',
+      divisionName: 'Brest',
+      branchName: 'Branch 1',
+      osMonthlyAvg: 0.123456,
+      psMonthlyAvg: 0.0,
+      videoMonthlyAvg: 0.0,
+      recordsMonthly: 0.05,
+      repairNoTravelMonthly: 0.01,
+      repairWithTravelMonthly: 0.02,
+      roundTripMin: 40.0,
+      pzvMinutes: 20.0,
+      totalNoTravelMin: 1.5,
+      itogoChisloNoTravel: 0.03,
+      totalWithTravelMin: 2.0,
+      itogoChisloWithTravel: 0.032327,
+      r1PerVisitTotal: 0.5,
+      r2PerVisitTotal: 0.3,
+      computedAt: '2026-03-30T12:00:00Z',
     }
     const result = SvodRowSchema.parse(raw)
-    expect(result.itogo_chislo_with_travel).toBeCloseTo(0.032327, 6)
-    expect(result.engineers).toHaveLength(1)
+    expect(result.itogoChisloWithTravel).toBeCloseTo(0.032327, 6)
+    expect(result.engineers).toHaveLength(0) // default empty array when absent
   })
 
-  it('ObjectSummarySchema parses all 19 summary fields', () => {
+  it('ObjectSummarySchema parses all summary fields', () => {
     const raw = {
-      object_id: '550e8400-e29b-41d4-a716-446655440000',
-      os_r1_per_visit: 0.1,
-      os_r2_per_visit: 0.2,
-      ps_r1_per_visit: 0.0,
-      ps_r2_per_visit: 0.0,
-      video_r1_per_visit: 0.0,
-      video_r2_per_visit: 0.0,
-      r1_per_visit_total: 0.1,
-      r2_per_visit_total: 0.2,
-      os_monthly_avg: 0.5,
-      ps_monthly_avg: 0.0,
-      video_monthly_avg: 0.0,
-      records_monthly: 0.03,
-      repair_no_travel_monthly: 0.01,
-      repair_with_travel_monthly: 0.02,
-      round_trip_min: 40.0,
-      pzv_minutes: 20.0,
-      total_no_travel_min: 1.0,
-      itogo_chislo_no_travel: 0.02,
-      total_with_travel_min: 2.0,
-      itogo_chislo_with_travel: 0.03,
-      computed_at: '2026-03-30T12:00:00Z',
+      objectId: '550e8400-e29b-41d4-a716-446655440000',
+      osR1PerVisit: 0.1,
+      osR2PerVisit: 0.2,
+      psR1PerVisit: 0.0,
+      psR2PerVisit: 0.0,
+      videoR1PerVisit: 0.0,
+      videoR2PerVisit: 0.0,
+      r1PerVisitTotal: 0.1,
+      r2PerVisitTotal: 0.2,
+      osMonthlyAvg: 0.5,
+      psMonthlyAvg: 0.0,
+      videoMonthlyAvg: 0.0,
+      recordsMonthly: 0.03,
+      repairNoTravelMonthly: 0.01,
+      repairWithTravelMonthly: 0.02,
+      roundTripMin: 40.0,
+      pzvMinutes: 20.0,
+      totalNoTravelMin: 1.0,
+      itogoChisloNoTravel: 0.02,
+      totalWithTravelMin: 2.0,
+      itogoChisloWithTravel: 0.03,
+      computedAt: '2026-03-30T12:00:00Z',
     }
     const result = ObjectSummarySchema.parse(raw)
-    expect(result.os_monthly_avg).toBe(0.5)
+    expect(result.osMonthlyAvg).toBe(0.5)
   })
 
   it('AggregationCompanySchema parses company-wide totals', () => {
     const raw = {
-      total_fte: 45.123,
-      total_objects: 2935,
-      division_count: 7,
+      requiredFte: 45.123,
+      objectCount: 2935,
+      divisionCount: 7,
     }
-    expect(AggregationCompanySchema.parse(raw).total_fte).toBeCloseTo(45.123)
+    expect(AggregationCompanySchema.parse(raw).requiredFte).toBeCloseTo(45.123)
   })
 
   it('AggregationDivisionSchema parses a division summary', () => {
     const raw = {
-      division_id: '550e8400-e29b-41d4-a716-446655440000',
-      division_name: 'Brest',
-      total_fte: 12.5,
-      object_count: 245,
-      gap_count: 12,
+      divisionId: '550e8400-e29b-41d4-a716-446655440000',
+      divisionName: 'Brest',
+      objectCount: 245,
+      requiredFte: 12.5,
+      coverageGapCount: 12,
     }
     const result = AggregationDivisionSchema.parse(raw)
-    expect(result.gap_count).toBe(12)
+    expect(result.coverageGapCount).toBe(12)
   })
 
   it('CoverageGapSchema parses an uncovered object', () => {
     const raw = {
-      object_id: '550e8400-e29b-41d4-a716-446655440000',
-      object_name: 'Infokiosk',
-      division_name: 'Brest',
-      branch_name: 'Branch 1',
-      itogo_chislo_with_travel: 0.008,
+      objectId: '550e8400-e29b-41d4-a716-446655440000',
+      objectName: 'Infokiosk',
+      divisionName: 'Brest',
+      branchName: 'Branch 1',
+      itogoChisloWithTravel: 0.008,
     }
     const result = CoverageGapSchema.parse(raw)
-    expect(result.itogo_chislo_with_travel).toBeCloseTo(0.008)
+    expect(result.itogoChisloWithTravel).toBeCloseTo(0.008)
   })
 
   it('AggregationBranchSchema parses a branch aggregation row', () => {
     const raw = {
-      branch_id: '550e8400-e29b-41d4-a716-446655440000',
-      branch_name: 'Branch 1',
-      division_name: 'Brest',
-      total_fte: 3.75,
-      object_count: 42,
+      branchId: '550e8400-e29b-41d4-a716-446655440000',
+      branchName: 'Branch 1',
+      divisionId: '660e8400-e29b-41d4-a716-446655440000',
+      divisionName: 'Brest',
+      requiredFte: 3.75,
+      objectCount: 42,
     }
     const result = AggregationBranchSchema.parse(raw)
-    expect(result.object_count).toBe(42)
+    expect(result.objectCount).toBe(42)
   })
 })

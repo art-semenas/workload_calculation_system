@@ -41,11 +41,11 @@ describe('DivisionDetailPage — M-02 additions', () => {
   it('shows FTE summary card with division totals', async () => {
     mockDivAgg.mockReturnValue({
       data: {
-        division_id: 'div-1',
-        division_name: 'Brest',
-        total_fte: 12.5,
-        object_count: 245,
-        gap_count: 12,
+        divisionId: 'div-1',
+        divisionName: 'Brest',
+        requiredFte: 12.5,
+        objectCount: 245,
+        coverageGapCount: 12,
       },
       isLoading: false,
     } as ReturnType<typeof useDivisionAggregation>)
@@ -61,22 +61,22 @@ describe('DivisionDetailPage — M-02 additions', () => {
   it('shows coverage gaps section with uncovered objects', async () => {
     mockDivAgg.mockReturnValue({
       data: {
-        division_id: 'div-1',
-        division_name: 'Brest',
-        total_fte: 12.5,
-        object_count: 245,
-        gap_count: 1,
+        divisionId: 'div-1',
+        divisionName: 'Brest',
+        requiredFte: 12.5,
+        objectCount: 245,
+        coverageGapCount: 1,
       },
       isLoading: false,
     } as ReturnType<typeof useDivisionAggregation>)
     mockGaps.mockReturnValue({
       data: [
         {
-          object_id: 'obj-1',
-          object_name: 'Infokiosk INF 00635',
-          division_name: 'Brest',
-          branch_name: 'Branch 1',
-          itogo_chislo_with_travel: 0.008,
+          objectId: 'obj-1',
+          objectName: 'Infokiosk INF 00635',
+          divisionName: 'Brest',
+          branchName: 'Branch 1',
+          itogoChisloWithTravel: 0.008,
         },
       ],
       isLoading: false,

@@ -1,111 +1,112 @@
 import { z } from 'zod'
 
-// --- Summary row (matches GET /svod response, ui-spec.md §7.9 — all 19 columns) ---
+// --- Summary row (matches GET /svod response — SvodRowDto, 17 numeric columns) ---
 
 export const SvodRowSchema = z.object({
-  object_id: z.string().uuid(),
-  object_name: z.string(),
-  address: z.string().optional(),
-  division_name: z.string(),
-  branch_name: z.string(),
-  import_seq_no: z.number().nullable().optional(),
-  engineers: z.array(z.string()),           // column 5: comma-joined in UI
-  os_monthly_avg: z.number(),               // column 10: Security
-  ps_monthly_avg: z.number(),               // column 8: Fire Alarm
-  video_monthly_avg: z.number(),            // column 9: Video
-  records_monthly: z.number(),              // column 11: Records
-  repair_no_travel_monthly: z.number(),     // column 12: Repair without Travel
-  repair_with_travel_monthly: z.number(),   // column 15: Repair with Travel
-  round_trip_min: z.number(),               // column 7: Travel
-  pzv_minutes: z.number(),                  // column 6: PZV
-  total_no_travel_min: z.number(),          // column 13
-  itogo_chislo_no_travel: z.number(),       // column 14: TOTAL Staffing (without travel)
-  total_with_travel_min: z.number(),        // column 16
-  itogo_chislo_with_travel: z.number(),     // column 17: TOTAL Staffing (with travel)
-  r1_per_visit_total: z.number(),           // column 18
-  r2_per_visit_total: z.number(),           // column 19
-  computed_at: z.string().nullable(),
+  objectId: z.string().uuid(),
+  objectName: z.string(),
+  address: z.string().nullable().optional(),
+  divisionName: z.string(),
+  branchName: z.string(),
+  // engineers and importSeqNo are not in SvodRowDto (engineers assigned in M-03)
+  engineers: z.array(z.string()).optional().default([]),
+  osMonthlyAvg: z.number(),
+  psMonthlyAvg: z.number(),
+  videoMonthlyAvg: z.number(),
+  recordsMonthly: z.number(),
+  repairNoTravelMonthly: z.number(),
+  repairWithTravelMonthly: z.number(),
+  roundTripMin: z.number(),
+  pzvMinutes: z.number(),
+  totalNoTravelMin: z.number(),
+  itogoChisloNoTravel: z.number(),
+  totalWithTravelMin: z.number(),
+  itogoChisloWithTravel: z.number(),
+  r1PerVisitTotal: z.number(),
+  r2PerVisitTotal: z.number(),
+  computedAt: z.string().nullable(),
 })
 export type SvodRow = z.infer<typeof SvodRowSchema>
 
-// --- Paginated Summary response ---
+// --- Paginated SVOD response (Spring Page<SvodRowDto> JSON shape) ---
 
 export const SvodPageSchema = z.object({
   content: z.array(SvodRowSchema),
-  total_elements: z.number(),
-  total_pages: z.number(),
-  page: z.number(),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  number: z.number(), // Spring Page uses "number" for the current page index
   size: z.number(),
 })
 export type SvodPage = z.infer<typeof SvodPageSchema>
 
-// --- Object summary (GET /objects/:id/summary) ---
+// --- Object summary (GET /objects/:id/summary — SummaryDto) ---
 
 export const ObjectSummarySchema = z.object({
-  object_id: z.string().uuid(),
-  os_r1_per_visit: z.number(),
-  os_r2_per_visit: z.number(),
-  ps_r1_per_visit: z.number(),
-  ps_r2_per_visit: z.number(),
-  video_r1_per_visit: z.number(),
-  video_r2_per_visit: z.number(),
-  r1_per_visit_total: z.number(),
-  r2_per_visit_total: z.number(),
-  os_monthly_avg: z.number(),
-  ps_monthly_avg: z.number(),
-  video_monthly_avg: z.number(),
-  records_monthly: z.number(),
-  repair_no_travel_monthly: z.number(),
-  repair_with_travel_monthly: z.number(),
-  round_trip_min: z.number(),
-  pzv_minutes: z.number(),
-  total_no_travel_min: z.number(),
-  itogo_chislo_no_travel: z.number(),
-  total_with_travel_min: z.number(),
-  itogo_chislo_with_travel: z.number(),
-  computed_at: z.string().nullable(),
+  objectId: z.string().uuid(),
+  osR1PerVisit: z.number(),
+  osR2PerVisit: z.number(),
+  psR1PerVisit: z.number(),
+  psR2PerVisit: z.number(),
+  videoR1PerVisit: z.number(),
+  videoR2PerVisit: z.number(),
+  r1PerVisitTotal: z.number(),
+  r2PerVisitTotal: z.number(),
+  osMonthlyAvg: z.number(),
+  psMonthlyAvg: z.number(),
+  videoMonthlyAvg: z.number(),
+  recordsMonthly: z.number(),
+  repairNoTravelMonthly: z.number(),
+  repairWithTravelMonthly: z.number(),
+  roundTripMin: z.number(),
+  pzvMinutes: z.number(),
+  totalNoTravelMin: z.number(),
+  itogoChisloNoTravel: z.number(),
+  totalWithTravelMin: z.number(),
+  itogoChisloWithTravel: z.number(),
+  computedAt: z.string().nullable(),
 })
 export type ObjectSummary = z.infer<typeof ObjectSummarySchema>
 
-// --- Aggregation: company level ---
+// --- Aggregation: company level (AggregationCompanyDto) ---
 
 export const AggregationCompanySchema = z.object({
-  total_fte: z.number(),
-  total_objects: z.number(),
-  division_count: z.number(),
+  requiredFte: z.number(),
+  objectCount: z.number(),
+  divisionCount: z.number(),
 })
 export type AggregationCompany = z.infer<typeof AggregationCompanySchema>
 
-// --- Aggregation: division level ---
+// --- Aggregation: division level (AggregationDivisionDto) ---
 
 export const AggregationDivisionSchema = z.object({
-  division_id: z.string().uuid(),
-  division_name: z.string(),
-  total_fte: z.number(),
-  object_count: z.number(),
-  gap_count: z.number(),
+  divisionId: z.string().uuid(),
+  divisionName: z.string(),
+  objectCount: z.number(),
+  requiredFte: z.number(),
+  coverageGapCount: z.number(),
 })
 export type AggregationDivision = z.infer<typeof AggregationDivisionSchema>
 
-// --- Aggregation: branch level ---
+// --- Aggregation: branch level (AggregationBranchDto) ---
 
 export const AggregationBranchSchema = z.object({
-  branch_id: z.string().uuid(),
-  branch_name: z.string(),
-  division_name: z.string(),
-  total_fte: z.number(),
-  object_count: z.number(),
+  branchId: z.string().uuid(),
+  branchName: z.string(),
+  divisionId: z.string().uuid(),
+  divisionName: z.string(),
+  objectCount: z.number(),
+  requiredFte: z.number(),
 })
 export type AggregationBranch = z.infer<typeof AggregationBranchSchema>
 
-// --- Coverage gap — objects with no assigned engineer ---
+// --- Coverage gap — objects with no assigned engineer (CoverageGapDto) ---
 
 export const CoverageGapSchema = z.object({
-  object_id: z.string().uuid(),
-  object_name: z.string(),
-  address: z.string().optional(),
-  division_name: z.string(),
-  branch_name: z.string(),
-  itogo_chislo_with_travel: z.number(),
+  objectId: z.string().uuid(),
+  objectName: z.string(),
+  address: z.string().nullable().optional(),
+  divisionName: z.string(),
+  branchName: z.string(),
+  itogoChisloWithTravel: z.number(),
 })
 export type CoverageGap = z.infer<typeof CoverageGapSchema>

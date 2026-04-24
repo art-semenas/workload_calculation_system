@@ -165,19 +165,19 @@ export default function DivisionDetailPage() {
                 <Typography variant="caption" color="text.secondary">
                   Total FTE
                 </Typography>
-                <Typography variant="body1">{divAgg.total_fte.toFixed(4)}</Typography>
+                <Typography variant="body1">{divAgg.requiredFte.toFixed(4)}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Objects
                 </Typography>
-                <Typography variant="body1">{divAgg.object_count}</Typography>
+                <Typography variant="body1">{divAgg.objectCount}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Coverage Gaps
                 </Typography>
-                <Typography variant="body1">{divAgg.gap_count}</Typography>
+                <Typography variant="body1">{divAgg.coverageGapCount}</Typography>
               </Box>
             </Box>
           </CardContent>
@@ -236,9 +236,9 @@ export default function DivisionDetailPage() {
               </TableHead>
               <TableBody>
                 {gaps.map((gap) => (
-                  <TableRow key={gap.object_id}>
-                    <TableCell>{gap.object_name}</TableCell>
-                    <TableCell>{gap.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                  <TableRow key={gap.objectId}>
+                    <TableCell>{gap.objectName}</TableCell>
+                    <TableCell>{gap.itogoChisloWithTravel.toFixed(6)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -50,17 +50,17 @@ export default function DashboardPage() {
             <TableBody>
               {(divisions ?? []).map((div) => (
                 <TableRow
-                  key={div.division_id}
+                  key={div.divisionId}
                   hover
                   onClick={() => {
-                    navigate(`/divisions/${div.division_id}`)
+                    navigate(`/divisions/${div.divisionId}`)
                   }}
                   sx={{ cursor: 'pointer' }}
                 >
-                  <TableCell>{div.division_name}</TableCell>
-                  <TableCell>{div.total_fte.toFixed(4)}</TableCell>
-                  <TableCell>{div.object_count}</TableCell>
-                  <TableCell>{div.gap_count}</TableCell>
+                  <TableCell>{div.divisionName}</TableCell>
+                  <TableCell>{div.requiredFte.toFixed(4)}</TableCell>
+                  <TableCell>{div.objectCount}</TableCell>
+                  <TableCell>{div.coverageGapCount}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -88,20 +88,20 @@ export default function DashboardPage() {
             </TableHead>
             <TableBody>
               {topObjects.map((row) => (
-                <TableRow key={row.object_id}>
+                <TableRow key={row.objectId}>
                   <TableCell>
                     <Box
                       component="span"
                       sx={{ cursor: 'pointer', color: 'primary.main' }}
                       onClick={() => {
-                        navigate(`/objects/${row.object_id}`)
+                        navigate(`/objects/${row.objectId}`)
                       }}
                     >
-                      {row.object_name}
+                      {row.objectName}
                     </Box>
                   </TableCell>
-                  <TableCell>{row.division_name}</TableCell>
-                  <TableCell>{row.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                  <TableCell>{row.divisionName}</TableCell>
+                  <TableCell>{row.itogoChisloWithTravel.toFixed(6)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -132,11 +132,11 @@ export default function DashboardPage() {
             </TableHead>
             <TableBody>
               {(gaps ?? []).map((gap) => (
-                <TableRow key={gap.object_id}>
-                  <TableCell>{gap.object_name}</TableCell>
-                  <TableCell>{gap.division_name}</TableCell>
-                  <TableCell>{gap.branch_name}</TableCell>
-                  <TableCell>{gap.itogo_chislo_with_travel.toFixed(6)}</TableCell>
+                <TableRow key={gap.objectId}>
+                  <TableCell>{gap.objectName}</TableCell>
+                  <TableCell>{gap.divisionName}</TableCell>
+                  <TableCell>{gap.branchName}</TableCell>
+                  <TableCell>{gap.itogoChisloWithTravel.toFixed(6)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
