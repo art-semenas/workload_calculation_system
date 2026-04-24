@@ -178,6 +178,7 @@ export default function SvodPage() {
   const [page, setPage] = useState(0)
   const pageSize = 100
   const [divisionId, setDivisionId] = useState<string>('')
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const { data: divisions = [] } = useQuery({
     queryKey: ['divisions'],
@@ -192,6 +193,7 @@ export default function SvodPage() {
   }
 
   const handleExport = () => {
+    setExportError(null)
     exportSvodXlsx()
       .then((blob) => {
         const url = URL.createObjectURL(blob)
@@ -202,7 +204,7 @@ export default function SvodPage() {
         URL.revokeObjectURL(url)
       })
       .catch(() => {
-        // PoC: export errors are silently ignored. Add user feedback in MVP.
+        setExportError('Export failed. Please try again.')
       })
   }
 
@@ -246,6 +248,12 @@ export default function SvodPage() {
           Export XLSX
         </Button>
       </Box>
+
+      {exportError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setExportError(null)}>
+          {exportError}
+        </Alert>
+      )}
 
       <Box
         sx={{

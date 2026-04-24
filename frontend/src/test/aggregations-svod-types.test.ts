@@ -8,7 +8,7 @@ import {
   CoverageGapSchema,
 } from '../types/m02'
 
-describe('M-02 Zod schemas', () => {
+describe('Svod and aggregation Zod schemas', () => {
   it('SvodRowSchema parses a valid SVOD row', () => {
     const raw = {
       objectId: '550e8400-e29b-41d4-a716-446655440000',

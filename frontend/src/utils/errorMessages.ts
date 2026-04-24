@@ -1,9 +1,17 @@
+function isObject(val: unknown): val is Record<string, unknown> {
+  return typeof val === 'object' && val !== null
+}
+
 export function extractErrorCode(err: unknown): string | undefined {
-  if (typeof err !== 'object' || err === null || !('response' in err)) {
-    return undefined
-  }
-  const response = (err as { response?: { data?: { error?: { code?: string } } } }).response
-  return response?.data?.error?.code
+  if (!isObject(err) || !('response' in err)) return undefined
+  const { response } = err
+  if (!isObject(response) || !('data' in response)) return undefined
+  const { data } = response
+  if (!isObject(data) || !('error' in data)) return undefined
+  const { error } = data
+  if (!isObject(error) || !('code' in error)) return undefined
+  const { code } = error
+  return typeof code === 'string' ? code : undefined
 }
 
 export function mapEquipmentErrorCode(code: string | undefined): string {
