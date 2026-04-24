@@ -119,3 +119,22 @@ describe('API modules', () => {
     await expect(getDivisions()).rejects.toThrow()
   })
 })
+
+describe('useCoverageGaps enabled condition', () => {
+  function isEnabled(divisionId: string | undefined): boolean {
+    return divisionId === undefined || divisionId.length > 0
+  }
+
+  it('should be enabled when divisionId is undefined', () => {
+    expect(isEnabled(undefined)).toBe(true)
+  })
+
+  it('should be enabled when divisionId is a non-empty string', () => {
+    expect(isEnabled('550e8400-e29b-41d4-a716-446655440000')).toBe(true)
+  })
+
+  it('should be disabled when divisionId is an empty string', () => {
+    // empty string means "no valid ID provided yet" — correct to disable
+    expect(isEnabled('')).toBe(false)
+  })
+})

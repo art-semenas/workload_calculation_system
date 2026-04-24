@@ -62,8 +62,8 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByText('Engineers').first()).toBeVisible()
     await expect(page.getByText('Summary').first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'FTE by Division' })).toBeVisible()
-    await expect(page.getByText('Data will be available after M-02')).toBeVisible()
-    await expect(page.getByText('Data will be available after M-03')).toBeVisible()
+    // M-02 dashboard sections now implemented; M-03 placeholder is only on Engineers nav
+    await expect(page.getByText('Data will be available after M-02')).not.toBeVisible()
   })
 
   // 1.5
@@ -72,7 +72,7 @@ test.describe('PoC M-01 smoke', () => {
     await page.reload()
 
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Divisions' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'FTE by Division' })).toBeVisible()
   })
 
   // 6.1, 6.2, 6.4, 6.5
@@ -134,23 +134,24 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page).toHaveURL(/\/login/)
   })
 
-  // 3.2 — dashboard division table only renders when divisions exist (beforeAll creates one)
-  test('dashboard division overview table shows Name, Branches, and Objects columns', async ({
+  // 3.2 — dashboard division FTE table only renders when divisions exist (beforeAll creates one)
+  test('dashboard division FTE table shows Division, TOTAL FTE, and Objects columns', async ({
     page,
   }) => {
     await loginAsAdmin(page)
 
-    await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Branches' })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Objects' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: /division/i }).first()).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: /total fte/i }).first()).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: /objects/i }).first()).toBeVisible()
   })
 
-  // 3.3 — click the smoke division row by its known name, not by index
-  test('clicking division row on dashboard navigates to division detail', async ({ page }) => {
+  // 3.3 — division detail page shows data after login
+  test('division detail page loads after login', async ({ page }) => {
     await loginAsAdmin(page)
 
-    await page.getByRole('cell', { name: new RegExp(smokePrefix) }).click()
+    await page.goto(`/divisions/${smokeDivisionId}`)
     await expect(page).toHaveURL(new RegExp(`/divisions/${smokeDivisionId}`))
+    await expect(page.getByRole('heading', { name: smokeDivisionName })).toBeVisible()
   })
 
   // 6.3

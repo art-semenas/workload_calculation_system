@@ -259,6 +259,40 @@ class CalculationServiceTest {
         .isEqualByComparingTo(BigDecimal.ZERO);
   }
 
+  @Test
+  void zeroGuardTest_repairWithZeroTimeMinutes() {
+    // Six repair types with count > 0 but timeMinutes = 0 produce no actual work.
+    // kvo = 6 > ZERO_THRESHOLD(5), so travel overhead fires if the bug is present.
+    // Travel overhead from kvo > ZERO_THRESHOLD must NOT bypass the zero guard (C-39).
+    List<ObjectRepair> repairs = new ArrayList<>();
+    for (int i = 0; i < 6; i++) {
+      RepairType zeroTimeType =
+          RepairType.builder()
+              .id(UUID.randomUUID())
+              .name("zero-time-" + i)
+              .timeMinutes(BigDecimal.ZERO)
+              .build();
+      repairs.add(
+          ObjectRepair.builder().id(UUID.randomUUID()).repairType(zeroTimeType).count(1).build());
+    }
+
+    when(assignmentRepo.findAllByObjectId(objectId)).thenReturn(List.of());
+    when(recordsRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(repairRepo.findAllByObjectId(objectId)).thenReturn(repairs);
+    when(travelRepo.findByObjectId(objectId)).thenReturn(Optional.of(buildTravel()));
+    when(summaryRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(summaryRepo.save(any(Summary.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Summary result = calculationService.recalculate(objectId);
+
+    assertThat(result.getItogoChisloWithTravel())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(BigDecimal.ZERO);
+    assertThat(result.getItogoChisloNoTravel())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(BigDecimal.ZERO);
+  }
+
   // --- Records-only test ---
 
   @Test

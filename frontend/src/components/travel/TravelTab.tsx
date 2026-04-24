@@ -6,12 +6,14 @@ import { TravelUpdateSchema } from '../../types/travel'
 import type { TravelUpdate } from '../../types/travel'
 import { useTravel, useUpdateTravel } from '../../hooks/useTravel'
 import { FormTextField } from '../common/FormTextField'
+import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
 
 export function TravelTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useTravel(objectId)
   const updateMutation = useUpdateTravel(objectId)
   const [successOpen, setSuccessOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('Failed to save travel.')
 
   const { control, handleSubmit, reset } = useForm<TravelUpdate>({
     resolver: zodResolver(TravelUpdateSchema),
@@ -36,7 +38,8 @@ export function TravelTab({ objectId }: { objectId: string }) {
     try {
       await updateMutation.mutateAsync(values)
       setSuccessOpen(true)
-    } catch {
+    } catch (err) {
+      setErrorMessage(mapSaveErrorCode(extractErrorCode(err)))
       setErrorOpen(true)
     }
   }
@@ -94,7 +97,7 @@ export function TravelTab({ objectId }: { objectId: string }) {
       </Snackbar>
       <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
         <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          Failed to save travel.
+          {errorMessage}
         </Alert>
       </Snackbar>
     </Box>

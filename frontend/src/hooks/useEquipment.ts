@@ -10,6 +10,8 @@ import {
   updateDevice,
 } from '../api/equipment'
 import type { AssignmentCreate, AssignmentUpdate, DeviceAdd } from '../types/equipment'
+import { SUMMARY_QUERY_KEY } from './useSummary'
+import { SVOD_QUERY_KEY } from './useSvod'
 
 export function useDevices(objectId: string | undefined) {
   return useQuery({
@@ -26,6 +28,8 @@ export function useAddDevice(objectId: string) {
     mutationFn: (data: DeviceAdd) => addDevice(objectId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'devices'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }
@@ -38,6 +42,8 @@ export function useUpdateDevice(objectId: string) {
       updateDevice(objectId, deviceTypeId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'devices'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }
@@ -50,6 +56,8 @@ export function useRemoveDevice(objectId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'devices'] })
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }
@@ -69,6 +77,8 @@ export function useAddAssignment(objectId: string) {
     mutationFn: (data: AssignmentCreate) => addAssignment(objectId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }
@@ -81,6 +91,8 @@ export function useUpdateAssignment(objectId: string) {
       updateAssignment(objectId, assignmentId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }
@@ -92,6 +104,8 @@ export function useRemoveAssignment(objectId: string) {
     mutationFn: (assignmentId: string) => removeAssignment(objectId, assignmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['objects', objectId, 'assignments'] })
+      void queryClient.invalidateQueries({ queryKey: [SUMMARY_QUERY_KEY, objectId] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }

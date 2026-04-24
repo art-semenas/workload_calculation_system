@@ -1,22 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from '../pages/DashboardPage'
 
-const mockUseDivisions = vi.fn()
-
-vi.mock('../hooks/useDivisions', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
-  useDivisions: (...args: unknown[]) => mockUseDivisions(...args),
+vi.mock('../hooks/useAggregations', () => ({
+  useDivisionsAggregation: vi.fn(),
+  useCoverageGaps: vi.fn(),
 }))
 
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
-  return { ...actual, useNavigate: () => mockNavigate }
-})
+vi.mock('../hooks/useSvod', () => ({
+  useSvod: vi.fn(),
+}))
+
+import { useDivisionsAggregation, useCoverageGaps } from '../hooks/useAggregations'
+import { useSvod } from '../hooks/useSvod'
+
+const mockDivisions = vi.mocked(useDivisionsAggregation)
+const mockGaps = vi.mocked(useCoverageGaps)
+const mockSvod = vi.mocked(useSvod)
 
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -30,66 +32,90 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockUseDivisions.mockReturnValue({
-      data: [],
-      isLoading: false,
-    })
-  })
-
-  it('renders welcome heading', async () => {
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Dashboard')
-    })
-  })
-
-  it('renders division summary table', async () => {
-    mockUseDivisions.mockReturnValue({
+  it('renders FTE by division section', async () => {
+    mockDivisions.mockReturnValue({
       data: [
-        { id: 'div-1', name: 'Division Alpha', branchCount: 2, objectCount: 10 },
-        { id: 'div-2', name: 'Division Beta', branchCount: 1, objectCount: 5 },
+        {
+          divisionId: '1',
+          divisionName: 'Brest',
+          requiredFte: 12.5,
+          objectCount: 245,
+          coverageGapCount: 12,
+        },
       ],
       isLoading: false,
-    })
-
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByText('Division Alpha')).toBeInTheDocument()
-      expect(screen.getByText('Division Beta')).toBeInTheDocument()
-    })
-  })
-
-  it('shows placeholder for M-02 aggregation data', async () => {
-    renderPage()
-
-    await waitFor(() => {
-      expect(screen.getByText('Data will be available after M-02')).toBeInTheDocument()
-    })
-  })
-
-  it('navigates to division detail on row click', async () => {
-    mockUseDivisions.mockReturnValue({
-      data: [{ id: 'div-1', name: 'Division Alpha', branchCount: 2, objectCount: 10 }],
+    } as ReturnType<typeof useDivisionsAggregation>)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
       isLoading: false,
-    })
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
     renderPage()
-
-    const row = await screen.findByText('Division Alpha')
-    await userEvent.click(row)
-
-    expect(mockNavigate).toHaveBeenCalledWith('/divisions/div-1')
+    await waitFor(() => {
+      expect(screen.getByText('Brest')).toBeInTheDocument()
+      expect(screen.getByText('12.5000')).toBeInTheDocument()
+    })
   })
 
-  it('shows placeholder for M-03 data', async () => {
-    renderPage()
+  it('renders "No uncovered objects" when no coverage gaps', async () => {
+    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
+      typeof useDivisionsAggregation
+    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
+    renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Data will be available after M-03')).toBeInTheDocument()
+      expect(screen.getByText('No uncovered objects')).toBeInTheDocument()
+    })
+  })
+
+  it('renders top 10 objects section', async () => {
+    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
+      typeof useDivisionsAggregation
+    >)
+    mockSvod.mockReturnValue({
+      data: {
+        content: [
+          {
+            objectId: 'obj-1',
+            objectName: 'CBU Brest',
+            divisionName: 'Brest',
+            branchName: 'Branch 1',
+            itogoChisloWithTravel: 0.064,
+            engineers: [],
+            osMonthlyAvg: 0,
+            psMonthlyAvg: 0,
+            videoMonthlyAvg: 0,
+            recordsMonthly: 0,
+            repairNoTravelMonthly: 0,
+            repairWithTravelMonthly: 0,
+            roundTripMin: 0,
+            pzvMinutes: 0,
+            totalNoTravelMin: 0,
+            itogoChisloNoTravel: 0,
+            totalWithTravelMin: 0,
+            r1PerVisitTotal: 0,
+            r2PerVisitTotal: 0,
+            computedAt: null,
+          },
+        ],
+        totalElements: 1,
+        totalPages: 1,
+        number: 0,
+        size: 10,
+      },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
+
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('CBU Brest')).toBeInTheDocument()
     })
   })
 })

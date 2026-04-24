@@ -18,7 +18,7 @@ const navItems = [
   { label: 'Dashboard', path: '/' },
   { label: 'Objects', path: '/objects' },
   { label: 'Engineers', path: '/engineers', disabled: true },
-  { label: 'Summary', path: '/svod', disabled: true },
+  { label: 'Summary', path: '/svod' },
   { label: 'Divisions', path: '/divisions' },
 ]
 

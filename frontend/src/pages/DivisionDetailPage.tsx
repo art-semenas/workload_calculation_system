@@ -2,6 +2,8 @@ import { useState } from 'react'
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -20,7 +22,7 @@ import {
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import {
   useCreateBranch,
@@ -28,6 +30,7 @@ import {
   useDivisionBranches,
   useUpdateDivision,
 } from '../hooks/useDivisions'
+import { useDivisionAggregation, useCoverageGaps } from '../hooks/useAggregations'
 import {
   BranchCreateSchema,
   DivisionCreateSchema,
@@ -41,10 +44,13 @@ export default function DivisionDetailPage() {
   const [editingName, setEditingName] = useState(false)
   const [openBranchDialog, setOpenBranchDialog] = useState(false)
 
-  const { data: division, isLoading } = useDivision(id || '')
-  const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id || '')
+  const { data: division, isLoading } = useDivision(id ?? '')
+  const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id ?? '')
   const updateDivision = useUpdateDivision()
-  const createBranch = useCreateBranch(id || '')
+  const createBranch = useCreateBranch(id ?? '')
+
+  const { data: divAgg } = useDivisionAggregation(id ?? '')
+  const { data: gaps } = useCoverageGaps(id)
 
   const nameForm = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
@@ -104,7 +110,7 @@ export default function DivisionDetailPage() {
     <Box>
       {/* Breadcrumb */}
       <Box sx={{ mb: 2 }}>
-        <Link href="/divisions" underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
+        <Link component={RouterLink} to="/divisions" underline="hover" sx={{ mr: 1 }}>
           Divisions
         </Link>
         <Typography component="span" sx={{ mr: 1 }}>
@@ -147,6 +153,37 @@ export default function DivisionDetailPage() {
         )}
       </Box>
 
+      {/* PoC: no error state for divAgg — card simply absent on error/loading */}
+      {divAgg !== undefined && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Division Summary
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 4 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Total FTE
+                </Typography>
+                <Typography variant="body1">{divAgg.requiredFte.toFixed(4)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Objects
+                </Typography>
+                <Typography variant="body1">{divAgg.objectCount}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Coverage Gaps
+                </Typography>
+                <Typography variant="body1">{divAgg.coverageGapCount}</Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Add Branch Button */}
       <Box sx={{ mb: 3 }}>
         <Button variant="contained" onClick={() => setOpenBranchDialog(true)}>
@@ -181,6 +218,33 @@ export default function DivisionDetailPage() {
         </Paper>
       ) : (
         <Typography color="text.secondary">No branches</Typography>
+      )}
+
+      {/* Coverage Gaps Section */}
+      {gaps !== undefined && gaps.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Objects without an assigned engineer
+          </Typography>
+          <Paper>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Object</TableCell>
+                  <TableCell>Load</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {gaps.map((gap) => (
+                  <TableRow key={gap.objectId}>
+                    <TableCell>{gap.objectName}</TableCell>
+                    <TableCell>{gap.itogoChisloWithTravel.toFixed(6)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Box>
       )}
 
       {/* Create Branch Dialog */}

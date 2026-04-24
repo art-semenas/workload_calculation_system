@@ -113,7 +113,7 @@ public class CalculationService {
             .add(psMonthlyAvg)
             .add(videoMonthlyAvg)
             .add(recordsMonthly)
-            .add(repairResult.repairWithTravelMonthly());
+            .add(repairResult.repairNoTravelMonthly());
 
     BigDecimal totalNoTravelMin =
         pzv.add(roundTripMin)

@@ -20,6 +20,7 @@ import { useRepairs, useUpdateRepair } from '../../hooks/useRepairs'
 import { RepairUpdateSchema, type RepairUpdate } from '../../types/repairs'
 import type { RepairType } from '../../types/catalog'
 import type { ObjectRepair } from '../../types/repairs'
+import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
 import { useState } from 'react'
 
 function getCount(repairs: ObjectRepair[], repairTypeId: string): number {
@@ -37,7 +38,7 @@ function RepairRow({
   initialCount: number
   objectId: string
   onSaveSuccess: () => void
-  onSaveError: () => void
+  onSaveError: (message: string) => void
 }) {
   const updateMutation = useUpdateRepair(objectId)
 
@@ -59,8 +60,8 @@ function RepairRow({
     try {
       await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: data.count } })
       onSaveSuccess()
-    } catch {
-      onSaveError()
+    } catch (err) {
+      onSaveError(mapSaveErrorCode(extractErrorCode(err)))
     }
   })
 
@@ -100,6 +101,7 @@ export function RepairsTab({ objectId }: { objectId: string }) {
   const { data: repairs, isLoading: repairsLoading } = useRepairs(objectId)
   const [successOpen, setSuccessOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('Failed to save repairs.')
 
   if (catalogLoading || repairsLoading) {
     return (
@@ -133,7 +135,10 @@ export function RepairsTab({ objectId }: { objectId: string }) {
               initialCount={getCount(repairList, repairType.id)}
               objectId={objectId}
               onSaveSuccess={() => setSuccessOpen(true)}
-              onSaveError={() => setErrorOpen(true)}
+              onSaveError={(msg) => {
+                setErrorMessage(msg)
+                setErrorOpen(true)
+              }}
             />
           ))}
         </TableBody>
@@ -145,7 +150,7 @@ export function RepairsTab({ objectId }: { objectId: string }) {
       </Snackbar>
       <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
         <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          Failed to save repairs.
+          {errorMessage}
         </Alert>
       </Snackbar>
     </Box>

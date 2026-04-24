@@ -322,3 +322,76 @@ export async function getAssignmentsSnapshot(
     )) ?? []
   )
 }
+
+// ---- M-02 types and helpers ----
+
+export interface SvodRow {
+  object_id: string
+  object_name: string
+  division_name: string
+  branch_name: string
+  itogo_chislo_with_travel: number
+  computed_at: string | null
+}
+
+export interface SvodPage {
+  content: SvodRow[]
+  total_elements: number
+  total_pages: number
+  page: number
+  size: number
+}
+
+export interface DivisionAggregation {
+  division_id: string
+  division_name: string
+  total_fte: number
+  object_count: number
+  gap_count: number
+}
+
+export async function fetchDivisionsAggregation(
+  request: APIRequestContext,
+  token?: string
+): Promise<DivisionAggregation[]> {
+  const adminToken = token ?? (await fetchAdminToken(request))
+  return (await getWithAuth<DivisionAggregation[]>(request, adminToken, '/api/v1/aggregations/divisions')) ?? []
+}
+
+export async function fetchSvodPage(
+  request: APIRequestContext,
+  token?: string,
+  page = 0,
+  size = 100
+): Promise<SvodPage | null> {
+  const adminToken = token ?? (await fetchAdminToken(request))
+  const response = await request.get('/api/v1/svod', {
+    headers: { Authorization: `Bearer ${adminToken}` },
+    params: { page, size },
+  })
+  const json = (await response.json()) as ApiEnvelope<SvodPage>
+  return json.data
+}
+
+/** Returns the object_id for the PAC-01 reference object (itogo ≈ 0.032327 or name contains "Архив"). */
+export async function fetchReferenceObjectId(
+  request: APIRequestContext,
+  token?: string
+): Promise<string | null> {
+  const adminToken = token ?? (await fetchAdminToken(request))
+  const data = await fetchSvodPage(request, adminToken)
+  if (!data) return null
+
+  const byName = data.content.find(
+    (row) =>
+      row.object_name.includes('Архив') ||
+      row.object_name.includes('Московская') ||
+      row.object_name.toLowerCase().includes('202д')
+  )
+  if (byName) return byName.object_id
+
+  const byValue = data.content.find(
+    (row) => Math.abs(row.itogo_chislo_with_travel - 0.032327) < 0.000001
+  )
+  return byValue?.object_id ?? null
+}

@@ -6,12 +6,14 @@ import { RecordsUpdateSchema } from '../../types/records'
 import type { RecordsUpdate } from '../../types/records'
 import { useRecords, useUpdateRecords } from '../../hooks/useRecords'
 import { FormTextField } from '../common/FormTextField'
+import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
 
 export function RecordsTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useRecords(objectId)
   const updateMutation = useUpdateRecords(objectId)
   const [successOpen, setSuccessOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('Failed to save records.')
 
   const { control, handleSubmit, reset } = useForm<RecordsUpdate>({
     resolver: zodResolver(RecordsUpdateSchema),
@@ -40,7 +42,8 @@ export function RecordsTab({ objectId }: { objectId: string }) {
     try {
       await updateMutation.mutateAsync(values)
       setSuccessOpen(true)
-    } catch {
+    } catch (err) {
+      setErrorMessage(mapSaveErrorCode(extractErrorCode(err)))
       setErrorOpen(true)
     }
   }
@@ -110,7 +113,7 @@ export function RecordsTab({ objectId }: { objectId: string }) {
       </Snackbar>
       <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
         <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          Failed to save records.
+          {errorMessage}
         </Alert>
       </Snackbar>
     </Box>

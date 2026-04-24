@@ -64,8 +64,9 @@ test.describe('PoC M-01 direct route smoke', () => {
     await page.getByRole('tab', { name: 'Engineers' }).click()
     await expect(page.getByText('Available in M-03')).toBeVisible()
 
+    // M-02 is now implemented — Summary tab no longer shows a placeholder
     await page.getByRole('tab', { name: 'Summary' }).click()
-    await expect(page.getByText('Available in M-02')).toBeVisible()
+    await expect(page.getByText('Available in M-02')).not.toBeVisible()
 
     await page.getByRole('button', { name: 'Delete object' }).click()
     await expect(page.getByText(/will also delete all related equipment, records, repairs, and travel data/i)).toBeVisible()
