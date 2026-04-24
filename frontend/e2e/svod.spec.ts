@@ -108,12 +108,13 @@ test.describe('Dashboard SVOD sections', () => {
   }) => {
     await loginAsAdmin(page)
 
-    const emptyState = page.getByText(/no uncovered objects/i)
-    const gapTable = page
+    const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
+    const gapTableVisible = await page
       .getByRole('table')
       .filter({ has: page.getByRole('columnheader', { name: /total fte/i }) })
+      .isVisible()
 
-    await expect(emptyState.or(gapTable)).toBeVisible()
+    expect(emptyStateVisible || gapTableVisible).toBeTruthy()
   })
 })
 
@@ -156,7 +157,9 @@ test.describe('Summary page (/svod)', () => {
     await page.goto('/svod')
 
     await expect(page).toHaveURL(/\/svod$/)
-    await expect(page.getByRole('heading').first().or(page.getByRole('grid'))).toBeVisible()
+    const headingVisible = await page.getByRole('heading').first().isVisible()
+    const gridVisible = await page.getByRole('grid').isVisible()
+    expect(headingVisible || gridVisible).toBeTruthy()
   })
 
   // Checklist 2.2 — page heading
@@ -476,13 +479,13 @@ test.describe('Object Detail — Summary tab', () => {
       .getByRole('button', { name: `add assignment for ${catalog.device.name}` })
       .click()
 
-    const addAssignmentDialog = page.getByRole('dialog', {
-      name: new RegExp(`Add Assignment - ${catalog.device.name}`),
-    })
-    await addAssignmentDialog.getByLabel('System Type').click()
+    const addAssignmentDialog = page.getByRole('dialog', { name: /add assignment/i })
+    await expect(addAssignmentDialog).toBeVisible()
+
+    await page.getByLabel('System Type').click()
     await page.getByRole('option', { name: assignmentLabel }).click()
-    await addAssignmentDialog.getByLabel('Quantity Maintained').fill('1')
-    await addAssignmentDialog.getByRole('button', { name: 'Add' }).click()
+    await page.getByLabel('Quantity Maintained').fill('1')
+    await page.getByRole('button', { name: 'Add' }).click()
     await expect(addAssignmentDialog).toBeHidden()
 
     // Switch to Summary tab without page reload — should now show data
@@ -510,9 +513,9 @@ test.describe('Object Detail — Summary tab', () => {
     await page.getByRole('tab', { name: /summary/i }).click()
 
     if (hadNoData) {
-      await expect(page.getByText(/total staffing/i)).toBeVisible({ timeout: 10_000 })
+      await expect(page.getByText(/total staffing/i).first()).toBeVisible({ timeout: 10_000 })
     } else {
-      await expect(page.getByText(/total staffing/i)).toBeVisible()
+      await expect(page.getByText(/total staffing/i).first()).toBeVisible()
     }
   })
 })

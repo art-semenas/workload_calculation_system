@@ -62,7 +62,8 @@ test.describe('PoC M-01 smoke', () => {
     await expect(page.getByText('Engineers').first()).toBeVisible()
     await expect(page.getByText('Summary').first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'FTE by Division' })).toBeVisible()
-    await expect(page.getByText('Data will be available after M-02')).toBeVisible()
+    // M-02 placeholder is gone (now implemented); M-03 placeholder still present
+    await expect(page.getByText('Data will be available after M-02')).not.toBeVisible()
     await expect(page.getByText('Data will be available after M-03')).toBeVisible()
   })
 
