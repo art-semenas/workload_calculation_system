@@ -11,7 +11,7 @@
 
 **Acceptance Criteria Covered:**
 
-- **PAC-06:** Engineer detail page shows correct `load_ratio` and `status` matching backend `engineer_summaries`
+- **PAC-06:** Engineer detail page shows correct `loadRatio` and `status` matching backend `engineer_summaries`
 - **PAC-07:** Assigning/removing an engineer on the Object Detail Engineers tab updates engineer summaries without page refresh (TanStack Query invalidation)
 - **PAC-09:** PoC full flow smoke check — Dashboard → Create Object → Add Equipment → Assign Engineer → Engineer Detail shows correct load
 
@@ -42,6 +42,7 @@ Before implementing any task below, use these rules whenever documents disagree:
 - No inline styles — use MUI `sx` prop or theme.
 - No business logic or calculations in frontend code — all computed values come from the API (TOR AD-07).
 - PoC simplifications to respect: no stale banners (S-02), no RBAC enforcement (S-04), no planning periods (S-05).
+- **All TypeScript types, Zod schemas, and API response field names use camelCase** — matching the backend Jackson serialization and the existing M-01/M-02 types in `src/types/`. Never use snake_case field names in TypeScript interfaces or Zod schemas. Query parameters sent to the API also use camelCase (e.g., `?homeDivisionId=xxx`, not `?home_division_id=xxx`).
 
 ---
 
@@ -104,6 +105,27 @@ Expected: no unexpected modified frontend files.
 
 ---
 
+## Task 0.5: Pre-condition — Ensure camelCase field names and missing schema fields
+
+Before implementing Task 1, confirm the following requirements are built into the type file. These fix two pre-condition bugs identified in the design handoff plan:
+
+### Bug 1 (backend — tracked in M-03 backend plan Task 2, mapper spec)
+The backend `EngineerMapper` must emit uppercase status (`"NORMAL"`, `"WARNING"`, `"OVERLOADED"`). This is handled in the backend plan Task 2. The frontend Zod enum `z.enum(["NORMAL", "WARNING", "OVERLOADED"])` is correct as-is.
+
+### Bug 2 — Missing fields in Zod schemas
+The following fields must be present in the schemas created in Task 1. They are required by the design and by `ObjectEngineerRowSchema` consumers:
+
+| Missing field | Schema | Required for |
+|---|---|---|
+| `employeeId: z.string().nullable().optional()` | `EngineerSchema` | engineer detail header |
+| `assignedAt: z.string().optional()` | `ObjectEngineerRowSchema` | assignment timestamps |
+| `totalLoad: z.number().optional()` | `ObjectEngineerRowSchema` | load display |
+| `capacityFte: z.number().optional()` | `ObjectEngineerRowSchema` | capacity bar |
+
+These fields are incorporated into the type file code in Task 1 Step 3 below.
+
+---
+
 ## Task 1: M-03 TypeScript types and Zod schemas
 
 **Files:**
@@ -134,13 +156,13 @@ describe("M-03 Zod schemas", () => {
       name: "Ivanov Petr Sergeevich",
       email: "ivanov@workload.local",
       role: "engineer",
-      home_division_id: "660e8400-e29b-41d4-a716-446655440000",
-      home_division_name: "Brest No. 100",
-      capacity_fte: 1.0,
-      is_active: true,
-      object_count: 47,
-      total_load: 0.92,
-      load_ratio: 0.92,
+      homeDivisionId: "660e8400-e29b-41d4-a716-446655440000",
+      homeDivisionName: "Brest No. 100",
+      capacityFte: 1.0,
+      isActive: true,
+      objectCount: 47,
+      totalLoad: 0.92,
+      loadRatio: 0.92,
       status: "WARNING",
     };
     const result = EngineerSchema.parse(raw);
@@ -154,13 +176,13 @@ describe("M-03 Zod schemas", () => {
       name: "Test",
       email: "test@test.com",
       role: "engineer",
-      home_division_id: "660e8400-e29b-41d4-a716-446655440000",
-      home_division_name: "Test",
-      capacity_fte: 1.0,
-      is_active: true,
-      object_count: 0,
-      total_load: 0,
-      load_ratio: 0,
+      homeDivisionId: "660e8400-e29b-41d4-a716-446655440000",
+      homeDivisionName: "Test",
+      capacityFte: 1.0,
+      isActive: true,
+      objectCount: 0,
+      totalLoad: 0,
+      loadRatio: 0,
       status: "INVALID",
     };
     const result = EngineerSchema.safeParse(raw);
@@ -169,81 +191,81 @@ describe("M-03 Zod schemas", () => {
 
   it("EngineerSummarySchema parses full breakdown", () => {
     const raw = {
-      engineer_id: "550e8400-e29b-41d4-a716-446655440000",
-      total_load: 0.921,
-      object_count: 47,
-      os_load: 0.41,
-      ps_load: 0.27,
-      video_load: 0.09,
-      records_load: 0.05,
-      repair_load: 0.1,
-      capacity_fte: 1.0,
-      load_ratio: 0.921,
+      engineerId: "550e8400-e29b-41d4-a716-446655440000",
+      totalLoad: 0.921,
+      objectCount: 47,
+      osLoad: 0.41,
+      psLoad: 0.27,
+      videoLoad: 0.09,
+      recordsLoad: 0.05,
+      repairLoad: 0.1,
+      capacityFte: 1.0,
+      loadRatio: 0.921,
       status: "WARNING",
     };
     const result = EngineerSummarySchema.parse(raw);
-    expect(result.total_load).toBeCloseTo(0.921);
-    expect(result.os_load).toBeCloseTo(0.41);
+    expect(result.totalLoad).toBeCloseTo(0.921);
+    expect(result.osLoad).toBeCloseTo(0.41);
   });
 
   it("EngineerShareSchema parses per-object share", () => {
     const raw = {
-      object_id: "550e8400-e29b-41d4-a716-446655440000",
-      object_name: "CBU Brest, Lenina St., 10",
-      division_name: "Brest",
-      branch_name: "Branch 1",
-      engineer_share: 0.032,
-      itogo_chislo_with_travel: 0.064,
-      engineer_count: 2,
+      objectId: "550e8400-e29b-41d4-a716-446655440000",
+      objectName: "CBU Brest, Lenina St., 10",
+      divisionName: "Brest",
+      branchName: "Branch 1",
+      engineerShare: 0.032,
+      itogoChisloWithTravel: 0.064,
+      engineerCount: 2,
     };
     const result = EngineerShareSchema.parse(raw);
-    expect(result.engineer_share).toBeCloseTo(0.032);
-    expect(result.engineer_count).toBe(2);
+    expect(result.engineerShare).toBeCloseTo(0.032);
+    expect(result.engineerCount).toBe(2);
   });
 
   it("ObjectEngineerRowSchema parses an engineer assigned to an object", () => {
     const raw = {
-      engineer_id: "550e8400-e29b-41d4-a716-446655440000",
-      engineer_name: "Ivanov Petr Sergeevich",
-      object_share: 0.0161,
-      load_ratio: 0.82,
+      engineerId: "550e8400-e29b-41d4-a716-446655440000",
+      engineerName: "Ivanov Petr Sergeevich",
+      objectShare: 0.0161,
+      loadRatio: 0.82,
       status: "NORMAL",
     };
     const result = ObjectEngineerRowSchema.parse(raw);
-    expect(result.object_share).toBeCloseTo(0.0161);
+    expect(result.objectShare).toBeCloseTo(0.0161);
   });
 
   it("EngineerCreateSchema validates required fields", () => {
     const valid = EngineerCreateSchema.safeParse({
       name: "New Engineer",
       email: "new@workload.local",
-      capacity_fte: 1.0,
-      home_division_id: "550e8400-e29b-41d4-a716-446655440000",
+      capacityFte: 1.0,
+      homeDivisionId: "550e8400-e29b-41d4-a716-446655440000",
     });
     expect(valid.success).toBe(true);
 
     const noEmail = EngineerCreateSchema.safeParse({
       name: "New Engineer",
       email: "",
-      capacity_fte: 1.0,
-      home_division_id: "550e8400-e29b-41d4-a716-446655440000",
+      capacityFte: 1.0,
+      homeDivisionId: "550e8400-e29b-41d4-a716-446655440000",
     });
     expect(noEmail.success).toBe(false);
   });
 
-  it("EngineerCreateSchema rejects capacity_fte <= 0", () => {
+  it("EngineerCreateSchema rejects capacityFte <= 0", () => {
     const result = EngineerCreateSchema.safeParse({
       name: "Test",
       email: "test@test.com",
-      capacity_fte: 0,
-      home_division_id: "550e8400-e29b-41d4-a716-446655440000",
+      capacityFte: 0,
+      homeDivisionId: "550e8400-e29b-41d4-a716-446655440000",
     });
     expect(result.success).toBe(false);
   });
 
   it("EngineerUpdateSchema accepts partial update", () => {
     const result = EngineerUpdateSchema.safeParse({
-      capacity_fte: 0.5,
+      capacityFte: 0.5,
     });
     expect(result.success).toBe(true);
   });
@@ -265,7 +287,7 @@ Create `frontend/src/types/engineer.ts`:
 ```typescript
 import { z } from "zod";
 
-// --- Engineer status enum (matches backend EngineerSummary.status) ---
+// --- Engineer status enum (matches backend EngineerSummary.status — uppercase from mapper) ---
 
 export const EngineerStatusEnum = z.enum(["NORMAL", "WARNING", "OVERLOADED"]);
 export type EngineerStatus = z.infer<typeof EngineerStatusEnum>;
@@ -277,54 +299,61 @@ export const EngineerSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   role: z.string(),
-  home_division_id: z.string().uuid().nullable(),
-  home_division_name: z.string().nullable().optional(),
-  capacity_fte: z.number(),
-  is_active: z.boolean(),
-  object_count: z.number().int(),
-  total_load: z.number(),
-  load_ratio: z.number(),
+  homeDivisionId: z.string().uuid().nullable(),
+  homeDivisionName: z.string().nullable().optional(),
+  capacityFte: z.number(),
+  isActive: z.boolean(),
+  employeeId: z.string().nullable().optional(),
+  objectCount: z.number().int(),
+  totalLoad: z.number(),
+  loadRatio: z.number(),
   status: EngineerStatusEnum,
+  createdAt: z.string().optional(),
 });
 export type Engineer = z.infer<typeof EngineerSchema>;
 
 // --- Engineer summary (GET /engineers/:id/summary) ---
 
 export const EngineerSummarySchema = z.object({
-  engineer_id: z.string().uuid(),
-  total_load: z.number(),
-  object_count: z.number().int(),
-  os_load: z.number(),
-  ps_load: z.number(),
-  video_load: z.number(),
-  records_load: z.number(),
-  repair_load: z.number(),
-  capacity_fte: z.number(),
-  load_ratio: z.number(),
+  engineerId: z.string().uuid(),
+  totalLoad: z.number(),
+  objectCount: z.number().int(),
+  osLoad: z.number(),
+  psLoad: z.number(),
+  videoLoad: z.number(),
+  recordsLoad: z.number(),
+  repairLoad: z.number(),
+  capacityFte: z.number(),
+  loadRatio: z.number(),
   status: EngineerStatusEnum,
+  computedAt: z.string().nullable().optional(),
 });
 export type EngineerSummary = z.infer<typeof EngineerSummarySchema>;
 
 // --- Engineer share per object (GET /engineers/:id/objects) ---
 
 export const EngineerShareSchema = z.object({
-  object_id: z.string().uuid(),
-  object_name: z.string(),
-  division_name: z.string().optional(),
-  branch_name: z.string().optional(),
-  engineer_share: z.number(),
-  itogo_chislo_with_travel: z.number(),
-  engineer_count: z.number().int(),
+  objectId: z.string().uuid(),
+  objectName: z.string(),
+  divisionName: z.string().optional(),
+  branchName: z.string().optional(),
+  engineerShare: z.number(),
+  itogoChisloWithTravel: z.number(),
+  engineerCount: z.number().int(),
+  assignedAt: z.string().optional(),
 });
 export type EngineerShare = z.infer<typeof EngineerShareSchema>;
 
 // --- Object engineer row (GET /objects/:id/engineers — engineer assigned to an object) ---
 
 export const ObjectEngineerRowSchema = z.object({
-  engineer_id: z.string().uuid(),
-  engineer_name: z.string(),
-  object_share: z.number(),
-  load_ratio: z.number(),
+  engineerId: z.string().uuid(),
+  engineerName: z.string(),
+  objectShare: z.number(),
+  loadRatio: z.number(),
+  totalLoad: z.number().optional(),
+  capacityFte: z.number().optional(),
+  assignedAt: z.string().optional(),
   status: EngineerStatusEnum,
 });
 export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>;
@@ -334,8 +363,8 @@ export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>;
 export const EngineerCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-  capacity_fte: z.number().positive("Capacity must be > 0"),
-  home_division_id: z.string().uuid("Select a division"),
+  capacityFte: z.number().positive("Capacity must be > 0"),
+  homeDivisionId: z.string().uuid("Select a division"),
 });
 export type EngineerCreateRequest = z.infer<typeof EngineerCreateSchema>;
 
@@ -343,8 +372,8 @@ export type EngineerCreateRequest = z.infer<typeof EngineerCreateSchema>;
 
 export const EngineerUpdateSchema = z.object({
   name: z.string().min(1).optional(),
-  capacity_fte: z.number().positive().optional(),
-  home_division_id: z.string().uuid().optional(),
+  capacityFte: z.number().positive().optional(),
+  homeDivisionId: z.string().uuid().optional(),
 });
 export type EngineerUpdateRequest = z.infer<typeof EngineerUpdateSchema>;
 ```
@@ -404,9 +433,9 @@ describe("engineers API", () => {
   it("getEngineers calls GET /engineers with optional filters", async () => {
     mockApi.get.mockResolvedValueOnce({ data: { data: [] } });
     const { getEngineers } = await import("../api/engineers");
-    await getEngineers({ status: "WARNING", home_division_id: "div-1" });
+    await getEngineers({ status: "WARNING", homeDivisionId: "div-1" });
     expect(mockApi.get).toHaveBeenCalledWith("/engineers", {
-      params: { status: "WARNING", home_division_id: "div-1" },
+      params: { status: "WARNING", homeDivisionId: "div-1" },
     });
   });
 
@@ -430,8 +459,8 @@ describe("engineers API", () => {
     const payload = {
       name: "Test",
       email: "test@test.com",
-      capacity_fte: 1.0,
-      home_division_id: "div-1",
+      capacityFte: 1.0,
+      homeDivisionId: "div-1",
     };
     await createEngineer(payload);
     expect(mockApi.post).toHaveBeenCalledWith("/engineers", payload);
@@ -440,9 +469,9 @@ describe("engineers API", () => {
   it("updateEngineer calls PUT /engineers/:id", async () => {
     mockApi.put.mockResolvedValueOnce({ data: { data: {} } });
     const { updateEngineer } = await import("../api/engineers");
-    await updateEngineer("eng-1", { capacity_fte: 0.5 });
+    await updateEngineer("eng-1", { capacityFte: 0.5 });
     expect(mockApi.put).toHaveBeenCalledWith("/engineers/eng-1", {
-      capacity_fte: 0.5,
+      capacityFte: 0.5,
     });
   });
 
@@ -472,7 +501,7 @@ describe("engineers API", () => {
     const { assignObjectToEngineer } = await import("../api/engineers");
     await assignObjectToEngineer("eng-1", "obj-1");
     expect(mockApi.post).toHaveBeenCalledWith("/engineers/eng-1/objects", {
-      object_id: "obj-1",
+      objectId: "obj-1",
     });
   });
 
@@ -499,7 +528,7 @@ describe("objectEngineers API", () => {
     const { assignEngineerToObject } = await import("../api/objectEngineers");
     await assignEngineerToObject("obj-1", "eng-1");
     expect(mockApi.post).toHaveBeenCalledWith("/objects/obj-1/engineers", {
-      engineer_id: "eng-1",
+      engineerId: "eng-1",
     });
   });
 
@@ -538,7 +567,7 @@ import type {
 
 interface EngineerFilters {
   status?: string;
-  home_division_id?: string;
+  homeDivisionId?: string;
 }
 
 export async function getEngineers(
@@ -546,8 +575,7 @@ export async function getEngineers(
 ): Promise<Engineer[]> {
   const params: Record<string, string> = {};
   if (filters?.status) params.status = filters.status;
-  if (filters?.home_division_id)
-    params.home_division_id = filters.home_division_id;
+  if (filters?.homeDivisionId) params.homeDivisionId = filters.homeDivisionId;
   const response = await api.get("/engineers", { params });
   return response.data.data as Engineer[];
 }
@@ -590,7 +618,7 @@ export async function assignObjectToEngineer(
   engineerId: string,
   objectId: string,
 ): Promise<void> {
-  await api.post(`/engineers/${engineerId}/objects`, { object_id: objectId });
+  await api.post(`/engineers/${engineerId}/objects`, { objectId });
 }
 
 export async function removeObjectFromEngineer(
@@ -618,7 +646,7 @@ export async function assignEngineerToObject(
   objectId: string,
   engineerId: string,
 ): Promise<void> {
-  await api.post(`/objects/${objectId}/engineers`, { engineer_id: engineerId });
+  await api.post(`/objects/${objectId}/engineers`, { engineerId });
 }
 
 export async function removeEngineerFromObject(
@@ -660,7 +688,7 @@ export const ENGINEER_OBJECTS_QUERY_KEY = "engineer-objects";
 export function useEngineers(status?: string, homeDivisionId?: string) {
   return useQuery({
     queryKey: [ENGINEERS_QUERY_KEY, { status, homeDivisionId }],
-    queryFn: () => getEngineers({ status, home_division_id: homeDivisionId }),
+    queryFn: () => getEngineers({ status, homeDivisionId }),
   });
 }
 
@@ -870,21 +898,21 @@ The Engineer List page is a sortable, filterable table of all engineers with wor
 | #   | Header (Russian) | Field                                | Align  | Format                             |
 | --- | ---------------- | ------------------------------------ | ------ | ---------------------------------- |
 | 1   | Engineer          | `name`                               | left   | text, clickable → `/engineers/:id` |
-| 2   | Division    | `home_division_name`                 | left   | text                               |
-| 3   | Objects         | `object_count`                       | right  | integer                            |
-| 4   | FTE Load     | `total_load`                         | right  | 4 decimal places                   |
-| 5   | Capacity         | `capacity_fte`                       | right  | 2 decimal places                   |
-| 6   | Status           | derived from `load_ratio` + `status` | center | colored MUI `Chip`                 |
+| 2   | Division    | `homeDivisionName`                   | left   | text                               |
+| 3   | Objects         | `objectCount`                        | right  | integer                            |
+| 4   | FTE Load     | `totalLoad`                          | right  | 4 decimal places                   |
+| 5   | Capacity         | `capacityFte`                        | right  | 2 decimal places                   |
+| 6   | Status           | derived from `loadRatio` + `status`  | center | colored MUI `Chip`                 |
 
 **Status chip rendering:**
 
-- `NORMAL` → green chip, label: `"{load_ratio as %}%"` (e.g. "48%"), icon: ✅
-- `WARNING` → amber/yellow chip, label: `"{load_ratio as %}%"` (e.g. "92%"), icon: ⚠
-- `OVERLOADED` → red chip, label: `"{load_ratio as %}%"` (e.g. "108%"), icon: 🔴
+- `NORMAL` → green chip, label: `"{loadRatio as %}%"` (e.g. "48%"), icon: ✅
+- `WARNING` → amber/yellow chip, label: `"{loadRatio as %}%"` (e.g. "92%"), icon: ⚠
+- `OVERLOADED` → red chip, label: `"{loadRatio as %}%"` (e.g. "108%"), icon: 🔴
 
 **Filter bar (above table):**
 
-- Division dropdown — options from `GET /divisions` (existing `useDivisions()` hook); passes `home_division_id` to `useEngineers(status, homeDivisionId)`
+- Division dropdown — options from `GET /divisions` (existing `useDivisions()` hook); passes `homeDivisionId` to `useEngineers(status, homeDivisionId)`
 - Status dropdown — options: "All", "Normal" (`NORMAL`), "Warning" (`WARNING`), "Overloaded" (`OVERLOADED`)
 - Name search — `<TextField>` that filters the client-side list by `name.toLowerCase().includes(query)`
 
@@ -965,13 +993,13 @@ describe('EngineerListPage', () => {
           name: 'Ivanov Petr',
           email: 'ivanov@test.com',
           role: 'engineer',
-          home_division_id: 'div-1',
-          home_division_name: 'Brest',
-          capacity_fte: 1.0,
-          is_active: true,
-          object_count: 47,
-          total_load: 0.92,
-          load_ratio: 0.92,
+          homeDivisionId: 'div-1',
+          homeDivisionName: 'Brest',
+          capacityFte: 1.0,
+          isActive: true,
+          objectCount: 47,
+          totalLoad: 0.92,
+          loadRatio: 0.92,
           status: 'WARNING' as const,
         },
         {
@@ -979,13 +1007,13 @@ describe('EngineerListPage', () => {
           name: 'Sidorova Anna',
           email: 'sidorova@test.com',
           role: 'engineer',
-          home_division_id: 'div-1',
-          home_division_name: 'Brest',
-          capacity_fte: 1.0,
-          is_active: true,
-          object_count: 31,
-          total_load: 1.08,
-          load_ratio: 1.08,
+          homeDivisionId: 'div-1',
+          homeDivisionName: 'Brest',
+          capacityFte: 1.0,
+          isActive: true,
+          objectCount: 31,
+          totalLoad: 1.08,
+          loadRatio: 1.08,
           status: 'OVERLOADED' as const,
         },
       ],
@@ -1026,15 +1054,15 @@ describe('EngineerListPage', () => {
       data: [
         {
           id: 'eng-1', name: 'Ivanov Petr', email: 'i@t.com', role: 'engineer',
-          home_division_id: 'div-1', home_division_name: 'Brest',
-          capacity_fte: 1.0, is_active: true, object_count: 10,
-          total_load: 0.5, load_ratio: 0.5, status: 'NORMAL' as const,
+          homeDivisionId: 'div-1', homeDivisionName: 'Brest',
+          capacityFte: 1.0, isActive: true, objectCount: 10,
+          totalLoad: 0.5, loadRatio: 0.5, status: 'NORMAL' as const,
         },
         {
           id: 'eng-2', name: 'Kozlov Dmitry', email: 'k@t.com', role: 'engineer',
-          home_division_id: 'div-1', home_division_name: 'Brest',
-          capacity_fte: 0.5, is_active: true, object_count: 5,
-          total_load: 0.24, load_ratio: 0.48, status: 'NORMAL' as const,
+          homeDivisionId: 'div-1', homeDivisionName: 'Brest',
+          capacityFte: 0.5, isActive: true, objectCount: 5,
+          totalLoad: 0.24, loadRatio: 0.48, status: 'NORMAL' as const,
         },
       ],
       isLoading: false,
@@ -1077,10 +1105,10 @@ Replace `frontend/src/pages/EngineerListPage.tsx`.
 - MUI `<Table>` (or `<DataGrid>`) with 6 columns as specified above
 - Status column renders a `<Chip>` with:
   - `color="success"` for NORMAL, `color="warning"` for WARNING, `color="error"` for OVERLOADED
-  - Label: `Math.round(load_ratio * 100) + '%'`
+  - Label: `Math.round(loadRatio * 100) + '%'`
 - Name column: clickable via `useNavigate()` → `/engineers/${engineer.id}`
 - "Create engineer" button → opens `<Dialog>` with React Hook Form + Zod:
-  - Form fields: name (`<TextField>`), email (`<TextField>`), capacity_fte (`<TextField type="number">`), home_division_id (`<Select>`)
+  - Form fields: name (`<TextField>`), email (`<TextField>`), capacityFte (`<TextField type="number">`), homeDivisionId (`<Select>`)
   - Resolver: `zodResolver(EngineerCreateSchema)`
   - Submit calls `useCreateEngineer().mutateAsync(data)`
   - On error 409 `ENGINEER_HAS_ACTIVE_ASSIGNMENTS`: irrelevant here (creation never hits this)
@@ -1134,42 +1162,42 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
 
 | Card | Label    | Value          | Format                                                 |
 | ---- | -------- | -------------- | ------------------------------------------------------ |
-| 1    | Load | `total_load`   | `{value} FTE`, 3 decimal places                        |
-| 2    | Capacity | `capacity_fte` | `{value} FTE`, 1 decimal place                         |
-| 3    | Utilization | `load_ratio`   | `{value * 100}%`, colored (green/amber/red per status) |
-| 4    | Objects | `object_count` | integer                                                |
+| 1    | Load | `totalLoad`   | `{value} FTE`, 3 decimal places                        |
+| 2    | Capacity | `capacityFte` | `{value} FTE`, 1 decimal place                         |
+| 3    | Utilization | `loadRatio`   | `{value * 100}%`, colored (green/amber/red per status) |
+| 4    | Objects | `objectCount` | integer                                                |
 
 **Section 2 — System breakdown chart (`SystemBreakdownChart.tsx`):**
 
 - Five horizontal bars using MUI `LinearProgress` (or a simple `Box` with proportional widths)
-- Data from `useEngineerSummary(id)`: `os_load`, `ps_load`, `video_load`, `records_load`, `repair_load`
+- Data from `useEngineerSummary(id)`: `osLoad`, `psLoad`, `videoLoad`, `recordsLoad`, `repairLoad`
 
 | System | Label              | Value                                | Color  |
 | ------ | ------------------ | ------------------------------------ | ------ |
-| Security     | `os_load` FTE      | `(os_load / total_load * 100)%`      | blue   |
-| Fire     | `ps_load` FTE      | `(ps_load / total_load * 100)%`      | orange |
-| Video  | `video_load` FTE   | `(video_load / total_load * 100)%`   | green  |
-| Records | `records_load` FTE | `(records_load / total_load * 100)%` | purple |
-| Repairs | `repair_load` FTE  | `(repair_load / total_load * 100)%`  | red    |
+| Security     | `osLoad` FTE      | `(osLoad / totalLoad * 100)%`      | blue   |
+| Fire     | `psLoad` FTE      | `(psLoad / totalLoad * 100)%`      | orange |
+| Video  | `videoLoad` FTE   | `(videoLoad / totalLoad * 100)%`   | green  |
+| Records | `recordsLoad` FTE | `(recordsLoad / totalLoad * 100)%` | purple |
+| Repairs | `repairLoad` FTE  | `(repairLoad / totalLoad * 100)%`  | red    |
 
 - Each bar row: label (left) + `LinearProgress variant="determinate" value={percentage}` (center) + `{value} FTE ({percentage}%)` (right)
-- If `total_load` is 0, show all bars at 0% with "No load data"
+- If `totalLoad` is 0, show all bars at 0% with "No load data"
 
 **Section 3 — Assigned objects table (`AssignedObjectsTable.tsx`):**
 
 - Data from `useEngineerObjects(id)` → `GET /engineers/:id/objects`
-- Sorted by `engineer_share` descending (default)
+- Sorted by `engineerShare` descending (default)
 
 | #   | Header (Russian) | Field                      | Align  | Format                           |
 | --- | ---------------- | -------------------------- | ------ | -------------------------------- |
-| 1   | Object           | `object_name`              | left   | text, clickable → `/objects/:id` |
-| 2   | Engineer Share    | `engineer_share`           | right  | FTE, 4 decimal places            |
-| 3   | Object Total  | `itogo_chislo_with_travel` | right  | FTE, 6 decimal places            |
-| 4   | Engineer Count      | `engineer_count`           | right  | integer                          |
+| 1   | Object           | `objectName`               | left   | text, clickable → `/objects/:id` |
+| 2   | Engineer Share    | `engineerShare`            | right  | FTE, 4 decimal places            |
+| 3   | Object Total  | `itogoChisloWithTravel`    | right  | FTE, 6 decimal places            |
+| 4   | Engineer Count      | `engineerCount`           | right  | integer                          |
 | 5   | Actions         | —                          | center | "Remove" button                   |
 
 - "Remove" button per row: calls `useRemoveObjectFromEngineer(engineerId).mutateAsync(objectId)`
-- Before removing: show `ConfirmDialog` (from M-01 common components) with message "Remove engineer assignment from object «{object_name}»?"
+- Before removing: show `ConfirmDialog` (from M-01 common components) with message "Remove engineer assignment from object «{objectName}»?"
 
 **Section 4 — Assign object button + dialog (`EngineerAssignDialog.tsx`):**
 
@@ -1184,7 +1212,7 @@ The Engineer Detail page is a personal workload dashboard with four sections (Se
 
 **"Edit" button (top right):**
 
-- Opens inline edit form (or dialog) for: name, capacity_fte, home_division_id
+- Opens inline edit form (or dialog) for: name, capacityFte, homeDivisionId
 - Uses React Hook Form + Zod (`EngineerUpdateSchema`)
 - Submit calls `useUpdateEngineer(id).mutateAsync(data)`
 - On success: refetches engineer data + summary
@@ -1232,48 +1260,48 @@ const mockEngineer = {
   name: 'Ivanov Petr Sergeevich',
   email: 'ivanov@test.com',
   role: 'engineer',
-  home_division_id: 'div-1',
-  home_division_name: 'Brest No. 100',
-  capacity_fte: 1.0,
-  is_active: true,
-  object_count: 47,
-  total_load: 0.921,
-  load_ratio: 0.921,
+  homeDivisionId: 'div-1',
+  homeDivisionName: 'Brest No. 100',
+  capacityFte: 1.0,
+  isActive: true,
+  objectCount: 47,
+  totalLoad: 0.921,
+  loadRatio: 0.921,
   status: 'WARNING' as const,
 }
 
 const mockSummary = {
-  engineer_id: 'eng-1',
-  total_load: 0.921,
-  object_count: 47,
-  os_load: 0.41,
-  ps_load: 0.27,
-  video_load: 0.09,
-  records_load: 0.05,
-  repair_load: 0.10,
-  capacity_fte: 1.0,
-  load_ratio: 0.921,
+  engineerId: 'eng-1',
+  totalLoad: 0.921,
+  objectCount: 47,
+  osLoad: 0.41,
+  psLoad: 0.27,
+  videoLoad: 0.09,
+  recordsLoad: 0.05,
+  repairLoad: 0.10,
+  capacityFte: 1.0,
+  loadRatio: 0.921,
   status: 'WARNING' as const,
 }
 
 const mockObjects = [
   {
-    object_id: 'obj-1',
-    object_name: 'CBU Brest, Lenina St., 10',
-    division_name: 'Brest',
-    branch_name: 'Branch 1',
-    engineer_share: 0.032,
-    itogo_chislo_with_travel: 0.064,
-    engineer_count: 2,
+    objectId: 'obj-1',
+    objectName: 'CBU Brest, Lenina St., 10',
+    divisionName: 'Brest',
+    branchName: 'Branch 1',
+    engineerShare: 0.032,
+    itogoChisloWithTravel: 0.064,
+    engineerCount: 2,
   },
   {
-    object_id: 'obj-2',
-    object_name: 'Brest Archive, Moskovskaya St., 202D',
-    division_name: 'Brest',
-    branch_name: 'Branch 1',
-    engineer_share: 0.024,
-    itogo_chislo_with_travel: 0.024,
-    engineer_count: 1,
+    objectId: 'obj-2',
+    objectName: 'Brest Archive, Moskovskaya St., 202D',
+    divisionName: 'Brest',
+    branchName: 'Branch 1',
+    engineerShare: 0.024,
+    itogoChisloWithTravel: 0.024,
+    engineerCount: 1,
   },
 ]
 
@@ -1388,22 +1416,22 @@ Create the four component files and the page. The implementation targets below s
 - Five rows, each: label (fixed 80px width) + `<LinearProgress variant="determinate" value={percentage} />` + FTE value + percentage
 - `percentage = totalLoad > 0 ? (componentLoad / totalLoad) * 100 : 0`
 - Colors: Security (`primary`), Fire (`warning`), Video (`success`), Records (`secondary`), Repairs (`error`)
-- Shows "No load data" `<Typography>` when `total_load === 0` or `summary` is undefined
+- Shows "No load data" `<Typography>` when `totalLoad === 0` or `summary` is undefined
 
 **`frontend/src/components/engineers/AssignedObjectsTable.tsx`:**
 
 - Props: `objects: EngineerShare[]`, `onRemove: (objectId: string) => void`, `isRemoving: boolean`
 - MUI `<Table>` with 5 columns as specified above
-- Object name column: clickable via `useNavigate()` → `/objects/${object_id}`
-- "Remove" button per row: calls `onRemove(object_id)` (parent handles confirmation dialog and mutation)
-- Sorted by `engineer_share` descending by default
+- Object name column: clickable via `useNavigate()` → `/objects/${objectId}`
+- "Remove" button per row: calls `onRemove(objectId)` (parent handles confirmation dialog and mutation)
+- Sorted by `engineerShare` descending by default
 
 **`frontend/src/components/engineers/EngineerAssignDialog.tsx`:**
 
 - Props: `open: boolean`, `onClose: () => void`, `onAssign: (objectId: string) => Promise<void>`, `isAssigning: boolean`
 - MUI `<Dialog>` with `<Autocomplete>` for object search
 - Uses `useObjects()` (from M-01 hooks) to load all objects
-- Autocomplete option: `{object.name} — {object.division_name}`
+- Autocomplete option: `{object.name} — {object.divisionName}`
 - "Assign" button: calls `onAssign(selectedObjectId)`, then `onClose()` on success
 - Cancel button: closes dialog
 
@@ -1417,7 +1445,7 @@ Create the four component files and the page. The implementation targets below s
   - Section 2: `<SystemBreakdownChart summary={summaryData} />`
   - Section 3: `<AssignedObjectsTable objects={objectsData} onRemove={handleRemove} isRemoving={removeMutation.isPending} />`
   - "Assign object" button → opens `<EngineerAssignDialog>`
-- "Edit" button: opens MUI `<Dialog>` with React Hook Form + Zod (`EngineerUpdateSchema`), fields: name, capacity_fte, home_division_id
+- "Edit" button: opens MUI `<Dialog>` with React Hook Form + Zod (`EngineerUpdateSchema`), fields: name, capacityFte, homeDivisionId
 - Remove flow: "Remove" click → `ConfirmDialog` → `useRemoveObjectFromEngineer(id).mutateAsync(objectId)`
 - Assign flow: "Assign object" → `EngineerAssignDialog` → `useAssignObjectToEngineer(id).mutateAsync(objectId)`
 - Show `<CircularProgress>` when `useEngineer` is loading
@@ -1463,22 +1491,22 @@ git commit -m "feat: implement Engineer Detail dashboard with summary cards, bre
 
 | #   | Header (Russian) | Field           | Align  | Format                                                        |
 | --- | ---------------- | --------------- | ------ | ------------------------------------------------------------- |
-| 1   | Engineer          | `engineer_name` | left   | text, clickable → `/engineers/:id`                            |
-| 2   | Object Share     | `object_share`  | right  | FTE, 4 decimal places                                         |
-| 3   | Utilization         | `load_ratio`    | center | colored `Chip` (same rendering as Engineer List status chips) |
+| 1   | Engineer          | `engineerName` | left   | text, clickable → `/engineers/:id`                            |
+| 2   | Object Share     | `objectShare`   | right  | FTE, 4 decimal places                                         |
+| 3   | Utilization         | `loadRatio`    | center | colored `Chip` (same rendering as Engineer List status chips) |
 | 4   | Actions         | —               | center | "Remove" button                                                |
 
 - Data from `useObjectEngineers(objectId)` → `GET /objects/:id/engineers`
-- "Object Share" = `itogo_chislo_with_travel / engineer_count` for this object (computed by backend, not frontend)
-- "Utilization" = engineer's total `load_ratio` across ALL their objects (provides context — assignment may push an already-loaded engineer into overload)
-- Engineer name: clickable via `useNavigate()` → `/engineers/${engineer_id}`
+- "Object Share" = `itogoChisloWithTravel / engineerCount` for this object (computed by backend, not frontend)
+- "Utilization" = engineer's total `loadRatio` across ALL their objects (provides context — assignment may push an already-loaded engineer into overload)
+- Engineer name: clickable via `useNavigate()` → `/engineers/${engineerId}`
 - "Remove" button per row: calls `useRemoveEngineerFromObject(objectId).mutateAsync(engineerId)` after `ConfirmDialog` confirmation
 
 **"Assign engineer" button:**
 
 - Opens a searchable MUI `<Dialog>` with `<Autocomplete>`
 - Options from `useEngineers()` (all active engineers, any division — per ui-spec §12 editor scoping rules: engineer picker is NOT filtered by division)
-- Each option shows: engineer name + current `load_ratio` as colored chip (helps user avoid overloading)
+- Each option shows: engineer name + current `loadRatio` as colored chip (helps user avoid overloading)
 - On confirm: calls `useAssignEngineerToObject(objectId).mutateAsync(engineerId)`
 - On success: dialog closes, engineer list refetches, summary and SVOD queries invalidated (PAC-07)
 
@@ -1518,9 +1546,9 @@ vi.mock('../hooks/useEngineers', () => ({
     data: [
       {
         id: 'eng-3', name: 'Kozlov Dmitry', email: 'k@t.com', role: 'engineer',
-        home_division_id: 'div-1', home_division_name: 'Grodno',
-        capacity_fte: 1.0, is_active: true, object_count: 5,
-        total_load: 0.24, load_ratio: 0.48, status: 'NORMAL' as const,
+        homeDivisionId: 'div-1', homeDivisionName: 'Grodno',
+        capacityFte: 1.0, isActive: true, objectCount: 5,
+        totalLoad: 0.24, loadRatio: 0.48, status: 'NORMAL' as const,
       },
     ],
     isLoading: false,
@@ -1565,17 +1593,17 @@ describe('Object Detail — Engineers tab', () => {
     mockUseObjectEngineers.mockReturnValue({
       data: [
         {
-          engineer_id: 'eng-1',
-          engineer_name: 'Ivanov Petr Sergeevich',
-          object_share: 0.0161,
-          load_ratio: 0.82,
+          engineerId: 'eng-1',
+          engineerName: 'Ivanov Petr Sergeevich',
+          objectShare: 0.0161,
+          loadRatio: 0.82,
           status: 'NORMAL' as const,
         },
         {
-          engineer_id: 'eng-2',
-          engineer_name: 'Sidorova Anna Nikolaevna',
-          object_share: 0.0161,
-          load_ratio: 0.45,
+          engineerId: 'eng-2',
+          engineerName: 'Sidorova Anna Nikolaevna',
+          objectShare: 0.0161,
+          loadRatio: 0.45,
           status: 'NORMAL' as const,
         },
       ],
@@ -1658,13 +1686,13 @@ Modify `frontend/src/pages/ObjectDetailPage.tsx` — replace the Engineers tab p
 - Tab panel for index 4 renders a new section with:
   - Table heading: "Assigned engineers" + "Assign engineer" button
   - MUI `<Table>` with 4 columns as specified above
-  - Engineer name: clickable `<Link>` to `/engineers/${engineer_id}`
+  - Engineer name: clickable `<Link>` to `/engineers/${engineerId}`
   - Status/load chip: same `<Chip>` rendering as Engineer List page
   - "Remove" button per row with `ConfirmDialog` confirmation
 - "Assign engineer" dialog:
   - MUI `<Dialog>` with `<Autocomplete>`
   - Options from `useEngineers()` — only active engineers
-  - Option render: `{name}` + status `<Chip>` showing current load_ratio
+  - Option render: `{name}` + status `<Chip>` showing current `loadRatio`
   - Confirm calls `useAssignEngineerToObject(objectId).mutateAsync(engineerId)`
 - Travel review banner:
   - `const [showTravelBanner, setShowTravelBanner] = useState(false)`
@@ -1858,7 +1886,7 @@ git push -u origin feature/poc-m03-frontend
 
 | Criterion | How verified                                                                                            | Task        |
 | --------- | ------------------------------------------------------------------------------------------------------- | ----------- |
-| PAC-06    | Engineer Detail summary cards display `load_ratio` and `status` from API                                | 4           |
+| PAC-06    | Engineer Detail summary cards display `loadRatio` and `status` from API                                 | 4           |
 | PAC-07    | Assign/remove engineer → `invalidateQueries` → engineer summaries and Summary refetch                      | 2, 5, 7     |
 | PAC-09    | Full PoC flow: Dashboard → Create Object → Add Equipment → Assign Engineer → Engineer Detail shows load | Smoke check |
 
@@ -1872,7 +1900,7 @@ After M-03 frontend is complete, the full PoC flow is functional. Perform manual
 2. **Create Division** → Create Branch → Create Object (from M-01)
 3. **Add equipment** (device + assignment) → Summary tab updates (from M-01 + M-02)
 4. **Navigate to Engineers** → Create engineer → assign to the object
-5. **Engineer Detail** → shows correct `load_ratio`, system breakdown, assigned object
+5. **Engineer Detail** → shows correct `loadRatio`, system breakdown, assigned object
 6. **Object Detail → Engineers tab** → shows assigned engineer with correct share
 7. **Remove engineer** → share redistributes, engineer summary updates
 8. **Summary page** → shows object with FTE value and engineer name in column 5

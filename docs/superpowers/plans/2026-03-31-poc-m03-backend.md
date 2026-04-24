@@ -47,6 +47,8 @@
 - Engineer status values are lowercase strings in the database: `'normal'`, `'warning'`, `'overloaded'`.
 - `engineer_summaries.is_stale` column does **not** exist in PoC schema — added in M-06.
 - `is_active` filtering in assignment dropdowns is **not** an RBAC feature (AD-18) — it must be implemented in PoC.
+- **All Java entity fields and DTO fields use camelCase naming** (Java standard convention). Jackson serializes camelCase Java fields directly to camelCase JSON — no snake_case conversion. The frontend Zod schemas and TypeScript types must use camelCase field names to match.
+- **Engineer status in API responses must be uppercase** (`"NORMAL"`, `"WARNING"`, `"OVERLOADED"`). The DB stores lowercase; `EngineerMapper` must call `.toUpperCase()` when mapping `status` to DTOs.
 
 ---
 
@@ -382,10 +384,18 @@ git commit -m "feat: add ObjectEngineer and EngineerSummary entities with reposi
 
 - `User` entity → `EngineerDto` (with `@Mapping` for `homeDivisionName` from the division join, summary fields from `EngineerSummary`)
 - `EngineerCreateRequest` → `User` (set `role = "engineer"`, hash password via injected `PasswordEncoder`)
+- **Status casing:** The DB stores status lowercase (`'normal'`/`'warning'`/`'overloaded'`), but the API must emit uppercase (`"NORMAL"`/`"WARNING"`/`"OVERLOADED"`) to match the frontend Zod enum. Every mapping that copies `status` from `EngineerSummary` → DTO must call `.toUpperCase()`:
+
+```java
+@Mapping(target = "status", expression = "java(summary != null && summary.getStatus() != null ? summary.getStatus().toUpperCase() : null)")
+```
+
+Apply to both `EngineerDto` and `EngineerSummaryDto` mappings.
 
 `EngineerSummaryMapper` — `@Mapper(componentModel = "spring")`:
 
 - `EngineerSummary` entity → `EngineerSummaryDto`
+- Same uppercase rule applies to the `status` field.
 
 ### TDD Cycle
 
@@ -396,6 +406,7 @@ Unit test (no Spring context needed) — instantiate mapper implementation direc
 - `toDto` maps all fields correctly including `homeDivisionName`
 - `toEntity` from `EngineerCreateRequest` sets `role = "engineer"`, `isActive = true`, `requiresActivation = false`
 - Null summary fields map to null in the DTO
+- **Status uppercase:** `toDto(engineer, summary).getStatus()` returns `"WARNING"` (uppercase) when summary has `status = "warning"`. Same assertion for `EngineerSummaryMapper.toDto(summary)` returning uppercase status.
 
 - [ ] **Step 2: Run test — expect FAIL**
 
