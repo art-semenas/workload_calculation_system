@@ -9,6 +9,7 @@ import com.workload.entity.Summary;
 import com.workload.exception.ObjectNotFoundException;
 import com.workload.mapper.SummaryMapper;
 import com.workload.repository.SummaryRepository;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -36,7 +37,14 @@ public class SvodService {
         divisionId != null
             ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
             : summaryRepository.findAllWithOrgHierarchy();
-    List<SvodRowDto> rows = all.stream().map(this::toSvodRowDto).toList();
+    List<SvodRowDto> rows =
+        all.stream()
+            .map(this::toSvodRowDto)
+            .sorted(
+                Comparator.comparing(
+                    SvodRowDto::itogoChisloWithTravel,
+                    Comparator.nullsLast(Comparator.reverseOrder())))
+            .toList();
     int start = (int) pageable.getOffset();
     int end = Math.min(start + pageable.getPageSize(), rows.size());
     List<SvodRowDto> page = start >= rows.size() ? List.of() : rows.subList(start, end);
