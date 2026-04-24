@@ -22,7 +22,7 @@ import {
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import {
   useCreateBranch,
@@ -110,7 +110,7 @@ export default function DivisionDetailPage() {
     <Box>
       {/* Breadcrumb */}
       <Box sx={{ mb: 2 }}>
-        <Link href="/divisions" underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
+        <Link component={RouterLink} to="/divisions" underline="hover" sx={{ mr: 1 }}>
           Divisions
         </Link>
         <Typography component="span" sx={{ mr: 1 }}>

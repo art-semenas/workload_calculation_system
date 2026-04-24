@@ -29,8 +29,6 @@ import { RepairsTab } from '../components/repairs/RepairsTab'
 import { TravelTab } from '../components/travel/TravelTab'
 import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
-import { DivisionCreateSchema } from '../types/division'
-import type { DivisionCreate } from '../types/division'
 import { useObjectSummary } from '../hooks/useSummary'
 
 interface TabPanelProps {
@@ -352,8 +350,8 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [editingName, setEditingName] = useState(false)
-  const nameForm = useForm<DivisionCreate>({
-    resolver: zodResolver(DivisionCreateSchema),
+  const nameForm = useForm<ObjectUpdate>({
+    resolver: zodResolver(ObjectUpdateSchema),
   })
 
   const { data: object, isLoading } = useObject(mode !== 'create' ? id : undefined)
@@ -373,7 +371,7 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
 
   const handleEditName = () => {
     if (object) {
-      nameForm.reset({ name: object.name })
+      nameForm.reset({ name: object.name, branchId: object.branchId })
       setEditingName(true)
     }
   }
