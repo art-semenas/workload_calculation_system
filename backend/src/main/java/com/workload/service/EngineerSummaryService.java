@@ -65,10 +65,9 @@ public class EngineerSummaryService {
       Optional<Summary> summaryOpt = summaryRepository.findByObjectId(objectId);
       if (summaryOpt.isEmpty()) {
         log.debug("No summary found for objectId={}, treating itogo as zero", objectId);
-        continue;
       }
 
-      Summary summary = summaryOpt.get();
+      Summary summary = summaryOpt.orElseGet(Summary::new);
       BigDecimal itogo =
           summary.getItogoChisloWithTravel() != null
               ? summary.getItogoChisloWithTravel()

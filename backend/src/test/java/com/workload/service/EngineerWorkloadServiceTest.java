@@ -723,4 +723,47 @@ class EngineerWorkloadServiceTest {
     // Both engineer summaries must have been saved
     verify(engineerSummaryRepository, times(2)).save(any(EngineerSummary.class));
   }
+
+  // -------------------------------------------------------------------------
+  // deleteByEngineerId tests
+  // -------------------------------------------------------------------------
+
+  @Test
+  void deleteByEngineerId_delegatesToRepository() {
+    UUID engineerId = UUID.randomUUID();
+    service.deleteByEngineerId(engineerId);
+    verify(engineerSummaryRepository).deleteByEngineerId(engineerId);
+  }
+
+  // -------------------------------------------------------------------------
+  // Missing summary edge case
+  // -------------------------------------------------------------------------
+
+  @Test
+  void missingObjectSummary_treatedAsZeroContribution() {
+    UUID engineerId = UUID.randomUUID();
+    UUID objectId = UUID.randomUUID();
+    User engineer = buildEngineer(engineerId, new BigDecimal("1.0"));
+    ObjectEntity object = buildObject(objectId);
+    ObjectEngineer assignment = buildAssignment(object, engineer);
+
+    when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
+    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
+    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
+    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
+    when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    service.recalculate(engineerId);
+
+    ArgumentCaptor<EngineerSummary> captor = ArgumentCaptor.forClass(EngineerSummary.class);
+    verify(engineerSummaryRepository).save(captor.capture());
+    EngineerSummary saved = captor.getValue();
+
+    // Object is counted even though it has no summary yet
+    assertThat(saved.getObjectCount()).isEqualTo(1);
+    // But the load contribution is zero
+    assertThat(saved.getTotalLoad().compareTo(BigDecimal.ZERO)).isEqualTo(0);
+    assertThat(saved.getStatus()).isEqualTo("normal");
+  }
 }
