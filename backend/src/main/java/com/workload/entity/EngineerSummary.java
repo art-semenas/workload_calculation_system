@@ -28,7 +28,7 @@ public class EngineerSummary {
 
   @Id private UUID id;
 
-  @OneToOne
+  @OneToOne(optional = false)
   @JoinColumn(name = "engineer_id", nullable = false, unique = true)
   @OnDelete(action = OnDeleteAction.CASCADE)
   private User engineer;
