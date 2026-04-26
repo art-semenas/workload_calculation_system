@@ -31,8 +31,8 @@ public interface EngineerMapper {
   EngineerDto toDto(User user, EngineerSummary summary, String homeDivisionName);
 
   @Mapping(target = "role", expression = "java(com.workload.entity.Role.ENGINEER)")
-  @Mapping(target = "active", constant = "true")
-  @Mapping(target = "requiresActivation", constant = "false")
+  @Mapping(target = "active", expression = "java(true)")
+  @Mapping(target = "requiresActivation", expression = "java(false)")
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "passwordHash", ignore = true)
   @Mapping(target = "divisionId", ignore = true)

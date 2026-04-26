@@ -41,26 +41,10 @@ class EngineerMapperTest {
             .updatedAt(createdAt)
             .build();
 
-    User engineerRef =
-        User.builder()
-            .id(userId)
-            .email("engineer@example.com")
-            .name("Test Engineer")
-            .passwordHash("hashed")
-            .role(Role.ENGINEER)
-            .homeDivisionId(homeDivisionId)
-            .capacityFte(new BigDecimal("1.00"))
-            .employeeId("EMP-001")
-            .active(true)
-            .requiresActivation(false)
-            .createdAt(createdAt)
-            .updatedAt(createdAt)
-            .build();
-
     EngineerSummary summary =
         EngineerSummary.builder()
             .id(UUID.randomUUID())
-            .engineer(engineerRef)
+            .engineer(null)
             .totalLoad(new BigDecimal("120.5"))
             .objectCount(3)
             .loadRatio(new BigDecimal("0.75"))
@@ -180,24 +164,10 @@ class EngineerMapperTest {
             .updatedAt(createdAt)
             .build();
 
-    User engineerRef =
-        User.builder()
-            .id(userId)
-            .email("engineer@example.com")
-            .name("Test Engineer")
-            .passwordHash("hashed")
-            .role(Role.ENGINEER)
-            .capacityFte(new BigDecimal("1.00"))
-            .active(true)
-            .requiresActivation(false)
-            .createdAt(createdAt)
-            .updatedAt(createdAt)
-            .build();
-
     EngineerSummary summary =
         EngineerSummary.builder()
             .id(UUID.randomUUID())
-            .engineer(engineerRef)
+            .engineer(null)
             .totalLoad(new BigDecimal("100.0"))
             .objectCount(2)
             .loadRatio(new BigDecimal("0.50"))
