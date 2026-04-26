@@ -3,7 +3,6 @@ package com.workload.mapper;
 import com.workload.dto.EngineerCreateRequest;
 import com.workload.dto.EngineerDto;
 import com.workload.entity.EngineerSummary;
-import com.workload.entity.Role;
 import com.workload.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -26,7 +25,8 @@ public interface EngineerMapper {
   @Mapping(
       target = "status",
       expression =
-          "java(summary != null && summary.getStatus() != null ? summary.getStatus().toUpperCase() : null)")
+          "java(summary != null && summary.getStatus() != null ? summary.getStatus().toUpperCase()"
+              + " : null)")
   @Mapping(target = "createdAt", source = "user.createdAt")
   EngineerDto toDto(User user, EngineerSummary summary, String homeDivisionName);
 

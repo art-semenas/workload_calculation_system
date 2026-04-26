@@ -17,7 +17,8 @@ import org.mapstruct.factory.Mappers;
 class EngineerMapperTest {
 
   private final EngineerMapper mapper = Mappers.getMapper(EngineerMapper.class);
-  private final EngineerSummaryMapper summaryMapper = Mappers.getMapper(EngineerSummaryMapper.class);
+  private final EngineerSummaryMapper summaryMapper =
+      Mappers.getMapper(EngineerSummaryMapper.class);
 
   @Test
   void toDto_mapsAllFieldsCorrectly() {
@@ -101,12 +102,7 @@ class EngineerMapperTest {
   void toEntity_setsRoleEngineer() {
     EngineerCreateRequest request =
         new EngineerCreateRequest(
-            "eng@example.com",
-            "Jane Doe",
-            "password123",
-            new BigDecimal("1.00"),
-            null,
-            null);
+            "eng@example.com", "Jane Doe", "password123", new BigDecimal("1.00"), null, null);
 
     User entity = mapper.toEntity(request);
 
@@ -117,12 +113,7 @@ class EngineerMapperTest {
   void toEntity_setsActiveTrue() {
     EngineerCreateRequest request =
         new EngineerCreateRequest(
-            "eng@example.com",
-            "Jane Doe",
-            "password123",
-            new BigDecimal("1.00"),
-            null,
-            null);
+            "eng@example.com", "Jane Doe", "password123", new BigDecimal("1.00"), null, null);
 
     User entity = mapper.toEntity(request);
 
@@ -133,12 +124,7 @@ class EngineerMapperTest {
   void toEntity_setsRequiresActivationFalse() {
     EngineerCreateRequest request =
         new EngineerCreateRequest(
-            "eng@example.com",
-            "Jane Doe",
-            "password123",
-            new BigDecimal("1.00"),
-            null,
-            null);
+            "eng@example.com", "Jane Doe", "password123", new BigDecimal("1.00"), null, null);
 
     User entity = mapper.toEntity(request);
 

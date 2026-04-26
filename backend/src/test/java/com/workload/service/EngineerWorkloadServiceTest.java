@@ -94,11 +94,7 @@ class EngineerWorkloadServiceTest {
   }
 
   private ObjectEngineer buildAssignment(ObjectEntity object, User engineer) {
-    return ObjectEngineer.builder()
-        .id(UUID.randomUUID())
-        .object(object)
-        .engineer(engineer)
-        .build();
+    return ObjectEngineer.builder().id(UUID.randomUUID()).object(object).engineer(engineer).build();
   }
 
   private Summary buildSummary(
@@ -192,7 +188,8 @@ class EngineerWorkloadServiceTest {
     verify(engineerSummaryRepository).save(captor.capture());
     EngineerSummary saved = captor.getValue();
 
-    BigDecimal expected = new BigDecimal("0.032327").divide(new BigDecimal("2"), 10, java.math.RoundingMode.HALF_UP);
+    BigDecimal expected =
+        new BigDecimal("0.032327").divide(new BigDecimal("2"), 10, java.math.RoundingMode.HALF_UP);
     assertThat(saved.getTotalLoad()).isEqualByComparingTo(expected);
     assertThat(saved.getObjectCount()).isEqualTo(1);
   }
@@ -228,7 +225,8 @@ class EngineerWorkloadServiceTest {
     verify(engineerSummaryRepository).save(captor.capture());
     EngineerSummary saved = captor.getValue();
 
-    BigDecimal expected = new BigDecimal("0.032327").divide(new BigDecimal("3"), 10, java.math.RoundingMode.HALF_UP);
+    BigDecimal expected =
+        new BigDecimal("0.032327").divide(new BigDecimal("3"), 10, java.math.RoundingMode.HALF_UP);
     assertThat(saved.getTotalLoad()).isEqualByComparingTo(expected);
     assertThat(saved.getObjectCount()).isEqualTo(1);
   }
@@ -639,7 +637,8 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     BigDecimal componentSum =
-        saved.getOsLoad()
+        saved
+            .getOsLoad()
             .add(saved.getPsLoad())
             .add(saved.getVideoLoad())
             .add(saved.getRecordsLoad())

@@ -46,11 +46,9 @@ public class EngineerSummaryService {
     User engineer =
         userRepository
             .findById(engineerId)
-            .orElseThrow(
-                () -> new IllegalArgumentException("Engineer not found: " + engineerId));
+            .orElseThrow(() -> new IllegalArgumentException("Engineer not found: " + engineerId));
 
-    List<ObjectEngineer> assignments =
-        objectEngineerRepository.findAllByEngineerId(engineerId);
+    List<ObjectEngineer> assignments = objectEngineerRepository.findAllByEngineerId(engineerId);
 
     BigDecimal totalLoad = BigDecimal.ZERO;
     BigDecimal osLoad = BigDecimal.ZERO;
@@ -66,8 +64,7 @@ public class EngineerSummaryService {
 
       Optional<Summary> summaryOpt = summaryRepository.findByObjectId(objectId);
       if (summaryOpt.isEmpty()) {
-        log.debug(
-            "No summary found for objectId={}, treating itogo as zero", objectId);
+        log.debug("No summary found for objectId={}, treating itogo as zero", objectId);
         continue;
       }
 
@@ -88,8 +85,7 @@ public class EngineerSummaryService {
       psLoad = psLoad.add(componentShare(summary.getPsMonthlyAvg(), countBd));
       videoLoad = videoLoad.add(componentShare(summary.getVideoMonthlyAvg(), countBd));
       recordsLoad = recordsLoad.add(componentShare(summary.getRecordsMonthly(), countBd));
-      repairLoad =
-          repairLoad.add(componentShare(summary.getRepairWithTravelMonthly(), countBd));
+      repairLoad = repairLoad.add(componentShare(summary.getRepairWithTravelMonthly(), countBd));
     }
 
     // §6.13 — load ratio and status
@@ -110,7 +106,8 @@ public class EngineerSummaryService {
     EngineerSummary es =
         engineerSummaryRepository
             .findByEngineerId(engineerId)
-            .orElseGet(() -> EngineerSummary.builder().id(UUID.randomUUID()).engineer(engineer).build());
+            .orElseGet(
+                () -> EngineerSummary.builder().id(UUID.randomUUID()).engineer(engineer).build());
 
     es.setTotalLoad(totalLoad);
     es.setObjectCount(objectCount);
@@ -150,8 +147,8 @@ public class EngineerSummaryService {
   }
 
   /**
-   * Removes the engineer summary row for the given engineer. Called when an engineer is
-   * deactivated or all assignments are removed.
+   * Removes the engineer summary row for the given engineer. Called when an engineer is deactivated
+   * or all assignments are removed.
    */
   @Transactional
   public void deleteByEngineerId(UUID engineerId) {

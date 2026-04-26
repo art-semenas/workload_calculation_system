@@ -11,7 +11,6 @@ public interface EngineerSummaryMapper {
   @Mapping(target = "engineerId", source = "engineer.id")
   @Mapping(
       target = "status",
-      expression =
-          "java(summary.getStatus() != null ? summary.getStatus().toUpperCase() : null)")
+      expression = "java(summary.getStatus() != null ? summary.getStatus().toUpperCase() : null)")
   EngineerSummaryDto toDto(EngineerSummary summary);
 }
