@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserRepository extends JpaRepository<User, UUID> {
   Optional<User> findByEmail(String email);
 
+  List<User> findAllByRole(Role role);
+
   List<User> findAllByRoleAndActive(Role role, boolean active);
 
   long countByHomeDivisionIdAndActiveTrue(UUID homeDivisionId);

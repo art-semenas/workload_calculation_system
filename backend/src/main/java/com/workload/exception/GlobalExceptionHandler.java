@@ -48,7 +48,19 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(
             ApiResponse.error(
-                new ApiError("NOT_FOUND", getEntityNotFoundMessage(ex.getEntityType()), null)));
+                new ApiError(
+                    getEntityNotFoundCode(ex.getEntityType()),
+                    getEntityNotFoundMessage(ex.getEntityType()),
+                    null)));
+  }
+
+  @ExceptionHandler(EngineerHasActiveAssignmentsException.class)
+  public ResponseEntity<ApiResponse<Void>> handleEngineerHasActiveAssignments(
+      EngineerHasActiveAssignmentsException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            ApiResponse.error(
+                new ApiError("ENGINEER_HAS_ACTIVE_ASSIGNMENTS", ex.getMessage(), null)));
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
@@ -166,12 +178,20 @@ public class GlobalExceptionHandler {
                 new ApiError("INTERNAL_ERROR", "An unexpected error occurred", null)));
   }
 
+  private String getEntityNotFoundCode(String entityType) {
+    return switch (entityType) {
+      case "Engineer" -> "ENGINEER_NOT_FOUND";
+      default -> "NOT_FOUND";
+    };
+  }
+
   private String getEntityNotFoundMessage(String entityType) {
     return switch (entityType) {
       case "DeviceType" -> "Device type not found";
       case "Context" -> "Context not found";
       case "RepairType" -> "Repair type not found";
       case "Assignment" -> "Assignment not found";
+      case "Engineer" -> "Engineer not found";
       default -> "Resource not found";
     };
   }

@@ -14,4 +14,6 @@ public interface ObjectEngineerRepository extends JpaRepository<ObjectEngineer, 
   Optional<ObjectEngineer> findByObjectIdAndEngineerId(UUID objectId, UUID engineerId);
 
   int countByObjectId(UUID objectId);
+
+  int countByEngineerId(UUID engineerId);
 }
