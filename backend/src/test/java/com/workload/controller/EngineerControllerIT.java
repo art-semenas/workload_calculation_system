@@ -264,7 +264,8 @@ class EngineerControllerIT extends IntegrationTestBase {
         given()
             .header("Authorization", bearerToken)
             .contentType(ContentType.JSON)
-            .body("""
+            .body(
+                """
                 {"name": "EngDeactDiv"}
                 """)
             .post("/divisions")
@@ -277,7 +278,8 @@ class EngineerControllerIT extends IntegrationTestBase {
         given()
             .header("Authorization", bearerToken)
             .contentType(ContentType.JSON)
-            .body("""
+            .body(
+                """
                 {"name": "EngDeactBranch"}
                 """)
             .post("/divisions/{id}/branches", divId)

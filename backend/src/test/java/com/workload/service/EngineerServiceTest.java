@@ -258,7 +258,19 @@ class EngineerServiceTest {
 
   private EngineerDto stubDto(UUID id) {
     return new EngineerDto(
-        id, "eng@test.com", "Test", "engineer", null, null,
-        BigDecimal.ONE, null, true, null, null, null, null, OffsetDateTime.now());
+        id,
+        "eng@test.com",
+        "Test",
+        "engineer",
+        null,
+        null,
+        BigDecimal.ONE,
+        null,
+        true,
+        null,
+        null,
+        null,
+        null,
+        OffsetDateTime.now());
   }
 }

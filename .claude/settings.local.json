@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v \"//.*double\\\\|//.*float\")",
+      "Bash(mvn test:*)",
+      "Bash(mvn spotless:apply -q)",
+      "Bash(mvn verify:*)",
+      "Bash(mvn clean:*)",
+      "Bash(mvn compile:*)",
+      "Bash(gh pr:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(npx vitest:*)",
+      "Bash(gh api *)"
+    ]
+  }
+}

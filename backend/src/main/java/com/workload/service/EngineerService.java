@@ -41,10 +41,7 @@ public class EngineerService {
 
     return engineers.stream()
         .filter(
-            eng ->
-                homeDivisionId
-                    .map(divId -> divId.equals(eng.getHomeDivisionId()))
-                    .orElse(true))
+            eng -> homeDivisionId.map(divId -> divId.equals(eng.getHomeDivisionId())).orElse(true))
         .flatMap(
             eng -> {
               EngineerSummary summary =
@@ -96,8 +93,7 @@ public class EngineerService {
   @Transactional
   public EngineerDto update(UUID id, EngineerUpdateRequest request) {
     User user = loadEngineerById(id);
-    boolean capacityChanged =
-        user.getCapacityFte().compareTo(request.capacityFte()) != 0;
+    boolean capacityChanged = user.getCapacityFte().compareTo(request.capacityFte()) != 0;
     user.setName(request.name());
     user.setCapacityFte(request.capacityFte());
     user.setHomeDivisionId(request.homeDivisionId());
