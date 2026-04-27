@@ -1,6 +1,8 @@
 package com.workload.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.workload.config.WorkloadConfig;
@@ -335,5 +337,42 @@ class AggregationServiceTest {
 
     assertThat(gaps).hasSize(1);
     assertThat(gaps.get(0).objectId()).isEqualTo(o1.getId());
+  }
+
+  // -------------------------------------------------------------------------
+  // Test 8: getBranches pre-computes division engineer counts once per division
+  // -------------------------------------------------------------------------
+
+  @Test
+  void getBranches_sameDivision_engineerCountsLookedUpOncePerDivision() {
+    Division div = buildDivision("Division A");
+    Branch b1 = buildBranch(div, "Branch 1");
+    Branch b2 = buildBranch(div, "Branch 2");
+    ObjectEntity o1 = buildObject(b1, "Object 1");
+    ObjectEntity o2 = buildObject(b2, "Object 2");
+
+    Summary s1 = buildSummary(o1, new BigDecimal("0.2"));
+    Summary s2 = buildSummary(o2, new BigDecimal("0.3"));
+
+    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of(s1, s2));
+    when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(3L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            div.getId(), "overloaded"))
+        .thenReturn(1L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
+        .thenReturn(1L);
+
+    List<AggregationBranchDto> result = aggregationService.getBranches();
+
+    assertThat(result).hasSize(2);
+    // Both branches belong to the same division — counts looked up exactly once
+    verify(userRepository, times(1)).countByHomeDivisionIdAndActiveTrue(div.getId());
+    verify(engineerSummaryRepository, times(1))
+        .countByEngineerHomeDivisionIdAndStatus(div.getId(), "overloaded");
+    verify(engineerSummaryRepository, times(1))
+        .countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning");
+    // Each branch DTO still carries the correct division-level counts
+    assertThat(result.get(0).engineersTotal()).isEqualTo(3);
+    assertThat(result.get(1).engineersTotal()).isEqualTo(3);
   }
 }

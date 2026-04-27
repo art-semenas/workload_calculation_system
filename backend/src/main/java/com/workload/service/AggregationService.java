@@ -93,13 +93,21 @@ public class AggregationService {
     Map<UUID, List<Summary>> byBranch =
         summaries.stream().collect(Collectors.groupingBy(s -> s.getObject().getBranch().getId()));
 
+    // Pre-compute division engineer counts once per unique division to avoid per-branch queries.
+    Map<UUID, EngineerCounts> countsByDivision =
+        byBranch.values().stream()
+            .map(list -> list.get(0).getObject().getBranch().getDivision().getId())
+            .distinct()
+            .collect(Collectors.toMap(id -> id, this::engineerCountsForDivision));
+
     return byBranch.entrySet().stream()
         .map(
             entry -> {
               UUID branchId = entry.getKey();
               List<Summary> branchSummaries = entry.getValue();
               Branch branch = branchSummaries.get(0).getObject().getBranch();
-              return buildBranchDto(branch, branchSummaries);
+              EngineerCounts counts = countsByDivision.get(branch.getDivision().getId());
+              return buildBranchDto(branch, branchSummaries, counts);
             })
         .toList();
   }
@@ -111,8 +119,8 @@ public class AggregationService {
             .orElseThrow(() -> new BranchNotFoundException(branchId.toString()));
 
     List<Summary> summaries = summaryRepository.findAllByBranchIdWithOrgHierarchy(branchId);
-
-    return buildBranchDto(branch, summaries);
+    EngineerCounts counts = engineerCountsForDivision(branch.getDivision().getId());
+    return buildBranchDto(branch, summaries, counts);
   }
 
   // PoC (S-02): all objects are coverage gaps — no object_engineers table yet.
@@ -144,7 +152,7 @@ public class AggregationService {
     BigDecimal staffingNeed = computeStaffingNeed(requiredFte);
     int objectCount = summaries.size();
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
-    int[] engineerCounts = engineerCountsForDivision(division.getId());
+    EngineerCounts counts = engineerCountsForDivision(division.getId());
 
     return new AggregationDivisionDto(
         division.getId(),
@@ -154,19 +162,19 @@ public class AggregationService {
         staffingNeed,
         requiredFte,
         objectCount,
-        engineerCounts[0],
-        engineerCounts[1],
-        engineerCounts[2],
+        counts.total(),
+        counts.overloaded(),
+        counts.warning(),
         breakdown);
   }
 
-  private AggregationBranchDto buildBranchDto(Branch branch, List<Summary> summaries) {
+  private AggregationBranchDto buildBranchDto(
+      Branch branch, List<Summary> summaries, EngineerCounts counts) {
     BigDecimal requiredFte = sumItogo(summaries);
     BigDecimal staffingNeed = computeStaffingNeed(requiredFte);
     int objectCount = summaries.size();
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
     Division division = branch.getDivision();
-    int[] engineerCounts = engineerCountsForDivision(division.getId());
 
     return new AggregationBranchDto(
         branch.getId(),
@@ -176,9 +184,9 @@ public class AggregationService {
         objectCount,
         requiredFte,
         staffingNeed,
-        engineerCounts[0],
-        engineerCounts[1],
-        engineerCounts[2],
+        counts.total(),
+        counts.overloaded(),
+        counts.warning(),
         breakdown);
   }
 
@@ -234,7 +242,7 @@ public class AggregationService {
             BigDecimal.valueOf(60).multiply(config.getMonthlyHoursFund()), 6, RoundingMode.HALF_UP);
   }
 
-  private int[] engineerCountsForDivision(UUID divisionId) {
+  private EngineerCounts engineerCountsForDivision(UUID divisionId) {
     int total = (int) userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
     int overloaded =
         (int)
@@ -243,6 +251,8 @@ public class AggregationService {
     int warning =
         (int)
             engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divisionId, "warning");
-    return new int[] {total, overloaded, warning};
+    return new EngineerCounts(total, overloaded, warning);
   }
+
+  private record EngineerCounts(int total, int overloaded, int warning) {}
 }
