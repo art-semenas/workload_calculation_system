@@ -63,10 +63,38 @@ public class GlobalExceptionHandler {
                 new ApiError("ENGINEER_HAS_ACTIVE_ASSIGNMENTS", ex.getMessage(), null)));
   }
 
+  @ExceptionHandler(EngineerInactiveException.class)
+  public ResponseEntity<ApiResponse<Void>> handleEngineerInactive(EngineerInactiveException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("ENGINEER_INACTIVE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(InvalidEngineerRoleException.class)
+  public ResponseEntity<ApiResponse<Void>> handleInvalidEngineerRole(
+      InvalidEngineerRoleException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("INVALID_ENGINEER_ROLE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(AssignmentNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAssignmentNotFound(
+      AssignmentNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(new ApiError("CONSTRAINT_VIOLATION", ex.getMessage(), null)));
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
       DataIntegrityViolationException ex) {
     String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+    // Check if it's an object-engineer assignment constraint violation
+    if (msg.contains("uq_oe_object_engineer")) {
+      return ResponseEntity.status(HttpStatus.CONFLICT)
+          .body(
+              ApiResponse.error(
+                  new ApiError(
+                      "CONSTRAINT_VIOLATION", "A database constraint was violated", null)));
+    }
     if (msg.contains("unique") || msg.contains("duplicate")) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
           .body(
