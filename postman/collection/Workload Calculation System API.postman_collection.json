@@ -209,6 +209,41 @@
       "key": "catalogUpdatedRepairMinutes",
       "value": "60.00",
       "type": "string"
+    },
+    {
+      "key": "engineerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "engineerEmail",
+      "value": "postman.engineer@example.com",
+      "type": "string"
+    },
+    {
+      "key": "engineerName",
+      "value": "Postman Smoke Engineer",
+      "type": "string"
+    },
+    {
+      "key": "engineerPassword",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "engineerCapacityFte",
+      "value": "1.00",
+      "type": "string"
+    },
+    {
+      "key": "engineerUpdatedName",
+      "value": "Postman Smoke Engineer Updated",
+      "type": "string"
+    },
+    {
+      "key": "engineerUpdatedCapacityFte",
+      "value": "0.75",
+      "type": "string"
     }
   ],
   "item": [
@@ -958,6 +993,167 @@
       ]
     },
     {
+      "name": "Engineers",
+      "item": [
+        {
+          "name": "Get All Engineers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/engineers",
+              "query": [
+                {
+                  "key": "status",
+                  "value": "normal",
+                  "disabled": true
+                },
+                {
+                  "key": "home_division_id",
+                  "value": "{{divisionId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Engineer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/engineers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{engineerEmail}}\",\n  \"name\": \"{{engineerName}}\",\n  \"password\": \"{{engineerPassword}}\",\n  \"capacityFte\": {{engineerCapacityFte}},\n  \"homeDivisionId\": \"{{divisionId}}\",\n  \"employeeId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const engineerId = body?.data?.id;",
+                  "pm.test('engineer id captured', () => pm.expect(engineerId).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('engineerId', engineerId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Engineer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}"
+          }
+        },
+        {
+          "name": "Update Engineer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{engineerUpdatedName}}\",\n  \"capacityFte\": {{engineerUpdatedCapacityFte}},\n  \"homeDivisionId\": \"{{divisionId}}\",\n  \"employeeId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deactivate Engineer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.unset('engineerId');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Engineer Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}/summary"
+          }
+        },
+        {
+          "name": "Get Engineer Objects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}/objects"
+          }
+        },
+        {
+          "name": "Assign Object to Engineer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}/objects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"objectId\": \"{{objectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remove Object from Engineer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/engineers/{{engineerId}}/objects/{{objectId}}"
+          }
+        }
+      ]
+    },
+    {
       "name": "Objects",
       "item": [
         {
@@ -1062,6 +1258,45 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/summary"
+          }
+        },
+        {
+          "name": "Get Object Engineers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/engineers"
+          }
+        },
+        {
+          "name": "Assign Engineer to Object",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/engineers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"engineerId\": \"{{engineerId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remove Engineer from Object",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/objects/{{objectId}}/engineers/{{engineerId}}"
           }
         }
       ]
