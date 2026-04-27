@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Box,
   Button,
+  Card,
   CircularProgress,
   FormControl,
   Grid,
@@ -30,6 +31,7 @@ import { TravelTab } from '../components/travel/TravelTab'
 import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
 import { useObjectSummary } from '../hooks/useSummary'
+import { CapBar } from '../components/common/CapBar'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -53,31 +55,224 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
-function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+// Right rail card components
+function HeroCard({ objectId }: { objectId: string }) {
+  const { data, isLoading } = useObjectSummary(objectId)
+
+  if (isLoading) {
+    return (
+      <Card sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress size={24} />
+      </Card>
+    )
+  }
+
+  if (!data) {
+    return null
+  }
+
+  const fmt6 = (v: number) => v.toFixed(6)
+  const delta = data.itogoChisloWithTravel - data.itogoChisloNoTravel
+
   return (
-    <>
-      <Grid item xs={6}>
-        <Typography variant="body2" color="text.secondary">
-          {label}
+    <Card
+      sx={{
+        p: 3,
+        background: 'var(--ink)',
+        color: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      <Box>
+        <Typography variant="caption" sx={{ opacity: 0.7 }}>
+          TOTAL STAFFING WITH TRAVEL
         </Typography>
-      </Grid>
-      <Grid item xs={6}>
-        <Typography variant="body2">{value}</Typography>
-      </Grid>
-    </>
+        <Typography
+          sx={{
+            fontSize: '42px',
+            fontWeight: 600,
+            lineHeight: 1,
+            fontFamily: "'JetBrains Mono', monospace",
+            mt: 0.5,
+          }}
+        >
+          {fmt6(data.itogoChisloWithTravel)}
+        </Typography>
+      </Box>
+
+      <Box sx={{ fontSize: '12px', opacity: 0.8 }}>
+        <Box>Without travel: {fmt6(data.itogoChisloNoTravel)}</Box>
+        <Box>Delta: {fmt6(delta)}</Box>
+      </Box>
+
+      <Box
+        sx={{
+          fontSize: '11px',
+          opacity: 0.6,
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          pt: 2,
+        }}
+      >
+        Recomputed {data.computedAt ? `at ${data.computedAt}` : 'recently'} · H1 2026
+      </Box>
+    </Card>
   )
 }
 
-function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
+function SystemAveragesCard({ objectId }: { objectId: string }) {
+  const { data, isLoading } = useObjectSummary(objectId)
+
+  if (isLoading || !data) {
+    return null
+  }
+
+  const systems = [
+    { label: 'ОС', value: data.osMonthlyAvg, color: '#3a4fcf' },
+    { label: 'ПС', value: data.psMonthlyAvg, color: '#a66600' },
+    { label: 'Видео', value: data.videoMonthlyAvg, color: '#2d7a4a' },
+    { label: 'Records', value: data.recordsMonthly, color: '#6b6a64' },
+  ]
+
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-        {title}
+    <Card sx={{ p: 3 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 2, fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' }}
+      >
+        Per-system monthly avg
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {systems.map((sys) => (
+          <Box
+            key={sys.label}
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <Typography variant="body2">{sys.label}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, ml: 1 }}>
+              <CapBar value={sys.value} max={0.1} width={80} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '12px',
+                  minWidth: '50px',
+                  textAlign: 'right',
+                }}
+              >
+                {sys.value.toFixed(6)}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Card>
+  )
+}
+
+function VisitBreakdownCard({ objectId }: { objectId: string }) {
+  const { data, isLoading } = useObjectSummary(objectId)
+
+  if (isLoading || !data) {
+    return null
+  }
+
+  const fmt6 = (v: number) => v.toFixed(6)
+
+  return (
+    <Card sx={{ p: 3 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 2, fontWeight: 600, fontSize: '11px', textTransform: 'uppercase' }}
+      >
+        Per-visit breakdown
       </Typography>
       <Grid container spacing={1}>
-        {children}
+        <Grid item xs={6}>
+          <Box>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: 'text.secondary' }}>
+              R1 total
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+            >
+              {fmt6(data.r1PerVisitTotal)}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
+          <Box>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: 'text.secondary' }}>
+              R2 total
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+            >
+              {fmt6(data.r2PerVisitTotal)}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
+          <Box>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: 'text.secondary' }}>
+              PZV
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+            >
+              {data.pzvMinutes.toFixed(2)}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
+          <Box>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: 'text.secondary' }}>
+              Round-trip
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+            >
+              {data.roundTripMin.toFixed(2)}
+            </Typography>
+          </Box>
+        </Grid>
       </Grid>
-    </Box>
+    </Card>
+  )
+}
+
+function EngineersCard() {
+  return (
+    <Card
+      sx={{
+        p: 3,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '120px',
+      }}
+    >
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        No engineers assigned
+      </Typography>
+    </Card>
   )
 }
 
@@ -97,61 +292,169 @@ function SummaryTab({ objectId }: { objectId: string }) {
   }
 
   const fmt6 = (v: number) => v.toFixed(6)
-  const fmt2 = (v: number) => v.toFixed(2)
 
   return (
     <Box>
-      <SummaryGroup title="Per-visit breakdown">
-        <SummaryRow label="Security R1" value={fmt6(data.osR1PerVisit)} />
-        <SummaryRow label="Security R2" value={fmt6(data.osR2PerVisit)} />
-        <SummaryRow label="Fire R1" value={fmt6(data.psR1PerVisit)} />
-        <SummaryRow label="Fire R2" value={fmt6(data.psR2PerVisit)} />
-        <SummaryRow label="Video R1" value={fmt6(data.videoR1PerVisit)} />
-        <SummaryRow label="Video R2" value={fmt6(data.videoR2PerVisit)} />
-        <SummaryRow label="R1 total" value={fmt6(data.r1PerVisitTotal)} />
-        <SummaryRow label="R2 total" value={fmt6(data.r2PerVisitTotal)} />
-      </SummaryGroup>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+          Per-visit breakdown
+        </Typography>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Security R1
+            </Typography>
+            <Typography variant="body2">{fmt6(data.osR1PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Security R2
+            </Typography>
+            <Typography variant="body2">{fmt6(data.osR2PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Fire R1
+            </Typography>
+            <Typography variant="body2">{fmt6(data.psR1PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Fire R2
+            </Typography>
+            <Typography variant="body2">{fmt6(data.psR2PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Video R1
+            </Typography>
+            <Typography variant="body2">{fmt6(data.videoR1PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Video R2
+            </Typography>
+            <Typography variant="body2">{fmt6(data.videoR2PerVisit)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              R1 total
+            </Typography>
+            <Typography variant="body2">{fmt6(data.r1PerVisitTotal)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              R2 total
+            </Typography>
+            <Typography variant="body2">{fmt6(data.r2PerVisitTotal)}</Typography>
+          </Grid>
+        </Grid>
+      </Box>
 
-      <SummaryGroup title="Monthly averages">
-        <SummaryRow label="Security" value={fmt6(data.osMonthlyAvg)} />
-        <SummaryRow label="Fire" value={fmt6(data.psMonthlyAvg)} />
-        <SummaryRow label="Video" value={fmt6(data.videoMonthlyAvg)} />
-        <SummaryRow label="Records" value={fmt6(data.recordsMonthly)} />
-        <SummaryRow label="Repair without Travel" value={fmt6(data.repairNoTravelMonthly)} />
-        <SummaryRow label="Repair with Travel" value={fmt6(data.repairWithTravelMonthly)} />
-      </SummaryGroup>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+          Monthly averages
+        </Typography>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Security
+            </Typography>
+            <Typography variant="body2">{fmt6(data.osMonthlyAvg)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Fire
+            </Typography>
+            <Typography variant="body2">{fmt6(data.psMonthlyAvg)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Video
+            </Typography>
+            <Typography variant="body2">{fmt6(data.videoMonthlyAvg)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Records
+            </Typography>
+            <Typography variant="body2">{fmt6(data.recordsMonthly)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Repair without Travel
+            </Typography>
+            <Typography variant="body2">{fmt6(data.repairNoTravelMonthly)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Repair with Travel
+            </Typography>
+            <Typography variant="body2">{fmt6(data.repairWithTravelMonthly)}</Typography>
+          </Grid>
+        </Grid>
+      </Box>
 
-      <SummaryGroup title="Travel">
-        <SummaryRow label="PZV" value={fmt2(data.pzvMinutes)} />
-        <SummaryRow label="Travel (round-trip)" value={fmt2(data.roundTripMin)} />
-      </SummaryGroup>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+          Travel
+        </Typography>
+        <Grid container spacing={1}>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              PZV
+            </Typography>
+            <Typography variant="body2">{data.pzvMinutes.toFixed(2)}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="text.secondary">
+              Travel (round-trip)
+            </Typography>
+            <Typography variant="body2">{data.roundTripMin.toFixed(2)}</Typography>
+          </Grid>
+        </Grid>
+      </Box>
 
-      <SummaryGroup title="Totals">
-        <SummaryRow
-          label="Maintenance+records+repair(without travel)+Travel, min"
-          value={fmt6(data.totalNoTravelMin)}
-        />
-        <SummaryRow
-          label="TOTAL Staffing (without travel)"
-          value={fmt6(data.itogoChisloNoTravel)}
-        />
-        <SummaryRow
-          label="Maintenance+records+repair(with travel)+Travel, min"
-          value={fmt6(data.totalWithTravelMin)}
-        />
-        <SummaryRow
-          label="TOTAL Staffing (with travel)"
-          value={
-            <Typography variant="body2" component="span" sx={{ fontWeight: 700 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+          Totals
+        </Typography>
+        <Grid container spacing={1}>
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary">
+              Maintenance+records+repair(without travel)+Travel, min
+            </Typography>
+            <Typography variant="body2">{fmt6(data.totalNoTravelMin)}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary">
+              TOTAL Staffing (without travel)
+            </Typography>
+            <Typography variant="body2">{fmt6(data.itogoChisloNoTravel)}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary">
+              Maintenance+records+repair(with travel)+Travel, min
+            </Typography>
+            <Typography variant="body2">{fmt6(data.totalWithTravelMin)}</Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary">
+              TOTAL Staffing (with travel)
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
               {fmt6(data.itogoChisloWithTravel)}
             </Typography>
-          }
-        />
-      </SummaryGroup>
+          </Grid>
+        </Grid>
+      </Box>
 
-      <SummaryGroup title="Computed at">
-        <SummaryRow label="Computed at" value={data.computedAt ?? '—'} />
-      </SummaryGroup>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+          Computed at
+        </Typography>
+        <Typography variant="body2">{data.computedAt ?? '—'}</Typography>
+      </Box>
     </Box>
   )
 }
@@ -475,9 +778,25 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         </Button>
       </Box>
 
-      {/* Tabs */}
+      {/* Tabs with styled underline */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="object tabs">
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="object tabs"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: 'var(--ink)',
+              height: '2px',
+            },
+            '& .MuiTab-root': {
+              color: 'text.secondary',
+              '&.Mui-selected': {
+                color: 'text.primary',
+              },
+            },
+          }}
+        >
           <Tab label="Equipment" id="tab-0" aria-controls="tabpanel-0" />
           <Tab label="Records" id="tab-1" aria-controls="tabpanel-1" />
           <Tab label="Repairs" id="tab-2" aria-controls="tabpanel-2" />
@@ -487,25 +806,46 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         </Tabs>
       </Box>
 
-      {/* Tab Panels */}
-      <TabPanel value={tabValue} index={0}>
-        <EquipmentTab objectId={id ?? ''} />
-      </TabPanel>
-      <TabPanel value={tabValue} index={1}>
-        <RecordsTab objectId={id ?? ''} />
-      </TabPanel>
-      <TabPanel value={tabValue} index={2}>
-        <RepairsTab objectId={id ?? ''} />
-      </TabPanel>
-      <TabPanel value={tabValue} index={3}>
-        <TravelTab objectId={id ?? ''} />
-      </TabPanel>
-      <TabPanel value={tabValue} index={4}>
-        <Typography>Available in M-03</Typography>
-      </TabPanel>
-      <TabPanel value={tabValue} index={5}>
-        <SummaryTab objectId={id ?? ''} />
-      </TabPanel>
+      {/* Main content with right rail on Equipment tab */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: tabValue === 0 ? '1fr 320px' : '1fr',
+          gap: 3,
+        }}
+      >
+        {/* Left column: Tab panels */}
+        <Box>
+          <TabPanel value={tabValue} index={0}>
+            <EquipmentTab objectId={id ?? ''} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <RecordsTab objectId={id ?? ''} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={2}>
+            <RepairsTab objectId={id ?? ''} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={3}>
+            <TravelTab objectId={id ?? ''} />
+          </TabPanel>
+          <TabPanel value={tabValue} index={4}>
+            <Typography>Available in M-03</Typography>
+          </TabPanel>
+          <TabPanel value={tabValue} index={5}>
+            <SummaryTab objectId={id ?? ''} />
+          </TabPanel>
+        </Box>
+
+        {/* Right rail: 4 stacked cards (only on Equipment tab) */}
+        {tabValue === 0 && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <HeroCard objectId={id ?? ''} />
+            <SystemAveragesCard objectId={id ?? ''} />
+            <VisitBreakdownCard objectId={id ?? ''} />
+            <EngineersCard />
+          </Box>
+        )}
+      </Box>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
