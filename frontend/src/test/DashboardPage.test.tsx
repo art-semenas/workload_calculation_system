@@ -20,11 +20,6 @@ const mockDivisions = vi.mocked(useDivisionsAggregation)
 const mockGaps = vi.mocked(useCoverageGaps)
 const mockSvod = vi.mocked(useSvod)
 
-const emptyPageResponse = {
-  data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
-  isLoading: false,
-}
-
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
