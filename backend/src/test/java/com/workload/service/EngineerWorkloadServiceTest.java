@@ -14,6 +14,7 @@ import com.workload.entity.ObjectEngineer;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
 import com.workload.entity.User;
+import com.workload.exception.EntityNotFoundException;
 import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.EngineerSummaryMapper;
 import com.workload.repository.EngineerSummaryRepository;
@@ -740,6 +741,15 @@ class EngineerWorkloadServiceTest {
     UUID engineerId = UUID.randomUUID();
     service.deleteByEngineerId(engineerId);
     verify(engineerSummaryRepository).deleteByEngineerId(engineerId);
+  }
+
+  @Test
+  void recalculate_unknownEngineerId_throwsEntityNotFoundException() {
+    UUID unknownId = UUID.randomUUID();
+    when(userRepository.findById(unknownId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.recalculate(unknownId))
+        .isInstanceOf(EntityNotFoundException.class);
   }
 
   // -------------------------------------------------------------------------

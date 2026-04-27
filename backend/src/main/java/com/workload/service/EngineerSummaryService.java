@@ -6,6 +6,7 @@ import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
 import com.workload.entity.Summary;
 import com.workload.entity.User;
+import com.workload.exception.EntityNotFoundException;
 import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.EngineerSummaryMapper;
 import com.workload.repository.EngineerSummaryRepository;
@@ -50,7 +51,7 @@ public class EngineerSummaryService {
     User engineer =
         userRepository
             .findById(engineerId)
-            .orElseThrow(() -> new IllegalArgumentException("Engineer not found: " + engineerId));
+            .orElseThrow(() -> new EntityNotFoundException("Engineer", engineerId.toString()));
 
     List<ObjectEngineer> assignments = objectEngineerRepository.findAllByEngineerId(engineerId);
 
