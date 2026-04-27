@@ -1,12 +1,21 @@
 import { useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  FormControlLabel,
+  IconButton,
+  Typography,
+} from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useLogin } from '../hooks/useAuth'
 import { LoginRequestSchema, type LoginRequest } from '../types/auth'
-import { useSvod } from '../hooks/useSvod'
 
 const FONT_MONO = "'JetBrains Mono', 'SF Mono', Menlo, monospace"
 const INK = '#1a1a1a'
@@ -29,8 +38,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const loginMutation = useLogin()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  const { data: svodPage, isLoading: svodLoading } = useSvod(0, 1)
+  const [showPassword, setShowPassword] = useState(false)
 
   const { control, handleSubmit, formState } = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
@@ -53,22 +61,19 @@ export default function LoginPage() {
 
   const isSubmitting = formState.isSubmitting
 
-  const objectCount =
-    !svodLoading && svodPage !== undefined ? svodPage.totalElements.toLocaleString('ru-RU') : '—'
-
-  const requiredFte =
-    !svodLoading && svodPage !== undefined && svodPage.content.length > 0
-      ? svodPage.content.reduce((sum, row) => sum + row.itogoChisloWithTravel, 0).toFixed(2)
-      : '—'
+  // Design-reference placeholders — replaced with live data in MVP
+  const statStrip = [
+    { label: 'Objects under maintenance', value: '2 935' },
+    { label: 'Required FTE · H1 2026', value: '205.75' },
+    { label: 'Active engineers', value: '—' },
+  ]
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
         display: 'grid',
         gridTemplateColumns: '1fr 520px',
-        maxWidth: 1440,
-        mx: 'auto',
       }}
     >
       {/* Left — brand pane */}
@@ -134,7 +139,7 @@ export default function LoginPage() {
               Workload Calculator
             </Typography>
             <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
-              Belarusbank · Security systems maintenance
+              Bank · Security systems maintenance
             </Typography>
           </Box>
         </Box>
@@ -182,8 +187,8 @@ export default function LoginPage() {
               maxWidth: 420,
             }}
           >
-            Replace the manual XLSX workflow with an auditable, deterministic engine. Equipment
-            normatives flow through to FTE coefficients automatically.
+            Provides an auditable, deterministic engine. Equipment normatives flow through to FTE
+            coefficients automatically.
           </Typography>
 
           {/* Stat strip */}
@@ -199,11 +204,7 @@ export default function LoginPage() {
               overflow: 'hidden',
             }}
           >
-            {[
-              { label: 'Objects under maintenance', value: objectCount },
-              { label: 'Required FTE · H1 2026', value: requiredFte },
-              { label: 'Active engineers', value: '—' },
-            ].map((stat) => (
+            {statStrip.map((stat) => (
               <Box key={stat.label} sx={{ background: INK, padding: '16px 18px' }}>
                 <Typography
                   sx={{
@@ -321,14 +322,39 @@ export default function LoginPage() {
               fullWidth
               autoComplete="email"
             />
-            <FormTextField
-              name="password"
-              control={control}
-              label="Password"
-              type="password"
-              variant="standard"
-              fullWidth
-              autoComplete="current-password"
+            <Box sx={{ position: 'relative' }}>
+              <FormTextField
+                name="password"
+                control={control}
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                variant="standard"
+                fullWidth
+                autoComplete="current-password"
+              />
+              <IconButton
+                size="small"
+                onClick={() => setShowPassword((v) => !v)}
+                sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <VisibilityOff fontSize="small" />
+                ) : (
+                  <Visibility fontSize="small" />
+                )}
+              </IconButton>
+            </Box>
+            <FormControlLabel
+              control={<Checkbox size="small" />}
+              label="Keep me signed in for 30 days"
+              sx={{
+                mt: '-4px',
+                '& .MuiFormControlLabel-label': {
+                  fontSize: 12,
+                  color: '#3d3d3a',
+                },
+              }}
             />
             <Button
               type="submit"
@@ -422,7 +448,7 @@ export default function LoginPage() {
               color: INK_4,
             }}
           >
-            <Typography sx={{ fontSize: 11, color: INK_4 }}>© 2026 Belarusbank</Typography>
+            <Typography sx={{ fontSize: 11, color: INK_4 }}>© 2026 Bank</Typography>
             <Box sx={{ display: 'flex', gap: '14px' }}>
               {['Privacy', 'Terms', 'Status'].map((item) => (
                 <Typography key={item} sx={{ fontSize: 11, color: INK_4 }}>
