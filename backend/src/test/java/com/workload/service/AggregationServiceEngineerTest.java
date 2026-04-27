@@ -127,8 +127,7 @@ class AggregationServiceEngineerTest {
 
     UUID divId = division.getId();
     when(divisionRepository.findById(divId)).thenReturn(Optional.of(division));
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divId))
-        .thenReturn(List.of(summary));
+    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divId)).thenReturn(List.of(summary));
     when(userRepository.countByHomeDivisionIdAndActiveTrue(divId)).thenReturn(5L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divId, "overloaded"))
         .thenReturn(2L);
@@ -151,8 +150,7 @@ class AggregationServiceEngineerTest {
 
     UUID divId = division.getId();
     when(divisionRepository.findById(divId)).thenReturn(Optional.of(division));
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divId))
-        .thenReturn(List.of(summary));
+    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divId)).thenReturn(List.of(summary));
     when(userRepository.countByHomeDivisionIdAndActiveTrue(divId)).thenReturn(0L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divId, "overloaded"))
         .thenReturn(0L);

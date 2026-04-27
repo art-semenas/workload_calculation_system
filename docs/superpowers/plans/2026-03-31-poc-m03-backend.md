@@ -1,6 +1,6 @@
 # PoC M-03 Backend — Engineer Module
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Engineer CRUD, object-engineer assignments, `engineer_summaries` calculation (each engineer's FTE share per assigned object, component breakdown, load_ratio, status), synchronous recalculation on all assignment and capacity changes. 14 endpoints from the engineer module.
 

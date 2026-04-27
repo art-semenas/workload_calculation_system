@@ -169,7 +169,8 @@ class AggregationServiceTest {
         .thenReturn(List.of(s1, s2, s3));
     when(divisionRepository.findById(div.getId())).thenReturn(Optional.of(div));
     when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "overloaded"))
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            div.getId(), "overloaded"))
         .thenReturn(0L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
         .thenReturn(0L);
@@ -198,7 +199,8 @@ class AggregationServiceTest {
         .thenReturn(List.of(s1, s2));
     when(branchRepository.findById(branch.getId())).thenReturn(Optional.of(branch));
     when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "overloaded"))
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            div.getId(), "overloaded"))
         .thenReturn(0L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
         .thenReturn(0L);
