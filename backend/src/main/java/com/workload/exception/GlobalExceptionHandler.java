@@ -79,8 +79,8 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AssignmentNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleAssignmentNotFound(
       AssignmentNotFoundException ex) {
-    return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(new ApiError("CONSTRAINT_VIOLATION", ex.getMessage(), null)));
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(new ApiError("ASSIGNMENT_NOT_FOUND", ex.getMessage(), null)));
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

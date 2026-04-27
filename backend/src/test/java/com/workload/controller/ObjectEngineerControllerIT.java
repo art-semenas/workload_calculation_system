@@ -238,6 +238,21 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
   }
 
   // =========================================================================
+  // Test: removeEngineerFromObject_assignmentNotFound_returns404
+  // =========================================================================
+  @Test
+  void removeEngineerFromObject_assignmentNotFound_returns404() {
+    // Attempt to remove engineer without prior assignment
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/objects/{id}/engineers/{eid}", objectId, engineerId1)
+        .then()
+        .statusCode(404)
+        .body("error.code", equalTo("ASSIGNMENT_NOT_FOUND"));
+  }
+
+  // =========================================================================
   // Test: getObjectEngineers_returnsPerEngineerShares
   // =========================================================================
   @Test
