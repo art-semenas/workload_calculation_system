@@ -66,7 +66,9 @@ export default function LoginPage() {
       sx={{
         minHeight: '100vh',
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '1fr 520px' },
+        gridTemplateColumns: '1fr 520px',
+        maxWidth: 1440,
+        mx: 'auto',
       }}
     >
       {/* Left — brand pane */}
@@ -285,7 +287,7 @@ export default function LoginPage() {
               mb: '8px',
             }}
           >
-            Sign in
+            SIGN IN
           </Typography>
           <Typography
             component="h2"
