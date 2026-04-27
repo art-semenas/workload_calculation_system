@@ -1,10 +1,11 @@
 package com.workload.controller;
 
 import com.workload.dto.ApiResponse;
+import com.workload.dto.AssignEngineerToObjectRequest;
+import com.workload.dto.AssignObjectToEngineerRequest;
 import com.workload.dto.EngineerObjectDto;
 import com.workload.dto.EngineerShareDto;
 import com.workload.dto.EngineerSummaryDto;
-import com.workload.dto.ObjectEngineerAssignRequest;
 import com.workload.dto.ObjectEngineerAssignmentDto;
 import com.workload.service.EngineerSummaryService;
 import com.workload.service.ObjectEngineerService;
@@ -44,7 +45,7 @@ public class ObjectEngineerController {
 
   @PostMapping("/objects/{id}/engineers")
   public ResponseEntity<ApiResponse<ObjectEngineerAssignmentDto>> assignEngineerToObject(
-      @PathVariable UUID id, @Valid @RequestBody ObjectEngineerAssignRequest request) {
+      @PathVariable UUID id, @Valid @RequestBody AssignEngineerToObjectRequest request) {
     ObjectEngineerAssignmentDto assignment =
         objectEngineerService.assignEngineerToObject(id, request.engineerId());
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(assignment));
@@ -70,7 +71,7 @@ public class ObjectEngineerController {
 
   @PostMapping("/engineers/{id}/objects")
   public ResponseEntity<ApiResponse<ObjectEngineerAssignmentDto>> assignObjectToEngineer(
-      @PathVariable UUID id, @Valid @RequestBody ObjectEngineerAssignRequest request) {
+      @PathVariable UUID id, @Valid @RequestBody AssignObjectToEngineerRequest request) {
     ObjectEngineerAssignmentDto assignment =
         objectEngineerService.assignEngineerToObject(request.objectId(), id);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(assignment));

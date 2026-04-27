@@ -153,12 +153,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -178,12 +175,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -196,12 +190,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -221,12 +212,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -268,12 +256,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -285,12 +270,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId2, objectId))
+                engineerId2))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -321,12 +303,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -357,12 +336,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -408,12 +384,9 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .body(
             String.format(
                 """
-                {
-                  "engineerId": "%s",
-                  "objectId": "%s"
-                }
+                { "engineerId": "%s" }
                 """,
-                engineerId1, objectId))
+                engineerId1))
         .when()
         .post("/objects/{id}/engineers", objectId)
         .then()
@@ -438,5 +411,49 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .statusCode(200)
         .body("data", hasSize(1))
         .body("data[0].engineerId", equalTo(engineerId1.toString()));
+  }
+
+  // =========================================================================
+  // Test: assignEngineerToObject_minimalBody_engineerIdOnly_returns201
+  // =========================================================================
+  @Test
+  void assignEngineerToObject_minimalBody_engineerIdOnly_returns201() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            String.format(
+                """
+                { "engineerId": "%s" }
+                """,
+                engineerId1))
+        .when()
+        .post("/objects/{id}/engineers", objectId)
+        .then()
+        .statusCode(201)
+        .body("data.engineerId", equalTo(engineerId1.toString()))
+        .body("error", nullValue());
+  }
+
+  // =========================================================================
+  // Test: assignObjectToEngineer_minimalBody_objectIdOnly_returns201
+  // =========================================================================
+  @Test
+  void assignObjectToEngineer_minimalBody_objectIdOnly_returns201() {
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body(
+            String.format(
+                """
+                { "objectId": "%s" }
+                """,
+                objectId))
+        .when()
+        .post("/engineers/{id}/objects", engineerId1)
+        .then()
+        .statusCode(201)
+        .body("data.engineerId", equalTo(engineerId1.toString()))
+        .body("error", nullValue());
   }
 }
