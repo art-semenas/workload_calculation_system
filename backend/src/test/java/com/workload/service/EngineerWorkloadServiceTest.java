@@ -1,22 +1,27 @@
 package com.workload.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.workload.config.WorkloadConfig;
+import com.workload.dto.EngineerSummaryDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
 import com.workload.entity.User;
+import com.workload.exception.SummaryNotFoundException;
+import com.workload.mapper.EngineerSummaryMapper;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,8 +39,10 @@ class EngineerWorkloadServiceTest {
   @Mock private SummaryRepository summaryRepository;
   @Mock private EngineerSummaryRepository engineerSummaryRepository;
   @Mock private UserRepository userRepository;
+  @Mock private EngineerSummaryMapper engineerSummaryMapper;
 
   private WorkloadConfig config;
+  private EngineerSummaryService engineerSummaryService;
   private EngineerSummaryService service;
 
   @BeforeEach
@@ -68,7 +75,9 @@ class EngineerWorkloadServiceTest {
             summaryRepository,
             engineerSummaryRepository,
             userRepository,
-            config);
+            config,
+            engineerSummaryMapper);
+    engineerSummaryService = service;
   }
 
   // -------------------------------------------------------------------------
@@ -738,6 +747,63 @@ class EngineerWorkloadServiceTest {
   // -------------------------------------------------------------------------
   // Missing summary edge case
   // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // getEngineerSummary tests
+  // -------------------------------------------------------------------------
+
+  @Test
+  void getEngineerSummary_existingSummary_returnsDto() {
+    UUID engineerId = UUID.randomUUID();
+    User engineer = User.builder().id(engineerId).build();
+    EngineerSummary summary =
+        EngineerSummary.builder()
+            .id(UUID.randomUUID())
+            .engineer(engineer)
+            .totalLoad(new BigDecimal("0.5"))
+            .objectCount(2)
+            .osLoad(BigDecimal.ZERO)
+            .psLoad(BigDecimal.ZERO)
+            .videoLoad(BigDecimal.ZERO)
+            .recordsLoad(BigDecimal.ZERO)
+            .repairLoad(BigDecimal.ZERO)
+            .capacityFte(BigDecimal.ONE)
+            .loadRatio(new BigDecimal("0.5"))
+            .status("normal")
+            .computedAt(OffsetDateTime.now())
+            .build();
+
+    when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.of(summary));
+    when(engineerSummaryMapper.toDto(summary))
+        .thenReturn(
+            new EngineerSummaryDto(
+                engineerId,
+                new BigDecimal("0.5"),
+                2,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ONE,
+                new BigDecimal("0.5"),
+                "NORMAL",
+                summary.getComputedAt()));
+
+    EngineerSummaryDto dto = engineerSummaryService.getEngineerSummary(engineerId);
+
+    assertThat(dto.engineerId()).isEqualTo(engineerId);
+    assertThat(dto.status()).isEqualTo("NORMAL");
+  }
+
+  @Test
+  void getEngineerSummary_notFound_throwsSummaryNotFoundException() {
+    UUID engineerId = UUID.randomUUID();
+    when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> engineerSummaryService.getEngineerSummary(engineerId))
+        .isInstanceOf(SummaryNotFoundException.class);
+  }
 
   @Test
   void missingObjectSummary_treatedAsZeroContribution() {

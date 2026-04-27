@@ -6,9 +6,7 @@ import com.workload.dto.EngineerShareDto;
 import com.workload.dto.EngineerSummaryDto;
 import com.workload.dto.ObjectEngineerAssignRequest;
 import com.workload.dto.ObjectEngineerAssignmentDto;
-import com.workload.exception.SummaryNotFoundException;
-import com.workload.mapper.EngineerSummaryMapper;
-import com.workload.repository.EngineerSummaryRepository;
+import com.workload.service.EngineerSummaryService;
 import com.workload.service.ObjectEngineerService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,8 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ObjectEngineerController {
 
   private final ObjectEngineerService objectEngineerService;
-  private final EngineerSummaryRepository engineerSummaryRepository;
-  private final EngineerSummaryMapper engineerSummaryMapper;
+  private final EngineerSummaryService engineerSummaryService;
 
   // =========================================================================
   // Object-side endpoints
@@ -88,13 +85,6 @@ public class ObjectEngineerController {
 
   @GetMapping("/engineers/{id}/summary")
   public ResponseEntity<ApiResponse<EngineerSummaryDto>> getEngineerSummary(@PathVariable UUID id) {
-    var summary =
-        engineerSummaryRepository
-            .findByEngineerId(id)
-            .orElseThrow(
-                () ->
-                    new SummaryNotFoundException("Engineer summary not found for engineer: " + id));
-
-    return ResponseEntity.ok(ApiResponse.success(engineerSummaryMapper.toDto(summary)));
+    return ResponseEntity.ok(ApiResponse.success(engineerSummaryService.getEngineerSummary(id)));
   }
 }

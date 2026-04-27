@@ -1,10 +1,13 @@
 package com.workload.service;
 
 import com.workload.config.WorkloadConfig;
+import com.workload.dto.EngineerSummaryDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
 import com.workload.entity.Summary;
 import com.workload.entity.User;
+import com.workload.exception.SummaryNotFoundException;
+import com.workload.mapper.EngineerSummaryMapper;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
@@ -33,6 +36,7 @@ public class EngineerSummaryService {
   private final EngineerSummaryRepository engineerSummaryRepository;
   private final UserRepository userRepository;
   private final WorkloadConfig config;
+  private final EngineerSummaryMapper engineerSummaryMapper;
 
   /**
    * Recalculates the engineer summary for the given engineer.
@@ -153,6 +157,17 @@ public class EngineerSummaryService {
   public void deleteByEngineerId(UUID engineerId) {
     engineerSummaryRepository.deleteByEngineerId(engineerId);
     log.info("Deleted engineer summary for engineerId={}", engineerId);
+  }
+
+  public EngineerSummaryDto getEngineerSummary(UUID engineerId) {
+    EngineerSummary summary =
+        engineerSummaryRepository
+            .findByEngineerId(engineerId)
+            .orElseThrow(
+                () ->
+                    new SummaryNotFoundException(
+                        "Engineer summary not found for engineer: " + engineerId));
+    return engineerSummaryMapper.toDto(summary);
   }
 
   // -------------------------------------------------------------------------
