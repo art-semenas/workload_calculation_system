@@ -26,15 +26,25 @@
   <script type="text/babel" src="screens/object-detail.jsx"></script>
   <script type="text/babel" src="screens/engineers.jsx"></script>
   <script type="text/babel" src="screens/catalog.jsx"></script>
+  <script type="text/babel" src="screens/login.jsx"></script>
 
   <script type="text/babel" data-presets="react">
     function App() {
-      const { DashboardScreen, SvodScreen, ObjectDetailScreen, EngineersScreen, CatalogScreen } = window;
+      const { DashboardScreen, SvodScreen, ObjectDetailScreen, EngineersScreen, CatalogScreen, LoginScreen, LoginMinimalScreen } = window;
       return (
         <DesignCanvas
           title="Workload Calculator"
           subtitle="Original hi-fi design concept for a security-systems maintenance workload tool. Rooted in the existing MUI frontend structure (Dashboard · СВОД · Object Detail · Engineers · Catalog) but elevated with a numeric-first typography system, slate neutrals, and data-dense composition. Click any artboard to focus."
         >
+          <DCSection id="auth" title="Authentication">
+            <DCArtboard id="login-split" label="00 · Login — split brand pane" width={1440} height={900}>
+              <LoginScreen/>
+            </DCArtboard>
+            <DCArtboard id="login-minimal" label="00b · Login — minimal card" width={1440} height={900}>
+              <LoginMinimalScreen/>
+            </DCArtboard>
+          </DCSection>
+
           <DCSection id="workspace" title="Workspace · daily operator surfaces">
             <DCArtboard id="dashboard" label="01 · Dashboard" width={1440} height={900}>
               <DashboardScreen/>
