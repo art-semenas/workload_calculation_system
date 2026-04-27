@@ -216,6 +216,7 @@ public class CalculationService {
       return travelOpt.get().getObject();
     }
 
+    // Fallback: create a minimal ObjectEntity reference with just the id
     ObjectEntity ref = new ObjectEntity();
     ref.setId(objectId);
     return ref;

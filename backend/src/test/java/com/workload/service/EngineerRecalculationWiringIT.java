@@ -42,7 +42,6 @@ class EngineerRecalculationWiringIT {
   @Autowired private EquipmentService equipmentService;
   @Autowired private RecordsService recordsService;
   @Autowired private ObjectService objectService;
-  @Autowired private EngineerSummaryService engineerSummaryService;
 
   @Autowired private DivisionRepository divisionRepository;
   @Autowired private BranchRepository branchRepository;
@@ -285,13 +284,19 @@ class EngineerRecalculationWiringIT {
     ObjectEntity freshObject = objectRepository.findById(objectId).orElseThrow();
     assignEngineerToObject(freshObject, engineer);
 
-    // Trigger engineer summary recalculation (simulating what a subsequent object recalc would do)
-    engineerSummaryService.recalculate(engineer.getId());
+    entityManager.flush();
+    entityManager.clear();
+
+    // Trigger recalculation via equipmentService.upsertDevice(), which goes through
+    // CalculationService.recalculate() -> recalculateAllForObject() -> engineer summary updated.
+    // This exercises the full wiring chain introduced in this task.
+    equipmentService.upsertDevice(
+        objectId, new ObjectDeviceUpsertRequest(deviceType.getId(), new BigDecimal("2")));
 
     entityManager.flush();
     entityManager.clear();
 
-    // Then: engineer summary exists and total_load > 0 matching the object summary
+    // Then: engineer summary exists and total_load > 0 because the full pipeline ran
     Optional<EngineerSummary> es = engineerSummaryRepository.findByEngineerId(engineer.getId());
     assertThat(es).isPresent();
     assertThat(es.get().getTotalLoad()).isGreaterThan(BigDecimal.ZERO);

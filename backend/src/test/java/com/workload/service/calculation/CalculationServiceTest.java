@@ -19,6 +19,7 @@ import com.workload.repository.ObjectSystemAssignmentRepository;
 import com.workload.repository.RecordsTaskRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.TravelRepository;
+import com.workload.service.EngineerSummaryService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ class CalculationServiceTest {
   @Mock private ObjectRepairRepository repairRepo;
   @Mock private TravelRepository travelRepo;
   @Mock private SummaryRepository summaryRepo;
+  @Mock private EngineerSummaryService engineerSummaryService;
 
   private WorkloadConfig config;
   private RepairCalculationHelper repairHelper;
@@ -82,7 +84,8 @@ class CalculationServiceTest {
             summaryRepo,
             config,
             repairHelper,
-            recordsHelper);
+            recordsHelper,
+            engineerSummaryService);
   }
 
   // --- PAC-01 reference test data setup helpers ---

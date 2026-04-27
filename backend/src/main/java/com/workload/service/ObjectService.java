@@ -94,6 +94,9 @@ public class ObjectService {
     }
     List<UUID> affectedEngineers = objectEngineerRepository.findEngineerIdsByObjectId(id);
     objectRepository.deleteById(id);
+    // Flush the pending delete to DB so the ON DELETE CASCADE removes object_engineers rows.
+    // Required because JPA auto-flush may not recognize DB-level cascade side-effects,
+    // and EngineerSummaryService.recalculate() must see 0 assignments for the deleted object.
     entityManager.flush();
     affectedEngineers.forEach(engineerSummaryService::recalculate);
   }
