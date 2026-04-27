@@ -12,13 +12,16 @@ import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.ObjectMapper;
 import com.workload.mapper.SummaryMapper;
 import com.workload.repository.BranchRepository;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
+import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ObjectService {
@@ -28,18 +31,27 @@ public class ObjectService {
   private final ObjectMapper objectMapper;
   private final SummaryRepository summaryRepository;
   private final SummaryMapper summaryMapper;
+  private final ObjectEngineerRepository objectEngineerRepository;
+  private final EngineerSummaryService engineerSummaryService;
+  private final EntityManager entityManager;
 
   public ObjectService(
       ObjectRepository objectRepository,
       BranchRepository branchRepository,
       ObjectMapper objectMapper,
       SummaryRepository summaryRepository,
-      SummaryMapper summaryMapper) {
+      SummaryMapper summaryMapper,
+      ObjectEngineerRepository objectEngineerRepository,
+      EngineerSummaryService engineerSummaryService,
+      EntityManager entityManager) {
     this.objectRepository = objectRepository;
     this.branchRepository = branchRepository;
     this.objectMapper = objectMapper;
     this.summaryRepository = summaryRepository;
     this.summaryMapper = summaryMapper;
+    this.objectEngineerRepository = objectEngineerRepository;
+    this.engineerSummaryService = engineerSummaryService;
+    this.entityManager = entityManager;
   }
 
   public List<ObjectDto> findAll(Optional<UUID> divisionId) {
@@ -92,11 +104,20 @@ public class ObjectService {
     return objectMapper.toDto(entity);
   }
 
+  @Transactional
   public void delete(UUID id) {
     if (!objectRepository.existsById(id)) {
       throw new ObjectNotFoundException(id.toString());
     }
+    List<UUID> affectedEngineers = objectEngineerRepository.findEngineerIdsByObjectId(id);
     objectRepository.deleteById(id);
+    // Flush the delete and clear the session so the recalculation runs with a clean state.
+    // Without this, Hibernate's auto-flush during recalculation encounters the deleted
+    // ObjectEntity still referenced by other entities in the session (e.g. Summary),
+    // causing a TransientObjectException.
+    entityManager.flush();
+    entityManager.clear();
+    affectedEngineers.forEach(engineerSummaryService::recalculate);
   }
 
   public SummaryDto getSummary(UUID objectId) {

@@ -9,10 +9,12 @@ import com.workload.entity.Summary;
 import com.workload.entity.SystemType;
 import com.workload.entity.Travel;
 import com.workload.repository.ObjectRepairRepository;
+import com.workload.repository.ObjectRepository;
 import com.workload.repository.ObjectSystemAssignmentRepository;
 import com.workload.repository.RecordsTaskRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.TravelRepository;
+import com.workload.service.EngineerSummaryService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
@@ -36,6 +38,8 @@ public class CalculationService {
   private final WorkloadConfig config;
   private final RepairCalculationHelper repairHelper;
   private final RecordsCalculationHelper recordsHelper;
+  private final EngineerSummaryService engineerSummaryService;
+  private final ObjectRepository objectRepository;
 
   // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
   public Summary recalculate(UUID objectId) {
@@ -188,7 +192,10 @@ public class CalculationService {
 
     log.info("Workload recalculated for object {}: itogoWithTravel={}", objectId, itogoWithTravel);
 
-    return summaryRepo.save(summary);
+    Summary saved = summaryRepo.save(summary);
+    // PoC (S-02): calls engineer summary recalculation synchronously after object summary update.
+    engineerSummaryService.recalculateAllForObject(objectId);
+    return saved;
   }
 
   private ObjectEntity resolveObjectRef(
@@ -211,9 +218,7 @@ public class CalculationService {
       return travelOpt.get().getObject();
     }
 
-    // Fallback: create a minimal ObjectEntity reference with just the id
-    ObjectEntity ref = new ObjectEntity();
-    ref.setId(objectId);
-    return ref;
+    // Fallback: load a managed proxy so the reference stays in the Hibernate session
+    return objectRepository.getReferenceById(objectId);
   }
 }
