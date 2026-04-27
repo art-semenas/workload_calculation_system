@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface EngineerSummaryRepository extends JpaRepository<EngineerSummary, UUID> {
   Optional<EngineerSummary> findByEngineerId(UUID engineerId);
 
+  long countByEngineerHomeDivisionIdAndStatus(UUID homeDivisionId, String status);
+
   @Modifying
   @Transactional
   void deleteByEngineerId(UUID engineerId);

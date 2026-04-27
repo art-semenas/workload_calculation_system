@@ -14,6 +14,7 @@ import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.DivisionRepository;
+import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ class AggregationServiceTest {
   @Mock private DivisionRepository divisionRepository;
   @Mock private BranchRepository branchRepository;
   @Mock private UserRepository userRepository;
+  @Mock private EngineerSummaryRepository engineerSummaryRepository;
 
   private WorkloadConfig config;
   private AggregationService aggregationService;
@@ -64,7 +66,12 @@ class AggregationServiceTest {
 
     aggregationService =
         new AggregationService(
-            summaryRepository, divisionRepository, branchRepository, userRepository, config);
+            summaryRepository,
+            divisionRepository,
+            branchRepository,
+            userRepository,
+            engineerSummaryRepository,
+            config);
   }
 
   // -------------------------------------------------------------------------
@@ -162,6 +169,10 @@ class AggregationServiceTest {
         .thenReturn(List.of(s1, s2, s3));
     when(divisionRepository.findById(div.getId())).thenReturn(Optional.of(div));
     when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "overloaded"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
+        .thenReturn(0L);
 
     AggregationDivisionDto result = aggregationService.getDivision(div.getId());
 
@@ -186,6 +197,11 @@ class AggregationServiceTest {
     when(summaryRepository.findAllByBranchIdWithOrgHierarchy(branch.getId()))
         .thenReturn(List.of(s1, s2));
     when(branchRepository.findById(branch.getId())).thenReturn(Optional.of(branch));
+    when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "overloaded"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
+        .thenReturn(0L);
 
     AggregationBranchDto result = aggregationService.getBranch(branch.getId());
 

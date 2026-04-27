@@ -13,6 +13,7 @@ import com.workload.exception.BranchNotFoundException;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.DivisionRepository;
+import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
@@ -36,6 +37,7 @@ public class AggregationService {
   private final DivisionRepository divisionRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
+  private final EngineerSummaryRepository engineerSummaryRepository;
   private final WorkloadConfig config;
 
   public AggregationCompanyDto getCompany() {
@@ -142,20 +144,19 @@ public class AggregationService {
     BigDecimal staffingNeed = computeStaffingNeed(requiredFte);
     int objectCount = summaries.size();
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
-    long engineersTotal = userRepository.countByHomeDivisionIdAndActiveTrue(division.getId());
+    int[] engineerCounts = engineerCountsForDivision(division.getId());
 
-    // PoC (S-02): no engineer_summaries — all objects are coverage gaps
     return new AggregationDivisionDto(
         division.getId(),
         division.getName(),
         objectCount,
         requiredFte,
         staffingNeed,
-        requiredFte, // uncoveredLoad = requiredFte (all objects uncovered)
-        objectCount, // coverageGapCount = objectCount
-        (int) engineersTotal,
-        0, // engineersOverloaded — M-03 not merged
-        0, // engineersWarning — M-03 not merged
+        requiredFte,
+        objectCount,
+        engineerCounts[0],
+        engineerCounts[1],
+        engineerCounts[2],
         breakdown);
   }
 
@@ -164,15 +165,20 @@ public class AggregationService {
     BigDecimal staffingNeed = computeStaffingNeed(requiredFte);
     int objectCount = summaries.size();
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
+    Division division = branch.getDivision();
+    int[] engineerCounts = engineerCountsForDivision(division.getId());
 
     return new AggregationBranchDto(
         branch.getId(),
         branch.getName(),
-        branch.getDivision().getId(),
-        branch.getDivision().getName(),
+        division.getId(),
+        division.getName(),
         objectCount,
         requiredFte,
         staffingNeed,
+        engineerCounts[0],
+        engineerCounts[1],
+        engineerCounts[2],
         breakdown);
   }
 
@@ -226,5 +232,17 @@ public class AggregationService {
         .multiply(config.getAbsenceCoefficient())
         .divide(
             BigDecimal.valueOf(60).multiply(config.getMonthlyHoursFund()), 6, RoundingMode.HALF_UP);
+  }
+
+  private int[] engineerCountsForDivision(UUID divisionId) {
+    int total = (int) userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
+    int overloaded =
+        (int)
+            engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+                divisionId, "overloaded");
+    int warning =
+        (int)
+            engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divisionId, "warning");
+    return new int[] {total, overloaded, warning};
   }
 }

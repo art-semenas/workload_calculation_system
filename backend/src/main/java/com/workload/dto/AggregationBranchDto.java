@@ -11,4 +11,7 @@ public record AggregationBranchDto(
     int objectCount,
     BigDecimal requiredFte,
     BigDecimal staffingNeed,
+    int engineersTotal,
+    int engineersOverloaded,
+    int engineersWarning,
     ComponentBreakdownDto breakdown) {}
