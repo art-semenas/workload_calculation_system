@@ -345,6 +345,7 @@ export default function LoginPage() {
                 )}
               </IconButton>
             </Box>
+            {/* PoC S-04: uncontrolled — wire to session-duration logic in MVP */}
             <FormControlLabel
               control={<Checkbox size="small" />}
               label="Keep me signed in for 30 days"
