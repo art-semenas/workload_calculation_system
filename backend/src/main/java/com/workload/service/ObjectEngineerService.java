@@ -2,6 +2,7 @@ package com.workload.service;
 
 import com.workload.dto.EngineerObjectDto;
 import com.workload.dto.EngineerShareDto;
+import com.workload.dto.ObjectEngineerAssignmentDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
 import com.workload.entity.ObjectEntity;
@@ -12,7 +13,7 @@ import com.workload.exception.AssignmentNotFoundException;
 import com.workload.exception.EngineerInactiveException;
 import com.workload.exception.InvalidEngineerRoleException;
 import com.workload.exception.ObjectNotFoundException;
-import com.workload.mapper.EngineerSummaryMapper;
+import com.workload.mapper.ObjectEngineerMapper;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
@@ -47,7 +48,7 @@ public class ObjectEngineerService {
   private final UserRepository userRepository;
   private final ObjectRepository objectRepository;
   private final EngineerSummaryService engineerSummaryService;
-  private final EngineerSummaryMapper engineerSummaryMapper;
+  private final ObjectEngineerMapper objectEngineerMapper;
 
   /**
    * Retrieves all engineers assigned to an object with their computed shares.
@@ -175,7 +176,7 @@ public class ObjectEngineerService {
    * @throws DataIntegrityViolationException if assignment already exists
    */
   @Transactional
-  public ObjectEngineer assignEngineerToObject(UUID objectId, UUID engineerId) {
+  public ObjectEngineerAssignmentDto assignEngineerToObject(UUID objectId, UUID engineerId) {
     // Validate engineer exists
     User engineer =
         userRepository
@@ -217,7 +218,7 @@ public class ObjectEngineerService {
       // PoC (S-02): recalculates all affected engineer summaries synchronously.
       engineerSummaryService.recalculateAllForObject(objectId);
 
-      return saved;
+      return objectEngineerMapper.toAssignmentDto(saved);
     } catch (DataIntegrityViolationException ex) {
       log.warn("Duplicate assignment attempt: engineer {} to object {}", engineerId, objectId);
       throw ex;

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.workload.dto.EngineerObjectDto;
 import com.workload.dto.EngineerShareDto;
+import com.workload.dto.ObjectEngineerAssignmentDto;
 import com.workload.entity.Branch;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
@@ -19,7 +20,7 @@ import com.workload.exception.AssignmentNotFoundException;
 import com.workload.exception.EngineerInactiveException;
 import com.workload.exception.InvalidEngineerRoleException;
 import com.workload.exception.ObjectNotFoundException;
-import com.workload.mapper.EngineerSummaryMapper;
+import com.workload.mapper.ObjectEngineerMapper;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
@@ -46,7 +47,7 @@ class ObjectEngineerServiceTest {
   @Mock private UserRepository userRepository;
   @Mock private ObjectRepository objectRepository;
   @Mock private EngineerSummaryService engineerSummaryService;
-  @Mock private EngineerSummaryMapper engineerSummaryMapper;
+  @Mock private ObjectEngineerMapper objectEngineerMapper;
 
   @InjectMocks private ObjectEngineerService objectEngineerService;
 
@@ -78,17 +79,24 @@ class ObjectEngineerServiceTest {
             .assignedAt(OffsetDateTime.now())
             .build();
 
+    UUID assignmentId = UUID.randomUUID();
+    ObjectEngineerAssignmentDto expectedDto =
+        new ObjectEngineerAssignmentDto(
+            assignmentId, objectId, engineerId, expected.getAssignedAt());
+
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
     when(objectRepository.findById(objectId)).thenReturn(Optional.of(object));
     when(objectEngineerRepository.save(any(ObjectEngineer.class))).thenReturn(expected);
+    when(objectEngineerMapper.toAssignmentDto(expected)).thenReturn(expectedDto);
 
     // Execute
-    ObjectEngineer result = objectEngineerService.assignEngineerToObject(objectId, engineerId);
+    ObjectEngineerAssignmentDto result =
+        objectEngineerService.assignEngineerToObject(objectId, engineerId);
 
     // Assert
     assertThat(result).isNotNull();
-    assertThat(result.getEngineer().getId()).isEqualTo(engineerId);
-    assertThat(result.getObject().getId()).isEqualTo(objectId);
+    assertThat(result.engineerId()).isEqualTo(engineerId);
+    assertThat(result.objectId()).isEqualTo(objectId);
     verify(engineerSummaryService).recalculateAllForObject(objectId);
   }
 

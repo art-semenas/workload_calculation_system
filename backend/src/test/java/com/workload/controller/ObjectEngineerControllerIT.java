@@ -130,6 +130,10 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(201)
         .body("data", notNullValue())
+        .body("data.engineerId", equalTo(engineerId1.toString()))
+        .body("data.objectId", equalTo(objectId.toString()))
+        .body("data.assignedAt", notNullValue())
+        .body("data.engineer", nullValue())
         .body("error", nullValue());
   }
 
