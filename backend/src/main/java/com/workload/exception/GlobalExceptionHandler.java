@@ -93,7 +93,9 @@ public class GlobalExceptionHandler {
           .body(
               ApiResponse.error(
                   new ApiError(
-                      "CONSTRAINT_VIOLATION", "A database constraint was violated", null)));
+                      "ENGINEER_ALREADY_ASSIGNED",
+                      "This engineer is already assigned to the object",
+                      null)));
     }
     if (msg.contains("unique") || msg.contains("duplicate")) {
       return ResponseEntity.status(HttpStatus.CONFLICT)

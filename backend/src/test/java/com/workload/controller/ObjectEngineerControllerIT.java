@@ -197,7 +197,7 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .post("/objects/{id}/engineers", objectId)
         .then()
         .statusCode(409)
-        .body("error.code", equalTo("CONSTRAINT_VIOLATION"));
+        .body("error.code", equalTo("ENGINEER_ALREADY_ASSIGNED"));
   }
 
   // =========================================================================
