@@ -1,11 +1,19 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useLogin } from '../hooks/useAuth'
 import { LoginRequestSchema, type LoginRequest } from '../types/auth'
+import { useSvod } from '../hooks/useSvod'
+
+const FONT_MONO = "'JetBrains Mono', 'SF Mono', Menlo, monospace"
+const INK = '#1a1a1a'
+const INK_3 = '#6b6a64'
+const INK_4 = '#9a988f'
+const ACCENT = '#3a4fcf'
+const LINE = '#e4e2dc'
 
 function isUnauthorizedError(error: unknown): boolean {
   return (
@@ -21,6 +29,8 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const loginMutation = useLogin()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const { data: svodPage, isLoading: svodLoading } = useSvod(0, 1)
 
   const { control, handleSubmit, formState } = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
@@ -43,29 +53,252 @@ export default function LoginPage() {
 
   const isSubmitting = formState.isSubmitting
 
+  const objectCount =
+    !svodLoading && svodPage !== undefined ? svodPage.totalElements.toLocaleString('ru-RU') : '—'
+
+  const requiredFte =
+    !svodLoading && svodPage !== undefined && svodPage.content.length > 0
+      ? svodPage.content.reduce((sum, row) => sum + row.itogoChisloWithTravel, 0).toFixed(2)
+      : '—'
+
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 2,
-        background:
-          'linear-gradient(135deg, rgba(232,240,254,1) 0%, rgba(245,247,250,1) 50%, rgba(226,239,218,1) 100%)',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '1fr 520px' },
       }}
     >
-      <Card sx={{ width: '100%', maxWidth: 420 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Workload Calculation System
+      {/* Left — brand pane */}
+      <Box
+        sx={{
+          background: INK,
+          color: '#fff',
+          position: 'relative',
+          overflow: 'hidden',
+          padding: { xs: '40px 32px', md: '40px 56px' },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          minHeight: { xs: 'auto', md: '100vh' },
+        }}
+      >
+        {/* Dot grid overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
+            backgroundSize: '16px 16px',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Accent blob */}
+        <Box
+          sx={{
+            position: 'absolute',
+            right: -160,
+            top: -120,
+            width: 520,
+            height: 520,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 30% 30%, rgba(58,79,207,0.55), transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Brand row */}
+        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: '9px',
+              background: '#fff',
+              color: INK,
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 700,
+              fontFamily: FONT_MONO,
+              fontSize: 16,
+            }}
+          >
+            W
+          </Box>
+          <Box>
+            <Typography
+              sx={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em', color: '#fff' }}
+            >
+              Workload Calculator
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
+              Belarusbank · Security systems maintenance
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Hero content */}
+        <Box sx={{ position: 'relative', maxWidth: 460 }}>
+          <Typography
+            sx={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.5)',
+              mb: '14px',
+            }}
+          >
+            Planning period · H1 2026
           </Typography>
-          <Typography variant="h6" component="h2" color="text.secondary" gutterBottom>
-            Sign In
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: 44,
+              fontWeight: 600,
+              letterSpacing: '-0.025em',
+              lineHeight: 1.1,
+              m: 0,
+              mb: '18px',
+              color: '#fff',
+            }}
+          >
+            Calculate maintenance headcount
+            <br />
+            across{' '}
+            <Box component="span" sx={{ color: '#9ab2ff' }}>
+              2 935 objects
+            </Box>
+            .
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: 'rgba(255,255,255,0.65)',
+              m: 0,
+              maxWidth: 420,
+            }}
+          >
+            Replace the manual XLSX workflow with an auditable, deterministic engine. Equipment
+            normatives flow through to FTE coefficients automatically.
           </Typography>
 
-          {errorMessage ? (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+          {/* Stat strip */}
+          <Box
+            sx={{
+              mt: '36px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1px',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '10px',
+              overflow: 'hidden',
+            }}
+          >
+            {[
+              { label: 'Objects under maintenance', value: objectCount },
+              { label: 'Required FTE · H1 2026', value: requiredFte },
+              { label: 'Active engineers', value: '—' },
+            ].map((stat) => (
+              <Box key={stat.label} sx={{ background: INK, padding: '16px 18px' }}>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255,255,255,0.5)',
+                  }}
+                >
+                  {stat.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 22,
+                    fontWeight: 500,
+                    letterSpacing: '-0.02em',
+                    mt: '8px',
+                    lineHeight: 1,
+                    fontFamily: FONT_MONO,
+                    color: '#fff',
+                  }}
+                >
+                  {stat.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Footer row */}
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.45)',
+          }}
+        >
+          <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+            v2.24 · build 8f3a-e921
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: '#4ade80',
+                flexShrink: 0,
+              }}
+            />
+            <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+              All systems operational
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Right — form pane */}
+      <Box
+        sx={{
+          background: '#ffffff',
+          padding: { xs: '40px 32px', md: '56px 64px' },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          minHeight: { xs: 'auto', md: '100vh' },
+        }}
+      >
+        <Box sx={{ maxWidth: 360, width: '100%' }}>
+          <Typography
+            sx={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: INK_3,
+              mb: '8px',
+            }}
+          >
+            Sign in
+          </Typography>
+          <Typography
+            component="h2"
+            sx={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', m: '0 0 8px' }}
+          >
+            Welcome back.
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: INK_3, m: '0 0 32px' }}>
+            Use your corporate credentials to access the workload tool.
+          </Typography>
+
+          {errorMessage !== null ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
               {errorMessage}
             </Alert>
           ) : null}
@@ -76,7 +309,7 @@ export default function LoginPage() {
               void onSubmit(e)
             }}
             noValidate
-            sx={{ mt: 2 }}
+            sx={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
           >
             <FormTextField
               name="email"
@@ -84,7 +317,6 @@ export default function LoginPage() {
               label="Email"
               variant="standard"
               fullWidth
-              margin="normal"
               autoComplete="email"
             />
             <FormTextField
@@ -94,7 +326,6 @@ export default function LoginPage() {
               type="password"
               variant="standard"
               fullWidth
-              margin="normal"
               autoComplete="current-password"
             />
             <Button
@@ -103,13 +334,103 @@ export default function LoginPage() {
               variant="contained"
               disableRipple
               disabled={isSubmitting}
-              sx={{ mt: 3, minHeight: 44 }}
+              sx={{
+                padding: '12px 14px',
+                fontSize: 14,
+                fontWeight: 500,
+                minHeight: 44,
+                mt: '4px',
+              }}
             >
               {isSubmitting ? <CircularProgress size={22} color="inherit" /> : 'Sign In'}
             </Button>
           </Box>
-        </CardContent>
-      </Card>
+
+          {/* Divider */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              my: '28px',
+              color: INK_4,
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <Box sx={{ flex: 1, height: '1px', background: LINE }} />
+            <Typography
+              sx={{
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: INK_4,
+              }}
+            >
+              or
+            </Typography>
+            <Box sx={{ flex: 1, height: '1px', background: LINE }} />
+          </Box>
+
+          {/* SSO button — disabled in PoC */}
+          <Button
+            fullWidth
+            variant="outlined"
+            disabled
+            startIcon={
+              <Box
+                sx={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '4px',
+                  background: ACCENT,
+                  color: '#fff',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontFamily: FONT_MONO,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                S
+              </Box>
+            }
+            sx={{ padding: '11px 14px', fontSize: 13, justifyContent: 'center', gap: '10px' }}
+          >
+            Continue with corporate SSO
+          </Button>
+
+          <Typography sx={{ mt: '32px', fontSize: 11, color: INK_3, lineHeight: 1.6 }}>
+            Trouble signing in? Contact IT Service Desk ext. 4400
+          </Typography>
+
+          {/* Footer */}
+          <Box
+            sx={{
+              mt: '48px',
+              pt: '20px',
+              borderTop: `1px solid ${LINE}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: INK_4,
+            }}
+          >
+            <Typography sx={{ fontSize: 11, color: INK_4 }}>© 2026 Belarusbank</Typography>
+            <Box sx={{ display: 'flex', gap: '14px' }}>
+              {['Privacy', 'Terms', 'Status'].map((item) => (
+                <Typography key={item} sx={{ fontSize: 11, color: INK_4 }}>
+                  {item}
+                </Typography>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   )
 }
