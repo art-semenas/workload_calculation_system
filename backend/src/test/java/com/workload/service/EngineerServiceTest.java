@@ -71,7 +71,6 @@ class EngineerServiceTest {
     when(passwordEncoder.encode("password1")).thenReturn("hashed");
     User savedUser = buildEngineer(id, new BigDecimal("1.0"));
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
-    when(engineerSummaryRepository.findByEngineerId(id)).thenReturn(Optional.empty());
     when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id));
 
     engineerService.create(request);
@@ -91,7 +90,6 @@ class EngineerServiceTest {
     when(passwordEncoder.encode("password1")).thenReturn("hashed");
     User savedUser = buildEngineer(id, new BigDecimal("1.0"));
     when(userRepository.save(any(User.class))).thenReturn(savedUser);
-    when(engineerSummaryRepository.findByEngineerId(id)).thenReturn(Optional.empty());
     when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id));
 
     engineerService.create(request);
@@ -100,6 +98,23 @@ class EngineerServiceTest {
     ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
     verify(userRepository).save(captor.capture());
     assertThat(captor.getValue().getPasswordHash()).isEqualTo("hashed");
+  }
+
+  @Test
+  void create_doesNotQuerySummaryRepository() {
+    EngineerCreateRequest request =
+        new EngineerCreateRequest(
+            "new@test.com", "New Engineer", "password1", new BigDecimal("1.0"), null, null);
+
+    when(passwordEncoder.encode("password1")).thenReturn("hashed");
+    UUID id = UUID.randomUUID();
+    User savedUser = buildEngineer(id, new BigDecimal("1.0"));
+    when(userRepository.save(any())).thenReturn(savedUser);
+    when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id));
+
+    engineerService.create(request);
+
+    verify(engineerSummaryRepository, never()).findByEngineerId(any());
   }
 
   @Test

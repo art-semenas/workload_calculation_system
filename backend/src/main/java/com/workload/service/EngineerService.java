@@ -86,8 +86,7 @@ public class EngineerService {
             .build();
     user = userRepository.save(user);
     log.info("Created engineer: id={}, email={}", user.getId(), user.getEmail());
-    EngineerSummary summary = engineerSummaryRepository.findByEngineerId(user.getId()).orElse(null);
-    return buildDto(user, summary);
+    return buildDto(user, null);
   }
 
   @Transactional
