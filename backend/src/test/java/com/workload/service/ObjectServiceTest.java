@@ -20,8 +20,10 @@ import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.ObjectMapper;
 import com.workload.mapper.SummaryMapper;
 import com.workload.repository.BranchRepository;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
+import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,9 @@ class ObjectServiceTest {
   @Mock private ObjectMapper objectMapper;
   @Mock private SummaryRepository summaryRepository;
   @Mock private SummaryMapper summaryMapper;
+  @Mock private ObjectEngineerRepository objectEngineerRepository;
+  @Mock private EngineerSummaryService engineerSummaryService;
+  @Mock private EntityManager entityManager;
 
   @InjectMocks private ObjectService objectService;
 
@@ -226,10 +231,12 @@ class ObjectServiceTest {
   void deleteDeletesObject() {
     UUID id = UUID.randomUUID();
     when(objectRepository.existsById(id)).thenReturn(true);
+    when(objectEngineerRepository.findEngineerIdsByObjectId(any())).thenReturn(List.of());
 
     objectService.delete(id);
 
     verify(objectRepository).deleteById(id);
+    verify(objectEngineerRepository).findEngineerIdsByObjectId(id);
   }
 
   @Test

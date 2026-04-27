@@ -13,6 +13,7 @@ import com.workload.repository.ObjectSystemAssignmentRepository;
 import com.workload.repository.RecordsTaskRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.TravelRepository;
+import com.workload.service.EngineerSummaryService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
@@ -36,6 +37,7 @@ public class CalculationService {
   private final WorkloadConfig config;
   private final RepairCalculationHelper repairHelper;
   private final RecordsCalculationHelper recordsHelper;
+  private final EngineerSummaryService engineerSummaryService;
 
   // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
   public Summary recalculate(UUID objectId) {
@@ -188,7 +190,10 @@ public class CalculationService {
 
     log.info("Workload recalculated for object {}: itogoWithTravel={}", objectId, itogoWithTravel);
 
-    return summaryRepo.save(summary);
+    Summary saved = summaryRepo.save(summary);
+    // PoC (S-02): calls engineer summary recalculation synchronously after object summary update.
+    engineerSummaryService.recalculateAllForObject(objectId);
+    return saved;
   }
 
   private ObjectEntity resolveObjectRef(

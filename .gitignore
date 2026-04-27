@@ -67,3 +67,6 @@ docs/Шаблон_нагрузки_з_v_4_00.xlsx
 docker-compose.override.yml
 
 postman/
+
+# Test artifacts
+ test-results/

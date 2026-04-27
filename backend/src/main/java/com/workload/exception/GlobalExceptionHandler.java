@@ -48,13 +48,55 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(
             ApiResponse.error(
-                new ApiError("NOT_FOUND", getEntityNotFoundMessage(ex.getEntityType()), null)));
+                new ApiError(
+                    getEntityNotFoundCode(ex.getEntityType()),
+                    getEntityNotFoundMessage(ex.getEntityType()),
+                    null)));
+  }
+
+  @ExceptionHandler(EngineerHasActiveAssignmentsException.class)
+  public ResponseEntity<ApiResponse<Void>> handleEngineerHasActiveAssignments(
+      EngineerHasActiveAssignmentsException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            ApiResponse.error(
+                new ApiError("ENGINEER_HAS_ACTIVE_ASSIGNMENTS", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(EngineerInactiveException.class)
+  public ResponseEntity<ApiResponse<Void>> handleEngineerInactive(EngineerInactiveException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("ENGINEER_INACTIVE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(InvalidEngineerRoleException.class)
+  public ResponseEntity<ApiResponse<Void>> handleInvalidEngineerRole(
+      InvalidEngineerRoleException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(new ApiError("INVALID_ENGINEER_ROLE", ex.getMessage(), null)));
+  }
+
+  @ExceptionHandler(AssignmentNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAssignmentNotFound(
+      AssignmentNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(new ApiError("ASSIGNMENT_NOT_FOUND", ex.getMessage(), null)));
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
       DataIntegrityViolationException ex) {
     String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+    // Check if it's an object-engineer assignment constraint violation
+    if (msg.contains("uq_oe_object_engineer")) {
+      return ResponseEntity.status(HttpStatus.CONFLICT)
+          .body(
+              ApiResponse.error(
+                  new ApiError(
+                      "ENGINEER_ALREADY_ASSIGNED",
+                      "This engineer is already assigned to the object",
+                      null)));
+    }
     if (msg.contains("unique") || msg.contains("duplicate")) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
           .body(
@@ -166,12 +208,20 @@ public class GlobalExceptionHandler {
                 new ApiError("INTERNAL_ERROR", "An unexpected error occurred", null)));
   }
 
+  private String getEntityNotFoundCode(String entityType) {
+    return switch (entityType) {
+      case "Engineer" -> "ENGINEER_NOT_FOUND";
+      default -> "NOT_FOUND";
+    };
+  }
+
   private String getEntityNotFoundMessage(String entityType) {
     return switch (entityType) {
       case "DeviceType" -> "Device type not found";
       case "Context" -> "Context not found";
       case "RepairType" -> "Repair type not found";
       case "Assignment" -> "Assignment not found";
+      case "Engineer" -> "Engineer not found";
       default -> "Resource not found";
     };
   }

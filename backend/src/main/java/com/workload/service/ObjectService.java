@@ -12,15 +12,20 @@ import com.workload.exception.SummaryNotFoundException;
 import com.workload.mapper.ObjectMapper;
 import com.workload.mapper.SummaryMapper;
 import com.workload.repository.BranchRepository;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
+import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ObjectService {
 
   private final ObjectRepository objectRepository;
@@ -28,19 +33,9 @@ public class ObjectService {
   private final ObjectMapper objectMapper;
   private final SummaryRepository summaryRepository;
   private final SummaryMapper summaryMapper;
-
-  public ObjectService(
-      ObjectRepository objectRepository,
-      BranchRepository branchRepository,
-      ObjectMapper objectMapper,
-      SummaryRepository summaryRepository,
-      SummaryMapper summaryMapper) {
-    this.objectRepository = objectRepository;
-    this.branchRepository = branchRepository;
-    this.objectMapper = objectMapper;
-    this.summaryRepository = summaryRepository;
-    this.summaryMapper = summaryMapper;
-  }
+  private final ObjectEngineerRepository objectEngineerRepository;
+  private final EngineerSummaryService engineerSummaryService;
+  private final EntityManager entityManager;
 
   public List<ObjectDto> findAll(Optional<UUID> divisionId) {
     List<ObjectEntity> entities =
@@ -92,11 +87,18 @@ public class ObjectService {
     return objectMapper.toDto(entity);
   }
 
+  @Transactional
   public void delete(UUID id) {
     if (!objectRepository.existsById(id)) {
       throw new ObjectNotFoundException(id.toString());
     }
+    List<UUID> affectedEngineers = objectEngineerRepository.findEngineerIdsByObjectId(id);
     objectRepository.deleteById(id);
+    // Flush the pending delete to DB so the ON DELETE CASCADE removes object_engineers rows.
+    // Required because JPA auto-flush may not recognize DB-level cascade side-effects,
+    // and EngineerSummaryService.recalculate() must see 0 assignments for the deleted object.
+    entityManager.flush();
+    affectedEngineers.forEach(engineerSummaryService::recalculate);
   }
 
   public SummaryDto getSummary(UUID objectId) {
