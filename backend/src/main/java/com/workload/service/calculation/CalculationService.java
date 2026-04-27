@@ -9,7 +9,6 @@ import com.workload.entity.Summary;
 import com.workload.entity.SystemType;
 import com.workload.entity.Travel;
 import com.workload.repository.ObjectRepairRepository;
-import com.workload.repository.ObjectRepository;
 import com.workload.repository.ObjectSystemAssignmentRepository;
 import com.workload.repository.RecordsTaskRepository;
 import com.workload.repository.SummaryRepository;
@@ -39,7 +38,6 @@ public class CalculationService {
   private final RepairCalculationHelper repairHelper;
   private final RecordsCalculationHelper recordsHelper;
   private final EngineerSummaryService engineerSummaryService;
-  private final ObjectRepository objectRepository;
 
   // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
   public Summary recalculate(UUID objectId) {
@@ -218,7 +216,8 @@ public class CalculationService {
       return travelOpt.get().getObject();
     }
 
-    // Fallback: load a managed proxy so the reference stays in the Hibernate session
-    return objectRepository.getReferenceById(objectId);
+    ObjectEntity ref = new ObjectEntity();
+    ref.setId(objectId);
+    return ref;
   }
 }

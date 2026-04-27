@@ -20,10 +20,12 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ObjectService {
 
   private final ObjectRepository objectRepository;
@@ -34,25 +36,6 @@ public class ObjectService {
   private final ObjectEngineerRepository objectEngineerRepository;
   private final EngineerSummaryService engineerSummaryService;
   private final EntityManager entityManager;
-
-  public ObjectService(
-      ObjectRepository objectRepository,
-      BranchRepository branchRepository,
-      ObjectMapper objectMapper,
-      SummaryRepository summaryRepository,
-      SummaryMapper summaryMapper,
-      ObjectEngineerRepository objectEngineerRepository,
-      EngineerSummaryService engineerSummaryService,
-      EntityManager entityManager) {
-    this.objectRepository = objectRepository;
-    this.branchRepository = branchRepository;
-    this.objectMapper = objectMapper;
-    this.summaryRepository = summaryRepository;
-    this.summaryMapper = summaryMapper;
-    this.objectEngineerRepository = objectEngineerRepository;
-    this.engineerSummaryService = engineerSummaryService;
-    this.entityManager = entityManager;
-  }
 
   public List<ObjectDto> findAll(Optional<UUID> divisionId) {
     List<ObjectEntity> entities =
@@ -111,12 +94,7 @@ public class ObjectService {
     }
     List<UUID> affectedEngineers = objectEngineerRepository.findEngineerIdsByObjectId(id);
     objectRepository.deleteById(id);
-    // Flush the delete and clear the session so the recalculation runs with a clean state.
-    // Without this, Hibernate's auto-flush during recalculation encounters the deleted
-    // ObjectEntity still referenced by other entities in the session (e.g. Summary),
-    // causing a TransientObjectException.
     entityManager.flush();
-    entityManager.clear();
     affectedEngineers.forEach(engineerSummaryService::recalculate);
   }
 
