@@ -170,7 +170,7 @@ public class ObjectEngineerService {
    *
    * @param objectId the object ID
    * @param engineerId the engineer ID
-   * @return the created ObjectEngineer row
+   * @return DTO representation of the created assignment
    * @throws EntityNotFoundException if engineer or object not found
    * @throws RequestValidationException if engineer is inactive or not an engineer
    * @throws DataIntegrityViolationException if assignment already exists
