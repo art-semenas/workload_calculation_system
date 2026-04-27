@@ -42,7 +42,6 @@ class EngineerWorkloadServiceTest {
   @Mock private EngineerSummaryMapper engineerSummaryMapper;
 
   private WorkloadConfig config;
-  private EngineerSummaryService engineerSummaryService;
   private EngineerSummaryService service;
 
   @BeforeEach
@@ -77,7 +76,6 @@ class EngineerWorkloadServiceTest {
             userRepository,
             config,
             engineerSummaryMapper);
-    engineerSummaryService = service;
   }
 
   // -------------------------------------------------------------------------
@@ -790,7 +788,7 @@ class EngineerWorkloadServiceTest {
                 "NORMAL",
                 summary.getComputedAt()));
 
-    EngineerSummaryDto dto = engineerSummaryService.getEngineerSummary(engineerId);
+    EngineerSummaryDto dto = service.getEngineerSummary(engineerId);
 
     assertThat(dto.engineerId()).isEqualTo(engineerId);
     assertThat(dto.status()).isEqualTo("NORMAL");
@@ -801,7 +799,7 @@ class EngineerWorkloadServiceTest {
     UUID engineerId = UUID.randomUUID();
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> engineerSummaryService.getEngineerSummary(engineerId))
+    assertThatThrownBy(() -> service.getEngineerSummary(engineerId))
         .isInstanceOf(SummaryNotFoundException.class);
   }
 

@@ -159,6 +159,7 @@ public class EngineerSummaryService {
     log.info("Deleted engineer summary for engineerId={}", engineerId);
   }
 
+  @Transactional(readOnly = true)
   public EngineerSummaryDto getEngineerSummary(UUID engineerId) {
     EngineerSummary summary =
         engineerSummaryRepository
