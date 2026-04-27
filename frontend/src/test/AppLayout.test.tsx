@@ -21,7 +21,8 @@ describe('AppLayout', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    // Dashboard appears in both breadcrumb and sidebar, so use getAllByText
+    expect(screen.getAllByText('Dashboard')).toHaveLength(2)
     expect(screen.getByText('Objects')).toBeInTheDocument()
     expect(screen.getByText('Divisions')).toBeInTheDocument()
   })

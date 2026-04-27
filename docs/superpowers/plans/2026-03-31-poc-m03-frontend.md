@@ -5,7 +5,13 @@
 **Goal:** Replace all M-03 placeholder sections with real UI. Implement Engineer List page (filterable, sortable with load-ratio status chips), Engineer Detail dashboard (summary cards, system breakdown, assigned objects, assign/remove), Engineers tab on Object Detail (assign/remove engineers with per-engineer share), and enable the Engineers nav link. All TanStack Query hooks, Zod schemas, and React components are fully functional. All PoC routes complete after this plan.
 
 **Branch:** `feature/poc-m03-frontend`
-**Depends on:** `feature/poc-m03-backend` merged to `feature/implementation`
+**Depends on:** `feature/poc-m03-backend` **and** `feature/poc-m03-design-foundation` both merged to `feature/implementation`
+
+> **Design status:** Phase A (design foundation) is **complete** on branch `feature/poc-m03-design-foundation`. Before starting this plan, ensure that branch is merged. Phase A delivers:
+> - `src/theme.ts` — full MUI theme with design tokens (accent, ok, warn, danger colors; Inter + JetBrains Mono)
+> - `src/components/common/` — `StatusChip`, `CapBar`, `Num`, `KpiTile`, `Sparkline`, `DonutMini`, `SystemChip`
+> - `src/components/layout/AppLayout.tsx` — reskinned sidebar (240px) with Engineers nav item **already active** (no `disabled` property)
+> - `src/pages/ObjectDetailPage.tsx` — redesigned with 2-column grid (tabs left + 320px right rail). Engineers tab (index 4) has `<Typography>Available in M-03</Typography>` placeholder. Right rail has `EngineersCard()` stub showing "No engineers assigned". **Task 5 must replace both.**
 
 **Architecture:** All engineer data comes from backend API — the frontend NEVER computes workload values or engineer shares (AD-07). All API calls use the shared Axios instance at `src/api/axios.ts`. All server state is managed by TanStack Query — never in Zustand or component state. No `any` types.
 
@@ -40,6 +46,7 @@ Before implementing any task below, use these rules whenever documents disagree:
 - All API response data managed by TanStack Query. Never store API response data in Zustand or component state. Zustand is for auth only.
 - All user-facing labels in **Russian**.
 - No inline styles — use MUI `sx` prop or theme.
+- Use Phase A common components where applicable: `<StatusChip kind="ok|warn|danger">` for load status, `<CapBar value={load} max={capacity}>` for utilization bars, `<Num value={...}>` for FTE numbers. These are in `src/components/common/` and are already tested.
 - No business logic or calculations in frontend code — all computed values come from the API (TOR AD-07).
 - PoC simplifications to respect: no stale banners (S-02), no RBAC enforcement (S-04), no planning periods (S-05).
 - **All TypeScript types, Zod schemas, and API response field names use camelCase** — matching the backend Jackson serialization and the existing M-01/M-02 types in `src/types/`. Never use snake_case field names in TypeScript interfaces or Zod schemas. Query parameters sent to the API also use camelCase (e.g., `?homeDivisionId=xxx`, not `?home_division_id=xxx`).
@@ -94,6 +101,8 @@ git checkout -b feature/poc-m03-frontend
 ```
 
 Expected: Git switches to `feature/poc-m03-frontend` with no merge conflicts.
+
+> **Pre-check:** Confirm `feature/poc-m03-design-foundation` has been merged into `feature/implementation` before proceeding. Verify with: `git log --oneline feature/implementation | head -5` — should show the Phase A design commits.
 
 - [ ] **Step 2: Verify working tree is clean**
 
@@ -1103,9 +1112,10 @@ Replace `frontend/src/pages/EngineerListPage.tsx`.
   - Status `<Select>` with options: All / Normal / Warning / Overloaded
   - Name search `<TextField>` with placeholder "Search by name..."
 - MUI `<Table>` (or `<DataGrid>`) with 6 columns as specified above
-- Status column renders a `<Chip>` with:
-  - `color="success"` for NORMAL, `color="warning"` for WARNING, `color="error"` for OVERLOADED
+- Status column renders using the Phase A `<StatusChip>` component (`src/components/common/StatusChip.tsx`):
+  - `kind="ok"` for NORMAL, `kind="warn"` for WARNING, `kind="danger"` for OVERLOADED
   - Label: `Math.round(loadRatio * 100) + '%'`
+  - Do NOT use raw `<Chip color="success/warning/error">` — `StatusChip` is the correct design-system component
 - Name column: clickable via `useNavigate()` → `/engineers/${engineer.id}`
 - "Create engineer" button → opens `<Dialog>` with React Hook Form + Zod:
   - Form fields: name (`<TextField>`), email (`<TextField>`), capacityFte (`<TextField type="number">`), homeDivisionId (`<Select>`)
@@ -1556,7 +1566,7 @@ vi.mock('../hooks/useEngineers', () => ({
   ENGINEERS_QUERY_KEY: 'engineers',
 }))
 
-// Mock other hooks that ObjectDetailPage may use (from M-01 and M-02)
+// Mock other hooks that ObjectDetailPage uses (from M-01 and M-02 + Phase A redesign)
 vi.mock('../hooks/useSummary', () => ({
   useObjectSummary: vi.fn(() => ({ data: undefined, isLoading: false })),
   SUMMARY_QUERY_KEY: 'object-summary',
@@ -1567,6 +1577,15 @@ vi.mock('../hooks/useObjects', () => ({
     data: { id: 'obj-1', name: 'CBU Brest', branch_id: 'br-1' },
     isLoading: false,
   })),
+  useCreateObject: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useUpdateObject: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useDeleteObject: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+}))
+
+// ObjectDetailPage imports useDivision + useDivisions for the edit form — must mock both
+vi.mock('../hooks/useDivisions', () => ({
+  useDivision: vi.fn(() => ({ data: undefined, isLoading: false })),
+  useDivisions: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
 import { useObjectEngineers } from '../hooks/useObjectEngineers'
@@ -1681,25 +1700,33 @@ Expected: fails because the Engineers tab in `ObjectDetailPage` is a placeholder
 
 Modify `frontend/src/pages/ObjectDetailPage.tsx` — replace the Engineers tab placeholder (tab index 4) with the full implementation.
 
+**Phase A structure note:** `ObjectDetailPage.tsx` was redesigned in Phase A. The page now uses a 2-column grid (`1fr 320px`). The tab bar (index 0–5) is in the left column. The right rail has 4 stacked cards: `HeroCard`, `SystemAveragesCard`, `VisitBreakdownCard`, `EngineersCard`. This task must replace **two** placeholders:
+1. `TabPanel index={4}` — currently `<Typography>Available in M-03</Typography>`
+2. `EngineersCard()` function — currently shows "No engineers assigned" stub in the right rail
+
 **Implementation targets:**
 
-- Tab panel for index 4 renders a new section with:
+- **Tab panel (index 4):** Replace the `<Typography>Available in M-03</Typography>` placeholder with:
   - Table heading: "Assigned engineers" + "Assign engineer" button
   - MUI `<Table>` with 4 columns as specified above
   - Engineer name: clickable `<Link>` to `/engineers/${engineerId}`
-  - Status/load chip: same `<Chip>` rendering as Engineer List page
+  - Status/load chip: use `<StatusChip>` from `src/components/common/StatusChip.tsx` (`kind="ok|warn|danger"`) — do NOT use raw `<Chip>`
   - "Remove" button per row with `ConfirmDialog` confirmation
-- "Assign engineer" dialog:
+- **Right rail `EngineersCard()`:** Replace the stub with real data from `useObjectEngineers(objectId)`:
+  - Show each assigned engineer: name + `objectShare` (4dp FTE) + `<CapBar value={objectShare} max={capacityFte ?? 1}>` (use `capacityFte` from `ObjectEngineerRow` if present, else 1.0)
+  - Clicking engineer name navigates to `/engineers/${engineerId}`
+  - If no engineers assigned: keep the "No engineers assigned" muted state
+- **"Assign engineer" dialog:**
   - MUI `<Dialog>` with `<Autocomplete>`
   - Options from `useEngineers()` — only active engineers
-  - Option render: `{name}` + status `<Chip>` showing current `loadRatio`
+  - Option render: `{name}` + `<StatusChip>` showing current `loadRatio`
   - Confirm calls `useAssignEngineerToObject(objectId).mutateAsync(engineerId)`
-- Travel review banner:
+- **Travel review banner:**
   - `const [showTravelBanner, setShowTravelBanner] = useState(false)`
   - Set to `true` in the assign mutation's `onSuccess`
   - `<Alert severity="info" onClose={() => setShowTravelBanner(false)}>Check travel data — travel time may differ for the new engineer</Alert>`
-- Uses `useObjectEngineers(objectId)` for data
-- Show `<CircularProgress>` while loading
+- Uses `useObjectEngineers(objectId)` for both the tab table and the right rail card
+- Show `<CircularProgress>` while loading in the tab panel
 
 - [ ] **Step 4: Run test — expect PASS**
 
@@ -1721,7 +1748,7 @@ Expected: no errors.
 
 ```bash
 git add frontend/src/pages/ObjectDetailPage.tsx frontend/src/test/ObjectEngineersTab.test.tsx
-git commit -m "feat: implement Engineers tab on Object Detail with assign/remove and travel review banner"
+git commit -m "feat: implement Engineers tab and right rail card on Object Detail with assign/remove and travel review banner"
 ```
 
 ---
@@ -1732,23 +1759,23 @@ git commit -m "feat: implement Engineers tab on Object Detail with assign/remove
 
 - Modify: `frontend/src/components/layout/AppLayout.tsx` (verify only — change if needed)
 
-The Engineers nav item was added in scaffolding. If M-01 added a `disabled` property to it, remove it. If it is already active (which it should be based on the scaffolding plan), no change is needed.
+The Engineers nav item is managed by Phase A (`feature/poc-m03-design-foundation`). After merging Phase A, `AppLayout.tsx` defines:
+
+```typescript
+const workspaceItems = [
+  { label: 'Dashboard', path: '/' },
+  { label: 'Summary', path: '/svod', badge: 'objects' },
+  { label: 'Objects', path: '/objects', badge: 'objects' },
+  { label: 'Engineers', path: '/engineers', badge: 'engineers' },
+  { label: 'Divisions', path: '/divisions' },
+]
+```
+
+Engineers is already active — no `disabled` property. This task is a verification-only step.
 
 - [ ] **Step 1: Verify Engineers nav link is active in AppLayout.tsx**
 
-Read `frontend/src/components/layout/AppLayout.tsx` and confirm the Engineers nav item exists without a `disabled` property. The scaffolding plan created it as:
-
-```typescript
-const navItems = [
-  { label: "Dashboard", path: "/" },
-  { label: "Objects", path: "/objects" },
-  { label: "Engineers", path: "/engineers" },
-  { label: "Summary", path: "/svod" },
-  { label: "Divisions", path: "/divisions" },
-];
-```
-
-If the Engineers item has `disabled: true`, remove that property. If it's already active, no change needed.
+Read `frontend/src/components/layout/AppLayout.tsx` and confirm the `workspaceItems` array contains `{ label: 'Engineers', path: '/engineers', badge: 'engineers' }` with no `disabled` property. If Phase A has been merged correctly, **no change is needed**.
 
 - [ ] **Step 2: Commit (only if changes were made)**
 

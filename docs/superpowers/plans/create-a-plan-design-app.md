@@ -2,29 +2,24 @@
 
 ## Context
 
-The `design/design_handoff_workload_calculator/` package specifies a high-fidelity visual redesign for all 5 screens of the workload calculator. It is a pure presentation-layer change — backend API, hooks, store, and types are untouched (per design README constraint). The current frontend uses a default MUI theme with no customisation, no design tokens, and no shared visual primitives.
+The `design/design_handoff_workload_calculator/` package specifies a high-fidelity visual redesign for all 6 screens of the workload calculator (dashboard, СВОД, object detail, engineer list, device catalog, login). It is a pure presentation-layer change — backend API, hooks, store, and types are untouched (per design README constraint). The current frontend uses a default MUI theme with no customisation, no design tokens, and no shared visual primitives.
 
-This plan schedules design work in three phases keyed to backend data availability, and calls out two pre-existing bugs in the M-03 plans that must be fixed before M-03 implementation begins.
+This plan schedules design work in three phases keyed to backend data availability. M-03 backend is **fully implemented** as of 2026-04-27 — all engineer entities, services, controllers, and mappers are in place.
 
 **Design reference files:**
 - `design/design_handoff_workload_calculator/README.md` — canonical token and screen spec
 - `design/design_handoff_workload_calculator/styles.css` — source of truth for all tokens
-- `design/design_handoff_workload_calculator/screens/*.jsx` — per-screen layout reference
+- `design/design_handoff_workload_calculator/screens/*.jsx` — per-screen layout reference (dashboard, svod, object-detail, engineers, catalog, login)
 
 ---
 
-## Pre-condition: Fix M-03 Plan Bugs Before Implementing M-03
+## Pre-condition: Fix M-03 Frontend Bugs Before Implementing M-03 Frontend
 
-These must be resolved before M-03 frontend work begins — they will silently break all engineer UI at runtime.
-
-### Bug 1 — Status casing mismatch (runtime breakage)
-- **Backend plan** stores status lowercase: `'normal'` / `'warning'` / `'overloaded'`
-- **Frontend plan** validates uppercase: `z.enum(["NORMAL", "WARNING", "OVERLOADED"])`
-- **Fix:** Add `.toUpperCase()` to `status` in `EngineerMapper.java` (Java DTO layer), so the API always emits uppercase. No change to Zod schema needed.
-- File to edit: `backend/src/main/java/com/workload/mapper/EngineerMapper.java`
+### Bug 1 — Status casing mismatch ✅ RESOLVED
+- **Status:** Fixed. `EngineerMapper.java` already calls `.toUpperCase()` on status when mapping to DTOs. The API emits `"NORMAL"` / `"WARNING"` / `"OVERLOADED"`. No action needed.
 
 ### Bug 2 — Missing fields in frontend Zod types
-The M-03 frontend `types/engineer.ts` is missing fields that the backend DTO sends and the design needs:
+The M-03 frontend `types/engineer.ts` is missing fields that the backend DTO sends and the design needs. This file does not yet exist — it will be created as part of M-03 frontend Task 1.
 
 | Missing field | Schema | Used by |
 |---|---|---|
@@ -40,8 +35,39 @@ The M-03 frontend `types/engineer.ts` is missing fields that the backend DTO sen
 ## Phase A — Foundation + Pre-M-03 Screens
 
 **Branch:** `feature/poc-m03-design-foundation`
-**Depends on:** `feature/implementation` (M-02 merged)
+**Depends on:** `feature/implementation` (M-02 merged; M-03 backend also merged as of 2026-04-27)
 **Data dependencies:** none — all work is visual, uses existing M-01/M-02 hooks
+
+### A0 — Login Page Redesign
+
+**Edit:** `frontend/src/pages/LoginPage.tsx`
+
+The current `LoginPage.tsx` is a plain unstyled card. Apply the design from `design/design_handoff_workload_calculator/screens/login.jsx` (`LoginScreen` variant — the full split-pane layout).
+
+Layout: `1440px` wide, `display: grid, gridTemplateColumns: "1fr 520px"`.
+
+**Left pane (dark brand panel):**
+- `background: var(--ink)`, white text, dot-grid SVG overlay + accent blob (radial gradient)
+- Brand row: `W` monogram square (36px, white bg, mono font) + "Workload Calculator" + subtitle
+- Hero headline: "Calculate maintenance headcount across 2 935 objects." with accent-colored object count span
+- Supporting copy: one sentence about replacing the manual XLSX workflow
+- Stat strip (3-column grid): "Objects under maintenance" / "Required FTE · H1 2026" / "Active engineers" — values from `useSvod` total count and sum; active engineers stubbed as `—` until M-03 hook available
+- Footer row: version string left, "All systems operational" with green dot right
+
+**Right pane (form):**
+- `background: var(--bg-elev)`, centered column, max-width 360px
+- "SIGN IN" label (uppercase, 11px, letter-spaced), "Welcome back." heading, subtitle
+- Email field, Password field (with show/hide toggle), "Keep me signed in" checkbox
+- Primary "Sign in" button (full-width, 12px 14px padding)
+- Divider "or" with hairlines
+- "Continue with corporate SSO" secondary button (corporate SSO not functional in PoC — button disabled or shown as coming-soon)
+- Footer: "© 2026 Belarusbank" + Privacy / Terms / Status links
+
+**Implementation notes:**
+- Keep all existing logic from `LoginPage.tsx` (React Hook Form + Zod, `useLogin` mutation, error state, navigate on success). This task is visual only.
+- Use MUI `Box` with `sx` for layout — no new HTML elements beyond what's needed
+- The stat strip values: use `useQuery` with `useSvod(0, 1)` for object count + total FTE. Wrap in `Suspense` or show `—` while loading. Active engineers stubbed `—` (Phase B5 fills in).
+- Do NOT implement the "Forgot?" link or SSO flow — those are MVP features
 
 ### A1 — Theme + Fonts
 
@@ -217,21 +243,18 @@ If endpoint does not exist: raise as a separate backend task before implementing
 ## Branch + Merge Order
 
 ```
-feature/implementation  (M-02 merged)
+feature/implementation  (M-02 merged; M-03 backend merged 2026-04-27)
     │
     ├── feature/poc-m03-design-foundation   (Phase A — can start now)
     │       └── merges to feature/implementation
     │
-    ├── feature/poc-m03-backend             (M-03 backend)
-    │       └── merges to feature/implementation
-    │
-    └── feature/poc-m03-frontend            (M-03 frontend + pre-condition bug fixes)
+    └── feature/poc-m03-frontend            (M-03 frontend + pre-condition Bug 2 fix)
             └── merges to feature/implementation
                     │
                     └── feature/poc-m04-design-engineers   (Phase B)
 ```
 
-Phase A and M-03 backend can run **in parallel** — they have no shared files.
+M-03 backend is already merged. Phase A can start immediately.
 
 ---
 
@@ -262,6 +285,7 @@ All Playwright E2E smoke tests must pass. Visually verify Dashboard, СВОД, a
 
 | File | Phase | Action |
 |---|---|---|
+| `frontend/src/pages/LoginPage.tsx` | A0 | Redesign — split-pane brand + form layout |
 | `frontend/index.html` | A1 | Add Google Fonts links |
 | `frontend/src/App.tsx` | A1 | Import custom theme |
 | `frontend/src/theme.ts` | A1 | **Create** — full design tokens |
@@ -275,8 +299,8 @@ All Playwright E2E smoke tests must pass. Visually verify Dashboard, СВОД, a
 | `frontend/src/pages/DashboardPage.tsx` | A4, B2 | Redesign (engineers stubbed → filled) |
 | `frontend/src/pages/SvodPage.tsx` | A5, B4 | Redesign (engineers stubbed → filled) |
 | `frontend/src/pages/ObjectDetailPage.tsx` | A6, B3 | Add right rail (engineers card stubbed → filled) |
-| `backend/src/main/java/com/workload/mapper/EngineerMapper.java` | pre-M-03 | Add `.toUpperCase()` on status |
-| `frontend/src/types/engineer.ts` | pre-M-03 | Add missing fields to schemas |
+| `backend/src/main/java/com/workload/mapper/EngineerMapper.java` | pre-M-03 | ✅ Already has `.toUpperCase()` — no action |
+| `frontend/src/types/engineer.ts` | pre-M-03 | Add missing fields to schemas (M-03 frontend Task 1) |
 | `frontend/src/pages/EngineerListPage.tsx` | B1 | Visual upgrade on top of M-03 implementation |
 | `frontend/src/pages/DeviceCatalogPage.tsx` | B6 | **Create** (after endpoint verified) |
 | `frontend/src/router/index.tsx` | B6 | Add `/admin/catalog` route |

@@ -41,7 +41,6 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('Password'), 'secret')
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
 
-    // Currently FAILS: LoginPage calls login() from api/auth directly, not useLogin().mutateAsync
     expect(mockMutateAsync).toHaveBeenCalledWith({
       email: 'admin@workload.local',
       password: 'secret',
