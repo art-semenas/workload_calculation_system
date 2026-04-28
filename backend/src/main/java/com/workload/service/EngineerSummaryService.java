@@ -1,6 +1,7 @@
 package com.workload.service;
 
 import com.workload.config.WorkloadConfig;
+import com.workload.constant.WorkloadStatus;
 import com.workload.dto.EngineerSummaryDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
@@ -100,7 +101,7 @@ public class EngineerSummaryService {
     String status;
     if (totalLoad.compareTo(BigDecimal.ZERO) == 0) {
       loadRatio = BigDecimal.ZERO;
-      status = "normal";
+      status = WorkloadStatus.NORMAL.getValue();
     } else {
       loadRatio = totalLoad.divide(capacityFte, RATIO_SCALE, RoundingMode.HALF_UP);
       status = resolveStatus(loadRatio);
@@ -202,11 +203,11 @@ public class EngineerSummaryService {
   private String resolveStatus(BigDecimal loadRatio) {
     BigDecimal warningThreshold = config.getEngineerWarningThreshold();
     if (loadRatio.compareTo(BigDecimal.ONE) >= 0) {
-      return "overloaded";
+      return WorkloadStatus.OVERLOADED.getValue();
     } else if (loadRatio.compareTo(warningThreshold) >= 0) {
-      return "warning";
+      return WorkloadStatus.WARNING.getValue();
     } else {
-      return "normal";
+      return WorkloadStatus.NORMAL.getValue();
     }
   }
 }

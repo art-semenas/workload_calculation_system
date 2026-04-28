@@ -1,5 +1,6 @@
 package com.workload.service;
 
+import com.workload.constant.WorkloadStatus;
 import com.workload.dto.EngineerObjectDto;
 import com.workload.dto.EngineerShareDto;
 import com.workload.dto.ObjectEngineerAssignmentDto;
@@ -88,13 +89,14 @@ public class ObjectEngineerService {
 
               BigDecimal totalLoad = BigDecimal.ZERO;
               BigDecimal loadRatio = BigDecimal.ZERO;
-              String status = "normal";
+              String status = WorkloadStatus.NORMAL.getValue();
 
               if (summaryOpt2.isPresent()) {
                 EngineerSummary es = summaryOpt2.get();
                 totalLoad = es.getTotalLoad() != null ? es.getTotalLoad() : BigDecimal.ZERO;
                 loadRatio = es.getLoadRatio() != null ? es.getLoadRatio() : BigDecimal.ZERO;
-                status = es.getStatus() != null ? es.getStatus() : "normal";
+                status =
+                    es.getStatus() != null ? es.getStatus().toUpperCase() : WorkloadStatus.NORMAL.getValue();
               }
 
               return new EngineerShareDto(
