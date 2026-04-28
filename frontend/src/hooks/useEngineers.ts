@@ -61,6 +61,8 @@ export function useDeactivateEngineer() {
     mutationFn: (id: string) => deactivateEngineer(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [ENGINEERS_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [ENGINEER_SUMMARY_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [SVOD_QUERY_KEY] })
     },
   })
 }

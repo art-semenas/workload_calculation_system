@@ -1,5 +1,7 @@
 package com.workload.constant;
 
+import org.slf4j.LoggerFactory;
+
 /** Engineer workload status enumeration. */
 public enum WorkloadStatus {
   NORMAL("NORMAL"),
@@ -26,6 +28,8 @@ public enum WorkloadStatus {
         return status;
       }
     }
+    LoggerFactory.getLogger(WorkloadStatus.class)
+        .warn("Unknown WorkloadStatus value '{}', defaulting to NORMAL", value);
     return NORMAL;
   }
 }

@@ -8,7 +8,7 @@ import {
   ObjectEngineerRowSchema,
 } from '../types/engineer'
 
-describe('M-03 Zod schemas', () => {
+describe('Engineer Zod schemas', () => {
   it('EngineerSchema parses a valid engineer', () => {
     const raw = {
       id: '550e8400-e29b-41d4-a716-446655440000',

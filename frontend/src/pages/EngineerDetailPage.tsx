@@ -52,29 +52,27 @@ export default function EngineerDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [removeObjectId, setRemoveObjectId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
+  const [assignError, setAssignError] = useState<string | null>(null)
+  const [removeError, setRemoveError] = useState<string | null>(null)
 
   const {
     control,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<EngineerUpdateRequest>({
     resolver: zodResolver(EngineerUpdateSchema),
-    defaultValues: {
-      name: engineer?.name || '',
-      capacityFte: engineer?.capacityFte,
-      homeDivisionId: engineer?.homeDivisionId || '',
-    },
+    values: engineer
+      ? {
+          name: engineer.name,
+          capacityFte: engineer.capacityFte,
+          homeDivisionId: engineer.homeDivisionId || '',
+        }
+      : undefined,
   })
 
   if (!id) return <Typography>Engineer not found</Typography>
 
   const handleEditOpen = () => {
-    reset({
-      name: engineer?.name || '',
-      capacityFte: engineer?.capacityFte,
-      homeDivisionId: engineer?.homeDivisionId || '',
-    })
     setEditError(null)
     setEditOpen(true)
   }
@@ -103,11 +101,13 @@ export default function EngineerDetailPage() {
   const handleRemoveConfirm = async () => {
     if (!removeObjectId) return
     try {
+      setRemoveError(null)
       await removeMutation.mutateAsync(removeObjectId)
       setConfirmOpen(false)
       setRemoveObjectId(null)
     } catch (err) {
-      console.error('Failed to remove engineer assignment:', err)
+      const message = err instanceof Error ? err.message : 'Failed to remove engineer assignment'
+      setRemoveError(message)
     }
   }
 
@@ -118,9 +118,11 @@ export default function EngineerDetailPage() {
 
   const handleAssignSubmit = async (objectId: string) => {
     try {
+      setAssignError(null)
       await assignMutation.mutateAsync(objectId)
     } catch (err) {
-      console.error('Failed to assign object:', err)
+      const message = err instanceof Error ? err.message : 'Failed to assign object to engineer'
+      setAssignError(message)
     }
   }
 
@@ -180,6 +182,12 @@ export default function EngineerDetailPage() {
               Assign Object
             </Button>
           </Box>
+
+          {assignError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {assignError}
+            </Alert>
+          )}
 
           {objectsLoading ? (
             <CircularProgress />
@@ -277,6 +285,11 @@ export default function EngineerDetailPage() {
       />
 
       {/* Confirm Remove Dialog */}
+      {removeError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {removeError}
+        </Alert>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title="Remove Assignment"

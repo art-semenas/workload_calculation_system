@@ -1,5 +1,6 @@
 package com.workload.mapper;
 
+import com.workload.constant.WorkloadStatus;
 import com.workload.dto.EngineerCreateRequest;
 import com.workload.dto.EngineerDto;
 import com.workload.entity.EngineerSummary;
@@ -7,7 +8,9 @@ import com.workload.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    imports = {WorkloadStatus.class})
 public interface EngineerMapper {
 
   @Mapping(target = "id", source = "user.id")
@@ -26,7 +29,7 @@ public interface EngineerMapper {
       target = "status",
       expression =
           "java(summary != null && summary.getStatus() != null ?"
-              + " com.workload.constant.WorkloadStatus.fromString(summary.getStatus()) : null)")
+              + " WorkloadStatus.fromString(summary.getStatus()) : null)")
   @Mapping(target = "createdAt", source = "user.createdAt")
   EngineerDto toDto(User user, EngineerSummary summary, String homeDivisionName);
 

@@ -30,7 +30,7 @@ export default function AssignedObjectsTable({
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
-          <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableRow sx={{ backgroundColor: 'grey.100' }}>
             <TableCell>Object</TableCell>
             <TableCell align="right">Engineer Share</TableCell>
             <TableCell align="right">Object Total</TableCell>

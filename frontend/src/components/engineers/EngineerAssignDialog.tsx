@@ -30,20 +30,17 @@ export default function EngineerAssignDialog({
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedObjectId) return
-
-    onAssign(selectedObjectId).then(
-      () => {
-        setSelectedObjectId(null)
-        onClose()
-      },
-      (err) => {
-        const message = err instanceof Error ? err.message : 'Failed to assign object to engineer'
-        setError(message)
-      }
-    )
     setError(null)
+    try {
+      await onAssign(selectedObjectId)
+      setSelectedObjectId(null)
+      onClose()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to assign object to engineer'
+      setError(message)
+    }
   }
 
   const handleClose = () => {
@@ -94,7 +91,7 @@ export default function EngineerAssignDialog({
           Cancel
         </Button>
         <Button
-          onClick={handleAssign}
+          onClick={() => void handleAssign()}
           disabled={!selectedObjectId || isAssigning}
           variant="contained"
         >

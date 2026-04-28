@@ -1,12 +1,12 @@
 import { Card, CardContent, Grid, Skeleton, Typography } from '@mui/material'
-import type { EngineerSummary } from '../../types/engineer'
+import type { EngineerSummary, EngineerStatus } from '../../types/engineer'
 
 interface EngineerSummaryCardsProps {
   summary: EngineerSummary | undefined
   isLoading: boolean
 }
 
-function getUtilizationColor(status?: string) {
+function getUtilizationColor(status?: EngineerStatus) {
   switch (status) {
     case 'NORMAL':
       return 'success.main'
