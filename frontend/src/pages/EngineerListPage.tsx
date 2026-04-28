@@ -199,16 +199,20 @@ export default function EngineerListPage() {
                 >
                   <TableCell align="left">{engineer.name}</TableCell>
                   <TableCell align="left">{engineer.homeDivisionName || '—'}</TableCell>
-                  <TableCell align="right">{engineer.objectCount}</TableCell>
-                  <TableCell align="right">{engineer.totalLoad.toFixed(4)}</TableCell>
+                  <TableCell align="right">{engineer.objectCount ?? '—'}</TableCell>
+                  <TableCell align="right">{engineer.totalLoad ? engineer.totalLoad.toFixed(4) : '—'}</TableCell>
                   <TableCell align="right">{engineer.capacityFte.toFixed(2)}</TableCell>
                   <TableCell align="center">
-                    <Chip
-                      label={`${Math.round(engineer.loadRatio * 100)}%`}
-                      color={getStatusChipColor(engineer.status)}
-                      icon={getStatusChipIcon(engineer.status)}
-                      size="small"
-                    />
+                    {engineer.loadRatio != null && engineer.status ? (
+                      <Chip
+                        label={`${Math.round(engineer.loadRatio * 100)}%`}
+                        color={getStatusChipColor(engineer.status)}
+                        icon={getStatusChipIcon(engineer.status)}
+                        size="small"
+                      />
+                    ) : (
+                      '—'
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
