@@ -89,14 +89,13 @@ public class ObjectEngineerService {
 
               BigDecimal totalLoad = BigDecimal.ZERO;
               BigDecimal loadRatio = BigDecimal.ZERO;
-              String status = WorkloadStatus.NORMAL.getValue();
+              WorkloadStatus status = WorkloadStatus.NORMAL;
 
               if (summaryOpt2.isPresent()) {
                 EngineerSummary es = summaryOpt2.get();
                 totalLoad = es.getTotalLoad() != null ? es.getTotalLoad() : BigDecimal.ZERO;
                 loadRatio = es.getLoadRatio() != null ? es.getLoadRatio() : BigDecimal.ZERO;
-                status =
-                    es.getStatus() != null ? es.getStatus().toUpperCase() : WorkloadStatus.NORMAL.getValue();
+                status = WorkloadStatus.fromString(es.getStatus());
               }
 
               return new EngineerShareDto(

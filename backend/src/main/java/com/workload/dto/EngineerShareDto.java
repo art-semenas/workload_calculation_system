@@ -1,5 +1,6 @@
 package com.workload.dto;
 
+import com.workload.constant.WorkloadStatus;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -10,5 +11,5 @@ public record EngineerShareDto(
     BigDecimal objectShare,
     BigDecimal totalLoad,
     BigDecimal loadRatio,
-    String status,
+    WorkloadStatus status,
     OffsetDateTime assignedAt) {}
