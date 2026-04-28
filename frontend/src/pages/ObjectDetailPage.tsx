@@ -263,7 +263,7 @@ function EngineersTab({ objectId }: { objectId: string }) {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <Autocomplete
             options={activeEngineers}
-            getOptionLabel={(option) => `${option.name} (${Math.round(option.loadRatio * 100)}%)`}
+            getOptionLabel={(option) => `${option.name} (${option.loadRatio != null ? Math.round(option.loadRatio * 100) : '—'}%)`}
             value={activeEngineers.find((e) => e.id === selectedEngineer) || null}
             onChange={(_, value) => setSelectedEngineer(value?.id ?? null)}
             renderInput={(params) => <TextField {...params} label="Engineer" />}
@@ -271,12 +271,16 @@ function EngineersTab({ objectId }: { objectId: string }) {
               <li {...props}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                   <span>{option.name}</span>
-                  <Chip
-                    label={`${Math.round(option.loadRatio * 100)}%`}
-                    color={getStatusChipColor(option.status)}
-                    icon={getStatusChipIcon(option.status)}
-                    size="small"
-                  />
+                  {option.loadRatio != null && option.status ? (
+                    <Chip
+                      label={`${Math.round(option.loadRatio * 100)}%`}
+                      color={getStatusChipColor(option.status)}
+                      icon={getStatusChipIcon(option.status)}
+                      size="small"
+                    />
+                  ) : (
+                    <span>—</span>
+                  )}
                 </Box>
               </li>
             )}
