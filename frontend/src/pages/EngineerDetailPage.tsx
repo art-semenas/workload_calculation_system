@@ -33,24 +33,19 @@ import EngineerSummaryCards from '../components/engineers/EngineerSummaryCards'
 import SystemBreakdownChart from '../components/engineers/SystemBreakdownChart'
 import AssignedObjectsTable from '../components/engineers/AssignedObjectsTable'
 import EngineerAssignDialog from '../components/engineers/EngineerAssignDialog'
-import {
-  EngineerUpdateSchema,
-  type EngineerUpdateRequest,
-} from '../types/engineer'
+import { EngineerUpdateSchema, type EngineerUpdateRequest } from '../types/engineer'
 
 export default function EngineerDetailPage() {
   const { id } = useParams<{ id: string }>()
-  if (!id) return <Typography>Engineer not found</Typography>
 
-  const { data: engineer, isLoading: engineerLoading } = useEngineer(id)
-  const { data: summary, isLoading: summaryLoading } = useEngineerSummary(id)
-  const { data: objects = [], isLoading: objectsLoading } =
-    useEngineerObjects(id)
+  const { data: engineer, isLoading: engineerLoading } = useEngineer(id || '')
+  const { data: summary, isLoading: summaryLoading } = useEngineerSummary(id || '')
+  const { data: objects = [], isLoading: objectsLoading } = useEngineerObjects(id || '')
   const { data: divisions = [] } = useDivisions()
 
-  const updateMutation = useUpdateEngineer(id)
-  const assignMutation = useAssignObjectToEngineer(id)
-  const removeMutation = useRemoveObjectFromEngineer(id)
+  const updateMutation = useUpdateEngineer(id || '')
+  const assignMutation = useAssignObjectToEngineer(id || '')
+  const removeMutation = useRemoveObjectFromEngineer(id || '')
 
   const [editOpen, setEditOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
@@ -71,6 +66,8 @@ export default function EngineerDetailPage() {
       homeDivisionId: engineer?.homeDivisionId || '',
     },
   })
+
+  if (!id) return <Typography>Engineer not found</Typography>
 
   const handleEditOpen = () => {
     reset({
@@ -93,10 +90,7 @@ export default function EngineerDetailPage() {
       await updateMutation.mutateAsync(data)
       setEditOpen(false)
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to update engineer'
+      const message = err instanceof Error ? err.message : 'Failed to update engineer'
       setEditError(message)
     }
   }
@@ -142,9 +136,7 @@ export default function EngineerDetailPage() {
     return <Typography>Engineer not found</Typography>
   }
 
-  const removeObjectName = objects.find(
-    (obj) => obj.objectId === removeObjectId
-  )?.objectName
+  const removeObjectName = objects.find((obj) => obj.objectId === removeObjectId)?.objectName
 
   return (
     <Container maxWidth="lg">
@@ -165,10 +157,7 @@ export default function EngineerDetailPage() {
         </Box>
 
         {/* Summary cards */}
-        <EngineerSummaryCards
-          summary={summary}
-          isLoading={summaryLoading}
-        />
+        <EngineerSummaryCards summary={summary} isLoading={summaryLoading} />
 
         {/* System breakdown */}
         <Typography variant="h6" sx={{ mb: 2, mt: 4 }}>
@@ -187,10 +176,7 @@ export default function EngineerDetailPage() {
             }}
           >
             <Typography variant="h6">Assigned Objects</Typography>
-            <Button
-              variant="contained"
-              onClick={() => setAssignOpen(true)}
-            >
+            <Button variant="contained" onClick={() => setAssignOpen(true)}>
               Assign Object
             </Button>
           </Box>
@@ -198,9 +184,7 @@ export default function EngineerDetailPage() {
           {objectsLoading ? (
             <CircularProgress />
           ) : objects.length === 0 ? (
-            <Typography color="textSecondary">
-              No objects assigned
-            </Typography>
+            <Typography color="textSecondary">No objects assigned</Typography>
           ) : (
             <AssignedObjectsTable
               objects={objects}
@@ -215,7 +199,11 @@ export default function EngineerDetailPage() {
       <Dialog open={editOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Engineer</DialogTitle>
         <DialogContent>
-          {editError && <Alert severity="error" sx={{ mb: 2 }}>{editError}</Alert>}
+          {editError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {editError}
+            </Alert>
+          )}
           <form>
             <Controller
               name="name"
@@ -253,10 +241,7 @@ export default function EngineerDetailPage() {
               render={({ field }) => (
                 <FormControl fullWidth margin="normal" error={!!errors.homeDivisionId}>
                   <InputLabel>Division</InputLabel>
-                  <Select
-                    {...field}
-                    label="Division"
-                  >
+                  <Select {...field} label="Division">
                     <MenuItem value="">None</MenuItem>
                     {divisions.map((div) => (
                       <MenuItem key={div.id} value={div.id}>
@@ -272,7 +257,9 @@ export default function EngineerDetailPage() {
         <DialogActions>
           <Button onClick={handleEditClose}>Cancel</Button>
           <Button
-            onClick={handleSubmit(onEditSubmit)}
+            onClick={() => {
+              void handleSubmit(onEditSubmit)()
+            }}
             variant="contained"
             disabled={updateMutation.isPending}
           >

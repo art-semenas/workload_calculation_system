@@ -174,9 +174,9 @@ describe('Object Detail — Engineers tab', () => {
     await userEvent.click(option)
 
     // Confirm assignment (find the "Assign" button in the dialog)
-    const confirmBtn = screen.getAllByRole('button', { name: /assign/i }).find(
-      (btn) => btn !== assignBtn
-    )
+    const confirmBtn = screen
+      .getAllByRole('button', { name: /assign/i })
+      .find((btn) => btn !== assignBtn)
     if (confirmBtn) await userEvent.click(confirmBtn)
 
     // Verify banner appears with correct message

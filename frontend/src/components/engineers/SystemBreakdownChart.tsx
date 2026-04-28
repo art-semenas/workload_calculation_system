@@ -1,10 +1,4 @@
-import {
-  Box,
-  LinearProgress,
-  Typography,
-  Stack,
-  LinearProgressProps,
-} from '@mui/material'
+import { Box, LinearProgress, Typography, Stack, LinearProgressProps } from '@mui/material'
 import type { EngineerSummary } from '../../types/engineer'
 
 interface SystemBreakdownChartProps {
@@ -19,9 +13,7 @@ interface SystemRow {
   color: ColorVariant
 }
 
-export default function SystemBreakdownChart({
-  summary,
-}: SystemBreakdownChartProps) {
+export default function SystemBreakdownChart({ summary }: SystemBreakdownChartProps) {
   if (!summary || summary.totalLoad === 0) {
     return (
       <Typography color="textSecondary" sx={{ mb: 3 }}>
@@ -56,11 +48,7 @@ export default function SystemBreakdownChart({
                 {system.label}
               </Typography>
               <Box sx={{ flex: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={percentage}
-                  color={system.color}
-                />
+                <LinearProgress variant="determinate" value={percentage} color={system.color} />
               </Box>
               <Typography
                 variant="body2"

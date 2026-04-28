@@ -583,6 +583,7 @@ function EditObjectForm({ id }: { id: string }) {
 
 export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [editingName, setEditingName] = useState(false)

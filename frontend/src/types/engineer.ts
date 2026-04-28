@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 // --- Engineer status enum (matches backend EngineerSummary.status — uppercase from mapper) ---
 
-export const EngineerStatusEnum = z.enum(["NORMAL", "WARNING", "OVERLOADED"]);
-export type EngineerStatus = z.infer<typeof EngineerStatusEnum>;
+export const EngineerStatusEnum = z.enum(['NORMAL', 'WARNING', 'OVERLOADED'])
+export type EngineerStatus = z.infer<typeof EngineerStatusEnum>
 
 // --- Engineer (list/detail response from GET /engineers, GET /engineers/:id) ---
 
@@ -22,8 +22,8 @@ export const EngineerSchema = z.object({
   loadRatio: z.number(),
   status: EngineerStatusEnum,
   createdAt: z.string().optional(),
-});
-export type Engineer = z.infer<typeof EngineerSchema>;
+})
+export type Engineer = z.infer<typeof EngineerSchema>
 
 // --- Engineer summary (GET /engineers/:id/summary) ---
 
@@ -40,8 +40,8 @@ export const EngineerSummarySchema = z.object({
   loadRatio: z.number(),
   status: EngineerStatusEnum,
   computedAt: z.string().nullable().optional(),
-});
-export type EngineerSummary = z.infer<typeof EngineerSummarySchema>;
+})
+export type EngineerSummary = z.infer<typeof EngineerSummarySchema>
 
 // --- Engineer share per object (GET /engineers/:id/objects) ---
 
@@ -54,8 +54,8 @@ export const EngineerShareSchema = z.object({
   itogoChisloWithTravel: z.number(),
   engineerCount: z.number().int(),
   assignedAt: z.string().optional(),
-});
-export type EngineerShare = z.infer<typeof EngineerShareSchema>;
+})
+export type EngineerShare = z.infer<typeof EngineerShareSchema>
 
 // --- Object engineer row (GET /objects/:id/engineers — engineer assigned to an object) ---
 
@@ -68,18 +68,18 @@ export const ObjectEngineerRowSchema = z.object({
   capacityFte: z.number().optional(),
   assignedAt: z.string().optional(),
   status: EngineerStatusEnum,
-});
-export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>;
+})
+export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>
 
 // --- Create engineer form schema ---
 
 export const EngineerCreateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  capacityFte: z.number().positive("Capacity must be > 0"),
-  homeDivisionId: z.string().uuid("Select a division"),
-});
-export type EngineerCreateRequest = z.infer<typeof EngineerCreateSchema>;
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  capacityFte: z.number().positive('Capacity must be > 0'),
+  homeDivisionId: z.string().uuid('Select a division'),
+})
+export type EngineerCreateRequest = z.infer<typeof EngineerCreateSchema>
 
 // --- Update engineer form schema (partial — all optional) ---
 
@@ -87,5 +87,5 @@ export const EngineerUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   capacityFte: z.number().positive().optional(),
   homeDivisionId: z.string().uuid().optional(),
-});
-export type EngineerUpdateRequest = z.infer<typeof EngineerUpdateSchema>;
+})
+export type EngineerUpdateRequest = z.infer<typeof EngineerUpdateSchema>

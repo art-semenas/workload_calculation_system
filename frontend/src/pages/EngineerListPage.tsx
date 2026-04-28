@@ -22,7 +22,6 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material'
-import { type SvgIconProps } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import CancelIcon from '@mui/icons-material/Cancel'

@@ -53,12 +53,8 @@ export default function AssignedObjectsTable({
                   {share.objectName}
                 </Button>
               </TableCell>
-              <TableCell align="right">
-                {share.engineerShare.toFixed(4)}
-              </TableCell>
-              <TableCell align="right">
-                {share.itogoChisloWithTravel.toFixed(6)}
-              </TableCell>
+              <TableCell align="right">{share.engineerShare.toFixed(4)}</TableCell>
+              <TableCell align="right">{share.itogoChisloWithTravel.toFixed(6)}</TableCell>
               <TableCell align="right">{share.engineerCount}</TableCell>
               <TableCell align="center">
                 <Button

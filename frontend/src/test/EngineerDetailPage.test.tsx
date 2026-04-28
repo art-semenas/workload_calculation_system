@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import EngineerDetailPage from '../pages/EngineerDetailPage'
@@ -54,7 +53,7 @@ const mockSummary = {
   psLoad: 0.27,
   videoLoad: 0.09,
   recordsLoad: 0.05,
-  repairLoad: 0.10,
+  repairLoad: 0.1,
   capacityFte: 1.0,
   loadRatio: 0.921,
   status: 'WARNING' as const,

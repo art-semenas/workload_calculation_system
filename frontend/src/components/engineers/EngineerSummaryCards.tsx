@@ -19,26 +19,15 @@ function getUtilizationColor(status?: string) {
   }
 }
 
-export default function EngineerSummaryCards({
-  summary,
-  isLoading,
-}: EngineerSummaryCardsProps) {
+export default function EngineerSummaryCards({ summary, isLoading }: EngineerSummaryCardsProps) {
   const cards = [
     {
       label: 'Load',
-      value: isLoading ? (
-        <Skeleton width="100%" />
-      ) : (
-        `${summary?.totalLoad.toFixed(3) ?? 0} FTE`
-      ),
+      value: isLoading ? <Skeleton width="100%" /> : `${summary?.totalLoad.toFixed(3) ?? 0} FTE`,
     },
     {
       label: 'Capacity',
-      value: isLoading ? (
-        <Skeleton width="100%" />
-      ) : (
-        `${summary?.capacityFte.toFixed(1) ?? 0} FTE`
-      ),
+      value: isLoading ? <Skeleton width="100%" /> : `${summary?.capacityFte.toFixed(1) ?? 0} FTE`,
     },
     {
       label: 'Utilization',
@@ -51,11 +40,7 @@ export default function EngineerSummaryCards({
     },
     {
       label: 'Objects',
-      value: isLoading ? (
-        <Skeleton width="100%" />
-      ) : (
-        summary?.objectCount ?? 0
-      ),
+      value: isLoading ? <Skeleton width="100%" /> : (summary?.objectCount ?? 0),
     },
   ]
 
@@ -68,10 +53,7 @@ export default function EngineerSummaryCards({
               <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                 {card.label}
               </Typography>
-              <Typography
-                variant="h5"
-                sx={{ color: card.color || 'text.primary' }}
-              >
+              <Typography variant="h5" sx={{ color: card.color || 'text.primary' }}>
                 {card.value}
               </Typography>
             </CardContent>

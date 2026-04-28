@@ -30,21 +30,20 @@ export default function EngineerAssignDialog({
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleAssign = async () => {
+  const handleAssign = () => {
     if (!selectedObjectId) return
 
-    try {
-      setError(null)
-      await onAssign(selectedObjectId)
-      setSelectedObjectId(null)
-      onClose()
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to assign object to engineer'
-      setError(message)
-    }
+    onAssign(selectedObjectId).then(
+      () => {
+        setSelectedObjectId(null)
+        onClose()
+      },
+      (err) => {
+        const message = err instanceof Error ? err.message : 'Failed to assign object to engineer'
+        setError(message)
+      }
+    )
+    setError(null)
   }
 
   const handleClose = () => {
@@ -68,14 +67,17 @@ export default function EngineerAssignDialog({
           </Box>
         ) : (
           <>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
             <Autocomplete
               options={objectOptions}
               getOptionLabel={(option) => option.label}
               value={
                 selectedObjectId
-                  ? objectOptions.find((obj) => obj.id === selectedObjectId) ||
-                    null
+                  ? objectOptions.find((obj) => obj.id === selectedObjectId) || null
                   : null
               }
               onChange={(_, option) => setSelectedObjectId(option?.id || null)}
