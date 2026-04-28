@@ -14,7 +14,7 @@ interface SystemRow {
 }
 
 export default function SystemBreakdownChart({ summary }: SystemBreakdownChartProps) {
-  if (!summary || summary.totalLoad === 0) {
+  if (!summary || !summary.totalLoad || summary.totalLoad === 0) {
     return (
       <Typography color="textSecondary" sx={{ mb: 3 }}>
         No load data

@@ -23,11 +23,11 @@ export default function EngineerSummaryCards({ summary, isLoading }: EngineerSum
   const cards = [
     {
       label: 'Load',
-      value: isLoading ? <Skeleton width="100%" /> : `${summary?.totalLoad.toFixed(3) ?? 0} FTE`,
+      value: isLoading ? <Skeleton width="100%" /> : `${(summary?.totalLoad ?? 0).toFixed(3)} FTE`,
     },
     {
       label: 'Capacity',
-      value: isLoading ? <Skeleton width="100%" /> : `${summary?.capacityFte.toFixed(1) ?? 0} FTE`,
+      value: isLoading ? <Skeleton width="100%" /> : `${(summary?.capacityFte ?? 0).toFixed(1)} FTE`,
     },
     {
       label: 'Utilization',
