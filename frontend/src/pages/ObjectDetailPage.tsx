@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react'
 import {
+  Alert,
+  Autocomplete,
   Box,
   Button,
+  Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   Grid,
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tab,
   Tabs,
   TextField,
@@ -16,6 +30,9 @@ import {
 } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import WarningIcon from '@mui/icons-material/Warning'
+import CancelIcon from '@mui/icons-material/Cancel'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
@@ -30,6 +47,13 @@ import { TravelTab } from '../components/travel/TravelTab'
 import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
 import { useObjectSummary } from '../hooks/useSummary'
+import {
+  useObjectEngineers,
+  useAssignEngineerToObject,
+  useRemoveEngineerFromObject,
+} from '../hooks/useObjectEngineers'
+import { useEngineers } from '../hooks/useEngineers'
+import type { EngineerStatus } from '../types/engineer'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -77,6 +101,217 @@ function SummaryGroup({ title, children }: { title: string; children: React.Reac
       <Grid container spacing={1}>
         {children}
       </Grid>
+    </Box>
+  )
+}
+
+function EngineersTab({ objectId }: { objectId: string }) {
+  const { data: assignedEngineers, isLoading } = useObjectEngineers(objectId)
+  const { data: allEngineers } = useEngineers()
+  const assignMutation = useAssignEngineerToObject(objectId)
+  const removeMutation = useRemoveEngineerFromObject(objectId)
+  const [showTravelBanner, setShowTravelBanner] = useState(false)
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [selectedEngineer, setSelectedEngineer] = useState<string | null>(null)
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
+  const [engineerToRemove, setEngineerToRemove] = useState<string | null>(null)
+
+  const getStatusChipColor = (status: EngineerStatus) => {
+    switch (status) {
+      case 'NORMAL':
+        return 'success'
+      case 'WARNING':
+        return 'warning'
+      case 'OVERLOADED':
+        return 'error'
+      default:
+        return 'default'
+    }
+  }
+
+  const getStatusChipIcon = (status: EngineerStatus) => {
+    switch (status) {
+      case 'NORMAL':
+        return <CheckCircleIcon />
+      case 'WARNING':
+        return <WarningIcon />
+      case 'OVERLOADED':
+        return <CancelIcon />
+      default:
+        return <CheckCircleIcon />
+    }
+  }
+
+  const handleAssignConfirm = async () => {
+    if (selectedEngineer) {
+      await assignMutation.mutateAsync(selectedEngineer)
+      setShowTravelBanner(true)
+      setAssignDialogOpen(false)
+      setSelectedEngineer(null)
+    }
+  }
+
+  const handleRemoveConfirm = async () => {
+    if (engineerToRemove) {
+      await removeMutation.mutateAsync(engineerToRemove)
+      setRemoveConfirmOpen(false)
+      setEngineerToRemove(null)
+    }
+  }
+
+  const activeEngineers = allEngineers?.filter((e) => e.isActive) ?? []
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Heading and Assign Button */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 1,
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Assigned engineers
+        </Typography>
+        <Button variant="contained" onClick={() => setAssignDialogOpen(true)}>
+          Assign engineer
+        </Button>
+      </Box>
+
+      {/* Travel Review Banner */}
+      {showTravelBanner && (
+        <Alert severity="info" sx={{ mt: 1 }} onClose={() => setShowTravelBanner(false)}>
+          Check travel data — travel time may differ for the new engineer
+        </Alert>
+      )}
+
+      {/* Engineers Table */}
+      {assignedEngineers && assignedEngineers.length > 0 ? (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">Engineer</TableCell>
+                <TableCell align="right">Object Share</TableCell>
+                <TableCell align="center">Utilization</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {assignedEngineers.map((engineer) => (
+                <TableRow key={engineer.engineerId}>
+                  <TableCell
+                    align="left"
+                    sx={{ cursor: 'pointer', color: 'primary.main' }}
+                    onClick={() => {
+                      window.location.href = `/engineers/${engineer.engineerId}`
+                    }}
+                  >
+                    {engineer.engineerName}
+                  </TableCell>
+                  <TableCell align="right">{engineer.objectShare.toFixed(4)}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={`${Math.round(engineer.loadRatio * 100)}%`}
+                      color={getStatusChipColor(engineer.status)}
+                      icon={getStatusChipIcon(engineer.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => {
+                        setEngineerToRemove(engineer.engineerId)
+                        setRemoveConfirmOpen(true)
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Typography color="text.secondary">No engineers assigned</Typography>
+      )}
+
+      {/* Assign Engineer Dialog */}
+      <Dialog
+        open={assignDialogOpen}
+        onClose={() => setAssignDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Assign engineer</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+          <Autocomplete
+            options={activeEngineers}
+            getOptionLabel={(option) => `${option.name} (${Math.round(option.loadRatio * 100)}%)`}
+            value={activeEngineers.find((e) => e.id === selectedEngineer) || null}
+            onChange={(_, value) => setSelectedEngineer(value?.id ?? null)}
+            renderInput={(params) => <TextField {...params} label="Engineer" />}
+            renderOption={(props, option) => (
+              <li {...props}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span>{option.name}</span>
+                  <Chip
+                    label={`${Math.round(option.loadRatio * 100)}%`}
+                    color={getStatusChipColor(option.status)}
+                    icon={getStatusChipIcon(option.status)}
+                    size="small"
+                  />
+                </Box>
+              </li>
+            )}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => void handleAssignConfirm()}
+            variant="contained"
+            disabled={!selectedEngineer || assignMutation.isPending}
+          >
+            Assign
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Remove Confirmation Dialog */}
+      <Dialog open={removeConfirmOpen} onClose={() => setRemoveConfirmOpen(false)}>
+        <DialogTitle>Remove engineer?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This will remove the engineer from this object and recalculate workload.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRemoveConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => void handleRemoveConfirm()}
+            color="error"
+            variant="contained"
+            disabled={removeMutation.isPending}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
@@ -501,7 +736,7 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         <TravelTab objectId={id ?? ''} />
       </TabPanel>
       <TabPanel value={tabValue} index={4}>
-        <Typography>Available in M-03</Typography>
+        <EngineersTab objectId={id ?? ''} />
       </TabPanel>
       <TabPanel value={tabValue} index={5}>
         <SummaryTab objectId={id ?? ''} />
