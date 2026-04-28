@@ -68,7 +68,7 @@ class EngineerMapperTest {
     assertThat(dto.objectCount()).isEqualTo(3);
     assertThat(dto.totalLoad()).isEqualByComparingTo("120.5");
     assertThat(dto.loadRatio()).isEqualByComparingTo("0.75");
-    assertThat(dto.status()).isEqualTo("NORMAL");
+    assertThat(dto.status()).isEqualTo(WorkloadStatus.NORMAL);
     assertThat(dto.createdAt()).isEqualTo(createdAt);
   }
 
@@ -164,7 +164,7 @@ class EngineerMapperTest {
 
     EngineerDto dto = mapper.toDto(user, summary, "Division Name");
 
-    assertThat(dto.status()).isEqualTo("WARNING");
+    assertThat(dto.status()).isEqualTo(WorkloadStatus.WARNING);
   }
 
   @Test

@@ -25,8 +25,8 @@ public interface EngineerMapper {
   @Mapping(
       target = "status",
       expression =
-          "java(summary != null && summary.getStatus() != null ? summary.getStatus().toUpperCase()"
-              + " : null)")
+          "java(summary != null && summary.getStatus() != null ?"
+              + " com.workload.constant.WorkloadStatus.fromString(summary.getStatus()) : null)")
   @Mapping(target = "createdAt", source = "user.createdAt")
   EngineerDto toDto(User user, EngineerSummary summary, String homeDivisionName);
 
