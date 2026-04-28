@@ -11,6 +11,7 @@ import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
 import com.workload.exception.ObjectNotFoundException;
 import com.workload.mapper.SummaryMapper;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -31,6 +32,7 @@ class SvodServiceTest {
 
   @Mock private SummaryRepository summaryRepository;
   @Mock private SummaryMapper summaryMapper;
+  @Mock private ObjectEngineerRepository objectEngineerRepository;
 
   @InjectMocks private SvodService svodService;
 
@@ -85,6 +87,7 @@ class SvodServiceTest {
     UUID objectId = UUID.randomUUID();
     Summary summary = buildSummary(objectId, "Object A", "Division 1", "Branch 1");
     when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of(summary));
+    when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
     Page<SvodRowDto> result = svodService.getSvod(pageable, null);
@@ -105,6 +108,7 @@ class SvodServiceTest {
     Summary summary = buildSummary(objectId, "Object B", "Division 2", "Branch 2");
     when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId))
         .thenReturn(List.of(summary));
+    when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
     Page<SvodRowDto> result = svodService.getSvod(pageable, divisionId);

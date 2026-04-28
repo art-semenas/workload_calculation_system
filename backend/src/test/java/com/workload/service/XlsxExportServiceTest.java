@@ -31,6 +31,7 @@ class XlsxExportServiceTest {
         null,
         "Test Division",
         "Test Branch",
+        List.of(),
         new BigDecimal("10.00"),
         new BigDecimal("5.00"),
         new BigDecimal("3.00"),

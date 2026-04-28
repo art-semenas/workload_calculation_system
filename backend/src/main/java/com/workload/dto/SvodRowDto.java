@@ -2,6 +2,7 @@ package com.workload.dto;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record SvodRowDto(
@@ -10,6 +11,7 @@ public record SvodRowDto(
     String address,
     String divisionName,
     String branchName,
+    List<String> engineers,
     BigDecimal osMonthlyAvg,
     BigDecimal psMonthlyAvg,
     BigDecimal videoMonthlyAvg,
