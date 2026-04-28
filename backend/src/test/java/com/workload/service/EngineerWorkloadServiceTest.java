@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.workload.config.WorkloadConfig;
+import com.workload.constant.WorkloadStatus;
 import com.workload.dto.EngineerSummaryDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
@@ -376,7 +377,7 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("0.032"));
-    assertThat(saved.getStatus()).isEqualTo("normal");
+    assertThat(saved.getStatus()).isEqualTo("NORMAL");
   }
 
   @Test
@@ -411,7 +412,7 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("0.95"));
-    assertThat(saved.getStatus()).isEqualTo("warning");
+    assertThat(saved.getStatus()).isEqualTo("WARNING");
   }
 
   @Test
@@ -446,7 +447,7 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("0.9"));
-    assertThat(saved.getStatus()).isEqualTo("warning");
+    assertThat(saved.getStatus()).isEqualTo("WARNING");
   }
 
   @Test
@@ -481,7 +482,7 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("1.0"));
-    assertThat(saved.getStatus()).isEqualTo("overloaded");
+    assertThat(saved.getStatus()).isEqualTo("OVERLOADED");
   }
 
   @Test
@@ -516,7 +517,7 @@ class EngineerWorkloadServiceTest {
     EngineerSummary saved = captor.getValue();
 
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("1.5"));
-    assertThat(saved.getStatus()).isEqualTo("overloaded");
+    assertThat(saved.getStatus()).isEqualTo("OVERLOADED");
   }
 
   @Test
@@ -552,7 +553,7 @@ class EngineerWorkloadServiceTest {
 
     // 0.5 / 0.5 = 1.0, which is overloaded (>= 1.0)
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(new BigDecimal("1.0"));
-    assertThat(saved.getStatus()).isEqualTo("overloaded");
+    assertThat(saved.getStatus()).isEqualTo("OVERLOADED");
   }
 
   // -------------------------------------------------------------------------
@@ -680,7 +681,7 @@ class EngineerWorkloadServiceTest {
     assertThat(saved.getTotalLoad()).isEqualByComparingTo(BigDecimal.ZERO);
     assertThat(saved.getObjectCount()).isEqualTo(0);
     assertThat(saved.getLoadRatio()).isEqualByComparingTo(BigDecimal.ZERO);
-    assertThat(saved.getStatus()).isEqualTo("normal");
+    assertThat(saved.getStatus()).isEqualTo("NORMAL");
   }
 
   // -------------------------------------------------------------------------
@@ -795,13 +796,13 @@ class EngineerWorkloadServiceTest {
                 BigDecimal.ZERO,
                 BigDecimal.ONE,
                 new BigDecimal("0.5"),
-                "NORMAL",
+                WorkloadStatus.NORMAL,
                 summary.getComputedAt()));
 
     EngineerSummaryDto dto = service.getEngineerSummary(engineerId);
 
     assertThat(dto.engineerId()).isEqualTo(engineerId);
-    assertThat(dto.status()).isEqualTo("NORMAL");
+    assertThat(dto.status()).isEqualTo(WorkloadStatus.NORMAL);
   }
 
   @Test
@@ -838,6 +839,6 @@ class EngineerWorkloadServiceTest {
     assertThat(saved.getObjectCount()).isEqualTo(1);
     // But the load contribution is zero
     assertThat(saved.getTotalLoad().compareTo(BigDecimal.ZERO)).isEqualTo(0);
-    assertThat(saved.getStatus()).isEqualTo("normal");
+    assertThat(saved.getStatus()).isEqualTo("NORMAL");
   }
 }
