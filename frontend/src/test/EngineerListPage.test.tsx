@@ -99,7 +99,7 @@ describe('EngineerListPage', () => {
       data: [],
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useEngineers>)
+    } as unknown as ReturnType<typeof useEngineers>)
 
     renderPage()
     const createBtn = screen.getByRole('button', { name: /create engineer/i })
@@ -108,6 +108,7 @@ describe('EngineerListPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/capacity/i)).toBeInTheDocument()
     })
   })

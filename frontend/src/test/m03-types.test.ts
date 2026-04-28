@@ -98,6 +98,7 @@ describe('M-03 Zod schemas', () => {
     const valid = EngineerCreateSchema.safeParse({
       name: 'New Engineer',
       email: 'new@workload.local',
+      password: 'securepass123',
       capacityFte: 1.0,
       homeDivisionId: '550e8400-e29b-41d4-a716-446655440000',
     })
@@ -106,16 +107,27 @@ describe('M-03 Zod schemas', () => {
     const noEmail = EngineerCreateSchema.safeParse({
       name: 'New Engineer',
       email: '',
+      password: 'securepass123',
       capacityFte: 1.0,
       homeDivisionId: '550e8400-e29b-41d4-a716-446655440000',
     })
     expect(noEmail.success).toBe(false)
+
+    const shortPassword = EngineerCreateSchema.safeParse({
+      name: 'New Engineer',
+      email: 'new@workload.local',
+      password: 'short',
+      capacityFte: 1.0,
+      homeDivisionId: '550e8400-e29b-41d4-a716-446655440000',
+    })
+    expect(shortPassword.success).toBe(false)
   })
 
   it('EngineerCreateSchema rejects capacityFte <= 0', () => {
     const result = EngineerCreateSchema.safeParse({
       name: 'Test',
       email: 'test@test.com',
+      password: 'securepass123',
       capacityFte: 0,
       homeDivisionId: '550e8400-e29b-41d4-a716-446655440000',
     })

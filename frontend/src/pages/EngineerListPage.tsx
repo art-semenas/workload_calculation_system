@@ -59,6 +59,7 @@ export default function EngineerListPage() {
     defaultValues: {
       name: '',
       email: '',
+      password: '',
       capacityFte: 1.0,
       homeDivisionId: '',
     },
@@ -237,6 +238,14 @@ export default function EngineerListPage() {
             )}
             <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
             <FormTextField name="email" control={control} label="Email" fullWidth type="email" />
+            <FormTextField
+              name="password"
+              control={control}
+              label="Password"
+              fullWidth
+              type="password"
+              helperText="Minimum 8 characters"
+            />
             <FormTextField
               name="capacityFte"
               control={control}
