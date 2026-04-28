@@ -14,6 +14,7 @@ import com.workload.exception.DivisionNotFoundException;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.DivisionRepository;
 import com.workload.repository.EngineerSummaryRepository;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ public class AggregationService {
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
   private final EngineerSummaryRepository engineerSummaryRepository;
+  private final ObjectEngineerRepository objectEngineerRepository;
   private final WorkloadConfig config;
 
   public AggregationCompanyDto getCompany() {
@@ -123,14 +125,19 @@ public class AggregationService {
     return buildBranchDto(branch, summaries, counts);
   }
 
-  // PoC (S-02): all objects are coverage gaps — no object_engineers table yet.
   public List<CoverageGapDto> getCoverageGaps(UUID divisionId) {
     List<Summary> summaries =
         divisionId != null
             ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
             : summaryRepository.findAllWithOrgHierarchy();
 
+    List<UUID> assignedObjectIds =
+        divisionId != null
+            ? objectEngineerRepository.findAllAssignedObjectIdsByDivision(divisionId)
+            : objectEngineerRepository.findAllAssignedObjectIds();
+
     return summaries.stream()
+        .filter(s -> !assignedObjectIds.contains(s.getObject().getId()))
         .map(
             s ->
                 new CoverageGapDto(

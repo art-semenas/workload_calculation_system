@@ -17,6 +17,7 @@ import com.workload.entity.Summary;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.DivisionRepository;
 import com.workload.repository.EngineerSummaryRepository;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ class AggregationServiceTest {
   @Mock private BranchRepository branchRepository;
   @Mock private UserRepository userRepository;
   @Mock private EngineerSummaryRepository engineerSummaryRepository;
+  @Mock private ObjectEngineerRepository objectEngineerRepository;
 
   private WorkloadConfig config;
   private AggregationService aggregationService;
@@ -73,6 +75,7 @@ class AggregationServiceTest {
             branchRepository,
             userRepository,
             engineerSummaryRepository,
+            objectEngineerRepository,
             config);
   }
 

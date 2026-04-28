@@ -19,7 +19,7 @@ interface EngineerFilters {
 export async function getEngineers(filters?: EngineerFilters): Promise<Engineer[]> {
   const params: Record<string, string> = {}
   if (filters?.status) params.status = filters.status
-  if (filters?.homeDivisionId) params.homeDivisionId = filters.homeDivisionId
+  if (filters?.homeDivisionId) params.home_division_id = filters.homeDivisionId
   const response = await api.get<ApiResponse<unknown>>('/engineers', { params })
   return EngineerSchema.array().parse(response.data.data)
 }

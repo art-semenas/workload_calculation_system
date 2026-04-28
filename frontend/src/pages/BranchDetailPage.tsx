@@ -24,8 +24,29 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useBranch, useUpdateBranch } from '../hooks/useBranches'
 import { useCreateObject, useObjects } from '../hooks/useObjects'
+import { useObjectSummary } from '../hooks/useSummary'
 import { BranchCreateSchema, type BranchCreate } from '../types/division'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
+
+function ObjectStaffingRow({
+  objectId,
+  name,
+  navigate,
+}: {
+  objectId: string
+  name: string
+  navigate: (path: string) => void
+}) {
+  const { data: summary, isLoading } = useObjectSummary(objectId)
+  return (
+    <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
+      <TableCell>{name}</TableCell>
+      <TableCell>
+        {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
+      </TableCell>
+    </TableRow>
+  )
+}
 
 export default function BranchDetailPage() {
   const navigate = useNavigate()
@@ -170,15 +191,12 @@ export default function BranchDetailPage() {
             </TableHead>
             <TableBody>
               {branchObjects.map((obj) => (
-                <TableRow
+                <ObjectStaffingRow
                   key={obj.id}
-                  hover
-                  onClick={() => navigate(`/objects/${obj.id}`)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>{obj.name}</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
+                  objectId={obj.id}
+                  name={obj.name}
+                  navigate={navigate}
+                />
               ))}
             </TableBody>
           </Table>

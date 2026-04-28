@@ -11,4 +11,6 @@ public record AssignmentDto(
     String deviceTypeName,
     SystemType systemType,
     BigDecimal quantityMaintained,
-    UUID contextId) {}
+    UUID contextId,
+    Integer r1Minutes,
+    Integer r2Minutes) {}

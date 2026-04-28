@@ -9,6 +9,8 @@ import org.mapstruct.Mapping;
 public interface ObjectMapper {
 
   @Mapping(target = "branchId", source = "branch.id")
+  @Mapping(target = "branchName", source = "branch.name")
   @Mapping(target = "divisionId", source = "branch.division.id")
+  @Mapping(target = "divisionName", source = "branch.division.name")
   ObjectDto toDto(ObjectEntity entity);
 }
