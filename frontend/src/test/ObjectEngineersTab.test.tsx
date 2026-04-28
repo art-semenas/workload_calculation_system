@@ -167,11 +167,21 @@ describe('Object Detail — Engineers tab', () => {
     const assignBtn = await screen.findByRole('button', { name: /assign engineer/i })
     await userEvent.click(assignBtn)
 
-    // The banner appears after successful assignment
-    // (exact assertion depends on implementation — verify the banner text exists)
-    // This test validates the banner infrastructure is in place
+    // Select engineer from dropdown
+    const autocomplete = screen.getByRole('combobox')
+    await userEvent.click(autocomplete)
+    const option = await screen.findByText(/Kozlov Dmitry/)
+    await userEvent.click(option)
+
+    // Confirm assignment (find the "Assign" button in the dialog)
+    const confirmBtn = screen.getAllByRole('button', { name: /assign/i }).find(
+      (btn) => btn !== assignBtn
+    )
+    if (confirmBtn) await userEvent.click(confirmBtn)
+
+    // Verify banner appears with correct message
     await waitFor(() => {
-      expect(assignBtn).toBeInTheDocument()
+      expect(screen.getByText(/Check travel data/i)).toBeInTheDocument()
     })
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Autocomplete,
@@ -106,6 +106,7 @@ function SummaryGroup({ title, children }: { title: string; children: React.Reac
 }
 
 function EngineersTab({ objectId }: { objectId: string }) {
+  const navigate = useNavigate()
   const { data: assignedEngineers, isLoading } = useObjectEngineers(objectId)
   const { data: allEngineers } = useEngineers()
   const assignMutation = useAssignEngineerToObject(objectId)
@@ -159,7 +160,10 @@ function EngineersTab({ objectId }: { objectId: string }) {
     }
   }
 
-  const activeEngineers = allEngineers?.filter((e) => e.isActive) ?? []
+  const activeEngineers = useMemo(
+    () => allEngineers?.filter((e) => e.isActive) ?? [],
+    [allEngineers]
+  )
 
   if (isLoading) {
     return (
@@ -213,9 +217,7 @@ function EngineersTab({ objectId }: { objectId: string }) {
                   <TableCell
                     align="left"
                     sx={{ cursor: 'pointer', color: 'primary.main' }}
-                    onClick={() => {
-                      window.location.href = `/engineers/${engineer.engineerId}`
-                    }}
+                    onClick={() => navigate(`/engineers/${engineer.engineerId}`)}
                   >
                     {engineer.engineerName}
                   </TableCell>
@@ -580,7 +582,6 @@ function EditObjectForm({ id }: { id: string }) {
 }
 
 export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
