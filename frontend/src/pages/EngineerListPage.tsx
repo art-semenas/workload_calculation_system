@@ -200,7 +200,9 @@ export default function EngineerListPage() {
                   <TableCell align="left">{engineer.name}</TableCell>
                   <TableCell align="left">{engineer.homeDivisionName || '—'}</TableCell>
                   <TableCell align="right">{engineer.objectCount ?? '—'}</TableCell>
-                  <TableCell align="right">{engineer.totalLoad ? engineer.totalLoad.toFixed(4) : '—'}</TableCell>
+                  <TableCell align="right">
+                    {engineer.totalLoad ? engineer.totalLoad.toFixed(4) : '—'}
+                  </TableCell>
                   <TableCell align="right">{engineer.capacityFte.toFixed(2)}</TableCell>
                   <TableCell align="center">
                     {engineer.loadRatio != null && engineer.status ? (

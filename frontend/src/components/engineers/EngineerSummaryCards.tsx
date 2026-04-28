@@ -27,7 +27,11 @@ export default function EngineerSummaryCards({ summary, isLoading }: EngineerSum
     },
     {
       label: 'Capacity',
-      value: isLoading ? <Skeleton width="100%" /> : `${(summary?.capacityFte ?? 0).toFixed(1)} FTE`,
+      value: isLoading ? (
+        <Skeleton width="100%" />
+      ) : (
+        `${(summary?.capacityFte ?? 0).toFixed(1)} FTE`
+      ),
     },
     {
       label: 'Utilization',

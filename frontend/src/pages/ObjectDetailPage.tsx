@@ -263,7 +263,9 @@ function EngineersTab({ objectId }: { objectId: string }) {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <Autocomplete
             options={activeEngineers}
-            getOptionLabel={(option) => `${option.name} (${option.loadRatio != null ? Math.round(option.loadRatio * 100) : '—'}%)`}
+            getOptionLabel={(option) =>
+              `${option.name} (${option.loadRatio != null ? Math.round(option.loadRatio * 100) : '—'}%)`
+            }
             value={activeEngineers.find((e) => e.id === selectedEngineer) || null}
             onChange={(_, value) => setSelectedEngineer(value?.id ?? null)}
             renderInput={(params) => <TextField {...params} label="Engineer" />}
