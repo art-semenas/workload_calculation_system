@@ -17,10 +17,10 @@ export const EngineerSchema = z.object({
   capacityFte: z.number(),
   isActive: z.boolean(),
   employeeId: z.string().nullable().optional(),
-  objectCount: z.number().int(),
-  totalLoad: z.number(),
-  loadRatio: z.number(),
-  status: EngineerStatusEnum,
+  objectCount: z.number().int().nullable().optional(),
+  totalLoad: z.number().nullable().optional(),
+  loadRatio: z.number().nullable().optional(),
+  status: EngineerStatusEnum.nullable().optional(),
   createdAt: z.string().optional(),
 })
 export type Engineer = z.infer<typeof EngineerSchema>
@@ -76,6 +76,7 @@ export type ObjectEngineerRow = z.infer<typeof ObjectEngineerRowSchema>
 export const EngineerCreateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   capacityFte: z.number().positive('Capacity must be > 0'),
   homeDivisionId: z.string().uuid('Select a division'),
 })
