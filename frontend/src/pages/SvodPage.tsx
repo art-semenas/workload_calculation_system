@@ -10,6 +10,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Tooltip,
   type SelectChangeEvent,
 } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
@@ -55,9 +56,20 @@ const columns: GridColDef<SvodRow>[] = [
     headerName: 'Assigned Engineers',
     align: 'left',
     headerAlign: 'left',
-    width: 180,
-    valueFormatter: ({ value }: { value: string[] | undefined }) =>
-      Array.isArray(value) ? value.join(', ') : '',
+    width: 280,
+    renderCell: ({ value }: { value: string[] | undefined }) => {
+      const names = Array.isArray(value) ? value : []
+      const displayText = names.length > 0 ? names.join(', ') : '—'
+      return names.length > 0 ? (
+        <Tooltip title={displayText}>
+          <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {displayText}
+          </Box>
+        </Tooltip>
+      ) : (
+        <Box sx={{ color: 'text.secondary' }}>{displayText}</Box>
+      )
+    },
   },
   {
     field: 'pzvMinutes',

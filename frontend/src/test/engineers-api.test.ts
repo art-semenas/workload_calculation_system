@@ -60,7 +60,7 @@ describe('engineers API', () => {
     const { getEngineers } = await import('../api/engineers')
     await getEngineers({ status: 'WARNING', homeDivisionId: 'div-1' })
     expect(mockApi.get).toHaveBeenCalledWith('/engineers', {
-      params: { status: 'WARNING', homeDivisionId: 'div-1' },
+      params: { status: 'WARNING', home_division_id: 'div-1' },
     })
   })
 

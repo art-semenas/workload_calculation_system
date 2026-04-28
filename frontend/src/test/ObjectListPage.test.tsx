@@ -9,6 +9,7 @@ const mockUseObjects = vi.fn()
 const mockUseDivisions = vi.fn()
 const mockUseCreateObject = vi.fn()
 const mockGetDivisionBranches = vi.fn()
+const mockUseObjectSummary = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -25,6 +26,11 @@ vi.mock('../hooks/useDivisions', () => ({
 vi.mock('../api/divisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args),
+}))
+
+vi.mock('../hooks/useSummary', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
+  useObjectSummary: (...args: unknown[]) => mockUseObjectSummary(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -93,6 +99,12 @@ describe('ObjectListPage', () => {
       mutateAsync: vi.fn().mockResolvedValue({ id: 'obj-3', name: 'Object 3' }),
       isPending: false,
     })
+    mockUseObjectSummary.mockReturnValue({
+      data: {
+        itogoChisloWithTravel: 0.123456,
+      },
+      isLoading: false,
+    })
   })
 
   it('renders object table with name and address', async () => {
@@ -141,14 +153,14 @@ describe('ObjectListPage', () => {
     })
   })
 
-  it('shows TOTAL Staffing column header and dash placeholder for each row', async () => {
+  it('shows TOTAL Staffing column header and values for each row', async () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
     expect(screen.getByText('TOTAL Staffing')).toBeInTheDocument()
-    const dashes = screen.getAllByText('-')
-    expect(dashes).toHaveLength(2)
+    const staffingValues = screen.getAllByText('0.123456')
+    expect(staffingValues).toHaveLength(2)
   })
 
   it('populates grouped branch selector in the dialog', async () => {
