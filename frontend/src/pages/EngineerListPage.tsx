@@ -31,6 +31,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEngineers, useCreateEngineer } from '../hooks/useEngineers'
 import { useDivisions } from '../hooks/useDivisions'
 import { FormTextField } from '../components/common/FormTextField'
+import { PageHead } from '../components/common/PageHead'
+import { DistBar } from '../components/common/DistBar'
+import { CapBar } from '../components/common/CapBar'
 import {
   EngineerCreateSchema,
   type EngineerCreateRequest,
@@ -44,7 +47,6 @@ export default function EngineerListPage() {
   const [nameSearch, setNameSearch] = useState<string>('')
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  // Map status filter UI values to backend status values
   const statusFilterValue = statusFilter === '' ? undefined : statusFilter
 
   const { data: engineers, isLoading: engineersLoading } = useEngineers(
@@ -65,11 +67,21 @@ export default function EngineerListPage() {
     },
   })
 
-  // Filter engineers by name (client-side)
   const filteredEngineers = useMemo(() => {
     if (!engineers) return []
     return engineers.filter((e) => e.name.toLowerCase().includes(nameSearch.toLowerCase()))
   }, [engineers, nameSearch])
+
+  const distBarSegments = useMemo(() => {
+    const normal = filteredEngineers.filter((e) => e.status === 'NORMAL').length
+    const warn = filteredEngineers.filter((e) => e.status === 'WARNING').length
+    const overloaded = filteredEngineers.filter((e) => e.status === 'OVERLOADED').length
+    return [
+      { tone: 'ok' as const, count: normal, label: 'Normal' },
+      { tone: 'warn' as const, count: warn, label: 'Watch' },
+      { tone: 'danger' as const, count: overloaded, label: 'Overloaded' },
+    ]
+  }, [filteredEngineers])
 
   const handleDialogClose = () => {
     setDialogOpen(false)
@@ -81,7 +93,7 @@ export default function EngineerListPage() {
       await createMutation.mutateAsync(formData)
       handleDialogClose()
     } catch {
-      // Error will be displayed via formState.errors if needed
+      // Error displayed via createMutation.isError
     }
   })
 
@@ -121,21 +133,15 @@ export default function EngineerListPage() {
 
   return (
     <Box>
-      {/* Title and Create Button */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4">Engineers</Typography>
-        <Button variant="contained" onClick={() => setDialogOpen(true)}>
-          Create engineer
-        </Button>
-      </Box>
+      <PageHead
+        crumbs={[{ label: 'Workload', to: '/' }, { label: 'Engineers' }]}
+        title="Engineers"
+        actions={
+          <Button variant="contained" onClick={() => setDialogOpen(true)}>
+            Create engineer
+          </Button>
+        }
+      />
 
       {/* Filter Bar */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -175,8 +181,15 @@ export default function EngineerListPage() {
         />
       </Box>
 
+      {/* Capacity distribution bar */}
+      {filteredEngineers.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <DistBar segments={distBarSegments} />
+        </Box>
+      )}
+
       {/* Engineers Table */}
-      {filteredEngineers && filteredEngineers.length > 0 ? (
+      {filteredEngineers.length > 0 ? (
         <Paper>
           <Table>
             <TableHead>
@@ -184,8 +197,7 @@ export default function EngineerListPage() {
                 <TableCell align="left">Engineer</TableCell>
                 <TableCell align="left">Division</TableCell>
                 <TableCell align="right">Objects</TableCell>
-                <TableCell align="right">FTE Load</TableCell>
-                <TableCell align="right">Capacity</TableCell>
+                <TableCell align="left">Utilisation</TableCell>
                 <TableCell align="center">Status</TableCell>
               </TableRow>
             </TableHead>
@@ -197,13 +209,25 @@ export default function EngineerListPage() {
                   onClick={() => navigate(`/engineers/${engineer.id}`)}
                   sx={{ cursor: 'pointer' }}
                 >
-                  <TableCell align="left">{engineer.name}</TableCell>
+                  <TableCell align="left">
+                    <Box>
+                      <Typography sx={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3 }}>
+                        {engineer.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, color: 'text.secondary', lineHeight: 1.3 }}>
+                        {engineer.email}
+                      </Typography>
+                    </Box>
+                  </TableCell>
                   <TableCell align="left">{engineer.homeDivisionName || '—'}</TableCell>
                   <TableCell align="right">{engineer.objectCount ?? '—'}</TableCell>
-                  <TableCell align="right">
-                    {engineer.totalLoad ? engineer.totalLoad.toFixed(4) : '—'}
+                  <TableCell align="left" sx={{ minWidth: 120 }}>
+                    {engineer.loadRatio != null ? (
+                      <CapBar pct={engineer.loadRatio} />
+                    ) : (
+                      '—'
+                    )}
                   </TableCell>
-                  <TableCell align="right">{engineer.capacityFte.toFixed(2)}</TableCell>
                   <TableCell align="center">
                     {engineer.loadRatio != null && engineer.status ? (
                       <Chip
