@@ -136,6 +136,7 @@ class AggregationServiceEngineerTest {
         .thenReturn(2L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divId, "warning"))
         .thenReturn(1L);
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divId)).thenReturn(List.of());
 
     AggregationDivisionDto result = aggregationService.getDivision(divId);
 
@@ -159,6 +160,7 @@ class AggregationServiceEngineerTest {
         .thenReturn(0L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divId, "warning"))
         .thenReturn(0L);
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divId)).thenReturn(List.of());
 
     AggregationDivisionDto result = aggregationService.getDivision(divId);
 

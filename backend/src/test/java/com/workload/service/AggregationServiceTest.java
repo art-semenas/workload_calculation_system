@@ -179,11 +179,49 @@ class AggregationServiceTest {
         .thenReturn(0L);
     when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
         .thenReturn(0L);
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(div.getId()))
+        .thenReturn(List.of());
 
     AggregationDivisionDto result = aggregationService.getDivision(div.getId());
 
     assertThat(result.requiredFte()).isEqualByComparingTo(new BigDecimal("0.6"));
     assertThat(result.objectCount()).isEqualTo(3);
+  }
+
+  // -------------------------------------------------------------------------
+  // Test 2b: coverageGapCount and uncoveredLoad reflect unassigned objects
+  // -------------------------------------------------------------------------
+
+  @Test
+  void divisionLoad_coverageGapCount_reflectsUnassignedObjects() {
+    Division div = buildDivision("Division A");
+    Branch branch = buildBranch(div, "Branch 1");
+    ObjectEntity o1 = buildObject(branch, "Object 1");
+    ObjectEntity o2 = buildObject(branch, "Object 2");
+    ObjectEntity o3 = buildObject(branch, "Object 3");
+
+    Summary s1 = buildSummary(o1, new BigDecimal("0.1"));
+    Summary s2 = buildSummary(o2, new BigDecimal("0.2"));
+    Summary s3 = buildSummary(o3, new BigDecimal("0.3"));
+
+    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(div.getId()))
+        .thenReturn(List.of(s1, s2, s3));
+    when(divisionRepository.findById(div.getId())).thenReturn(Optional.of(div));
+    when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(2L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            div.getId(), "overloaded"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(div.getId(), "warning"))
+        .thenReturn(0L);
+    // o1 is assigned, o2 and o3 are gaps
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(div.getId()))
+        .thenReturn(List.of(o1.getId()));
+
+    AggregationDivisionDto result = aggregationService.getDivision(div.getId());
+
+    assertThat(result.coverageGapCount()).isEqualTo(2);
+    assertThat(result.uncoveredLoad()).isEqualByComparingTo(new BigDecimal("0.5"));
+    assertThat(result.requiredFte()).isEqualByComparingTo(new BigDecimal("0.6"));
   }
 
   // -------------------------------------------------------------------------
