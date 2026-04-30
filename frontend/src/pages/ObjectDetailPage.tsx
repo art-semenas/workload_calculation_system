@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
@@ -526,9 +525,7 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const { data: summary, isLoading: summaryLoading } = useObjectSummary(
     mode === 'detail' ? (id ?? '') : ''
   )
-  const { data: assignedEngineers = [] } = useObjectEngineers(
-    mode === 'detail' ? (id ?? '') : ''
-  )
+  const { data: assignedEngineers = [] } = useObjectEngineers(mode === 'detail' ? (id ?? '') : '')
 
   const deleteObject = useDeleteObject()
 
@@ -608,14 +605,8 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
           value={summary?.itogoChisloWithTravel.toFixed(6) ?? '—'}
           large
         />
-        <InlineStat
-          label="FTE no travel"
-          value={summary?.itogoChisloNoTravel.toFixed(4) ?? '—'}
-        />
-        <InlineStat
-          label="Travel (min)"
-          value={summary?.roundTripMin.toFixed(2) ?? '—'}
-        />
+        <InlineStat label="FTE no travel" value={summary?.itogoChisloNoTravel.toFixed(4) ?? '—'} />
+        <InlineStat label="Travel (min)" value={summary?.roundTripMin.toFixed(2) ?? '—'} />
         <InlineStat label="Engineers" value={String(assignedEngineers.length)} />
         <InlineStat label="Visits/yr" value="—" last />
       </Box>
@@ -770,7 +761,6 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         onCancel={() => setOpenDeleteDialog(false)}
         confirmLabel="Delete"
       />
-
     </Box>
   )
 }

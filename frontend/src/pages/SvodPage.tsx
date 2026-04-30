@@ -6,6 +6,9 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
+  MenuItem,
+  Select,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -34,7 +37,10 @@ function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
       headerAlign: 'left',
       width: 220,
       renderCell: ({ row }: { row: SvodRow }) => (
-        <Link to={`/objects/${row.objectId}`} style={{ color: tokens.ink2, textDecoration: 'none' }}>
+        <Link
+          to={`/objects/${row.objectId}`}
+          style={{ color: tokens.ink2, textDecoration: 'none' }}
+        >
           {row.objectName}
         </Link>
       ),
@@ -51,7 +57,14 @@ function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
         const text = names.join(', ')
         return (
           <Tooltip title={text}>
-            <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: tokens.ink3 }}>
+            <Box
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: tokens.ink3,
+              }}
+            >
               {text}
             </Box>
           </Tooltip>
@@ -257,47 +270,36 @@ export default function SvodPage() {
           gap: 1,
         }}
       >
-        {/* Division pill segmented control */}
-        <Box
-          sx={{
-            display: 'flex',
-            background: tokens.bgSunken,
-            borderRadius: 'var(--r-pill)',
-            p: '3px',
-            gap: '2px',
-            flexWrap: 'wrap',
-          }}
-        >
-          {[{ id: '', name: 'All' }, ...divisions].map((d) => {
-            const active = divisionId === d.id
-            return (
-              <Box
-                key={d.id}
-                component="button"
-                onClick={() => {
-                  setDivisionId(d.id)
-                  setPage(0)
-                }}
-                sx={{
-                  fontSize: 12,
-                  fontWeight: active ? 500 : 400,
-                  color: active ? tokens.ink : tokens.ink3,
-                  background: active ? tokens.bgElev : 'transparent',
-                  border: 'none',
-                  borderRadius: 'var(--r-pill)',
-                  cursor: 'pointer',
-                  px: '10px',
-                  py: '4px',
-                  lineHeight: 1.4,
-                  boxShadow: active ? `0 0 0 1px ${tokens.line}` : 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+        {/* Division filter dropdown */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <Select
+            displayEmpty
+            value={divisionId}
+            onChange={(e) => {
+              setDivisionId(e.target.value)
+              setPage(0)
+            }}
+            renderValue={(value) => {
+              if (!value) return <span style={{ color: tokens.ink3 }}>All divisions</span>
+              return divisions.find((d) => d.id === value)?.name ?? value
+            }}
+            sx={{
+              fontSize: 13,
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            }}
+          >
+            <MenuItem value="" sx={{ fontSize: 13, color: tokens.ink3 }}>
+              All divisions
+            </MenuItem>
+            {divisions.map((d) => (
+              <MenuItem key={d.id} value={d.id} sx={{ fontSize: 13 }}>
                 {d.name}
-              </Box>
-            )
-          })}
-        </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         {/* Precision toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

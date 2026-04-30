@@ -15,6 +15,12 @@ vi.mock('../hooks/useDivisions', () => ({
   useCreateBranch: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
+vi.mock('../hooks/useAggregations', () => ({
+  useDivisionAggregation: () => ({ data: undefined, isLoading: false }),
+  useCoverageGaps: () => ({ data: [], isLoading: false }),
+  useBranchesAggregation: () => ({ data: [], isLoading: false }),
+}))
+
 function wrapper({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={new QueryClient()}>
@@ -32,7 +38,7 @@ describe('DivisionDetailPage inline name editor', () => {
     const user = userEvent.setup()
     render(<DivisionDetailPage />, { wrapper })
 
-    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    await user.click(screen.getByRole('button', { name: 'Edit division' }))
 
     const nameInput = screen.getByDisplayValue('Test Division')
     await user.clear(nameInput)

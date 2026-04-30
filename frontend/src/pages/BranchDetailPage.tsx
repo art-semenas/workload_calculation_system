@@ -41,11 +41,7 @@ function ObjectStaffingRow({
   const { data: summary, isLoading } = useObjectSummary(objectId)
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
-      <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-        {objectId.substring(0, 8)}
-      </TableCell>
       <TableCell>{name}</TableCell>
-      <TableCell>—</TableCell>
       <TableCell align="right">
         {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(2) ?? '—')}
       </TableCell>
@@ -124,7 +120,7 @@ export default function BranchDetailPage() {
   const kpiItems = branchAgg
     ? [
         { label: 'Objects', value: branchAgg.objectCount },
-        { label: 'Engineers', value: '—' },
+        { label: 'Engineers', value: branchAgg.engineersTotal },
         { label: 'Required FTE', value: branchAgg.requiredFte.toFixed(2) },
         {
           label: 'Avg per object',
@@ -199,9 +195,7 @@ export default function BranchDetailPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
                   <TableCell>Object</TableCell>
-                  <TableCell>Tier</TableCell>
                   <TableCell align="right">FTE</TableCell>
                 </TableRow>
               </TableHead>

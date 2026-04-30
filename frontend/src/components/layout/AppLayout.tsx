@@ -98,9 +98,7 @@ export default function AppLayout() {
           >
             W
           </Box>
-          <Typography
-            sx={{ fontSize: 13, fontWeight: 600, color: tokens.ink, lineHeight: 1 }}
-          >
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: tokens.ink, lineHeight: 1 }}>
             Workload
           </Typography>
         </Box>
@@ -212,9 +210,11 @@ export default function AppLayout() {
         sx={{
           flexGrow: 1,
           ml: `${NAV_WIDTH}px`,
+          minWidth: 0,
           minHeight: '100vh',
           background: tokens.bg,
           p: 3,
+          overflow: 'hidden',
         }}
       >
         <Outlet />

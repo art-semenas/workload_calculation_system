@@ -161,14 +161,21 @@ public class AggregationService {
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
     EngineerCounts counts = engineerCountsForDivision(division.getId());
 
+    List<UUID> assignedIds =
+        objectEngineerRepository.findAllAssignedObjectIdsByDivision(division.getId());
+    List<Summary> unassigned =
+        summaries.stream().filter(s -> !assignedIds.contains(s.getObject().getId())).toList();
+    BigDecimal uncoveredLoad = sumItogo(unassigned);
+    int coverageGapCount = unassigned.size();
+
     return new AggregationDivisionDto(
         division.getId(),
         division.getName(),
         objectCount,
         requiredFte,
         staffingNeed,
-        requiredFte,
-        objectCount,
+        uncoveredLoad,
+        coverageGapCount,
         counts.total(),
         counts.overloaded(),
         counts.warning(),

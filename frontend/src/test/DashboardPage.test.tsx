@@ -46,7 +46,7 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  it('renders page title', async () => {
+  it('renders page title', () => {
     mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
       typeof useDivisionsAggregation
     >)

@@ -149,9 +149,7 @@ export default function DashboardPage() {
                   >
                     <TableCell>{div.divisionName}</TableCell>
                     <TableCell>{div.objectCount}</TableCell>
-                    <TableCell
-                      sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-                    >
+                    <TableCell sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}>
                       {div.requiredFte.toFixed(4)}
                     </TableCell>
                     <TableCell>{div.coverageGapCount}</TableCell>

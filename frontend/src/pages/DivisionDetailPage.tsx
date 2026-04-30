@@ -28,7 +28,11 @@ import {
   useDivisionBranches,
   useUpdateDivision,
 } from '../hooks/useDivisions'
-import { useDivisionAggregation, useCoverageGaps } from '../hooks/useAggregations'
+import {
+  useBranchesAggregation,
+  useDivisionAggregation,
+  useCoverageGaps,
+} from '../hooks/useAggregations'
 import {
   BranchCreateSchema,
   DivisionCreateSchema,
@@ -49,6 +53,8 @@ export default function DivisionDetailPage() {
 
   const { data: divAgg } = useDivisionAggregation(id ?? '')
   const { data: gaps } = useCoverageGaps(id)
+  const { data: branchAggs = [] } = useBranchesAggregation()
+  const branchAggById = Object.fromEntries(branchAggs.map((b) => [b.branchId, b]))
 
   const nameForm = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
@@ -125,7 +131,11 @@ export default function DivisionDetailPage() {
   return (
     <Box>
       <PageHead
-        crumbs={[{ label: 'Workload', to: '/' }, { label: 'Divisions', to: '/divisions' }, { label: division.name }]}
+        crumbs={[
+          { label: 'Workload', to: '/' },
+          { label: 'Divisions', to: '/divisions' },
+          { label: division.name },
+        ]}
         title={division.name}
         actions={
           !editingName && (
@@ -180,10 +190,8 @@ export default function DivisionDetailPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Code</TableCell>
                   <TableCell>Branch</TableCell>
                   <TableCell align="right">Objects</TableCell>
-                  <TableCell align="right">Engineers</TableCell>
                   <TableCell align="right">FTE req.</TableCell>
                 </TableRow>
               </TableHead>
@@ -195,13 +203,11 @@ export default function DivisionDetailPage() {
                     onClick={() => navigate(`/branches/${branch.id}`)}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-                      {branch.id.substring(0, 8)}
-                    </TableCell>
                     <TableCell>{branch.name}</TableCell>
                     <TableCell align="right">{branch.objectCount}</TableCell>
-                    <TableCell align="right">—</TableCell>
-                    <TableCell align="right">—</TableCell>
+                    <TableCell align="right">
+                      {branchAggById[branch.id]?.requiredFte.toFixed(2) ?? '—'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

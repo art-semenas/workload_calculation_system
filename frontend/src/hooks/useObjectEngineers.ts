@@ -7,6 +7,7 @@ import {
 import { ENGINEERS_QUERY_KEY, ENGINEER_SUMMARY_QUERY_KEY } from './useEngineers'
 import { SUMMARY_QUERY_KEY } from './useSummary'
 import { SVOD_QUERY_KEY } from './useSvod'
+import { COVERAGE_QUERY_KEY, AGGREGATION_QUERY_KEY } from './useAggregations'
 
 export const OBJECT_ENGINEERS_QUERY_KEY = 'object-engineers'
 
@@ -35,6 +36,8 @@ export function useAssignEngineerToObject(objectId: string) {
       void queryClient.invalidateQueries({
         queryKey: [ENGINEER_SUMMARY_QUERY_KEY],
       })
+      void queryClient.invalidateQueries({ queryKey: [COVERAGE_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [AGGREGATION_QUERY_KEY] })
     },
   })
 }
@@ -55,6 +58,8 @@ export function useRemoveEngineerFromObject(objectId: string) {
       void queryClient.invalidateQueries({
         queryKey: [ENGINEER_SUMMARY_QUERY_KEY],
       })
+      void queryClient.invalidateQueries({ queryKey: [COVERAGE_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: [AGGREGATION_QUERY_KEY] })
     },
   })
 }

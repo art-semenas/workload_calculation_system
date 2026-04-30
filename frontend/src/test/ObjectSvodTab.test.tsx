@@ -32,6 +32,12 @@ vi.mock('../hooks/useDivisions', () => ({
   useDivision: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
 }))
 
+vi.mock('../hooks/useObjectEngineers', () => ({
+  useObjectEngineers: vi.fn().mockReturnValue({ data: [], isLoading: false }),
+  useAssignEngineerToObject: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
+  useRemoveEngineerFromObject: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
+}))
+
 vi.mock('../components/equipment/EquipmentTab', () => ({
   EquipmentTab: () => null,
 }))
@@ -65,12 +71,12 @@ function renderPage(objectId: string = '123') {
   )
 }
 
-describe('Object Detail — Summary tab', () => {
+describe('Object Detail — FTE breakdown drawer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('shows "No data" when no summary exists', async () => {
+  it('shows "No data" in drawer when no summary exists', async () => {
     mockUseObjectSummary.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -78,16 +84,14 @@ describe('Object Detail — Summary tab', () => {
     } as ReturnType<typeof useObjectSummary>)
 
     renderPage()
-    // Navigate to Summary tab (tab index 5 — the last tab)
-    const svodTab = screen.getByRole('tab', { name: /summary/i })
-    await userEvent.click(svodTab)
+    await userEvent.click(screen.getByRole('button', { name: /FTE breakdown/i }))
 
     await waitFor(() => {
       expect(screen.getByText('No data')).toBeInTheDocument()
     })
   })
 
-  it('renders summary values when data exists', async () => {
+  it('renders ИТОГО Числ value in drawer when data exists', async () => {
     mockUseObjectSummary.mockReturnValue({
       data: {
         objectId: '123',
@@ -118,11 +122,10 @@ describe('Object Detail — Summary tab', () => {
     } as ReturnType<typeof useObjectSummary>)
 
     renderPage()
-    const svodTab = screen.getByRole('tab', { name: /summary/i })
-    await userEvent.click(svodTab)
+    await userEvent.click(screen.getByRole('button', { name: /FTE breakdown/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('0.032327')).toBeInTheDocument()
+      expect(screen.getAllByText('0.032327').length).toBeGreaterThanOrEqual(1)
     })
   })
 })

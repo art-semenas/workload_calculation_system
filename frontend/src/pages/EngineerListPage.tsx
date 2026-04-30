@@ -222,11 +222,7 @@ export default function EngineerListPage() {
                   <TableCell align="left">{engineer.homeDivisionName || '—'}</TableCell>
                   <TableCell align="right">{engineer.objectCount ?? '—'}</TableCell>
                   <TableCell align="left" sx={{ minWidth: 120 }}>
-                    {engineer.loadRatio != null ? (
-                      <CapBar pct={engineer.loadRatio} />
-                    ) : (
-                      '—'
-                    )}
+                    {engineer.loadRatio != null ? <CapBar pct={engineer.loadRatio} /> : '—'}
                   </TableCell>
                   <TableCell align="center">
                     {engineer.loadRatio != null && engineer.status ? (

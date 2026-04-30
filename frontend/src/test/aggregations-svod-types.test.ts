@@ -116,9 +116,13 @@ describe('Svod and aggregation Zod schemas', () => {
       requiredFte: 3.75,
       staffingNeed: 0.25,
       objectCount: 42,
+      engineersTotal: 5,
+      engineersOverloaded: 1,
+      engineersWarning: 2,
       breakdown: { os: 2.0, ps: 1.0, video: 0.5, records: 0.1, repair: 0.05 },
     }
     const result = AggregationBranchSchema.parse(raw)
     expect(result.objectCount).toBe(42)
+    expect(result.engineersTotal).toBe(5)
   })
 })

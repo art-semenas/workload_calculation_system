@@ -13,6 +13,7 @@ const mockUseCreateBranch = vi.fn()
 vi.mock('../hooks/useAggregations', () => ({
   useDivisionAggregation: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
   useCoverageGaps: vi.fn().mockReturnValue({ data: [], isLoading: false }),
+  useBranchesAggregation: vi.fn().mockReturnValue({ data: [], isLoading: false }),
 }))
 
 vi.mock('../hooks/useDivisions', () => ({
