@@ -167,5 +167,12 @@ export const theme = createTheme({
         },
       },
     },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: tokens.bg,
+        },
+      },
+    },
   },
 })
