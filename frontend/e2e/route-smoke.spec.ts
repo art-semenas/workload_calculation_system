@@ -27,7 +27,7 @@ test.describe('PoC M-01 direct route smoke', () => {
     await loginAsAdmin(page)
 
     const routes = [
-      { path: '/', heading: 'Dashboard' },
+      { path: '/', heading: 'Maintenance workload' },
       { path: '/divisions', heading: 'Divisions' },
       { path: `/divisions/${routeDivisionId}`, text: /divisions/i },
       { path: `/branches/${routeBranchId}`, text: /divisions/i },
@@ -59,15 +59,10 @@ test.describe('PoC M-01 direct route smoke', () => {
     await expect(page.getByRole('tab', { name: 'Repairs' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Travel' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Engineers' })).toBeVisible()
-    await expect(page.getByRole('tab', { name: 'Summary' })).toBeVisible()
 
     // M-03 is now implemented — Engineers tab shows real content
     await page.getByRole('tab', { name: 'Engineers' }).click()
     await expect(page.getByText('Assigned engineers')).toBeVisible()
-
-    // M-02 is now implemented — Summary tab no longer shows a placeholder
-    await page.getByRole('tab', { name: 'Summary' }).click()
-    await expect(page.getByText('Available in M-02')).not.toBeVisible()
 
     await page.getByRole('button', { name: 'Delete object' }).click()
     await expect(page.getByText(/will also delete all related equipment, records, repairs, and travel data/i)).toBeVisible()

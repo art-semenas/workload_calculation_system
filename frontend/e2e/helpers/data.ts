@@ -326,28 +326,28 @@ export async function getAssignmentsSnapshot(
 // ---- M-02 types and helpers ----
 
 export interface SvodRow {
-  object_id: string
-  object_name: string
-  division_name: string
-  branch_name: string
-  itogo_chislo_with_travel: number
-  computed_at: string | null
+  objectId: string
+  objectName: string
+  divisionName: string
+  branchName: string
+  itogoChisloWithTravel: number
+  computedAt: string | null
 }
 
 export interface SvodPage {
   content: SvodRow[]
-  total_elements: number
-  total_pages: number
+  totalElements: number
+  totalPages: number
   page: number
   size: number
 }
 
 export interface DivisionAggregation {
-  division_id: string
-  division_name: string
-  total_fte: number
-  object_count: number
-  gap_count: number
+  divisionId: string
+  divisionName: string
+  requiredFte: number
+  objectCount: number
+  coverageGapCount: number
 }
 
 export async function fetchDivisionsAggregation(
@@ -384,14 +384,14 @@ export async function fetchReferenceObjectId(
 
   const byName = data.content.find(
     (row) =>
-      row.object_name.includes('Архив') ||
-      row.object_name.includes('Московская') ||
-      row.object_name.toLowerCase().includes('202д')
+      row.objectName.includes('Архив') ||
+      row.objectName.includes('Московская') ||
+      row.objectName.toLowerCase().includes('202д')
   )
-  if (byName) return byName.object_id
+  if (byName) return byName.objectId
 
   const byValue = data.content.find(
-    (row) => Math.abs(row.itogo_chislo_with_travel - 0.032327) < 0.000001
+    (row) => Math.abs(row.itogoChisloWithTravel - 0.032327) < 0.000001
   )
-  return byValue?.object_id ?? null
+  return byValue?.objectId ?? null
 }

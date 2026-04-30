@@ -29,7 +29,7 @@ test.describe('PoC M-01 deterministic CRUD', () => {
       await expect(page).toHaveURL(/\/divisions\/[0-9a-f-]+$/)
       await expect(page.getByRole('heading', { name: names.divisionName })).toBeVisible()
 
-      await page.getByRole('button', { name: 'Edit' }).click()
+      await page.getByRole('button', { name: 'Edit division' }).click()
       await page.getByRole('textbox').fill(updatedDivisionName)
       await page.getByRole('button', { name: 'Save' }).click()
       await expect(page.getByRole('heading', { name: updatedDivisionName })).toBeVisible()
@@ -47,7 +47,7 @@ test.describe('PoC M-01 deterministic CRUD', () => {
       await expect(page).toHaveURL(/\/branches\/[0-9a-f-]+$/)
       await expect(page.getByRole('heading', { name: names.branchName })).toBeVisible()
 
-      await page.getByRole('heading', { name: names.branchName }).locator('xpath=..').getByRole('button').click()
+      await page.getByRole('button', { name: 'Edit branch' }).click()
       await page.getByRole('textbox').fill(updatedBranchName)
       await page.getByRole('button', { name: 'Save' }).click()
       await expect(page.getByRole('heading', { name: updatedBranchName })).toBeVisible()
@@ -65,9 +65,11 @@ test.describe('PoC M-01 deterministic CRUD', () => {
       await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+$/)
       await expect(page.getByRole('heading', { name: names.objectName })).toBeVisible()
 
-      await page.getByRole('button', { name: 'Edit name' }).click()
-      await page.getByRole('textbox').fill(updatedObjectName)
+      await page.getByRole('button', { name: 'Edit object' }).click()
+      await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+\/edit$/)
+      await page.getByLabel('Name').fill(updatedObjectName)
       await page.getByRole('button', { name: 'Save' }).click()
+      await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+$/)
       await expect(page.getByRole('heading', { name: updatedObjectName })).toBeVisible()
 
       await page.getByRole('button', { name: 'Delete object' }).click()
