@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from '../pages/DashboardPage'
@@ -20,6 +20,20 @@ const mockDivisions = vi.mocked(useDivisionsAggregation)
 const mockGaps = vi.mocked(useCoverageGaps)
 const mockSvod = vi.mocked(useSvod)
 
+const baseDivision = {
+  divisionId: '1',
+  divisionName: 'Brest',
+  requiredFte: 12.5,
+  objectCount: 245,
+  coverageGapCount: 12,
+  staffingNeed: 0,
+  uncoveredLoad: 0,
+  engineersTotal: 10,
+  engineersOverloaded: 0,
+  engineersWarning: 0,
+  breakdown: { os: 0, ps: 0, video: 0, records: 0, repair: 0 },
+}
+
 function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -32,17 +46,23 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  it('renders FTE by division section', async () => {
+  it('renders page title', async () => {
+    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
+      typeof useDivisionsAggregation
+    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
+
+    renderPage()
+    expect(screen.getByText('Maintenance workload')).toBeInTheDocument()
+  })
+
+  it('renders FTE by division section with division data', async () => {
     mockDivisions.mockReturnValue({
-      data: [
-        {
-          divisionId: '1',
-          divisionName: 'Brest',
-          requiredFte: 12.5,
-          objectCount: 245,
-          coverageGapCount: 12,
-        },
-      ],
+      data: [baseDivision],
       isLoading: false,
     } as ReturnType<typeof useDivisionsAggregation>)
     mockSvod.mockReturnValue({
@@ -58,10 +78,11 @@ describe('DashboardPage', () => {
     })
   })
 
-  it('renders "No uncovered objects" when no coverage gaps', async () => {
-    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
-      typeof useDivisionsAggregation
-    >)
+  it('renders KPI row with totals from divisions', async () => {
+    mockDivisions.mockReturnValue({
+      data: [baseDivision],
+      isLoading: false,
+    } as ReturnType<typeof useDivisionsAggregation>)
     mockSvod.mockReturnValue({
       data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
       isLoading: false,
@@ -70,11 +91,14 @@ describe('DashboardPage', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('No uncovered objects')).toBeInTheDocument()
+      // KPI label appears at least once (may also appear in table header)
+      expect(screen.getAllByText('Required FTE').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText('Coverage gaps')).toBeInTheDocument()
+      expect(screen.getByText('Overloaded engineers')).toBeInTheDocument()
     })
   })
 
-  it('renders top 10 objects section', async () => {
+  it('opens drawer and shows top objects when Details button is clicked', async () => {
     mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
       typeof useDivisionsAggregation
     >)
@@ -114,8 +138,30 @@ describe('DashboardPage', () => {
     mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
 
     renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: /Details/i }))
+
     await waitFor(() => {
       expect(screen.getByText('CBU Brest')).toBeInTheDocument()
+    })
+  })
+
+  it('shows "No uncovered objects" in drawer when no coverage gaps', async () => {
+    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
+      typeof useDivisionsAggregation
+    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({ data: [], isLoading: false } as ReturnType<typeof useCoverageGaps>)
+
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: /Details/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('No uncovered objects')).toBeInTheDocument()
     })
   })
 })
