@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { QuietDrawer } from '../components/common/QuietDrawer'
+import { QuietDrawer, DrawerSection } from '../components/common/QuietDrawer'
 import { describe, it, expect, vi } from 'vitest'
 
 describe('QuietDrawer', () => {
@@ -32,5 +32,27 @@ describe('QuietDrawer', () => {
       </QuietDrawer>
     )
     expect(screen.queryByText('hidden')).not.toBeInTheDocument()
+  })
+})
+
+describe('DrawerSection', () => {
+  it('renders label and children', () => {
+    render(
+      <DrawerSection label="FTE Breakdown">
+        <p>section content</p>
+      </DrawerSection>
+    )
+    expect(screen.getByText(/FTE Breakdown/i)).toBeInTheDocument()
+    expect(screen.getByText('section content')).toBeInTheDocument()
+  })
+
+  it('renders uppercase label via CSS transform', () => {
+    render(
+      <DrawerSection label="Overview">
+        <span />
+      </DrawerSection>
+    )
+    const label = screen.getByText(/Overview/i)
+    expect(label).toBeInTheDocument()
   })
 })

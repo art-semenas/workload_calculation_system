@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { tokens } from '../../theme'
 
 export interface HeroStat {
   label: string
@@ -15,7 +16,7 @@ export function HeroCard({ title, heroValue, stats }: HeroCardProps) {
   return (
     <Box
       sx={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: tokens.ink,
         color: 'white',
         borderRadius: 'var(--r-md)',
         padding: 'var(--gap-m)',
