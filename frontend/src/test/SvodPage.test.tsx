@@ -102,7 +102,7 @@ describe('SvodPage', () => {
     mockExport.mockResolvedValueOnce(blob)
 
     renderPage()
-    const exportBtn = screen.getByRole('button', { name: /export xlsx/i })
+    const exportBtn = screen.getByRole('button', { name: /export csv/i })
     await userEvent.click(exportBtn)
     expect(mockExport).toHaveBeenCalled()
   })

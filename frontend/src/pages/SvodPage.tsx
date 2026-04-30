@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -6,191 +6,200 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Tooltip,
-  type SelectChangeEvent,
+  Typography,
 } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
+import { PageHead } from '../components/common/PageHead'
 import { useSvod } from '../hooks/useSvod'
+import { useUiStore } from '../stores/uiStore'
 import { exportSvodXlsx } from '../api/svod'
 import { getDivisions } from '../api/divisions'
+import { tokens } from '../theme'
 import type { SvodRow } from '../types/m02'
 
 type NumericFormatterParams = { value: number }
 
-function formatDecimal(value: number, places: number): string {
+function fmt(value: number, places: number): string {
   if (value === 0) return ''
   return value.toFixed(places)
 }
 
-const columns: GridColDef<SvodRow>[] = [
-  {
-    field: 'divisionName',
-    headerName: 'Division',
-    align: 'left',
-    headerAlign: 'left',
-    width: 120,
-  },
-  {
-    field: 'branchName',
-    headerName: 'Branch',
-    align: 'left',
-    headerAlign: 'left',
-    width: 120,
-  },
-  {
-    field: 'objectName',
-    headerName: 'Object',
-    align: 'left',
-    headerAlign: 'left',
-    width: 200,
-    renderCell: ({ row }: { row: SvodRow }) => (
-      <Link to={`/objects/${row.objectId}`}>{row.objectName}</Link>
-    ),
-  },
-  {
-    field: 'engineers',
-    headerName: 'Assigned Engineers',
-    align: 'left',
-    headerAlign: 'left',
-    width: 280,
-    renderCell: ({ value }: { value: string[] | undefined }) => {
-      const names = Array.isArray(value) ? value : []
-      const displayText = names.length > 0 ? names.join(', ') : '—'
-      return names.length > 0 ? (
-        <Tooltip title={displayText}>
-          <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {displayText}
-          </Box>
-        </Tooltip>
-      ) : (
-        <Box sx={{ color: 'text.secondary' }}>{displayText}</Box>
-      )
+function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
+  return [
+    {
+      field: 'objectName',
+      headerName: 'Object',
+      align: 'left',
+      headerAlign: 'left',
+      width: 220,
+      renderCell: ({ row }: { row: SvodRow }) => (
+        <Link to={`/objects/${row.objectId}`} style={{ color: tokens.ink2, textDecoration: 'none' }}>
+          {row.objectName}
+        </Link>
+      ),
     },
+    {
+      field: 'engineers',
+      headerName: 'Eng',
+      align: 'left',
+      headerAlign: 'left',
+      width: 200,
+      renderCell: ({ value }: { value: string[] | undefined }) => {
+        const names = Array.isArray(value) ? value : []
+        if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
+        const text = names.join(', ')
+        return (
+          <Tooltip title={text}>
+            <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: tokens.ink3 }}>
+              {text}
+            </Box>
+          </Tooltip>
+        )
+      },
+    },
+    {
+      field: 'pzvMinutes',
+      headerName: 'PZV',
+      align: 'right',
+      headerAlign: 'right',
+      width: 80,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'roundTripMin',
+      headerName: 'Travel',
+      align: 'right',
+      headerAlign: 'right',
+      width: 80,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'psMonthlyAvg',
+      headerName: 'ПС',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'videoMonthlyAvg',
+      headerName: 'Видео',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'osMonthlyAvg',
+      headerName: 'ОС',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'recordsMonthly',
+      headerName: 'Records',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'repairNoTravelMonthly',
+      headerName: 'Repair',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'r1PerVisitTotal',
+      headerName: 'R1',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'r2PerVisitTotal',
+      headerName: 'R2',
+      align: 'right',
+      headerAlign: 'right',
+      width: 90,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'itogoChisloNoTravel',
+      headerName: 'FTE no tr',
+      align: 'right',
+      headerAlign: 'right',
+      width: 110,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+    },
+    {
+      field: 'itogoChisloWithTravel',
+      headerName: 'ИТОГО Числ',
+      align: 'right',
+      headerAlign: 'right',
+      width: 130,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+      cellClassName: 'itogo-cell',
+    },
+  ]
+}
+
+const quietGridSx = {
+  border: 'none',
+  '& .MuiDataGrid-columnHeaders': {
+    borderBottom: `1px solid ${tokens.line}`,
+    backgroundColor: 'transparent',
+    minHeight: '40px !important',
+    maxHeight: '40px !important',
   },
-  {
-    field: 'pzvMinutes',
-    headerName: 'PZV',
-    align: 'right',
-    headerAlign: 'right',
-    width: 80,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
+  '& .MuiDataGrid-columnHeaderTitle': {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+    color: tokens.ink3,
   },
-  {
-    field: 'roundTripMin',
-    headerName: 'Travel',
-    align: 'right',
-    headerAlign: 'right',
-    width: 80,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 2),
+  '& .MuiDataGrid-columnSeparator': {
+    display: 'none',
   },
-  {
-    field: 'psMonthlyAvg',
-    headerName: 'Fire Alarm',
-    align: 'right',
-    headerAlign: 'right',
-    width: 100,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
+  '& .MuiDataGrid-row': {
+    minHeight: '52px !important',
+    maxHeight: '52px !important',
   },
-  {
-    field: 'videoMonthlyAvg',
-    headerName: 'Video',
-    align: 'right',
-    headerAlign: 'right',
-    width: 100,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
+  '& .MuiDataGrid-cell': {
+    borderBottom: `1px solid ${tokens.line}`,
+    fontSize: 13,
+    color: tokens.ink2,
+    display: 'flex',
+    alignItems: 'center',
   },
-  {
-    field: 'osMonthlyAvg',
-    headerName: 'Security',
-    align: 'right',
-    headerAlign: 'right',
-    width: 100,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
+  '& .MuiDataGrid-row:hover': {
+    backgroundColor: 'rgba(0,0,0,0.012)',
   },
-  {
-    field: 'recordsMonthly',
-    headerName: 'Records',
-    align: 'right',
-    headerAlign: 'right',
-    width: 100,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
+  '& .itogo-cell': {
+    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+    fontWeight: 600,
+    color: tokens.ink,
   },
-  {
-    field: 'repairNoTravelMonthly',
-    headerName: 'Repair without Travel',
-    align: 'right',
-    headerAlign: 'right',
-    width: 160,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
+  '& .MuiDataGrid-footerContainer': {
+    borderTop: `1px solid ${tokens.line}`,
+    minHeight: 44,
   },
-  {
-    field: 'totalNoTravelMin',
-    headerName: 'Maintenance+records+repair(without travel)+Travel, min',
-    align: 'right',
-    headerAlign: 'right',
-    width: 260,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-  {
-    field: 'itogoChisloNoTravel',
-    headerName: 'TOTAL Staffing (without travel)',
-    align: 'right',
-    headerAlign: 'right',
-    width: 200,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-  {
-    field: 'repairWithTravelMonthly',
-    headerName: 'Repair with Travel',
-    align: 'right',
-    headerAlign: 'right',
-    width: 140,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-  {
-    field: 'totalWithTravelMin',
-    headerName: 'Maintenance+records+repair(with travel)+Travel, min',
-    align: 'right',
-    headerAlign: 'right',
-    width: 260,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-  {
-    field: 'itogoChisloWithTravel',
-    headerName: 'TOTAL Staffing (with travel)',
-    align: 'right',
-    headerAlign: 'right',
-    width: 200,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-    cellClassName: 'bold-cell',
-  },
-  {
-    field: 'r1PerVisitTotal',
-    headerName: 'R1 across all systems on the object',
-    align: 'right',
-    headerAlign: 'right',
-    width: 220,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-  {
-    field: 'r2PerVisitTotal',
-    headerName: 'R2 across all systems on the object',
-    align: 'right',
-    headerAlign: 'right',
-    width: 220,
-    valueFormatter: ({ value }: NumericFormatterParams) => formatDecimal(value, 6),
-  },
-]
+}
 
 export default function SvodPage() {
   const [page, setPage] = useState(0)
   const pageSize = 100
-  const [divisionId, setDivisionId] = useState<string>('')
+  const [divisionId, setDivisionId] = useState('')
   const [exportError, setExportError] = useState<string | null>(null)
+
+  const { svodPrecision, setSvodPrecision } = useUiStore()
 
   const { data: divisions = [] } = useQuery({
     queryKey: ['divisions'],
@@ -199,10 +208,7 @@ export default function SvodPage() {
 
   const { data, isLoading, isError } = useSvod(page, pageSize, divisionId || undefined)
 
-  const handleDivisionChange = (event: SelectChangeEvent<string>) => {
-    setDivisionId(event.target.value)
-    setPage(0)
-  }
+  const columns = useMemo(() => buildColumns(svodPrecision), [svodPrecision])
 
   const handleExport = () => {
     setExportError(null)
@@ -224,41 +230,95 @@ export default function SvodPage() {
     setPage(model.page)
   }
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (isError) {
-    return <Alert severity="error">Failed to load data</Alert>
-  }
+  const totalElements = data?.totalElements ?? 0
+  const subtitle = `Consolidated workload across all objects${totalElements > 0 ? ` · ${totalElements.toLocaleString()} rows` : ''}`
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel id="division-filter-label">Division</InputLabel>
-          <Select
-            labelId="division-filter-label"
-            value={divisionId}
-            label="Division"
-            onChange={handleDivisionChange}
-          >
-            <MenuItem value="">All divisions</MenuItem>
-            {divisions.map((d) => (
-              <MenuItem key={d.id} value={d.id}>
-                {d.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+    <Box>
+      <PageHead
+        crumbs={[{ label: 'Workload', to: '/' }, { label: 'СВОД' }]}
+        title="СВОД"
+        subtitle={subtitle}
+        actions={
+          <Button variant="outlined" size="small" onClick={handleExport}>
+            Export CSV
+          </Button>
+        }
+      />
 
-        <Button variant="contained" onClick={handleExport}>
-          Export XLSX
-        </Button>
+      {/* Filter row */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
+        {/* Division pill segmented control */}
+        <Box
+          sx={{
+            display: 'flex',
+            background: tokens.bgSunken,
+            borderRadius: 'var(--r-pill)',
+            p: '3px',
+            gap: '2px',
+            flexWrap: 'wrap',
+          }}
+        >
+          {[{ id: '', name: 'All' }, ...divisions].map((d) => {
+            const active = divisionId === d.id
+            return (
+              <Box
+                key={d.id}
+                component="button"
+                onClick={() => {
+                  setDivisionId(d.id)
+                  setPage(0)
+                }}
+                sx={{
+                  fontSize: 12,
+                  fontWeight: active ? 500 : 400,
+                  color: active ? tokens.ink : tokens.ink3,
+                  background: active ? tokens.bgElev : 'transparent',
+                  border: 'none',
+                  borderRadius: 'var(--r-pill)',
+                  cursor: 'pointer',
+                  px: '10px',
+                  py: '4px',
+                  lineHeight: 1.4,
+                  boxShadow: active ? `0 0 0 1px ${tokens.line}` : 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {d.name}
+              </Box>
+            )
+          })}
+        </Box>
+
+        {/* Precision toggle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>Precision:</Typography>
+          <Box
+            component="button"
+            onClick={() => setSvodPrecision(svodPrecision === 2 ? 6 : 2)}
+            sx={{
+              fontSize: 12,
+              color: tokens.accent,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              p: 0,
+              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              '&:hover': { opacity: 0.8 },
+            }}
+          >
+            {svodPrecision === 2 ? '2 decimals · show full' : 'full · show 2'}
+          </Box>
+        </Box>
       </Box>
 
       {exportError && (
@@ -267,28 +327,29 @@ export default function SvodPage() {
         </Alert>
       )}
 
-      <Box
-        sx={{
-          height: 600,
-          width: '100%',
-          '& .bold-cell': {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <DataGrid
-          rows={data?.content ?? []}
-          columns={columns}
-          getRowId={(row: SvodRow) => row.objectId}
-          paginationMode="server"
-          rowCount={data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={handlePaginationModelChange}
-          pageSizeOptions={[100]}
-          disableRowSelectionOnClick
-          disableVirtualization={import.meta.env.MODE === 'test'}
-        />
-      </Box>
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : isError ? (
+        <Alert severity="error">Failed to load data</Alert>
+      ) : (
+        <Box sx={{ width: '100%' }}>
+          <DataGrid
+            rows={data?.content ?? []}
+            columns={columns}
+            getRowId={(row: SvodRow) => row.objectId}
+            paginationMode="server"
+            rowCount={totalElements}
+            paginationModel={{ page, pageSize }}
+            onPaginationModelChange={handlePaginationModelChange}
+            pageSizeOptions={[100]}
+            disableRowSelectionOnClick
+            disableVirtualization={import.meta.env.MODE === 'test'}
+            sx={quietGridSx}
+          />
+        </Box>
+      )}
     </Box>
   )
 }
