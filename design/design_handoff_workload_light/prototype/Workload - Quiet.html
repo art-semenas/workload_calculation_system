@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workload — Direction A "Quiet"</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  html, body, #root { height: 100%; margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="screens-1.jsx"></script>
+<script type="text/babel" src="screens-2.jsx"></script>
+<script type="text/babel" src="screens-3.jsx"></script>
+<script type="text/babel" src="screens-4.jsx"></script>
+<script type="text/babel" src="screens-5.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+function App() {
+  return (
+    <DesignCanvas title="Workload Calculation System — Direction A “Quiet”">
+      <DCSection id="auth" title="Authentication">
+        <DCArtboard id="login-split"   label="01 · Login — Split brand"   width={1280} height={800}>
+          <LoginSplit />
+        </DCArtboard>
+        <DCArtboard id="login-minimal" label="02 · Login — Minimal card"  width={1280} height={800}>
+          <LoginMinimal />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="overview" title="Overview">
+        <DCArtboard id="dashboard" label="03 · Dashboard"             width={1440} height={1100}>
+          <DashboardScreen />
+        </DCArtboard>
+        <DCArtboard id="svod"      label="04 · СВОД — Consolidated"   width={1600} height={1100}>
+          <SvodScreen />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="detail" title="Object & engineers">
+        <DCArtboard id="objects-list" label="03b · Object list"                       width={1440} height={1000}>
+          <ObjectListScreen />
+        </DCArtboard>
+        <DCArtboard id="object"    label="05 · Object detail (Drawer open)" width={1440} height={1200}>
+          <ObjectDetailScreen />
+        </DCArtboard>
+        <DCArtboard id="object-records"  label="05b · Object · Records tab"  width={1440} height={950}>
+          <ObjectRecordsTab />
+        </DCArtboard>
+        <DCArtboard id="object-repairs"  label="05c · Object · Repairs tab"  width={1440} height={950}>
+          <ObjectRepairsTab />
+        </DCArtboard>
+        <DCArtboard id="object-travel"   label="05d · Object · Travel tab"   width={1440} height={950}>
+          <ObjectTravelTab />
+        </DCArtboard>
+        <DCArtboard id="object-engineers" label="05e · Object · Engineers tab" width={1440} height={950}>
+          <ObjectEngineersTab />
+        </DCArtboard>
+        <DCArtboard id="engineers" label="06 · Engineers"                   width={1440} height={1100}>
+          <EngineersScreen />
+        </DCArtboard>
+        <DCArtboard id="engineer-detail" label="06b · Engineer detail"     width={1440} height={1100}>
+          <EngineerDetailScreen />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="reference" title="Reference">
+        <DCArtboard id="divisions" label="07 · Divisions"                          width={1440} height={950}>
+          <DivisionsScreen />
+        </DCArtboard>
+        <DCArtboard id="division-detail" label="07b · Division detail"             width={1440} height={950}>
+          <DivisionDetailScreen />
+        </DCArtboard>
+        <DCArtboard id="branch-detail" label="07c · Branch detail"                 width={1440} height={950}>
+          <BranchDetailScreen />
+        </DCArtboard>
+        <DCArtboard id="catalog"   label="08 · Device catalog (master/detail)"     width={1440} height={1000}>
+          <CatalogScreen />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dialogs" title="Create dialogs">
+        <DCArtboard id="create-object"   label="09 · Create object"   width={1440} height={900}>
+          <CreateObjectDialog />
+        </DCArtboard>
+        <DCArtboard id="create-engineer" label="10 · Create engineer" width={1440} height={900}>
+          <CreateEngineerDialog />
+        </DCArtboard>
+        <DCArtboard id="create-division" label="11 · Create division" width={1440} height={900}>
+          <CreateDivisionDialog />
+        </DCArtboard>
+        <DCArtboard id="create-branch"   label="12 · Create branch"   width={1440} height={900}>
+          <CreateBranchDialog />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
