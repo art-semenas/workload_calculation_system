@@ -1902,7 +1902,7 @@ DELETE /divisions/:id                 Delete division — admin only (MVP); bloc
 }
 ```
 
-HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
+HTTP 409 on duplicate name: `{ "data": null, "meta": null, "error": { "code": 409, "message": "A division with this name already exists" } }`
 
 **`GET /divisions/:id`** — HTTP 200
 
@@ -1934,21 +1934,22 @@ HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT",
 }
 ```
 
-HTTP 409 on duplicate name: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A division with this name already exists" } }`
+HTTP 409 on duplicate name: `{ "data": null, "meta": null, "error": { "code": 409, "message": "A division with this name already exists" } }`
 
 **`DELETE /divisions/:id`** — HTTP 204 on success. HTTP 409 when blocked:
 
 ```json
 {
   "data": null,
+  "meta": null,
   "error": {
-    "code": "DIVISION_HAS_BRANCHES",
+    "code": 409,
     "message": "Cannot delete: division has 12 branches"
   }
 }
 ```
 
-> **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Division not found" } }` (applies to `GET /divisions/:id`, `PUT /divisions/:id`, `DELETE /divisions/:id`)
+> **404 (all `/:id` routes):** `{ "data": null, "meta": null, "error": { "code": 404, "message": "Division not found" } }` (applies to `GET /divisions/:id`, `PUT /divisions/:id`, `DELETE /divisions/:id`)
 
 > **RBAC by phase:** See §15.3 S-04. In PoC: `POST` and `PUT` endpoints are accessible to any authenticated user; `DELETE` endpoints are not available. In MVP: `POST`, `PUT`, `DELETE` are admin-only; `GET` endpoints are accessible to all authenticated users (editors scoped to own division; viewers see all read-only).
 
@@ -2039,14 +2040,15 @@ HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": 
 ```json
 {
   "data": null,
+  "meta": null,
   "error": {
-    "code": "BRANCH_HAS_OBJECTS",
+    "code": 409,
     "message": "Cannot delete: branch has 20 objects"
   }
 }
 ```
 
-> **404 (all `/:id` routes):** `{ "data": null, "error": { "code": "NOT_FOUND", "message": "Branch not found" } }` (applies to `GET /branches/:id`, `PUT /branches/:id`, `DELETE /branches/:id`)
+> **404 (all `/:id` routes):** `{ "data": null, "meta": null, "error": { "code": 404, "message": "Branch not found" } }` (applies to `GET /branches/:id`, `PUT /branches/:id`, `DELETE /branches/:id`)
 
 > **RBAC by phase:** See §15.3 S-04. In PoC: `POST` and `PUT` endpoints are accessible to any authenticated user; `DELETE` endpoints are not available. In MVP: `POST`, `PUT`, `DELETE` are admin-only; `GET` endpoints are accessible to all authenticated users (editors scoped to own division; viewers see all read-only).
 
@@ -2109,8 +2111,8 @@ GET    /objects/:id/export/xlsx        Export object inventory to XLSX
 - **Response:** HTTP 200 with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and `Content-Disposition: attachment; filename="object_{id}_export.xlsx"`.
 - **File contents:** The generated file contains one sheet per data group — physical devices (device type, physical quantity), system assignments (device type, system type, maintained quantity), records task quantities, repair counts by type, and travel data (transport type, distance km, one-way minutes, round-trip minutes). All values match the corresponding `GET` API responses for the same object at the time of export.
 - **Error cases:**
-  - `404 { "code": "OBJECT_NOT_FOUND" }` — object does not exist.
-  - `403 { "code": "FORBIDDEN" }` — caller role is not permitted.
+  - `404 { "code": 404 }` — object does not exist.
+  - `403 { "code": 403 }` — caller role is not permitted.
 
 #### Device Catalog
 
@@ -2136,7 +2138,7 @@ PUT    /catalog/repairs/:id            Update (marks stale for affected objects 
 DELETE /catalog/repairs/:id            Delete (blocked if any object_repairs row with count > 0 references this type; returns 409)
 ```
 
-> **Deletion rule:** A repair type may be deleted only when no `object_repairs` row references it with `count > 0` in any period (past or active). Rows with `count = 0` do not block deletion. The API returns HTTP 409 with `{ "code": "REPAIR_TYPE_IN_USE", "message": "Cannot delete: repair type has recorded usage" }` when blocked.
+> **Deletion rule:** A repair type may be deleted only when no `object_repairs` row references it with `count > 0` in any period (past or active). Rows with `count = 0` do not block deletion. The API returns HTTP 409 with `{ "code": 409, "message": "Cannot delete: repair type has recorded usage" }` when blocked.
 
 #### СВОД & Summary
 
@@ -2268,9 +2270,9 @@ DELETE /admin/users/:id                Deactivate — sets is_active=FALSE (admi
 - **Role constraint:** `POST /admin/users` accepts `role` values `admin`, `editor`, `viewer`. To create an `engineer`, use `POST /engineers` (which sets the extra fields `capacityFte` and `homeDivisionId`). Engineers appear in `GET /admin/users` results but their engineer-specific fields are managed via `/engineers/:id`.
 - **Placeholder activation:** `PUT /admin/users/:id/activate` is the canonical surface for activating placeholder accounts created by bulk import (M-01). It sets `is_active = TRUE` and `requires_activation = FALSE`. The admin then provides or resets the password through the standard authentication flow.
 - **Error cases:**
-  - `404 { "code": "USER_NOT_FOUND" }` — user does not exist.
-  - `409 { "code": "ENGINEER_HAS_ACTIVE_ASSIGNMENTS" }` — deactivation blocked because the engineer has active object assignments; remove assignments first.
-  - `422 { "code": "INVALID_ROLE_FOR_ENDPOINT" }` — attempted to create role `engineer` via `POST /admin/users`.
+  - `404 { "code": 404 }` — user does not exist.
+  - `409 { "code": 409 }` — deactivation blocked because the engineer has active object assignments; remove assignments first.
+  - `422 { "code": 422 }` — attempted to create role `engineer` via `POST /admin/users`.
 
 #### Object-Engineer Assignments (alternative entry point from object side)
 
@@ -2312,22 +2314,84 @@ GET    /auth/me
 
 ### 10.3 Response Format
 
+All API responses use a unified envelope format:
+
+#### Success Response
 ```json
 { "data": { ... }, "meta": { "page": 1, "total": 2935, "per_page": 100 }, "error": null }
 ```
 
-On error:
+#### Error Response
+All errors use **HTTP status codes** (not semantic string codes) for consistency and REST alignment:
 
 ```json
 {
   "data": null,
+  "meta": null,
   "error": {
-    "code": "CONTEXT_IN_USE",
-    "message": "Cannot delete: 42 objects have active assignments using this context",
-    "affected_count": 42
+    "code": 409,
+    "message": "Cannot delete: 42 objects have active assignments using this context"
   }
 }
 ```
+
+**Error Code Reference:**
+
+| Code | Status | Meaning | Example |
+|---|---|---|---|
+| **400** | Bad Request | Malformed request payload | Missing required field in JSON |
+| **401** | Unauthorized | Invalid or expired JWT token | Session expired, token invalid |
+| **403** | Forbidden | Authenticated but lacking permission | Editor accessing another division (RBAC) |
+| **404** | Not Found | Resource doesn't exist | Division ID doesn't exist |
+| **409** | Conflict | Resource already exists or action blocked | Division name already exists, cannot delete division with branches |
+| **422** | Unprocessable Entity | Validation failed or business rule violation | Invalid `branchId`, device context not found |
+| **429** | Too Many Requests | Rate limit exceeded | IP has exceeded request quota |
+| **500** | Internal Server Error | Unexpected backend error | Database connection lost, calculation engine crash |
+| **503** | Service Unavailable | Service temporarily down | Backend pod restarting, database maintenance |
+
+**Examples:**
+
+- HTTP 409 on duplicate division name:
+```json
+{
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 409,
+    "message": "A division with this name already exists"
+  }
+}
+```
+
+- HTTP 422 on invalid input:
+```json
+{
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 422,
+    "message": "Invalid branch ID: branch not found in this division"
+  }
+}
+```
+
+- HTTP 404 on resource not found:
+```json
+{
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 404,
+    "message": "Division not found"
+  }
+}
+```
+
+**Backend Implementation:**
+- `GlobalExceptionHandler` must map all exception types to appropriate HTTP status codes and include a descriptive user-facing message.
+- The `error.code` field must be the HTTP status code (integer), never a semantic string.
+- The `error.message` field must be human-readable and describe the error in 1-2 sentences.
+- Never include stack traces, internal field names, or SQL details in error messages.
 
 ---
 

@@ -19,7 +19,7 @@
 
 **AC-04:** Admin creates a device type, adds a system context (R1/R2), assigns it to an object, sets `quantityMaintained`. СВОД recalculates correctly. No code deployment required.
 
-**AC-05:** UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row. API rejects invalid assignments with `422 NO_CONTEXT_FOR_SYSTEM`.
+**AC-05:** UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row. API rejects invalid assignments with HTTP 422 and message "Device context not found for this system type".
 
 **AC-06:** `DELETE /catalog/devices/:id/contexts/:cid` returns HTTP 409 listing affected objects when any `object_system_assignments` references that context. Database FK `ON DELETE RESTRICT` prevents bypass.
 

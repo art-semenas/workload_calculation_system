@@ -16,17 +16,17 @@
 
 ## Acceptance Criteria In Scope
 
-**AC-05:** UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row for the device. API rejects `POST /objects/:id/assignments` where (`deviceTypeId`, `systemType`) has no context row — returns HTTP 422 with code `NO_CONTEXT_FOR_SYSTEM`.
+**AC-05:** UI "Assign to system" dropdown shows only system types with a valid `device_system_contexts` row for the device. API rejects `POST /objects/:id/assignments` where (`deviceTypeId`, `systemType`) has no context row — returns HTTP 422 with message "Device context not found for this system type".
 
 **AC-06:** `DELETE /catalog/devices/:id/contexts/:cid` returns HTTP 409 listing affected objects when any `object_system_assignments` references that context. Database FK `ON DELETE RESTRICT` also prevents bypass via direct SQL.
 
 **AC-07:** API ignores or rejects attempts to set `roundTripMin`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
 
-**AC-11:** Attempting to `POST /objects/:id/assignments` for a `deviceTypeId` that has no corresponding `object_devices` row at that object returns HTTP 422 with code `DEVICE_NOT_IN_INVENTORY`.
+**AC-11:** Attempting to `POST /objects/:id/assignments` for a `deviceTypeId` that has no corresponding `object_devices` row at that object returns HTTP 422 with message "Device not found in inventory".
 
 **AC-12:** An object with one Galaxy 512 (контроллер АСПС и СО) assigned to both `OS` and `PS` with `quantityMaintained = 1` each produces correct per-system contributions in `summaries` with physical inventory showing 1 unit.
 
-**AC-13:** In the Equipment tab, for a device that has `device_system_contexts` only for `OS`: "Assign to system" dropdown shows only "OS" — PS and Video are absent (not hidden/disabled). Attempting `POST /objects/:id/assignments` with `systemType: "PS"` returns HTTP 422 `NO_CONTEXT_FOR_SYSTEM`.
+**AC-13:** In the Equipment tab, for a device that has `device_system_contexts` only for `OS`: "Assign to system" dropdown shows only "OS" — PS and Video are absent (not hidden/disabled). Attempting `POST /objects/:id/assignments` with `systemType: "PS"` returns HTTP 422 with message "Device context not found for this system type".
 
 **AC-24:** Creating an object via `POST /objects` with valid `branchId`, `name`, and `address` returns HTTP 201 and the object appears in `GET /objects` filtered by the parent division. Updating the object name via `PUT /objects/:id` persists the change. `DELETE /objects/:id` removes the object and all child rows (devices, assignments, records, repairs, travel, summaries) — `GET /objects/:id` returns HTTP 404 after deletion.
 

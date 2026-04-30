@@ -109,9 +109,6 @@ Expected: no unexpected modified frontend files.
 
 Before implementing Task 1, confirm the following requirements are built into the type file. These fix two pre-condition bugs identified in the design handoff plan:
 
-### Bug 1 (backend — tracked in M-03 backend plan Task 2, mapper spec)
-The backend `EngineerMapper` must emit uppercase status (`"NORMAL"`, `"WARNING"`, `"OVERLOADED"`). This is handled in the backend plan Task 2. The frontend Zod enum `z.enum(["NORMAL", "WARNING", "OVERLOADED"])` is correct as-is.
-
 ### Bug 2 — Missing fields in Zod schemas
 The following fields must be present in the schemas created in Task 1. They are required by the design and by `ObjectEngineerRowSchema` consumers:
 
