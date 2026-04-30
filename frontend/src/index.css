@@ -32,10 +32,8 @@
   --r-pill: 999px;
 }
 
-html,
-body,
-#root {
-  background-color: var(--bg) !important;
+body {
+  background-color: var(--bg);
   font-variant-numeric: tabular-nums;
 }
 
