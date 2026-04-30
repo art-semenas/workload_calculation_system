@@ -14,11 +14,8 @@ const renderPageHead = (props: React.ComponentProps<typeof PageHead>) => {
 describe('PageHead', () => {
   it('renders title and breadcrumbs', () => {
     renderPageHead({
-      crumbs: [
-        { label: 'Workload', to: '/' },
-        { label: 'Objects' }
-      ],
-      title: 'Objects'
+      crumbs: [{ label: 'Workload', to: '/' }, { label: 'Objects' }],
+      title: 'Objects',
     })
     expect(screen.getByRole('heading', { name: 'Objects' })).toBeInTheDocument()
     expect(screen.getByText('Workload')).toBeInTheDocument()
@@ -28,7 +25,7 @@ describe('PageHead', () => {
     renderPageHead({
       crumbs: [{ label: 'Workload' }],
       title: 'Dashboard',
-      subtitle: 'Overview'
+      subtitle: 'Overview',
     })
     expect(screen.getByText('Overview')).toBeInTheDocument()
   })
@@ -37,7 +34,7 @@ describe('PageHead', () => {
     renderPageHead({
       crumbs: [{ label: 'Workload' }],
       title: 'Test',
-      actions: <button>Export</button>
+      actions: <button>Export</button>,
     })
     expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument()
   })

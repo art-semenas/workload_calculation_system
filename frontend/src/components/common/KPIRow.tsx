@@ -40,8 +40,7 @@ export function KPIRow({ items }: KPIRowProps) {
           sx={{
             paddingRight: idx < items.length - 1 ? 'var(--gap-m)' : 0,
             marginRight: idx < items.length - 1 ? 'var(--gap-m)' : 0,
-            borderRight:
-              idx < items.length - 1 ? `1px solid var(--line)` : 'none',
+            borderRight: idx < items.length - 1 ? `1px solid var(--line)` : 'none',
           }}
         >
           {/* Label */}

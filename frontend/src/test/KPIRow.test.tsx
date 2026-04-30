@@ -19,11 +19,7 @@ describe('KPIRow', () => {
 
   it('renders delta text when provided', () => {
     render(
-      <KPIRow
-        items={[
-          { label: 'FTE', value: '187', delta: '+2.14 vs Q3', deltaTone: 'ok' },
-        ]}
-      />
+      <KPIRow items={[{ label: 'FTE', value: '187', delta: '+2.14 vs Q3', deltaTone: 'ok' }]} />
     )
     expect(screen.getByText('+2.14 vs Q3')).toBeInTheDocument()
   })

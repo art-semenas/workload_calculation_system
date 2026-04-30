@@ -34,12 +34,7 @@ export function Spark({ data, width = 64, height = 18 }: SparkProps) {
       style={{ display: 'block' }}
       className="row-trend"
     >
-      <polyline
-        points={points.join(' ')}
-        fill="none"
-        stroke={tokens.ink3}
-        strokeWidth="1.5"
-      />
+      <polyline points={points.join(' ')} fill="none" stroke={tokens.ink3} strokeWidth="1.5" />
     </svg>
   )
 }
