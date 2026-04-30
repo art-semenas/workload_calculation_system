@@ -84,7 +84,7 @@ describe('DivisionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Division 1')
     })
   })
 
@@ -92,7 +92,7 @@ describe('DivisionDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Division 1')
     })
 
     expect(screen.getByText('Branch 1')).toBeInTheDocument()
@@ -103,7 +103,7 @@ describe('DivisionDetailPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Division 1')
     )
 
     await userEvent.click(screen.getByText('Add branch'))
@@ -114,7 +114,7 @@ describe('DivisionDetailPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Division 1')
     )
 
     const branchCell = screen.getByText('Branch 1')
@@ -134,10 +134,10 @@ describe('DivisionDetailPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Division 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Division 1')
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+    await userEvent.click(screen.getByRole('button', { name: /edit division/i }))
 
     const textField = screen.getByRole('textbox')
     await userEvent.clear(textField)
