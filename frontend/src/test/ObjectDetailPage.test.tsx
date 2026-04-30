@@ -35,6 +35,18 @@ vi.mock('../hooks/useSummary', () => ({
   SUMMARY_QUERY_KEY: 'object-summary',
 }))
 
+vi.mock('../hooks/useObjectEngineers', () => ({
+  useObjectEngineers: vi.fn().mockReturnValue({ data: [], isLoading: false, isError: false }),
+  useAssignEngineerToObject: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
+  useRemoveEngineerFromObject: vi.fn().mockReturnValue({ mutateAsync: vi.fn(), isPending: false }),
+  OBJECT_ENGINEERS_QUERY_KEY: 'object-engineers',
+}))
+
+vi.mock('../hooks/useEngineers', () => ({
+  useEngineers: vi.fn().mockReturnValue({ data: [], isLoading: false }),
+  ENGINEERS_QUERY_KEY: 'engineers',
+}))
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -158,7 +170,7 @@ describe('ObjectDetailPage', () => {
     )
 
     await userEvent.click(screen.getByText('Engineers'))
-    expect(screen.getByText(/Available in M-03/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /assign engineer/i })).toBeInTheDocument()
   })
 
   it('shows Summary tab with no data message when no summary exists', async () => {

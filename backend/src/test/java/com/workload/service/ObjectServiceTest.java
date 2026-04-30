@@ -74,7 +74,9 @@ class ObjectServiceTest {
         new ObjectDto(
             entity.getId(),
             branchId,
+            "Branch1",
             divisionId,
+            "Brest",
             "Archive",
             null,
             entity.getCreatedAt(),
@@ -94,7 +96,9 @@ class ObjectServiceTest {
         new ObjectDto(
             entity.getId(),
             branchId,
+            "Branch1",
             divisionId,
+            "Brest",
             "Archive",
             null,
             entity.getCreatedAt(),
@@ -136,7 +140,9 @@ class ObjectServiceTest {
               return new ObjectDto(
                   e.getId(),
                   branchId,
+                  "Branch1",
                   divisionId,
+                  "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
                   e.getCreatedAt(),
@@ -162,7 +168,9 @@ class ObjectServiceTest {
               return new ObjectDto(
                   e.getId(),
                   branchId,
+                  "Branch1",
                   divisionId,
+                  "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
                   e.getCreatedAt(),
@@ -198,7 +206,9 @@ class ObjectServiceTest {
               return new ObjectDto(
                   e.getId(),
                   e.getBranch().getId(),
+                  "NewBranch",
                   divisionId,
+                  "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
                   e.getCreatedAt(),

@@ -662,15 +662,18 @@ test.describe('Navigation scope', () => {
     await expect(page.getByText('Available in the next version')).not.toBeVisible()
   })
 
-  // Checklist 5.2 — Engineers nav still disabled
-  test('Engineers nav item is still disabled (not yet implemented)', async ({ page }) => {
+  // Checklist 5.2 — Engineers nav is now enabled
+  test('Engineers nav item is now enabled and clickable', async ({ page }) => {
     await loginAsAdmin(page)
 
     const engineersButton = page.getByRole('button', { name: 'Engineers' })
     await expect(engineersButton).toBeVisible()
 
     await engineersButton.hover({ force: true })
-    await expect(page.getByText('Available in the next version')).toBeVisible()
+    await expect(page.getByText('Available in the next version')).not.toBeVisible()
+
+    await engineersButton.click()
+    await expect(page).toHaveURL(/.*\/engineers$/)
   })
 
   // Checklist 5.3 — direct /svod route loads

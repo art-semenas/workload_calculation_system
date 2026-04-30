@@ -163,7 +163,9 @@ class EquipmentServiceTest {
             "Dev",
             SystemType.OS,
             BigDecimal.ONE,
-            ctx.getId());
+            ctx.getId(),
+            null,
+            null);
     when(equipmentMapper.toAssignmentDto(any(ObjectSystemAssignment.class))).thenReturn(dto);
 
     AssignmentDto result =
@@ -195,7 +197,9 @@ class EquipmentServiceTest {
             "Dev",
             SystemType.OS,
             BigDecimal.TEN,
-            UUID.randomUUID());
+            UUID.randomUUID(),
+            null,
+            null);
     when(equipmentMapper.toAssignmentDto(any(ObjectSystemAssignment.class))).thenReturn(dto);
 
     AssignmentDto result =

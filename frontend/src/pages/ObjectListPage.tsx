@@ -28,6 +28,7 @@ import { getDivisionBranches } from '../api/divisions'
 import { FormTextField } from '../components/common/FormTextField'
 import { useCreateObject, useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
+import { useObjectSummary } from '../hooks/useSummary'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 import type { Branch } from '../types/division'
 
@@ -36,6 +37,32 @@ interface GroupedBranchOption {
   branchName: string
   divisionId: string
   divisionName: string
+}
+
+function ObjectStaffingRow({
+  objectId,
+  name,
+  divisionName,
+  branchName,
+  navigate,
+}: {
+  objectId: string
+  name: string
+  divisionName: string
+  branchName: string
+  navigate: (path: string) => void
+}) {
+  const { data: summary, isLoading } = useObjectSummary(objectId)
+  return (
+    <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
+      <TableCell>{name}</TableCell>
+      <TableCell>{divisionName}</TableCell>
+      <TableCell>{branchName}</TableCell>
+      <TableCell>
+        {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
+      </TableCell>
+    </TableRow>
+  )
 }
 
 export default function ObjectListPage() {
@@ -161,17 +188,14 @@ export default function ObjectListPage() {
             </TableHead>
             <TableBody>
               {objects.map((obj) => (
-                <TableRow
+                <ObjectStaffingRow
                   key={obj.id}
-                  hover
-                  onClick={() => navigate(`/objects/${obj.id}`)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>{obj.name}</TableCell>
-                  <TableCell>{obj.divisionName}</TableCell>
-                  <TableCell>{obj.branchName}</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
+                  objectId={obj.id}
+                  name={obj.name}
+                  divisionName={obj.divisionName || '—'}
+                  branchName={obj.branchName || '—'}
+                  navigate={navigate}
+                />
               ))}
             </TableBody>
           </Table>

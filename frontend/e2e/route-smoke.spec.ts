@@ -50,7 +50,7 @@ test.describe('PoC M-01 direct route smoke', () => {
     }
   })
 
-  test('object detail shows placeholder tabs and delete confirmation text', async ({ page }) => {
+  test('object detail shows all tabs and delete confirmation text', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto(`/objects/${routeObjectId}`)
 
@@ -61,8 +61,9 @@ test.describe('PoC M-01 direct route smoke', () => {
     await expect(page.getByRole('tab', { name: 'Engineers' })).toBeVisible()
     await expect(page.getByRole('tab', { name: 'Summary' })).toBeVisible()
 
+    // M-03 is now implemented — Engineers tab shows real content
     await page.getByRole('tab', { name: 'Engineers' }).click()
-    await expect(page.getByText('Available in M-03')).toBeVisible()
+    await expect(page.getByText('Assigned engineers')).toBeVisible()
 
     // M-02 is now implemented — Summary tab no longer shows a placeholder
     await page.getByRole('tab', { name: 'Summary' }).click()

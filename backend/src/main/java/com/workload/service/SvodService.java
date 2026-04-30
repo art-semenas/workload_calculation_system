@@ -8,6 +8,7 @@ import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
 import com.workload.exception.ObjectNotFoundException;
 import com.workload.mapper.SummaryMapper;
+import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import java.util.Comparator;
 import java.util.List;
@@ -23,10 +24,15 @@ public class SvodService {
 
   private final SummaryRepository summaryRepository;
   private final SummaryMapper summaryMapper;
+  private final ObjectEngineerRepository objectEngineerRepository;
 
-  public SvodService(SummaryRepository summaryRepository, SummaryMapper summaryMapper) {
+  public SvodService(
+      SummaryRepository summaryRepository,
+      SummaryMapper summaryMapper,
+      ObjectEngineerRepository objectEngineerRepository) {
     this.summaryRepository = summaryRepository;
     this.summaryMapper = summaryMapper;
+    this.objectEngineerRepository = objectEngineerRepository;
   }
 
   @Transactional(readOnly = true)
@@ -73,12 +79,17 @@ public class SvodService {
     ObjectEntity o = s.getObject();
     Branch b = o.getBranch();
     Division d = b.getDivision();
+    List<String> engineerNames =
+        objectEngineerRepository.findAllByObjectId(o.getId()).stream()
+            .map(oe -> oe.getEngineer().getName())
+            .toList();
     return new SvodRowDto(
         o.getId(),
         o.getName(),
         o.getAddress(),
         d.getName(),
         b.getName(),
+        engineerNames,
         s.getOsMonthlyAvg(),
         s.getPsMonthlyAvg(),
         s.getVideoMonthlyAvg(),

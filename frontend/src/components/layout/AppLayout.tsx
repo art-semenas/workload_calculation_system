@@ -14,10 +14,16 @@ import { useAuthStore } from '../../store/authStore'
 
 const NAV_WIDTH = 220
 
-const navItems = [
+interface NavItem {
+  label: string
+  path: string
+  disabled?: boolean
+}
+
+const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/' },
   { label: 'Objects', path: '/objects' },
-  { label: 'Engineers', path: '/engineers', disabled: true },
+  { label: 'Engineers', path: '/engineers' },
   { label: 'Summary', path: '/svod' },
   { label: 'Divisions', path: '/divisions' },
 ]

@@ -103,7 +103,7 @@ test.describe('PoC M-01 smoke', () => {
   })
 
   // 2.2
-  test('disabled navigation items are visible with tooltip', async ({ page }) => {
+  test('navigation items are visible and enabled', async ({ page }) => {
     await loginAsAdmin(page)
 
     const engineersButton = page.getByRole('button', { name: 'Engineers' })
@@ -111,8 +111,9 @@ test.describe('PoC M-01 smoke', () => {
     await expect(engineersButton).toBeVisible()
     await expect(summaryButton).toBeVisible()
 
-    await engineersButton.hover({ force: true })
-    await expect(page.getByText('Available in the next version')).toBeVisible()
+    // M-03 is now implemented — Engineers nav item is enabled and navigable
+    await engineersButton.click()
+    await expect(page).toHaveURL(/\/engineers$/)
   })
 
   // 2.3

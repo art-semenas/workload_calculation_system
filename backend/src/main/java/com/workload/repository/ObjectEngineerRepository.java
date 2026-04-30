@@ -21,4 +21,12 @@ public interface ObjectEngineerRepository extends JpaRepository<ObjectEngineer, 
 
   @Query("SELECT oe.engineer.id FROM ObjectEngineer oe WHERE oe.object.id = :objectId")
   List<UUID> findEngineerIdsByObjectId(@Param("objectId") UUID objectId);
+
+  @Query("SELECT DISTINCT oe.object.id FROM ObjectEngineer oe")
+  List<UUID> findAllAssignedObjectIds();
+
+  @Query(
+      "SELECT DISTINCT oe.object.id FROM ObjectEngineer oe WHERE oe.object.branch.division.id ="
+          + " :divisionId")
+  List<UUID> findAllAssignedObjectIdsByDivision(@Param("divisionId") UUID divisionId);
 }

@@ -26,6 +26,8 @@ public interface EquipmentMapper {
   @Mapping(target = "deviceTypeId", source = "deviceType.id")
   @Mapping(target = "deviceTypeName", source = "deviceType.name")
   @Mapping(target = "contextId", source = "context.id")
+  @Mapping(target = "r1Minutes", source = "context.r1Minutes")
+  @Mapping(target = "r2Minutes", source = "context.r2Minutes")
   AssignmentDto toAssignmentDto(ObjectSystemAssignment assignment);
 
   @Mapping(target = "objectId", source = "object.id")
