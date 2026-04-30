@@ -12,7 +12,7 @@ describe('CapBar', () => {
     [0.5, 'ok'],
     [0.92, 'warn'],
     [1.05, 'danger'],
-  ])('applies correct tone for pct=%s', (pct, tone) => {
+  ])('applies correct tone for pct=%s', (pct, _tone) => {
     const { container } = render(<CapBar pct={pct} />)
     // Verify the bar exists
     expect(container.firstChild).toBeInTheDocument()
