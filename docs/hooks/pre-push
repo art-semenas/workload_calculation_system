@@ -14,12 +14,25 @@ echo ""
 FRONTEND_CHANGED=false
 BACKEND_CHANGED=false
 
-# Check what files are staged or committed since origin/main
-if git diff --name-only origin/main...HEAD | grep -q '^frontend/'; then
+# Find the integration branch this branch diverged from
+BASE_BRANCH=""
+for candidate in origin/feature/implementation origin/main origin/master; do
+  if git rev-parse --verify "$candidate" &>/dev/null; then
+    BASE_BRANCH="$candidate"
+    break
+  fi
+done
+
+CHANGED_FILES=""
+if [ -n "$BASE_BRANCH" ]; then
+  CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}...HEAD")
+fi
+
+if echo "$CHANGED_FILES" | grep -q '^frontend/'; then
   FRONTEND_CHANGED=true
 fi
 
-if git diff --name-only origin/main...HEAD | grep -q '^backend/'; then
+if echo "$CHANGED_FILES" | grep -q '^backend/'; then
   BACKEND_CHANGED=true
 fi
 
