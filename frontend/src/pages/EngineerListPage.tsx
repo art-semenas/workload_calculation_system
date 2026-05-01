@@ -28,6 +28,7 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { tokens } from '../theme'
 import { useEngineers, useCreateEngineer } from '../hooks/useEngineers'
 import { useDivisions } from '../hooks/useDivisions'
 import { FormTextField } from '../components/common/FormTextField'
@@ -143,42 +144,64 @@ export default function EngineerListPage() {
         }
       />
 
-      {/* Filter Bar */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <Select
-          value={divisionFilter}
-          onChange={(e) => setDivisionFilter(e.target.value)}
-          displayEmpty
-          sx={{ minWidth: 200 }}
-          disabled={divisionsLoading}
-        >
-          <MenuItem value="">All divisions</MenuItem>
-          {divisions?.map((div) => (
-            <MenuItem key={div.id} value={div.id}>
-              {div.name}
-            </MenuItem>
-          ))}
-        </Select>
-
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          displayEmpty
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">All statuses</MenuItem>
-          <MenuItem value="NORMAL">Normal</MenuItem>
-          <MenuItem value="WARNING">Warning</MenuItem>
-          <MenuItem value="OVERLOADED">Overloaded</MenuItem>
-        </Select>
-
+      {/* Filter Row */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1.5,
+          mb: 3,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
         <TextField
           placeholder="Search by name..."
+          aria-label="Search engineers"
           value={nameSearch}
           onChange={(e) => setNameSearch(e.target.value)}
           size="small"
           sx={{ minWidth: 200 }}
         />
+
+        <FormControl size="small" sx={{ minWidth: 200 }} disabled={divisionsLoading}>
+          <InputLabel>Division</InputLabel>
+          <Select
+            value={divisionFilter}
+            label="Division"
+            onChange={(e) => setDivisionFilter(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            }}
+          >
+            <MenuItem value="">All divisions</MenuItem>
+            {divisions?.map((div) => (
+              <MenuItem key={div.id} value={div.id}>
+                {div.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusFilter}
+            label="Status"
+            onChange={(e) => setStatusFilter(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            }}
+          >
+            <MenuItem value="">All statuses</MenuItem>
+            <MenuItem value="NORMAL">Normal</MenuItem>
+            <MenuItem value="WARNING">Warning</MenuItem>
+            <MenuItem value="OVERLOADED">Overloaded</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Capacity distribution bar */}
