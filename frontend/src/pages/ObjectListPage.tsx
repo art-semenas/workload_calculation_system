@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate } from 'react-router-dom'
 import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
@@ -57,6 +58,9 @@ function ObjectStaffingRow({
         }}
       >
         {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
+      </TableCell>
+      <TableCell sx={{ width: 32, p: 0, pr: 1, textAlign: 'right' }}>
+        <ChevronRightIcon sx={{ fontSize: 16, color: tokens.ink4, display: 'block' }} />
       </TableCell>
     </TableRow>
   )
@@ -198,6 +202,7 @@ export default function ObjectListPage() {
                 <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
                   FTE
                 </TableCell>
+                <TableCell sx={{ width: 32, p: 0 }} />
               </TableRow>
             </TableHead>
             <TableBody>
