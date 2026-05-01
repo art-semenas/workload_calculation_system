@@ -21,6 +21,7 @@ import { useSvod } from '../hooks/useSvod'
 import { tokens } from '../theme'
 import type { AggregationDivision } from '../types/m02'
 
+// PoC (S-05): period selector is decorative — no period_id on records yet. Wired in MVP M-05.
 const PERIODS = ['FY25', 'FY26', 'Q-by-Q'] as const
 type Period = (typeof PERIODS)[number]
 
@@ -94,6 +95,7 @@ export default function DashboardPage() {
             <Button variant="outlined" size="small" onClick={() => setDrawerOpen(true)}>
               Details ›
             </Button>
+            {/* PoC (S-02): recalculate triggers manual sync. Background worker added in MVP M-06. */}
             <Button variant="contained" size="small">
               Recalculate
             </Button>

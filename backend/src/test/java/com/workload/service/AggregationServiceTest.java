@@ -225,6 +225,54 @@ class AggregationServiceTest {
   }
 
   // -------------------------------------------------------------------------
+  // Test 2c: getDivisions list endpoint computes coverageGapCount per division
+  // -------------------------------------------------------------------------
+
+  @Test
+  void getDivisions_coverageGapCount_computedPerDivision() {
+    Division divA = buildDivision("Division A");
+    Division divB = buildDivision("Division B");
+    Branch branchA = buildBranch(divA, "Branch A1");
+    Branch branchB = buildBranch(divB, "Branch B1");
+    ObjectEntity oA1 = buildObject(branchA, "Object A1");
+    ObjectEntity oA2 = buildObject(branchA, "Object A2");
+    ObjectEntity oB1 = buildObject(branchB, "Object B1");
+
+    Summary sA1 = buildSummary(oA1, new BigDecimal("0.1"));
+    Summary sA2 = buildSummary(oA2, new BigDecimal("0.2"));
+    Summary sB1 = buildSummary(oB1, new BigDecimal("0.4"));
+
+    when(summaryRepository.findAllWithOrgHierarchy())
+        .thenReturn(List.of(sA1, sA2, sB1));
+
+    // oA1 assigned in divA — oA2 is a gap; all of divB unassigned
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divA.getId()))
+        .thenReturn(List.of(oA1.getId()));
+    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divB.getId()))
+        .thenReturn(List.of());
+    when(userRepository.countByHomeDivisionIdAndActiveTrue(divA.getId())).thenReturn(0L);
+    when(userRepository.countByHomeDivisionIdAndActiveTrue(divB.getId())).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divA.getId(), "overloaded")).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divA.getId(), "warning")).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divB.getId(), "overloaded")).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divB.getId(), "warning")).thenReturn(0L);
+
+    List<AggregationDivisionDto> results = aggregationService.getDivisions();
+
+    AggregationDivisionDto resultA = results.stream()
+        .filter(r -> r.divisionName().equals("Division A")).findFirst().orElseThrow();
+    AggregationDivisionDto resultB = results.stream()
+        .filter(r -> r.divisionName().equals("Division B")).findFirst().orElseThrow();
+
+    assertThat(resultA.coverageGapCount()).isEqualTo(1);
+    assertThat(resultA.uncoveredLoad()).isEqualByComparingTo(new BigDecimal("0.2"));
+    assertThat(resultA.requiredFte()).isEqualByComparingTo(new BigDecimal("0.3"));
+
+    assertThat(resultB.coverageGapCount()).isEqualTo(1);
+    assertThat(resultB.uncoveredLoad()).isEqualByComparingTo(new BigDecimal("0.4"));
+  }
+
+  // -------------------------------------------------------------------------
   // Test 3: branch requiredFte == sum of object itogo values
   // -------------------------------------------------------------------------
 

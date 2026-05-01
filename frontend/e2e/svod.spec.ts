@@ -105,7 +105,8 @@ test.describe('Dashboard SVOD sections', () => {
 
     await page.getByRole('button', { name: /details/i }).click()
     const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
-    const gapListVisible = await page.locator('ul').isVisible()
+    const uncoveredSection = page.getByText(/uncovered objects/i).first().locator('..')
+    const gapListVisible = await uncoveredSection.locator('ul').isVisible()
 
     expect(emptyStateVisible || gapListVisible).toBeTruthy()
   })
@@ -163,24 +164,26 @@ test.describe('Summary page (/svod)', () => {
     await expect(page.getByRole('heading').first()).toBeVisible()
   })
 
-  // Checklist 2.3 + 2.4 — division filter with real division names (pill segment control)
-  test('division filter shows real division names as pill buttons', async ({ page }) => {
+  // Checklist 2.3 + 2.4 — division filter with real division names
+  test('division filter shows real division names', async ({ page }) => {
     test.skip(!seededDivisionName, 'No seeded division aggregation data available')
 
     await loginAsAdmin(page)
     await page.goto('/svod')
 
+    await expect(page.getByRole('combobox').first()).toBeVisible()
+    await page.getByRole('combobox').first().click()
     await expect(
-      page.getByRole('button', { name: new RegExp(seededDivisionName) })
+      page.getByRole('option', { name: new RegExp(seededDivisionName) })
     ).toBeVisible()
   })
 
-  // Checklist 2.5 — Export CSV button present
-  test('Export CSV button is present', async ({ page }) => {
+  // Checklist 2.5 — Export XLSX button present
+  test('Export XLSX button is present', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/svod')
 
-    await expect(page.getByRole('button', { name: /export csv/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /export xlsx/i })).toBeVisible()
   })
 
   // Checklist 2.6 + 2.16 — key column headers (covers the 19-column spec)
@@ -258,31 +261,31 @@ test.describe('Summary page (/svod)', () => {
     await loginAsAdmin(page)
     await page.goto('/svod')
 
-    const divisionPill = page.getByRole('button', { name: new RegExp(seededDivisionName) })
-    await expect(divisionPill).toBeVisible()
-
+    await expect(page.getByRole('combobox').first()).toBeVisible()
     const totalBefore = await page.getByRole('row').count()
 
-    await divisionPill.click()
+    await page.getByRole('combobox').first().click()
+    await page.getByRole('option', { name: new RegExp(seededDivisionName) }).click()
 
     await expect(page.getByRole('row').nth(1)).toBeVisible()
 
-    // Clear filter by clicking the 'All' pill
-    await page.getByRole('button', { name: /^all$/i }).click()
+    // Clear filter by selecting "All divisions"
+    await page.getByRole('combobox').first().click()
+    await page.getByRole('option', { name: /all divisions/i }).click()
 
     const totalAfter = await page.getByRole('row').count()
     expect(totalAfter).toBeGreaterThanOrEqual(totalBefore)
   })
 
-  // Checklist 2.14 — Export CSV triggers a file download
-  test('clicking Export CSV initiates a .xlsx file download', async ({ page }) => {
+  // Checklist 2.14 — Export XLSX triggers a file download
+  test('clicking Export XLSX initiates a .xlsx file download', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/svod')
 
-    await expect(page.getByRole('button', { name: /export csv/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /export xlsx/i })).toBeVisible()
 
     const downloadPromise = page.waitForEvent('download')
-    await page.getByRole('button', { name: /export csv/i }).click()
+    await page.getByRole('button', { name: /export xlsx/i }).click()
 
     const download = await downloadPromise
     expect(download.suggestedFilename()).toMatch(/\.xlsx$/i)

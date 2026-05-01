@@ -117,11 +117,14 @@ export default function DivisionDetailPage() {
         { label: 'Required FTE', value: divAgg.requiredFte.toFixed(2) },
         {
           label: 'Utilisation',
-          value: (divAgg.staffingNeed / divAgg.engineersTotal).toFixed(2),
+          value:
+            divAgg.engineersTotal > 0
+              ? (divAgg.staffingNeed / divAgg.engineersTotal).toFixed(2)
+              : '—',
           tone:
-            divAgg.staffingNeed / divAgg.engineersTotal > 1.0
+            divAgg.engineersTotal > 0 && divAgg.staffingNeed / divAgg.engineersTotal > 1.0
               ? 'danger'
-              : divAgg.staffingNeed / divAgg.engineersTotal > 0.9
+              : divAgg.engineersTotal > 0 && divAgg.staffingNeed / divAgg.engineersTotal > 0.9
                 ? 'warn'
                 : 'ok',
         },

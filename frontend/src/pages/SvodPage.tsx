@@ -51,7 +51,7 @@ function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
       align: 'left',
       headerAlign: 'left',
       width: 200,
-      renderCell: ({ value }: { value: string[] | undefined }) => {
+      renderCell: ({ value }: { value?: string[] }) => {
         const names = Array.isArray(value) ? value : []
         if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
         const text = names.join(', ')
@@ -254,7 +254,7 @@ export default function SvodPage() {
         subtitle={subtitle}
         actions={
           <Button variant="outlined" size="small" onClick={handleExport}>
-            Export CSV
+            Export XLSX
           </Button>
         }
       />

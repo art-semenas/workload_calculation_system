@@ -12,6 +12,6 @@ export const useUiStore = create<UiState>()(
       svodPrecision: 2,
       setSvodPrecision: (precision) => set({ svodPrecision: precision }),
     }),
-    { name: 'ui' }
+    { name: 'workload-ui' }
   )
 )

@@ -19,8 +19,10 @@ import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -131,10 +133,11 @@ public class AggregationService {
             ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
             : summaryRepository.findAllWithOrgHierarchy();
 
-    List<UUID> assignedObjectIds =
-        divisionId != null
-            ? objectEngineerRepository.findAllAssignedObjectIdsByDivision(divisionId)
-            : objectEngineerRepository.findAllAssignedObjectIds();
+    Set<UUID> assignedObjectIds =
+        new HashSet<>(
+            divisionId != null
+                ? objectEngineerRepository.findAllAssignedObjectIdsByDivision(divisionId)
+                : objectEngineerRepository.findAllAssignedObjectIds());
 
     return summaries.stream()
         .filter(s -> !assignedObjectIds.contains(s.getObject().getId()))
@@ -161,8 +164,8 @@ public class AggregationService {
     ComponentBreakdownDto breakdown = buildBreakdown(summaries);
     EngineerCounts counts = engineerCountsForDivision(division.getId());
 
-    List<UUID> assignedIds =
-        objectEngineerRepository.findAllAssignedObjectIdsByDivision(division.getId());
+    Set<UUID> assignedIds =
+        new HashSet<>(objectEngineerRepository.findAllAssignedObjectIdsByDivision(division.getId()));
     List<Summary> unassigned =
         summaries.stream().filter(s -> !assignedIds.contains(s.getObject().getId())).toList();
     BigDecimal uncoveredLoad = sumItogo(unassigned);
