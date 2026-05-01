@@ -24,6 +24,14 @@ vi.mock('../hooks/useObjects', () => ({
   useObjects: (...args: unknown[]) => mockUseObjects(...args),
 }))
 
+vi.mock('../hooks/useAggregations', () => ({
+  useBranchAggregation: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
+}))
+
+vi.mock('../hooks/useSummary', () => ({
+  useObjectSummary: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
+}))
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -82,7 +90,7 @@ describe('BranchDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Branch 1')
     })
 
     expect(screen.getByText('Division 1')).toBeInTheDocument()
@@ -92,7 +100,7 @@ describe('BranchDetailPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Branch 1')
     })
 
     expect(screen.getByText('Object 1')).toBeInTheDocument()
@@ -103,7 +111,7 @@ describe('BranchDetailPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Branch 1')
     )
 
     await userEvent.click(screen.getByText('Add object'))
@@ -114,7 +122,7 @@ describe('BranchDetailPage', () => {
     renderPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Branch 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Branch 1')
     )
 
     const objectCell = screen.getByText('Object 1')

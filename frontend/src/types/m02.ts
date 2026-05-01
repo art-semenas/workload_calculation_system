@@ -116,6 +116,9 @@ export const AggregationBranchSchema = z.object({
   objectCount: z.number(),
   requiredFte: z.number(),
   staffingNeed: z.number(),
+  engineersTotal: z.number(),
+  engineersOverloaded: z.number(),
+  engineersWarning: z.number(),
   breakdown: ComponentBreakdownSchema,
 })
 export type AggregationBranch = z.infer<typeof AggregationBranchSchema>

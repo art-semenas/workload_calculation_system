@@ -56,12 +56,12 @@ test.describe('PoC M-01 smoke', () => {
   test('valid login reaches dashboard and shows core navigation', async ({ page }) => {
     await loginAsAdmin(page)
 
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Objects' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Divisions' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Maintenance workload' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Objects' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Divisions' })).toBeVisible()
     await expect(page.getByText('Engineers').first()).toBeVisible()
     await expect(page.getByText('Summary').first()).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'FTE by Division' })).toBeVisible()
+    await expect(page.getByText('FTE by division')).toBeVisible()
     // M-02 dashboard sections now implemented; M-03 placeholder is only on Engineers nav
     await expect(page.getByText('Data will be available after M-02')).not.toBeVisible()
   })
@@ -71,8 +71,8 @@ test.describe('PoC M-01 smoke', () => {
     await loginAsAdmin(page)
     await page.reload()
 
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'FTE by Division' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Maintenance workload' })).toBeVisible()
+    await expect(page.getByText('FTE by division')).toBeVisible()
   })
 
   // 6.1, 6.2, 6.4, 6.5
@@ -106,13 +106,13 @@ test.describe('PoC M-01 smoke', () => {
   test('navigation items are visible and enabled', async ({ page }) => {
     await loginAsAdmin(page)
 
-    const engineersButton = page.getByRole('button', { name: 'Engineers' })
-    const summaryButton = page.getByRole('button', { name: 'Summary' })
-    await expect(engineersButton).toBeVisible()
-    await expect(summaryButton).toBeVisible()
+    const engineersLink = page.getByRole('link', { name: 'Engineers' })
+    const summaryLink = page.getByRole('link', { name: 'Summary' })
+    await expect(engineersLink).toBeVisible()
+    await expect(summaryLink).toBeVisible()
 
     // M-03 is now implemented — Engineers nav item is enabled and navigable
-    await engineersButton.click()
+    await engineersLink.click()
     await expect(page).toHaveURL(/\/engineers$/)
   })
 
@@ -142,7 +142,7 @@ test.describe('PoC M-01 smoke', () => {
     await loginAsAdmin(page)
 
     await expect(page.getByRole('columnheader', { name: /division/i }).first()).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: /total fte/i }).first()).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: /required fte/i }).first()).toBeVisible()
     await expect(page.getByRole('columnheader', { name: /objects/i }).first()).toBeVisible()
   })
 

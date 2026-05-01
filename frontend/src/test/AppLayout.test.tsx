@@ -8,7 +8,7 @@ vi.mock('../store/authStore', () => ({
     selector({
       logout: vi.fn(),
       token: 'test',
-      user: { name: 'Admin' },
+      user: { name: 'Admin User', role: 'admin' },
       isAuthenticated: () => true,
     }),
 }))
@@ -26,17 +26,48 @@ describe('AppLayout', () => {
     expect(screen.getByText('Divisions')).toBeInTheDocument()
   })
 
-  it('shows Summary and Engineers as disabled nav items in M-01', () => {
+  it('renders Summary and Engineers nav items', () => {
     render(
       <MemoryRouter>
         <AppLayout />
       </MemoryRouter>
     )
 
-    const svodItem = screen.getByText('Summary')
-    expect(svodItem).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Summary' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Engineers' })).toBeInTheDocument()
+  })
 
-    const engItem = screen.getByText('Engineers')
-    expect(engItem).toBeInTheDocument()
+  it('renders section labels', () => {
+    render(
+      <MemoryRouter>
+        <AppLayout />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Overview')).toBeInTheDocument()
+    expect(screen.getByText('Operations')).toBeInTheDocument()
+    expect(screen.getByText('Reference')).toBeInTheDocument()
+  })
+
+  it('renders user chip with initials and name', () => {
+    render(
+      <MemoryRouter>
+        <AppLayout />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Admin User')).toBeInTheDocument()
+    expect(screen.getByText('AU')).toBeInTheDocument()
+  })
+
+  it('renders brand wordmark', () => {
+    render(
+      <MemoryRouter>
+        <AppLayout />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('W')).toBeInTheDocument()
+    expect(screen.getByText('Workload')).toBeInTheDocument()
   })
 })

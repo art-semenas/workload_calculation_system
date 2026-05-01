@@ -50,7 +50,7 @@ export async function loginAsAdmin(page: Page) {
   await page.getByLabel(/password/i).fill(adminPassword)
   await page.getByRole('button', { name: /sign in/i }).click()
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Maintenance workload' })).toBeVisible()
 }
 
 export async function fetchAdminToken(request: APIRequestContext): Promise<string> {

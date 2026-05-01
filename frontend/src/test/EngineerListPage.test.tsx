@@ -92,6 +92,10 @@ describe('EngineerListPage', () => {
     // Verify status chips are rendered (chip text shows percentage)
     expect(screen.getByText('92%')).toBeInTheDocument()
     expect(screen.getByText('108%')).toBeInTheDocument()
+    // DistBar renders capacity distribution legend
+    expect(screen.getByText(/Normal 0/)).toBeInTheDocument()
+    expect(screen.getByText(/Watch 1/)).toBeInTheDocument()
+    expect(screen.getByText(/Overloaded 1/)).toBeInTheDocument()
   })
 
   it('opens create engineer dialog on button click', async () => {

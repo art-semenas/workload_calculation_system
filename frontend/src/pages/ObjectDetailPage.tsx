@@ -11,25 +11,21 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  Grid,
-  IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import CancelIcon from '@mui/icons-material/Cancel'
@@ -44,6 +40,10 @@ import { EquipmentTab } from '../components/equipment/EquipmentTab'
 import { RecordsTab } from '../components/records/RecordsTab'
 import { RepairsTab } from '../components/repairs/RepairsTab'
 import { TravelTab } from '../components/travel/TravelTab'
+import { PageHead } from '../components/common/PageHead'
+import { QuietDrawer, DrawerSection } from '../components/common/QuietDrawer'
+import { HeroCard } from '../components/common/HeroCard'
+import { CapBar } from '../components/common/CapBar'
 import { ObjectCreateSchema, ObjectUpdateSchema } from '../types/object'
 import type { ObjectCreate, ObjectUpdate } from '../types/object'
 import { useObjectSummary } from '../hooks/useSummary'
@@ -53,7 +53,10 @@ import {
   useRemoveEngineerFromObject,
 } from '../hooks/useObjectEngineers'
 import { useEngineers } from '../hooks/useEngineers'
+import { tokens } from '../theme'
 import type { EngineerStatus } from '../types/engineer'
+
+// ---------- Helpers ----------
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -61,48 +64,80 @@ interface TabPanelProps {
   value: number
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props
-
+function TabPanel({ children, value, index }: TabPanelProps) {
   return (
     <div
       role="tabpanel"
       hidden={value !== index}
       id={`tabpanel-${index}`}
       aria-labelledby={`tab-${index}`}
-      {...other}
     >
       {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   )
 }
 
-function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InlineStat({
+  label,
+  value,
+  large,
+  last,
+}: {
+  label: string
+  value: string
+  large?: boolean
+  last?: boolean
+}) {
   return (
-    <>
-      <Grid item xs={6}>
-        <Typography variant="body2" color="text.secondary">
-          {label}
-        </Typography>
-      </Grid>
-      <Grid item xs={6}>
-        <Typography variant="body2">{value}</Typography>
-      </Grid>
-    </>
+    <Box
+      sx={{
+        pr: last ? 0 : 3,
+        mr: last ? 0 : 3,
+        borderRight: last ? 'none' : `1px solid ${tokens.line}`,
+      }}
+    >
+      <Typography sx={{ fontSize: 11, color: tokens.ink3, mb: '4px' }}>{label}</Typography>
+      <Typography
+        sx={{
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          fontSize: large ? 28 : 18,
+          fontWeight: 500,
+          color: tokens.ink,
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
   )
 }
 
-function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-        {title}
-      </Typography>
-      <Grid container spacing={1}>
-        {children}
-      </Grid>
-    </Box>
-  )
+// ---------- Engineers tab ----------
+
+function getStatusChipColor(status: EngineerStatus) {
+  switch (status) {
+    case 'NORMAL':
+      return 'success'
+    case 'WARNING':
+      return 'warning'
+    case 'OVERLOADED':
+      return 'error'
+    default:
+      return 'default' as const
+  }
+}
+
+function getStatusChipIcon(status: EngineerStatus) {
+  switch (status) {
+    case 'NORMAL':
+      return <CheckCircleIcon />
+    case 'WARNING':
+      return <WarningIcon />
+    case 'OVERLOADED':
+      return <CancelIcon />
+    default:
+      return <CheckCircleIcon />
+  }
 }
 
 function EngineersTab({ objectId }: { objectId: string }) {
@@ -116,32 +151,6 @@ function EngineersTab({ objectId }: { objectId: string }) {
   const [selectedEngineer, setSelectedEngineer] = useState<string | null>(null)
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
   const [engineerToRemove, setEngineerToRemove] = useState<string | null>(null)
-
-  const getStatusChipColor = (status: EngineerStatus) => {
-    switch (status) {
-      case 'NORMAL':
-        return 'success'
-      case 'WARNING':
-        return 'warning'
-      case 'OVERLOADED':
-        return 'error'
-      default:
-        return 'default'
-    }
-  }
-
-  const getStatusChipIcon = (status: EngineerStatus) => {
-    switch (status) {
-      case 'NORMAL':
-        return <CheckCircleIcon />
-      case 'WARNING':
-        return <WarningIcon />
-      case 'OVERLOADED':
-        return <CancelIcon />
-      default:
-        return <CheckCircleIcon />
-    }
-  }
 
   const handleAssignConfirm = async () => {
     if (selectedEngineer) {
@@ -175,37 +184,27 @@ function EngineersTab({ objectId }: { objectId: string }) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Heading and Assign Button */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 1,
-        }}
-      >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 500, color: tokens.ink }}>
           Assigned engineers
         </Typography>
-        <Button variant="contained" onClick={() => setAssignDialogOpen(true)}>
+        <Button variant="contained" size="small" onClick={() => setAssignDialogOpen(true)}>
           Assign engineer
         </Button>
       </Box>
 
-      {/* Travel Review Banner */}
       {showTravelBanner && (
         <Alert severity="info" sx={{ mt: 1 }} onClose={() => setShowTravelBanner(false)}>
           Check travel data — travel time may differ for the new engineer
         </Alert>
       )}
 
-      {/* Engineers Table */}
       {assignedEngineers && assignedEngineers.length > 0 ? (
-        <TableContainer component={Paper}>
+        <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell align="left">Engineer</TableCell>
+                <TableCell>Engineer</TableCell>
                 <TableCell align="right">Object Share</TableCell>
                 <TableCell align="center">Utilization</TableCell>
                 <TableCell align="center">Actions</TableCell>
@@ -215,9 +214,8 @@ function EngineersTab({ objectId }: { objectId: string }) {
               {assignedEngineers.map((engineer) => (
                 <TableRow key={engineer.engineerId}>
                   <TableCell
-                    align="left"
-                    sx={{ cursor: 'pointer', color: 'primary.main' }}
-                    onClick={() => navigate(`/engineers/${engineer.engineerId}`)}
+                    sx={{ cursor: 'pointer', color: tokens.accent }}
+                    onClick={() => void navigate(`/engineers/${engineer.engineerId}`)}
                   >
                     {engineer.engineerName}
                   </TableCell>
@@ -249,10 +247,9 @@ function EngineersTab({ objectId }: { objectId: string }) {
           </Table>
         </TableContainer>
       ) : (
-        <Typography color="text.secondary">No engineers assigned</Typography>
+        <Typography sx={{ color: tokens.ink3, fontSize: 13 }}>No engineers assigned</Typography>
       )}
 
-      {/* Assign Engineer Dialog */}
       <Dialog
         open={assignDialogOpen}
         onClose={() => setAssignDialogOpen(false)}
@@ -266,7 +263,7 @@ function EngineersTab({ objectId }: { objectId: string }) {
             getOptionLabel={(option) =>
               `${option.name} (${option.loadRatio != null ? Math.round(option.loadRatio * 100) : '—'}%)`
             }
-            value={activeEngineers.find((e) => e.id === selectedEngineer) || null}
+            value={activeEngineers.find((e) => e.id === selectedEngineer) ?? null}
             onChange={(_, value) => setSelectedEngineer(value?.id ?? null)}
             renderInput={(params) => <TextField {...params} label="Engineer" />}
             renderOption={(props, option) => (
@@ -300,7 +297,6 @@ function EngineersTab({ objectId }: { objectId: string }) {
         </DialogActions>
       </Dialog>
 
-      {/* Remove Confirmation Dialog */}
       <Dialog open={removeConfirmOpen} onClose={() => setRemoveConfirmOpen(false)}>
         <DialogTitle>Remove engineer?</DialogTitle>
         <DialogContent>
@@ -324,84 +320,7 @@ function EngineersTab({ objectId }: { objectId: string }) {
   )
 }
 
-function SummaryTab({ objectId }: { objectId: string }) {
-  const { data, isLoading } = useObjectSummary(objectId)
-
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (!data) {
-    return <Typography>No data</Typography>
-  }
-
-  const fmt6 = (v: number) => v.toFixed(6)
-  const fmt2 = (v: number) => v.toFixed(2)
-
-  return (
-    <Box>
-      <SummaryGroup title="Per-visit breakdown">
-        <SummaryRow label="Security R1" value={fmt6(data.osR1PerVisit)} />
-        <SummaryRow label="Security R2" value={fmt6(data.osR2PerVisit)} />
-        <SummaryRow label="Fire R1" value={fmt6(data.psR1PerVisit)} />
-        <SummaryRow label="Fire R2" value={fmt6(data.psR2PerVisit)} />
-        <SummaryRow label="Video R1" value={fmt6(data.videoR1PerVisit)} />
-        <SummaryRow label="Video R2" value={fmt6(data.videoR2PerVisit)} />
-        <SummaryRow label="R1 total" value={fmt6(data.r1PerVisitTotal)} />
-        <SummaryRow label="R2 total" value={fmt6(data.r2PerVisitTotal)} />
-      </SummaryGroup>
-
-      <SummaryGroup title="Monthly averages">
-        <SummaryRow label="Security" value={fmt6(data.osMonthlyAvg)} />
-        <SummaryRow label="Fire" value={fmt6(data.psMonthlyAvg)} />
-        <SummaryRow label="Video" value={fmt6(data.videoMonthlyAvg)} />
-        <SummaryRow label="Records" value={fmt6(data.recordsMonthly)} />
-        <SummaryRow label="Repair without Travel" value={fmt6(data.repairNoTravelMonthly)} />
-        <SummaryRow label="Repair with Travel" value={fmt6(data.repairWithTravelMonthly)} />
-      </SummaryGroup>
-
-      <SummaryGroup title="Travel">
-        <SummaryRow label="PZV" value={fmt2(data.pzvMinutes)} />
-        <SummaryRow label="Travel (round-trip)" value={fmt2(data.roundTripMin)} />
-      </SummaryGroup>
-
-      <SummaryGroup title="Totals">
-        <SummaryRow
-          label="Maintenance+records+repair(without travel)+Travel, min"
-          value={fmt6(data.totalNoTravelMin)}
-        />
-        <SummaryRow
-          label="TOTAL Staffing (without travel)"
-          value={fmt6(data.itogoChisloNoTravel)}
-        />
-        <SummaryRow
-          label="Maintenance+records+repair(with travel)+Travel, min"
-          value={fmt6(data.totalWithTravelMin)}
-        />
-        <SummaryRow
-          label="TOTAL Staffing (with travel)"
-          value={
-            <Typography variant="body2" component="span" sx={{ fontWeight: 700 }}>
-              {fmt6(data.itogoChisloWithTravel)}
-            </Typography>
-          }
-        />
-      </SummaryGroup>
-
-      <SummaryGroup title="Computed at">
-        <SummaryRow label="Computed at" value={data.computedAt ?? '—'} />
-      </SummaryGroup>
-    </Box>
-  )
-}
-
-interface ObjectDetailPageProps {
-  mode: 'create' | 'edit' | 'detail'
-}
+// ---------- Create form ----------
 
 function CreateObjectForm() {
   const navigate = useNavigate()
@@ -498,12 +417,14 @@ function CreateObjectForm() {
           >
             Create
           </Button>
-          <Button onClick={() => navigate('/objects')}>Cancel</Button>
+          <Button onClick={() => void navigate('/objects')}>Cancel</Button>
         </Box>
       </Box>
     </Box>
   )
 }
+
+// ---------- Edit form ----------
 
 function EditObjectForm({ id }: { id: string }) {
   const navigate = useNavigate()
@@ -527,7 +448,7 @@ function EditObjectForm({ id }: { id: string }) {
 
   const onSubmit = handleSubmit(async (data) => {
     await updateObject.mutateAsync({ id, data })
-    navigate(`/objects/${id}`)
+    void navigate(`/objects/${id}`)
   })
 
   if (isLoading) {
@@ -580,11 +501,17 @@ function EditObjectForm({ id }: { id: string }) {
           <Button type="submit" variant="contained" disabled={updateObject.isPending}>
             Save
           </Button>
-          <Button onClick={() => navigate(`/objects/${id}`)}>Cancel</Button>
+          <Button onClick={() => void navigate(`/objects/${id}`)}>Cancel</Button>
         </Box>
       </Box>
     </Box>
   )
+}
+
+// ---------- Main page ----------
+
+interface ObjectDetailPageProps {
+  mode: 'create' | 'edit' | 'detail'
 }
 
 export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
@@ -592,57 +519,26 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const navigate = useNavigate()
   const [tabValue, setTabValue] = useState(0)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
-  const [editingName, setEditingName] = useState(false)
-  const nameForm = useForm<ObjectUpdate>({
-    resolver: zodResolver(ObjectUpdateSchema),
-  })
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const { data: object, isLoading } = useObject(mode !== 'create' ? id : undefined)
-  const deleteObject = useDeleteObject()
-  const updateObject = useUpdateObject()
+  const { data: summary, isLoading: summaryLoading } = useObjectSummary(
+    mode === 'detail' ? (id ?? '') : ''
+  )
+  const { data: assignedEngineers = [] } = useObjectEngineers(mode === 'detail' ? (id ?? '') : '')
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue)
-  }
+  const deleteObject = useDeleteObject()
 
   const handleDeleteConfirm = async () => {
     if (id) {
       await deleteObject.mutateAsync(id)
-      navigate('/objects')
+      void navigate('/objects')
     }
   }
 
-  const handleEditName = () => {
-    if (object) {
-      nameForm.reset({ name: object.name, branchId: object.branchId })
-      setEditingName(true)
-    }
-  }
+  if (mode === 'create') return <CreateObjectForm />
+  if (mode === 'edit' && id) return <EditObjectForm id={id} />
 
-  const handleSaveName = nameForm.handleSubmit(async (data) => {
-    if (id && object) {
-      await updateObject.mutateAsync({
-        id,
-        data: { name: data.name, branchId: object.branchId },
-      })
-      setEditingName(false)
-    }
-  })
-
-  const handleCancelEdit = () => {
-    setEditingName(false)
-    nameForm.reset()
-  }
-
-  if (mode === 'create') {
-    return <CreateObjectForm />
-  }
-
-  if (mode === 'edit' && id) {
-    return <EditObjectForm id={id} />
-  }
-
-  // detail mode
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -655,82 +551,97 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
     return <Typography color="error">Object not found</Typography>
   }
 
+  const subtitle = [object.branchName, object.divisionName].filter(Boolean).join(' · ')
+
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Box sx={{ mb: 2 }}>
-        <RouterLink to="/divisions">Divisions</RouterLink>
-        {' > '}
-        <RouterLink to={`/branches/${object.branchId}`}>{object.branchName}</RouterLink>
-        {' > '}
-        <Typography component="span">{object.name}</Typography>
-      </Box>
+      <PageHead
+        crumbs={[
+          { label: 'Workload', to: '/' },
+          { label: 'Objects', to: '/objects' },
+          { label: object.divisionName ?? '' },
+          { label: object.name },
+        ]}
+        title={object.name}
+        subtitle={subtitle}
+        actions={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button variant="outlined" size="small" onClick={() => setDrawerOpen(true)}>
+              FTE breakdown ›
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => void navigate(`/objects/${id}/edit`)}
+            >
+              Edit object
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteOutlinedIcon />}
+              onClick={() => setOpenDeleteDialog(true)}
+            >
+              Delete object
+            </Button>
+          </Box>
+        }
+      />
 
-      {/* Object Name with Edit */}
+      {/* Inline summary strip */}
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          borderTop: `1px solid ${tokens.line}`,
+          borderBottom: `1px solid ${tokens.line}`,
+          py: 2,
           mb: 3,
-          gap: 2,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {editingName ? (
-            <Box
-              component="form"
-              onSubmit={(e) => {
-                void handleSaveName(e)
-              }}
-              sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
-            >
-              <FormTextField
-                name="name"
-                control={nameForm.control}
-                label="Object name"
-                size="small"
-                autoFocus
-              />
-              <Button size="small" type="submit" disabled={updateObject.isPending}>
-                Save
-              </Button>
-              <Button size="small" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Typography variant="h4">{object.name}</Typography>
-              <IconButton size="small" aria-label="Edit name" onClick={handleEditName}>
-                <EditOutlinedIcon />
-              </IconButton>
-            </>
-          )}
-        </Box>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<DeleteOutlinedIcon />}
-          onClick={() => setOpenDeleteDialog(true)}
-        >
-          Delete object
-        </Button>
+        <InlineStat
+          label="ИТОГО Числ"
+          value={summary?.itogoChisloWithTravel.toFixed(6) ?? '—'}
+          large
+        />
+        <InlineStat label="FTE no travel" value={summary?.itogoChisloNoTravel.toFixed(4) ?? '—'} />
+        <InlineStat label="Travel (min)" value={summary?.roundTripMin.toFixed(2) ?? '—'} />
+        <InlineStat label="Engineers" value={String(assignedEngineers.length)} />
+        <InlineStat label="Visits/yr" value="—" last />
       </Box>
 
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="object tabs">
+      {/* Tabs — Quiet style: ink underline, no pill bg */}
+      <Box sx={{ borderBottom: `1px solid ${tokens.line}`, mb: 0 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(_e, v: number) => setTabValue(v)}
+          aria-label="object tabs"
+          TabIndicatorProps={{ style: { backgroundColor: tokens.ink, height: 2 } }}
+          sx={{
+            minHeight: 40,
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontSize: 13,
+              fontWeight: 400,
+              color: tokens.ink3,
+              minHeight: 40,
+              padding: '8px 12px',
+            },
+            '& .Mui-selected': {
+              color: `${tokens.ink} !important`,
+              fontWeight: 500,
+            },
+          }}
+        >
           <Tab label="Equipment" id="tab-0" aria-controls="tabpanel-0" />
           <Tab label="Records" id="tab-1" aria-controls="tabpanel-1" />
           <Tab label="Repairs" id="tab-2" aria-controls="tabpanel-2" />
           <Tab label="Travel" id="tab-3" aria-controls="tabpanel-3" />
           <Tab label="Engineers" id="tab-4" aria-controls="tabpanel-4" />
-          <Tab label="Summary" id="tab-5" aria-controls="tabpanel-5" />
         </Tabs>
       </Box>
 
-      {/* Tab Panels */}
       <TabPanel value={tabValue} index={0}>
         <EquipmentTab objectId={id ?? ''} />
       </TabPanel>
@@ -746,18 +657,107 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
       <TabPanel value={tabValue} index={4}>
         <EngineersTab objectId={id ?? ''} />
       </TabPanel>
-      <TabPanel value={tabValue} index={5}>
-        <SummaryTab objectId={id ?? ''} />
-      </TabPanel>
 
-      {/* Delete Confirmation Dialog */}
+      {/* FTE breakdown drawer */}
+      <QuietDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="FTE breakdown">
+        {summaryLoading ? (
+          <CircularProgress size={24} />
+        ) : !summary ? (
+          <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>No data</Typography>
+        ) : (
+          <>
+            <HeroCard
+              title="ИТОГО Числ"
+              heroValue={summary.itogoChisloWithTravel.toFixed(6)}
+              stats={[
+                { label: 'FTE no travel', value: summary.itogoChisloNoTravel.toFixed(4) },
+                { label: 'Travel (min)', value: summary.roundTripMin.toFixed(2) },
+                { label: 'PZV (min)', value: summary.pzvMinutes.toFixed(2) },
+                { label: 'Computed at', value: summary.computedAt?.slice(0, 10) ?? '—' },
+              ]}
+            />
+
+            <DrawerSection label="Per-visit breakdown">
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {[
+                    { label: 'ОС R1', value: summary.osR1PerVisit },
+                    { label: 'ОС R2', value: summary.osR2PerVisit },
+                    { label: 'ПС R1', value: summary.psR1PerVisit },
+                    { label: 'ПС R2', value: summary.psR2PerVisit },
+                    { label: 'Видео R1', value: summary.videoR1PerVisit },
+                    { label: 'Видео R2', value: summary.videoR2PerVisit },
+                    { label: 'R1 total', value: summary.r1PerVisitTotal },
+                    { label: 'R2 total', value: summary.r2PerVisitTotal },
+                  ].map(({ label, value }) => (
+                    <Box
+                      component="tr"
+                      key={label}
+                      sx={{ borderBottom: `1px solid ${tokens.line}` }}
+                    >
+                      <Box
+                        component="td"
+                        sx={{ fontSize: 12, color: tokens.ink3, py: '6px', pr: 2 }}
+                      >
+                        {label}
+                      </Box>
+                      <Box
+                        component="td"
+                        sx={{
+                          fontSize: 12,
+                          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                          color: tokens.ink,
+                          py: '6px',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {value.toFixed(6)}
+                      </Box>
+                    </Box>
+                  ))}
+                </tbody>
+              </Box>
+            </DrawerSection>
+
+            {assignedEngineers.length > 0 && (
+              <DrawerSection label="Assigned engineers">
+                {assignedEngineers.map((eng) => (
+                  <Box key={eng.engineerId} sx={{ mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: '4px',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 13, color: tokens.ink2 }}>
+                        {eng.engineerName}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                          color: tokens.ink3,
+                        }}
+                      >
+                        {Math.round(eng.loadRatio * 100)}%
+                      </Typography>
+                    </Box>
+                    <CapBar pct={eng.loadRatio} />
+                  </Box>
+                ))}
+              </DrawerSection>
+            )}
+          </>
+        )}
+      </QuietDrawer>
+
       <ConfirmDialog
         open={openDeleteDialog}
         title="Delete object?"
         message={`Deleting "${object.name}" will also delete all related equipment, records, repairs, and travel data. This action cannot be undone.`}
-        onConfirm={() => {
-          void handleDeleteConfirm()
-        }}
+        onConfirm={() => void handleDeleteConfirm()}
         onCancel={() => setOpenDeleteDialog(false)}
         confirmLabel="Delete"
       />

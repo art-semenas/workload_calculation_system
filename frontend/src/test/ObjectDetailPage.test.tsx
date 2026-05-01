@@ -131,11 +131,11 @@ describe('ObjectDetailPage', () => {
     })
   })
 
-  it('renders object name as heading', async () => {
+  it('renders object name as page heading', async () => {
     renderDetailPage()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     })
   })
 
@@ -143,7 +143,7 @@ describe('ObjectDetailPage', () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
     expect(screen.getByText('Equipment')).toBeInTheDocument()
@@ -156,32 +156,35 @@ describe('ObjectDetailPage', () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
-    expect(screen.getByText('Delete object')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete object/i })).toBeInTheDocument()
   })
 
-  it('shows placeholder for Engineers tab', async () => {
+  it('shows Engineers tab with assign button', async () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
-    await userEvent.click(screen.getByText('Engineers'))
+    await userEvent.click(screen.getByRole('tab', { name: 'Engineers' }))
     expect(screen.getByRole('button', { name: /assign engineer/i })).toBeInTheDocument()
   })
 
-  it('shows Summary tab with no data message when no summary exists', async () => {
+  it('shows FTE breakdown drawer with no data when summary is empty', async () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
-    await userEvent.click(screen.getByText('Summary'))
-    expect(screen.getByText('No data')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /fte breakdown/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('No data')).toBeInTheDocument()
+    })
   })
 
   it('confirms before deleting', async () => {
@@ -194,10 +197,10 @@ describe('ObjectDetailPage', () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
-    await userEvent.click(screen.getByText('Delete object'))
+    await userEvent.click(screen.getByRole('button', { name: /delete object/i }))
 
     await waitFor(() => {
       expect(screen.getByText('Delete object?')).toBeInTheDocument()
@@ -210,14 +213,14 @@ describe('ObjectDetailPage', () => {
     })
   })
 
-  it('delete confirmation shows updated message text', async () => {
+  it('delete confirmation shows message text', async () => {
     renderDetailPage()
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Object 1')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Object 1')
     )
 
-    await userEvent.click(screen.getByText('Delete object'))
+    await userEvent.click(screen.getByRole('button', { name: /delete object/i }))
 
     await waitFor(() => {
       expect(

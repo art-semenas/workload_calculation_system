@@ -17,6 +17,7 @@ vi.mock('../hooks/useDivisions', () => ({
 vi.mock('../hooks/useAggregations', () => ({
   useDivisionAggregation: vi.fn(),
   useCoverageGaps: vi.fn(),
+  useBranchesAggregation: vi.fn().mockReturnValue({ data: [], isLoading: false }),
 }))
 
 import { useDivisionAggregation, useCoverageGaps } from '../hooks/useAggregations'
@@ -44,8 +45,14 @@ describe('DivisionDetailPage — M-02 additions', () => {
         divisionId: 'div-1',
         divisionName: 'Brest',
         requiredFte: 12.5,
+        staffingNeed: 1.3,
+        uncoveredLoad: 0.5,
         objectCount: 245,
         coverageGapCount: 12,
+        engineersTotal: 10,
+        engineersOverloaded: 0,
+        engineersWarning: 1,
+        breakdown: { os: 0, ps: 0, video: 0, records: 0, repair: 0 },
       },
       isLoading: false,
     } as ReturnType<typeof useDivisionAggregation>)
@@ -53,7 +60,7 @@ describe('DivisionDetailPage — M-02 additions', () => {
 
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText(/12\.5000/)).toBeInTheDocument()
+      expect(screen.getByText(/12\.50/)).toBeInTheDocument()
       expect(screen.getByText(/245/)).toBeInTheDocument()
     })
   })
@@ -64,8 +71,14 @@ describe('DivisionDetailPage — M-02 additions', () => {
         divisionId: 'div-1',
         divisionName: 'Brest',
         requiredFte: 12.5,
+        staffingNeed: 1.3,
+        uncoveredLoad: 0.5,
         objectCount: 245,
         coverageGapCount: 1,
+        engineersTotal: 10,
+        engineersOverloaded: 0,
+        engineersWarning: 1,
+        breakdown: { os: 0, ps: 0, video: 0, records: 0, repair: 0 },
       },
       isLoading: false,
     } as ReturnType<typeof useDivisionAggregation>)

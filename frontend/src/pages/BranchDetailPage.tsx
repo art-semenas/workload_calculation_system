@@ -7,8 +7,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
-  Link,
   Paper,
   Table,
   TableBody,
@@ -17,14 +15,17 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
+import { PageHead } from '../components/common/PageHead'
+import { KPIRow } from '../components/common/KPIRow'
+import { SectionBlock } from '../components/common/SectionBlock'
 import { useBranch, useUpdateBranch } from '../hooks/useBranches'
 import { useCreateObject, useObjects } from '../hooks/useObjects'
 import { useObjectSummary } from '../hooks/useSummary'
+import { useBranchAggregation } from '../hooks/useAggregations'
 import { BranchCreateSchema, type BranchCreate } from '../types/division'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
 
@@ -41,8 +42,8 @@ function ObjectStaffingRow({
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
       <TableCell>{name}</TableCell>
-      <TableCell>
-        {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
+      <TableCell align="right">
+        {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(2) ?? '—')}
       </TableCell>
     </TableRow>
   )
@@ -56,6 +57,7 @@ export default function BranchDetailPage() {
 
   const { data: branch, isLoading } = useBranch(id || '')
   const { data: allObjects = [] } = useObjects()
+  const { data: branchAgg } = useBranchAggregation(id || '')
   const updateBranch = useUpdateBranch()
   const createObject = useCreateObject()
 
@@ -115,92 +117,101 @@ export default function BranchDetailPage() {
 
   const branchObjects = allObjects.filter((o) => o.branchId === id)
 
+  const kpiItems = branchAgg
+    ? [
+        { label: 'Objects', value: branchAgg.objectCount },
+        { label: 'Engineers', value: branchAgg.engineersTotal },
+        { label: 'Required FTE', value: branchAgg.requiredFte.toFixed(2) },
+        {
+          label: 'Avg per object',
+          value:
+            branchAgg.objectCount > 0
+              ? (branchAgg.requiredFte / branchAgg.objectCount).toFixed(2)
+              : '—',
+        },
+      ]
+    : []
+
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Box sx={{ mb: 2 }}>
-        <Link href="/divisions" underline="hover" sx={{ cursor: 'pointer', mr: 1 }}>
-          Divisions
-        </Link>
-        <Typography component="span" sx={{ mr: 1 }}>
-          &gt;
-        </Typography>
-        <Link
-          href={`/divisions/${branch.divisionId}`}
-          underline="hover"
-          sx={{ cursor: 'pointer', mr: 1 }}
-        >
-          {branch.divisionName}
-        </Link>
-        <Typography component="span" sx={{ mr: 1 }}>
-          &gt;
-        </Typography>
-        <Typography component="span">{branch.name}</Typography>
-      </Box>
+      <PageHead
+        crumbs={[
+          { label: 'Workload', to: '/' },
+          { label: 'Divisions', to: '/divisions' },
+          { label: branch.divisionName, to: `/divisions/${branch.divisionId}` },
+          { label: branch.name },
+        ]}
+        title={branch.name}
+        actions={
+          !editingName && (
+            <Button variant="contained" onClick={handleEditName}>
+              Edit branch
+            </Button>
+          )
+        }
+      />
 
-      {/* Branch Name with Edit */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        {editingName ? (
-          <Box
-            component="form"
-            onSubmit={(e) => {
-              void handleSaveName(e)
-            }}
-            sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
-          >
-            <FormTextField
-              name="name"
-              control={nameForm.control}
-              label="Branch name"
-              size="small"
-              autoFocus
-            />
-            <Button size="small" type="submit" disabled={updateBranch.isPending}>
-              Save
-            </Button>
-            <Button size="small" onClick={handleCancelEdit}>
-              Cancel
-            </Button>
-          </Box>
-        ) : (
-          <>
-            <Typography variant="h4">{branch.name}</Typography>
-            <IconButton size="small" aria-label="Edit branch name" onClick={handleEditName}>
-              <EditOutlinedIcon />
-            </IconButton>
-          </>
-        )}
-      </Box>
+      {editingName && (
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void handleSaveName(e)
+          }}
+          sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 3 }}
+        >
+          <FormTextField
+            name="name"
+            control={nameForm.control}
+            label="Branch name"
+            size="small"
+            autoFocus
+          />
+          <Button size="small" type="submit" disabled={updateBranch.isPending}>
+            Save
+          </Button>
+          <Button size="small" onClick={handleCancelEdit}>
+            Cancel
+          </Button>
+        </Box>
+      )}
+
+      {kpiItems.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <KPIRow items={kpiItems} />
+        </Box>
+      )}
 
       {/* Add Object Button */}
       <Box sx={{ mb: 3 }}>
-        <Button variant="contained" onClick={() => setOpenObjectDialog(true)}>
+        <Button variant="contained" size="small" onClick={() => setOpenObjectDialog(true)}>
           Add object
         </Button>
       </Box>
 
       {/* Objects Table */}
       {branchObjects.length > 0 ? (
-        <Paper>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>TOTAL Staffing (with travel)</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {branchObjects.map((obj) => (
-                <ObjectStaffingRow
-                  key={obj.id}
-                  objectId={obj.id}
-                  name={obj.name}
-                  navigate={navigate}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </Paper>
+        <SectionBlock label="Objects in this branch">
+          <Paper>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Object</TableCell>
+                  <TableCell align="right">FTE</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {branchObjects.map((obj) => (
+                  <ObjectStaffingRow
+                    key={obj.id}
+                    objectId={obj.id}
+                    name={obj.name}
+                    navigate={navigate}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        </SectionBlock>
       ) : (
         <Typography color="text.secondary">No objects</Typography>
       )}
