@@ -1,17 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  FormControl,
-  MenuItem,
-  Select,
-  Tooltip,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Tooltip, Typography } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
 import { PageHead } from '../components/common/PageHead'
 import { useSvod } from '../hooks/useSvod'
@@ -270,36 +260,43 @@ export default function SvodPage() {
           gap: 1,
         }}
       >
-        {/* Division filter dropdown */}
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <Select
-            displayEmpty
-            value={divisionId}
-            onChange={(e) => {
-              setDivisionId(e.target.value)
-              setPage(0)
-            }}
-            renderValue={(value) => {
-              if (!value) return <span style={{ color: tokens.ink3 }}>All divisions</span>
-              return divisions.find((d) => d.id === value)?.name ?? value
-            }}
-            sx={{
-              fontSize: 13,
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-            }}
-          >
-            <MenuItem value="" sx={{ fontSize: 13, color: tokens.ink3 }}>
-              All divisions
-            </MenuItem>
-            {divisions.map((d) => (
-              <MenuItem key={d.id} value={d.id} sx={{ fontSize: 13 }}>
-                {d.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {/* Division filter — pill segmented control */}
+        <Box
+          sx={{
+            display: 'flex',
+            border: `1px solid ${tokens.line}`,
+            borderRadius: 'var(--r-pill)',
+            overflow: 'hidden',
+            backgroundColor: tokens.bgSunken,
+            flexShrink: 0,
+          }}
+        >
+          {[{ id: '', name: 'All' }, ...divisions].map((d, i) => (
+            <Box
+              key={d.id}
+              component="button"
+              onClick={() => {
+                setDivisionId(d.id)
+                setPage(0)
+              }}
+              sx={{
+                fontSize: 12,
+                fontWeight: divisionId === d.id ? 500 : 400,
+                color: divisionId === d.id ? tokens.ink : tokens.ink3,
+                background: divisionId === d.id ? tokens.bgElev : 'transparent',
+                border: 'none',
+                borderLeft: i !== 0 ? `1px solid ${tokens.line}` : 'none',
+                cursor: 'pointer',
+                px: '10px',
+                py: '5px',
+                whiteSpace: 'nowrap',
+                fontFamily: 'inherit',
+              }}
+            >
+              {d.name}
+            </Box>
+          ))}
+        </Box>
 
         {/* Precision toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
