@@ -166,6 +166,15 @@ export const theme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          '& .MuiOutlinedInput-root': {
+            height: 38,
+          },
+        },
+      },
+    },
     MuiDrawer: {
       styleOverrides: {
         paper: {
