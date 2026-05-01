@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
   MenuItem,
   Paper,
   Select,
@@ -25,6 +26,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import CancelIcon from '@mui/icons-material/Cancel'
+import SearchIcon from '@mui/icons-material/Search'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -161,6 +163,32 @@ export default function EngineerListPage() {
           onChange={(e) => setNameSearch(e.target.value)}
           size="small"
           sx={{ minWidth: 200 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Box
+                  component="kbd"
+                  sx={{
+                    fontSize: 10,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: tokens.ink4,
+                    border: `1px solid ${tokens.line}`,
+                    borderRadius: 'var(--r-sm)',
+                    px: '4px',
+                    py: '1px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  ⌘K
+                </Box>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <FormControl size="small" sx={{ minWidth: 200 }} disabled={divisionsLoading}>

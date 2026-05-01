@@ -4,6 +4,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
@@ -16,6 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
 import { useNavigate } from 'react-router-dom'
 import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
@@ -115,6 +117,32 @@ export default function ObjectListPage() {
           variant="outlined"
           size="small"
           sx={{ minWidth: 200 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Box
+                  component="kbd"
+                  sx={{
+                    fontSize: 10,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: tokens.ink4,
+                    border: `1px solid ${tokens.line}`,
+                    borderRadius: 'var(--r-sm)',
+                    px: '4px',
+                    py: '1px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  ⌘K
+                </Box>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <FormControl size="small" sx={{ minWidth: 160 }}>

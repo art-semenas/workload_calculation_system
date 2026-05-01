@@ -4,11 +4,13 @@ import {
   Card,
   Divider,
   Grid,
+  InputAdornment,
   TextField,
   Typography,
   Chip,
   CircularProgress,
 } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
 import { useCatalogDevices, useCatalogDeviceContexts } from '../hooks/useCatalog'
 import { tokens } from '../theme'
 
@@ -18,13 +20,13 @@ export default function CatalogPage() {
 
   const { data: devices = [], isLoading: devicesLoading } = useCatalogDevices()
   const { data: contexts = [], isLoading: contextsLoading } = useCatalogDeviceContexts(
-    selectedDeviceId || undefined,
+    selectedDeviceId || undefined
   )
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId)
 
   const filteredDevices = devices.filter((device) =>
-    device.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    device.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   if (devicesLoading) {
@@ -69,6 +71,32 @@ export default function CatalogPage() {
             size="small"
             fullWidth
             sx={{ mb: 2 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Box
+                    component="kbd"
+                    sx={{
+                      fontSize: 10,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      color: tokens.ink4,
+                      border: `1px solid ${tokens.line}`,
+                      borderRadius: 'var(--r-sm)',
+                      px: '4px',
+                      py: '1px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    ⌘K
+                  </Box>
+                </InputAdornment>
+              ),
+            }}
           />
         </Box>
 
