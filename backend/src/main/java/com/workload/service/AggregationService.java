@@ -165,7 +165,8 @@ public class AggregationService {
     EngineerCounts counts = engineerCountsForDivision(division.getId());
 
     Set<UUID> assignedIds =
-        new HashSet<>(objectEngineerRepository.findAllAssignedObjectIdsByDivision(division.getId()));
+        new HashSet<>(
+            objectEngineerRepository.findAllAssignedObjectIdsByDivision(division.getId()));
     List<Summary> unassigned =
         summaries.stream().filter(s -> !assignedIds.contains(s.getObject().getId())).toList();
     BigDecimal uncoveredLoad = sumItogo(unassigned);

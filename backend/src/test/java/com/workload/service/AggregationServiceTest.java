@@ -242,8 +242,7 @@ class AggregationServiceTest {
     Summary sA2 = buildSummary(oA2, new BigDecimal("0.2"));
     Summary sB1 = buildSummary(oB1, new BigDecimal("0.4"));
 
-    when(summaryRepository.findAllWithOrgHierarchy())
-        .thenReturn(List.of(sA1, sA2, sB1));
+    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of(sA1, sA2, sB1));
 
     // oA1 assigned in divA — oA2 is a gap; all of divB unassigned
     when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divA.getId()))
@@ -252,17 +251,29 @@ class AggregationServiceTest {
         .thenReturn(List.of());
     when(userRepository.countByHomeDivisionIdAndActiveTrue(divA.getId())).thenReturn(0L);
     when(userRepository.countByHomeDivisionIdAndActiveTrue(divB.getId())).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divA.getId(), "overloaded")).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divA.getId(), "warning")).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divB.getId(), "overloaded")).thenReturn(0L);
-    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divB.getId(), "warning")).thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            divA.getId(), "overloaded"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divA.getId(), "warning"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(
+            divB.getId(), "overloaded"))
+        .thenReturn(0L);
+    when(engineerSummaryRepository.countByEngineerHomeDivisionIdAndStatus(divB.getId(), "warning"))
+        .thenReturn(0L);
 
     List<AggregationDivisionDto> results = aggregationService.getDivisions();
 
-    AggregationDivisionDto resultA = results.stream()
-        .filter(r -> r.divisionName().equals("Division A")).findFirst().orElseThrow();
-    AggregationDivisionDto resultB = results.stream()
-        .filter(r -> r.divisionName().equals("Division B")).findFirst().orElseThrow();
+    AggregationDivisionDto resultA =
+        results.stream()
+            .filter(r -> r.divisionName().equals("Division A"))
+            .findFirst()
+            .orElseThrow();
+    AggregationDivisionDto resultB =
+        results.stream()
+            .filter(r -> r.divisionName().equals("Division B"))
+            .findFirst()
+            .orElseThrow();
 
     assertThat(resultA.coverageGapCount()).isEqualTo(1);
     assertThat(resultA.uncoveredLoad()).isEqualByComparingTo(new BigDecimal("0.2"));
