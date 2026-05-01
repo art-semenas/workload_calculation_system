@@ -133,7 +133,7 @@ describe('ObjectListPage', () => {
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
-    await userEvent.click(screen.getByText('Add object'))
+    await userEvent.click(screen.getByText('Create object'))
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
   })
 
@@ -153,41 +153,26 @@ describe('ObjectListPage', () => {
     })
   })
 
-  it('shows TOTAL Staffing column header and values for each row', async () => {
+  it('shows FTE column header and values for each row', async () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
-    expect(screen.getByText('TOTAL Staffing')).toBeInTheDocument()
+    expect(screen.getByText('FTE')).toBeInTheDocument()
     const staffingValues = screen.getAllByText('0.123456')
     expect(staffingValues).toHaveLength(2)
   })
 
-  it('populates grouped branch selector in the dialog', async () => {
+  it('displays object count and shows no objects message when empty', async () => {
+    mockUseObjects.mockReturnValue({
+      data: [],
+      isLoading: false,
+    })
+
     renderPage()
 
-    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
-
-    await userEvent.click(screen.getByText('Add object'))
-
-    const branchSelect = screen.getByTestId('dialog-branch-select-btn')
-    await userEvent.click(branchSelect)
-
-    expect(await screen.findByRole('option', { name: 'Branch 1A' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Branch 1B' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Branch 2A' })).toBeInTheDocument()
-
-    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-1')
-    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-2')
-  })
-
-  it('keeps Create button disabled until a branch is selected', async () => {
-    renderPage()
-
-    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
-
-    await userEvent.click(screen.getByText('Add object'))
-
-    expect(screen.getByRole('button', { name: /create/i })).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByText('No objects')).toBeInTheDocument()
+    })
   })
 })

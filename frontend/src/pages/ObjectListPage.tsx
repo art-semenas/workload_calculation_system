@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   Box,
   Button,
@@ -13,6 +13,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
@@ -38,10 +39,21 @@ function ObjectStaffingRow({
   const { data: summary, isLoading } = useObjectSummary(objectId)
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
+      <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+        {objectId.slice(0, 8)}
+      </TableCell>
       <TableCell>{name}</TableCell>
       <TableCell>{divisionName}</TableCell>
-      <TableCell>{branchName}</TableCell>
-      <TableCell>
+      <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+        {branchName}
+      </TableCell>
+      <TableCell
+        sx={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontWeight: 500,
+          fontSize: 12,
+        }}
+      >
         {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
       </TableCell>
     </TableRow>
@@ -51,10 +63,15 @@ function ObjectStaffingRow({
 export default function ObjectListPage() {
   const navigate = useNavigate()
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
 
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
+
+  const filteredObjects = objects?.filter((obj) =>
+    obj.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  ) ?? []
 
   if (isLoading || divisionsLoading) {
     return (
@@ -81,8 +98,25 @@ export default function ObjectListPage() {
         </Button>
       </Box>
 
-      <Box sx={{ mb: 3, minWidth: 200 }}>
-        <FormControl fullWidth>
+      {/* Filter Row */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          mb: 3,
+          alignItems: 'flex-end',
+        }}
+      >
+        <TextField
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          variant="outlined"
+          size="small"
+          sx={{ minWidth: 200 }}
+        />
+
+        <FormControl sx={{ minWidth: 180 }}>
           <InputLabel>Division</InputLabel>
           <Select
             value={selectedDivisionId}
@@ -98,21 +132,37 @@ export default function ObjectListPage() {
               ))}
           </Select>
         </FormControl>
+
+        <FormControl sx={{ minWidth: 180 }} disabled>
+          <InputLabel>Tier</InputLabel>
+          <Select value="" label="Tier">
+            <MenuItem value="">All tiers</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Box sx={{ ml: 'auto', minWidth: 180 }}>
+          <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>
+            {filteredObjects.length} objects
+          </Typography>
+        </Box>
       </Box>
 
-      {objects && objects.length > 0 ? (
+      {filteredObjects.length > 0 ? (
         <Paper>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
+                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace" }}>ID</TableCell>
+                <TableCell>Object name</TableCell>
                 <TableCell>Division</TableCell>
-                <TableCell>Branch</TableCell>
-                <TableCell>TOTAL Staffing</TableCell>
+                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace" }}>Branch</TableCell>
+                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
+                  FTE
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {objects.map((obj) => (
+              {filteredObjects.map((obj) => (
                 <ObjectStaffingRow
                   key={obj.id}
                   objectId={obj.id}
