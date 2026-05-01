@@ -17,11 +17,11 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
 import { useObjectSummary } from '../hooks/useSummary'
 import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
-
 
 function ObjectStaffingRow({
   objectId,
@@ -69,9 +69,8 @@ export default function ObjectListPage() {
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
 
-  const filteredObjects = objects?.filter((obj) =>
-    obj.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  ) ?? []
+  const filteredObjects =
+    objects?.filter((obj) => obj.name.toLowerCase().includes(searchQuery.toLowerCase())) ?? []
 
   if (isLoading || divisionsLoading) {
     return (
@@ -102,13 +101,13 @@ export default function ObjectListPage() {
       <Box
         sx={{
           display: 'flex',
-          gap: 2,
+          gap: 1.5,
           mb: 3,
-          alignItems: 'flex-end',
+          alignItems: 'center',
         }}
       >
         <TextField
-          placeholder="Search..."
+          placeholder="Search objects..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           variant="outlined"
@@ -116,35 +115,37 @@ export default function ObjectListPage() {
           sx={{ minWidth: 200 }}
         />
 
-        <FormControl sx={{ minWidth: 180 }}>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>Division</InputLabel>
           <Select
             value={selectedDivisionId}
             label="Division"
             onChange={(e) => setSelectedDivisionId(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            }}
           >
             <MenuItem value="">All divisions</MenuItem>
-            {divisions &&
-              divisions.map((div) => (
-                <MenuItem key={div.id} value={div.id}>
-                  {div.name}
-                </MenuItem>
-              ))}
+            {divisions?.map((div) => (
+              <MenuItem key={div.id} value={div.id}>
+                {div.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 180 }} disabled>
+        <FormControl size="small" sx={{ minWidth: 120 }} disabled>
           <InputLabel>Tier</InputLabel>
           <Select value="" label="Tier">
             <MenuItem value="">All tiers</MenuItem>
           </Select>
         </FormControl>
 
-        <Box sx={{ ml: 'auto', minWidth: 180 }}>
-          <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>
-            {filteredObjects.length} objects
-          </Typography>
-        </Box>
+        <Typography sx={{ ml: 'auto', fontSize: 12, color: 'text.secondary' }}>
+          {filteredObjects.length} objects
+        </Typography>
       </Box>
 
       {filteredObjects.length > 0 ? (
@@ -179,10 +180,7 @@ export default function ObjectListPage() {
         <Typography color="text.secondary">No objects</Typography>
       )}
 
-      <CreateObjectDialog
-        open={openObjectDialog}
-        onClose={() => setOpenObjectDialog(false)}
-      />
+      <CreateObjectDialog open={openObjectDialog} onClose={() => setOpenObjectDialog(false)} />
     </Box>
   )
 }
