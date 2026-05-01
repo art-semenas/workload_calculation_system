@@ -104,10 +104,12 @@ export default function ObjectListPage() {
           gap: 1.5,
           mb: 3,
           alignItems: 'center',
+          flexWrap: 'wrap',
         }}
       >
         <TextField
           placeholder="Search objects..."
+          aria-label="Search objects"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           variant="outlined"
@@ -138,7 +140,15 @@ export default function ObjectListPage() {
 
         <FormControl size="small" sx={{ minWidth: 120 }} disabled>
           <InputLabel>Tier</InputLabel>
-          <Select value="" label="Tier">
+          <Select
+            value=""
+            label="Tier"
+            sx={{
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            }}
+          >
             <MenuItem value="">All tiers</MenuItem>
           </Select>
         </FormControl>
