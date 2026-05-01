@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   Box,
   Card,
-  Divider,
   Grid,
   InputAdornment,
   TextField,
@@ -65,6 +64,7 @@ export default function CatalogPage() {
 
           <TextField
             placeholder="Search devices..."
+            aria-label="Search devices"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
