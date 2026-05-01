@@ -103,6 +103,14 @@ export const theme = createTheme({
           textTransform: 'none',
           height: 32,
           fontSize: 13,
+          paddingLeft: 12,
+          paddingRight: 12,
+        },
+        outlined: {
+          borderColor: tokens.lineStrong,
+          '&:hover': {
+            borderColor: tokens.ink4,
+          },
         },
       },
     },
