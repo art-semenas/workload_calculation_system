@@ -3,10 +3,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Paper,
   Table,
   TableBody,
@@ -15,40 +11,19 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { PageHead } from '../components/common/PageHead'
 import { KPIRow, type KPIItem } from '../components/common/KPIRow'
 import { SectionBlock } from '../components/common/SectionBlock'
 import { CapBar } from '../components/common/CapBar'
-import { FormTextField } from '../components/common/FormTextField'
-import { useCreateDivision, useDivisions } from '../hooks/useDivisions'
-import { DivisionCreateSchema, type DivisionCreate } from '../types/division'
+import { CreateDivisionDialog } from '../components/dialogs/CreateDivisionDialog'
+import { useDivisions } from '../hooks/useDivisions'
 import { tokens } from '../theme'
 
 export default function DivisionsListPage() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const { data, isLoading } = useDivisions()
-  const createDivision = useCreateDivision()
-
-  const { control, handleSubmit, reset } = useForm<DivisionCreate>({
-    resolver: zodResolver(DivisionCreateSchema),
-    defaultValues: {
-      name: '',
-    },
-  })
-
-  const handleClose = () => {
-    setOpen(false)
-    reset()
-  }
-
-  const handleCreate = handleSubmit(async (formData) => {
-    await createDivision.mutateAsync(formData)
-    handleClose()
-  })
 
   // Compute KPI metrics
   const divisionCount = data?.length ?? 0
@@ -195,25 +170,7 @@ export default function DivisionsListPage() {
       )}
 
       {/* Create Division Dialog */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle>Create division</DialogTitle>
-        <Box
-          component="form"
-          onSubmit={(e) => {
-            void handleCreate(e)
-          }}
-        >
-          <DialogContent>
-            <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={createDivision.isPending}>
-              Create
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
+      <CreateDivisionDialog open={open} onClose={() => setOpen(false)} />
     </Box>
   )
 }
