@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Box,
   Button,
@@ -7,7 +7,6 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Table,
   TableBody,
@@ -24,7 +23,10 @@ import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
 import { useObjectSummary } from '../hooks/useSummary'
+import { PageHead } from '../components/common/PageHead'
 import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
+
+const PAGE_SIZE = 20
 
 function ObjectStaffingRow({
   objectId,
@@ -42,22 +44,16 @@ function ObjectStaffingRow({
   const { data: summary, isLoading } = useObjectSummary(objectId)
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
-      <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-        {objectId.slice(0, 8)}
-      </TableCell>
       <TableCell>{name}</TableCell>
-      <TableCell>{divisionName}</TableCell>
-      <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-        {branchName}
-      </TableCell>
+      <TableCell sx={{ color: tokens.ink3 }}>{divisionName}</TableCell>
+      <TableCell sx={{ color: tokens.ink3 }}>{branchName}</TableCell>
       <TableCell
         sx={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
           fontWeight: 500,
-          fontSize: 12,
         }}
       >
-        {isLoading ? '...' : (summary?.itogoChisloWithTravel.toFixed(6) ?? '—')}
+        {isLoading ? '…' : (summary?.itogoChisloWithTravel.toFixed(4) ?? '—')}
       </TableCell>
       <TableCell sx={{ width: 32, p: 0, pr: 1, textAlign: 'right' }}>
         <ChevronRightIcon sx={{ fontSize: 16, color: tokens.ink4, display: 'block' }} />
@@ -68,15 +64,46 @@ function ObjectStaffingRow({
 
 export default function ObjectListPage() {
   const navigate = useNavigate()
-  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
+  const [selectedDivisionId, setSelectedDivisionId] = useState('')
+  const [selectedBranchId, setSelectedBranchId] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(0)
   const [openObjectDialog, setOpenObjectDialog] = useState(false)
 
   const { data: objects, isLoading } = useObjects(selectedDivisionId || undefined)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
 
-  const filteredObjects =
-    objects?.filter((obj) => obj.name.toLowerCase().includes(searchQuery.toLowerCase())) ?? []
+  const branches = useMemo(() => {
+    if (!objects) return []
+    const seen = new Map<string, string>()
+    for (const obj of objects) {
+      if (obj.branchId && obj.branchName && !seen.has(obj.branchId)) {
+        seen.set(obj.branchId, obj.branchName)
+      }
+    }
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }))
+  }, [objects])
+
+  const filteredObjects = useMemo(() => {
+    let result = objects ?? []
+    if (selectedBranchId) result = result.filter((o) => o.branchId === selectedBranchId)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (o) => o.name.toLowerCase().includes(q) || (o.address ?? '').toLowerCase().includes(q)
+      )
+    }
+    return result
+  }, [objects, selectedBranchId, searchQuery])
+
+  const totalPages = Math.max(1, Math.ceil(filteredObjects.length / PAGE_SIZE))
+  const pagedObjects = filteredObjects.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  const handleDivisionChange = (value: string) => {
+    setSelectedDivisionId(value)
+    setSelectedBranchId('')
+    setPage(0)
+  }
 
   if (isLoading || divisionsLoading) {
     return (
@@ -86,41 +113,35 @@ export default function ObjectListPage() {
     )
   }
 
+  const rangeStart = filteredObjects.length === 0 ? 0 : page * PAGE_SIZE + 1
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, filteredObjects.length)
+
   return (
     <Box>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4">Objects</Typography>
-        <Button variant="contained" onClick={() => setOpenObjectDialog(true)}>
-          Create object
-        </Button>
-      </Box>
+      <PageHead
+        crumbs={[{ label: 'Workload', to: '/' }, { label: 'Objects' }]}
+        title="Objects"
+        subtitle={`${filteredObjects.length.toLocaleString()} objects`}
+        actions={
+          <Button variant="contained" size="small" onClick={() => setOpenObjectDialog(true)}>
+            Create object
+          </Button>
+        }
+      />
 
-      {/* Filter Row */}
-      <Box
-        sx={{
-          display: 'flex',
-          gap: 1.5,
-          mb: 3,
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
+      {/* Filter row */}
+      <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
-          placeholder="Search objects..."
+          placeholder="Search objects…"
           aria-label="Search objects"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            setPage(0)
+          }}
           variant="outlined"
           size="small"
-          sx={{ minWidth: 200 }}
+          sx={{ width: 260 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -133,13 +154,12 @@ export default function ObjectListPage() {
                   component="kbd"
                   sx={{
                     fontSize: 10,
-                    fontFamily: "'JetBrains Mono', monospace",
                     color: tokens.ink4,
                     border: `1px solid ${tokens.line}`,
-                    borderRadius: 'var(--r-sm)',
+                    borderRadius: '3px',
                     px: '4px',
                     py: '1px',
-                    lineHeight: 1.4,
+                    fontFamily: 'inherit',
                   }}
                 >
                   ⌘K
@@ -154,12 +174,8 @@ export default function ObjectListPage() {
           <Select
             value={selectedDivisionId}
             label="Division"
-            onChange={(e) => setSelectedDivisionId(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-            }}
+            onChange={(e) => handleDivisionChange(e.target.value)}
+            sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong } }}
           >
             <MenuItem value="">All divisions</MenuItem>
             {divisions?.map((div) => (
@@ -170,57 +186,116 @@ export default function ObjectListPage() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 120 }} disabled>
-          <InputLabel>Tier</InputLabel>
+        <FormControl size="small" sx={{ minWidth: 160 }} disabled={branches.length === 0}>
+          <InputLabel>Branch</InputLabel>
           <Select
-            value=""
-            label="Tier"
-            sx={{
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+            value={selectedBranchId}
+            label="Branch"
+            onChange={(e) => {
+              setSelectedBranchId(e.target.value)
+              setPage(0)
             }}
+            sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong } }}
           >
-            <MenuItem value="">All tiers</MenuItem>
+            <MenuItem value="">All branches</MenuItem>
+            {branches.map((b) => (
+              <MenuItem key={b.id} value={b.id}>
+                {b.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
-
-        <Typography sx={{ ml: 'auto', fontSize: 12, color: 'text.secondary' }}>
-          {filteredObjects.length} objects
-        </Typography>
       </Box>
 
-      {filteredObjects.length > 0 ? (
-        <Paper>
+      {pagedObjects.length > 0 ? (
+        <>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace" }}>ID</TableCell>
                 <TableCell>Object name</TableCell>
                 <TableCell>Division</TableCell>
-                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace" }}>Branch</TableCell>
-                <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
-                  FTE
-                </TableCell>
+                <TableCell>Branch</TableCell>
+                <TableCell>FTE</TableCell>
                 <TableCell sx={{ width: 32, p: 0 }} />
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredObjects.map((obj) => (
+              {pagedObjects.map((obj) => (
                 <ObjectStaffingRow
                   key={obj.id}
                   objectId={obj.id}
                   name={obj.name}
-                  divisionName={obj.divisionName || '—'}
-                  branchName={obj.branchName || '—'}
+                  divisionName={obj.divisionName ?? '—'}
+                  branchName={obj.branchName ?? '—'}
                   navigate={navigate}
                 />
               ))}
             </TableBody>
           </Table>
-        </Paper>
+
+          {/* Pagination footer */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: `1px solid ${tokens.line}`,
+              pt: '12px',
+              mt: 0,
+            }}
+          >
+            <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+              Showing{' '}
+              <Box
+                component="span"
+                sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+              >
+                {rangeStart}–{rangeEnd}
+              </Box>{' '}
+              of{' '}
+              <Box
+                component="span"
+                sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+              >
+                {filteredObjects.length.toLocaleString()}
+              </Box>
+            </Typography>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                ‹ Prev
+              </Button>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  color: tokens.ink3,
+                  minWidth: 60,
+                  textAlign: 'center',
+                }}
+              >
+                {page + 1} / {totalPages}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => p + 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                Next ›
+              </Button>
+            </Box>
+          </Box>
+        </>
       ) : (
-        <Typography color="text.secondary">No objects</Typography>
+        <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>No objects found</Typography>
       )}
 
       <CreateObjectDialog open={openObjectDialog} onClose={() => setOpenObjectDialog(false)} />
