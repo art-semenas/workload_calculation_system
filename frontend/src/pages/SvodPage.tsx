@@ -32,49 +32,87 @@ function fmt(value: number, places: number): string {
   return value.toFixed(places)
 }
 
-function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
-  return [
-    {
-      field: 'objectName',
-      headerName: 'Object',
-      align: 'left',
-      headerAlign: 'left',
-      width: 220,
-      renderCell: ({ row }: { row: SvodRow }) => (
-        <Link
-          to={`/objects/${row.objectId}`}
-          style={{ color: tokens.ink2, textDecoration: 'none' }}
+const colObjectName = (wide = false): GridColDef<SvodRow> => ({
+  field: 'objectName',
+  headerName: 'Object',
+  align: 'left',
+  headerAlign: 'left',
+  width: wide ? 280 : 340,
+  flex: wide ? undefined : 1,
+  renderCell: ({ row }: { row: SvodRow }) => (
+    <Link to={`/objects/${row.objectId}`} style={{ color: tokens.ink2, textDecoration: 'none' }}>
+      {row.objectName}
+    </Link>
+  ),
+})
+
+const colEngCount = (): GridColDef<SvodRow> => ({
+  field: 'engineers',
+  headerName: 'Eng',
+  align: 'right',
+  headerAlign: 'right',
+  width: 70,
+  renderCell: ({ value }: { value?: string[] }) => {
+    const n = Array.isArray(value) ? value.length : 0
+    return <Box sx={{ color: n === 0 ? tokens.ink4 : tokens.ink3 }}>{n === 0 ? '—' : n}</Box>
+  },
+})
+
+const colEngNames = (): GridColDef<SvodRow> => ({
+  field: 'engineers',
+  headerName: 'Engineers',
+  align: 'left',
+  headerAlign: 'left',
+  width: 200,
+  renderCell: ({ value }: { value?: string[] }) => {
+    const names = Array.isArray(value) ? value : []
+    if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
+    const text = names.join(', ')
+    return (
+      <Tooltip title={text}>
+        <Box
+          sx={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: tokens.ink3,
+          }}
         >
-          {row.objectName}
-        </Link>
-      ),
+          {text}
+        </Box>
+      </Tooltip>
+    )
+  },
+})
+
+function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
+  return [
+    colObjectName(false),
+    colEngCount(),
+    {
+      field: 'itogoChisloNoTravel',
+      headerName: 'FTE no travel',
+      align: 'right',
+      headerAlign: 'right',
+      width: 130,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
     },
     {
-      field: 'engineers',
-      headerName: 'Eng',
-      align: 'left',
-      headerAlign: 'left',
-      width: 200,
-      renderCell: ({ value }: { value?: string[] }) => {
-        const names = Array.isArray(value) ? value : []
-        if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
-        const text = names.join(', ')
-        return (
-          <Tooltip title={text}>
-            <Box
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                color: tokens.ink3,
-              }}
-            >
-              {text}
-            </Box>
-          </Tooltip>
-        )
-      },
+      field: 'itogoChisloWithTravel',
+      headerName: 'ИТОГО Числ',
+      align: 'right',
+      headerAlign: 'right',
+      width: 130,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+      cellClassName: 'itogo-cell',
     },
+  ]
+}
+
+function buildFullColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
+  return [
+    colObjectName(true),
+    colEngNames(),
     {
       field: 'pzvMinutes',
       headerName: 'PZV',
@@ -214,6 +252,8 @@ export default function SvodPage() {
   const [search, setSearch] = useState('')
   const [exportError, setExportError] = useState<string | null>(null)
 
+  const [showBreakdown, setShowBreakdown] = useState(false)
+
   const { svodPrecision, setSvodPrecision } = useUiStore()
 
   const { data: divisions = [] } = useQuery({
@@ -223,7 +263,10 @@ export default function SvodPage() {
 
   const { data, isLoading, isError } = useSvod(page, PAGE_SIZE, divisionId || undefined)
 
-  const columns = useMemo(() => buildColumns(svodPrecision), [svodPrecision])
+  const columns = useMemo(
+    () => (showBreakdown ? buildFullColumns(svodPrecision) : buildCompactColumns(svodPrecision)),
+    [showBreakdown, svodPrecision]
+  )
 
   const filteredRows = useMemo(() => {
     const rows = data?.content ?? []
@@ -336,6 +379,15 @@ export default function SvodPage() {
             ))}
           </Select>
         </FormControl>
+
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setShowBreakdown((v) => !v)}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+        </Button>
 
         <Box sx={{ flex: 1 }} />
 
