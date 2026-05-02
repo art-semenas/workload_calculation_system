@@ -88,6 +88,26 @@ const colEngNames = (): GridColDef<SvodRow> => ({
 function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
   return [
     colObjectName(false),
+    {
+      field: 'branchName',
+      headerName: 'Branch',
+      align: 'left',
+      headerAlign: 'left',
+      flex: 0.6,
+      minWidth: 140,
+      renderCell: ({ value }: { value: string }) => (
+        <Box
+          sx={{
+            color: tokens.ink3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {value}
+        </Box>
+      ),
+    },
     colEngCount(),
     {
       field: 'itogoChisloNoTravel',
