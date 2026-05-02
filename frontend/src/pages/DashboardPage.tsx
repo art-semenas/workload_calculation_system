@@ -21,6 +21,8 @@ import { useSvod } from '../hooks/useSvod'
 import { tokens } from '../theme'
 import type { AggregationDivision } from '../types/m02'
 
+const TOP_OBJECTS_LIMIT = 5
+
 // PoC (S-05): period selector is decorative — no period_id on records yet. Wired in MVP M-05.
 const PERIODS = ['FY25', 'FY26', 'Q-by-Q'] as const
 type Period = (typeof PERIODS)[number]
@@ -122,7 +124,10 @@ export default function DashboardPage() {
         />
       )}
 
-      <SectionBlock label="FTE by division">
+      <SectionBlock
+        label="FTE by division"
+        meta={`${divsList.length} divisions · sorted by required FTE`}
+      >
         {divisionsLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
             <CircularProgress />
@@ -170,48 +175,46 @@ export default function DashboardPage() {
         )}
       </SectionBlock>
 
-      <QuietDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Details">
-        <DrawerSection label="Top objects by workload">
-          {svodLoading ? (
-            <CircularProgress size={20} />
-          ) : topObjects.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>No data</Typography>
-          ) : (
-            <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-              {topObjects.slice(0, 10).map((row) => (
-                <Box
+      <SectionBlock
+        label="Top objects by workload"
+        meta={`Sorted by ИТОГО Числ · top ${TOP_OBJECTS_LIMIT}`}
+      >
+        {svodLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Object</TableCell>
+                <TableCell>Division</TableCell>
+                <TableCell>FTE</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {topObjects.slice(0, TOP_OBJECTS_LIMIT).map((row) => (
+                <TableRow
                   key={row.objectId}
-                  component="li"
+                  hover
                   onClick={() => void navigate(`/objects/${row.objectId}`)}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    py: '8px',
-                    borderBottom: `1px solid ${tokens.line}`,
-                    cursor: 'pointer',
-                    '&:hover': { opacity: 0.8 },
-                  }}
+                  sx={{ cursor: 'pointer' }}
                 >
-                  <Box sx={{ fontSize: 13, color: tokens.ink2 }}>{row.objectName}</Box>
-                  <Box
-                    sx={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                      color: tokens.ink,
-                      ml: 2,
-                      flexShrink: 0,
-                    }}
+                  <TableCell>{row.objectName}</TableCell>
+                  <TableCell sx={{ color: tokens.ink3 }}>{row.divisionName}</TableCell>
+                  <TableCell
+                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontWeight: 600 }}
                   >
-                    {row.itogoChisloWithTravel.toFixed(6)}
-                  </Box>
-                </Box>
+                    {row.itogoChisloWithTravel.toFixed(4)}
+                  </TableCell>
+                </TableRow>
               ))}
-            </Box>
-          )}
-        </DrawerSection>
+            </TableBody>
+          </Table>
+        )}
+      </SectionBlock>
 
+      <QuietDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Details">
         <DrawerSection label="Uncovered objects">
           {gapsLoading ? (
             <CircularProgress size={20} />
