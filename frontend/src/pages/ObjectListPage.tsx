@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Box,
   Button,
@@ -23,6 +24,7 @@ import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
 import { useObjectSummary } from '../hooks/useSummary'
+import { getObjectEngineers } from '../api/objectEngineers'
 import { PageHead } from '../components/common/PageHead'
 import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
 
@@ -41,19 +43,23 @@ function ObjectStaffingRow({
   branchName: string
   navigate: (path: string) => void
 }) {
-  const { data: summary, isLoading } = useObjectSummary(objectId)
+  const { data: summary, isLoading: summaryLoading } = useObjectSummary(objectId)
+  const { data: engineers } = useQuery({
+    queryKey: ['objectEngineers', objectId],
+    queryFn: () => getObjectEngineers(objectId),
+  })
+  const engCount = engineers?.length ?? null
+
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
       <TableCell>{name}</TableCell>
       <TableCell sx={{ color: tokens.ink3 }}>{divisionName}</TableCell>
       <TableCell sx={{ color: tokens.ink3 }}>{branchName}</TableCell>
-      <TableCell
-        sx={{
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-          fontWeight: 500,
-        }}
-      >
-        {isLoading ? '…' : (summary?.itogoChisloWithTravel.toFixed(4) ?? '—')}
+      <TableCell sx={{ color: engCount === 0 ? tokens.ink4 : tokens.ink3, textAlign: 'right' }}>
+        {engCount === null ? '…' : engCount === 0 ? '—' : engCount}
+      </TableCell>
+      <TableCell sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontWeight: 500 }}>
+        {summaryLoading ? '…' : (summary?.itogoChisloWithTravel.toFixed(4) ?? '—')}
       </TableCell>
       <TableCell sx={{ width: 32, p: 0, pr: 1, textAlign: 'right' }}>
         <ChevronRightIcon sx={{ fontSize: 16, color: tokens.ink4, display: 'block' }} />
@@ -215,6 +221,7 @@ export default function ObjectListPage() {
                 <TableCell>Object name</TableCell>
                 <TableCell>Division</TableCell>
                 <TableCell>Branch</TableCell>
+                <TableCell sx={{ textAlign: 'right' }}>Eng</TableCell>
                 <TableCell>FTE</TableCell>
                 <TableCell sx={{ width: 32, p: 0 }} />
               </TableRow>
