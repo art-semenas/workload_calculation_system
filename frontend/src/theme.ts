@@ -166,11 +166,13 @@ export const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          height: 32,
           fontSize: 13,
           '& fieldset': {
             borderColor: tokens.lineStrong,
           },
+        },
+        sizeSmall: {
+          height: 32,
         },
       },
     },

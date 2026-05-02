@@ -63,10 +63,6 @@ export default function LoginPage() {
         justifyContent: 'center',
         px: 2,
         backgroundColor: tokens.bg,
-        backgroundImage: `
-          repeating-linear-gradient(0deg, transparent, transparent 31px, ${tokens.line} 31px, ${tokens.line} 32px),
-          repeating-linear-gradient(90deg, transparent, transparent 31px, ${tokens.line} 31px, ${tokens.line} 32px)
-        `,
       }}
     >
       <Box
@@ -173,7 +169,7 @@ export default function LoginPage() {
 
           <Divider sx={{ my: 2, fontSize: 12, color: tokens.ink3 }}>or</Divider>
 
-          <Button fullWidth variant="text">
+          <Button fullWidth variant="outlined">
             Continue with corporate SSO
           </Button>
         </Box>
