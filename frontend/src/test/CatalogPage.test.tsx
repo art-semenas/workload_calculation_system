@@ -22,7 +22,7 @@ function renderPage() {
       <MemoryRouter>
         <CatalogPage />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
 }
 
@@ -105,8 +105,8 @@ describe('CatalogPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Per-system norms')).toBeInTheDocument()
-      expect(screen.getByText('ОС')).toBeInTheDocument()
-      expect(screen.getByText('ПС')).toBeInTheDocument()
+      expect(screen.getAllByText('ОС')).toHaveLength(2) // one in header, one in card
+      expect(screen.getAllByText('ПС')).toHaveLength(2) // one in header, one in card
     })
   })
 

@@ -10,8 +10,20 @@ import {
   CircularProgress,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import { useQueries } from '@tanstack/react-query'
 import { useCatalogDevices, useCatalogDeviceContexts } from '../hooks/useCatalog'
+import { getCatalogDeviceContexts } from '../api/catalog'
 import { tokens } from '../theme'
+
+const SYSTEM_TONE: Record<string, { bg: string; color: string }> = {
+  ОС: { bg: tokens.accentSoft, color: tokens.accentInk },
+  ПС: { bg: tokens.okSoft, color: tokens.ok },
+  Видео: { bg: tokens.warnSoft, color: tokens.warn },
+}
+
+function systemChipSx(systemName: string): { backgroundColor: string; color: string } {
+  return SYSTEM_TONE[systemName] ?? { backgroundColor: tokens.bgSunken, color: tokens.ink3 }
+}
 
 export default function CatalogPage() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
@@ -21,6 +33,28 @@ export default function CatalogPage() {
   const { data: contexts = [], isLoading: contextsLoading } = useCatalogDeviceContexts(
     selectedDeviceId || undefined
   )
+
+  const allContextQueries = useQueries({
+    queries: devices.map((device) => ({
+      queryKey: ['catalog', 'devices', device.id, 'contexts'] as const,
+      queryFn: () => getCatalogDeviceContexts(device.id),
+      staleTime: Number.POSITIVE_INFINITY,
+    })),
+  })
+
+  const deviceSystemTags: Record<string, string[]> = {}
+  for (let i = 0; i < devices.length; i++) {
+    const device = devices[i]
+    const query = allContextQueries[i]
+    const systemNames: string[] = []
+    if (query?.data && Array.isArray(query.data)) {
+      const contexts = query.data as Array<{ systemType: { name: string } }>
+      for (const context of contexts) {
+        systemNames.push(context.systemType.name)
+      }
+    }
+    deviceSystemTags[device.id] = systemNames
+  }
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId)
 
@@ -137,9 +171,17 @@ export default function CatalogPage() {
                   },
                 }}
               >
-                <Typography sx={{ fontWeight: 500, mb: 0.5 }}>{device.name}</Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 450, color: tokens.ink }}>
+                  {device.name}
+                </Typography>
+                {/* System tags */}
+                {(deviceSystemTags[device.id] ?? []).length > 0 && (
+                  <Typography sx={{ fontSize: 11, color: tokens.ink4, mt: 0.25 }}>
+                    {(deviceSystemTags[device.id] ?? []).join(', ')}
+                  </Typography>
+                )}
                 {device.description && (
-                  <Typography sx={{ fontSize: 12, color: tokens.ink4 }}>
+                  <Typography sx={{ fontSize: 12, color: tokens.ink4, mt: 0.5 }}>
                     {device.description}
                   </Typography>
                 )}
@@ -170,6 +212,27 @@ export default function CatalogPage() {
           >
             Device catalog / {selectedDevice.name}
           </Typography>
+
+          {/* System chip(s) in detail header */}
+          {contexts.length > 0 && (
+            <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
+              {[
+                ...new Set(
+                  contexts.map((c) => {
+                    return (c.systemType as { name: string }).name
+                  })
+                ),
+              ].map((name) => (
+                <Chip
+                  key={name}
+                  label={name}
+                  size="small"
+                  variant="filled"
+                  sx={systemChipSx(name)}
+                />
+              ))}
+            </Box>
+          )}
 
           {/* Title */}
           <Typography variant="h1" sx={{ mb: 1 }}>
@@ -210,13 +273,10 @@ export default function CatalogPage() {
                         >
                           <Box sx={{ mb: 2 }}>
                             <Chip
-                              label={context.systemType.name}
+                              label={context.systemType.name as string}
                               size="small"
                               variant="filled"
-                              sx={{
-                                backgroundColor: tokens.accentSoft,
-                                color: tokens.accentInk,
-                              }}
+                              sx={systemChipSx(context.systemType.name as string)}
                             />
                           </Box>
 
