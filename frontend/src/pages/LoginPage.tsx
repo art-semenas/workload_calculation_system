@@ -75,16 +75,16 @@ export default function LoginPage() {
           maxWidth: 380,
           backgroundColor: tokens.bgElev,
           borderRadius: 'var(--r-lg)',
-          border: `1px solid ${tokens.lineStrong}`,
-          p: '28px 32px 24px',
+          border: `1px solid ${tokens.line}`,
+          p: '40px 36px 32px',
         }}
       >
         {/* Brand mark + wordmark */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
           <Box
             sx={{
-              width: 22,
-              height: 22,
+              width: 28,
+              height: 28,
               backgroundColor: tokens.ink,
               borderRadius: 'var(--r-sm)',
               display: 'flex',
@@ -93,12 +93,12 @@ export default function LoginPage() {
               flexShrink: 0,
             }}
           >
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
               W
             </Typography>
           </Box>
           <Typography
-            sx={{ fontSize: 13, fontWeight: 600, color: tokens.ink, letterSpacing: '-0.01em' }}
+            sx={{ fontSize: 15, fontWeight: 600, color: tokens.ink, letterSpacing: '-0.01em' }}
           >
             Workload
           </Typography>
@@ -173,7 +173,7 @@ export default function LoginPage() {
 
           <Divider sx={{ my: 2, fontSize: 12, color: tokens.ink3 }}>or</Divider>
 
-          <Button fullWidth variant="outlined">
+          <Button fullWidth variant="text">
             Continue with corporate SSO
           </Button>
         </Box>

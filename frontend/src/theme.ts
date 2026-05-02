@@ -43,6 +43,7 @@ export const theme = createTheme({
     divider: tokens.line,
     primary: {
       main: tokens.ink,
+      contrastText: '#ffffff',
     },
     success: {
       main: tokens.ok,
@@ -105,6 +106,13 @@ export const theme = createTheme({
           fontSize: 13,
           paddingLeft: 12,
           paddingRight: 12,
+        },
+        contained: {
+          backgroundColor: tokens.ink,
+          color: '#ffffff',
+          '&:hover': {
+            backgroundColor: '#000000',
+          },
         },
         outlined: {
           borderColor: tokens.lineStrong,
