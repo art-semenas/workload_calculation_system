@@ -28,7 +28,7 @@ function renderPage() {
       <MemoryRouter>
         <DivisionsListPage />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
 }
 

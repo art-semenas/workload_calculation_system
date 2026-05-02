@@ -24,7 +24,7 @@ import { SectionBlock } from '../components/common/SectionBlock'
 import { CapBar } from '../components/common/CapBar'
 import { FormTextField } from '../components/common/FormTextField'
 import { useCreateDivision, useDivisions } from '../hooks/useDivisions'
-import { DivisionCreateSchema, type DivisionCreate, type Division } from '../types/division'
+import { DivisionCreateSchema, type DivisionCreate } from '../types/division'
 import { tokens } from '../theme'
 
 export default function DivisionsListPage() {
@@ -57,7 +57,7 @@ export default function DivisionsListPage() {
 
   // Compute average utilisation (warn if > 100%)
   const validUtilisations = (data ?? []).filter(
-    (d) => d.utilisation !== null && d.utilisation !== undefined,
+    (d) => d.utilisation !== null && d.utilisation !== undefined
   )
   const avgUtilisation =
     validUtilisations.length > 0
@@ -91,10 +91,7 @@ export default function DivisionsListPage() {
     <Box>
       {/* Page Head */}
       <PageHead
-        crumbs={[
-          { label: 'Workload', to: '/' },
-          { label: 'Divisions' },
-        ]}
+        crumbs={[{ label: 'Workload', to: '/' }, { label: 'Divisions' }]}
         title="Divisions"
         subtitle={`${divisionCount} regional divisions · ${totalObjects} objects · ${totalEngineers} engineers`}
         actions={
@@ -151,9 +148,7 @@ export default function DivisionsListPage() {
                     <TableCell>—</TableCell>
 
                     {/* Objects */}
-                    <TableCell sx={{ textAlign: 'right' }}>
-                      {division.objectCount ?? '—'}
-                    </TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>{division.objectCount ?? '—'}</TableCell>
 
                     {/* Engineers */}
                     <TableCell sx={{ textAlign: 'right' }}>

@@ -9,8 +9,9 @@ const mockGetCatalogDevices = vi.fn()
 const mockGetCatalogDeviceContexts = vi.fn()
 
 vi.mock('../api/catalog', () => ({
-  getCatalogDevices: (...args: unknown[]) => mockGetCatalogDevices(...args),
-  getCatalogDeviceContexts: (...args: unknown[]) => mockGetCatalogDeviceContexts(...args),
+  getCatalogDevices: (...args: unknown[]) => mockGetCatalogDevices(...args) as unknown,
+  getCatalogDeviceContexts: (...args: unknown[]) =>
+    mockGetCatalogDeviceContexts(...args) as unknown,
   getCatalogRepairs: vi.fn().mockResolvedValue([]),
 }))
 

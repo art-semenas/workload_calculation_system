@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
 
@@ -9,8 +8,8 @@ const mockGetDivisionBranches = vi.fn()
 const mockCreateObject = vi.fn()
 
 vi.mock('../api/divisions', () => ({
-  getDivisions: (...args: unknown[]) => mockGetDivisions(...args),
-  getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args),
+  getDivisions: (...args: unknown[]) => mockGetDivisions(...args) as unknown,
+  getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args) as unknown,
 }))
 
 vi.mock('../hooks/useObjects', () => ({
@@ -32,7 +31,7 @@ function renderDialog() {
   return render(
     <QueryClientProvider client={qc}>
       <CreateObjectDialog open onClose={vi.fn()} />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
 }
 
@@ -51,9 +50,7 @@ describe('CreateObjectDialog', () => {
         ])
       }
       if (divId === 'div2') {
-        return Promise.resolve([
-          { id: 'br3', name: 'Branch 3', divisionId: 'div2' },
-        ])
+        return Promise.resolve([{ id: 'br3', name: 'Branch 3', divisionId: 'div2' }])
       }
       return Promise.resolve([])
     })
@@ -87,8 +84,8 @@ describe('CreateObjectDialog', () => {
       expect(screen.getByLabelText(/address/i)).toBeInTheDocument()
     })
 
-    const addressField = screen.getByLabelText(/address/i) as HTMLInputElement
-    expect(addressField.required).toBe(false)
+    const addressField = screen.getByLabelText(/address/i)
+    expect((addressField as HTMLInputElement).required).toBe(false)
   })
 
   it('displays create object button', async () => {
