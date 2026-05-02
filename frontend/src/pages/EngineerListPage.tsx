@@ -4,10 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   InputAdornment,
   MenuItem,
   Paper,
@@ -19,7 +15,6 @@ import {
   TableRow,
   TextField,
   Typography,
-  Alert,
   FormControl,
   InputLabel,
 } from '@mui/material'
@@ -28,20 +23,14 @@ import WarningIcon from '@mui/icons-material/Warning'
 import CancelIcon from '@mui/icons-material/Cancel'
 import SearchIcon from '@mui/icons-material/Search'
 import { useNavigate } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { tokens } from '../theme'
-import { useEngineers, useCreateEngineer } from '../hooks/useEngineers'
+import { useEngineers } from '../hooks/useEngineers'
 import { useDivisions } from '../hooks/useDivisions'
-import { FormTextField } from '../components/common/FormTextField'
 import { PageHead } from '../components/common/PageHead'
 import { DistBar } from '../components/common/DistBar'
 import { CapBar } from '../components/common/CapBar'
-import {
-  EngineerCreateSchema,
-  type EngineerCreateRequest,
-  type EngineerStatus,
-} from '../types/engineer'
+import { CreateEngineerDialog } from '../components/dialogs/CreateEngineerDialog'
+import type { EngineerStatus } from '../types/engineer'
 
 export default function EngineerListPage() {
   const navigate = useNavigate()
@@ -57,18 +46,6 @@ export default function EngineerListPage() {
     divisionFilter || undefined
   )
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
-  const createMutation = useCreateEngineer()
-
-  const { control, handleSubmit, reset } = useForm<EngineerCreateRequest>({
-    resolver: zodResolver(EngineerCreateSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      capacityFte: 1.0,
-      homeDivisionId: '',
-    },
-  })
 
   const filteredEngineers = useMemo(() => {
     if (!engineers) return []
@@ -85,20 +62,6 @@ export default function EngineerListPage() {
       { tone: 'danger' as const, count: overloaded, label: 'Overloaded' },
     ]
   }, [filteredEngineers])
-
-  const handleDialogClose = () => {
-    setDialogOpen(false)
-    reset()
-  }
-
-  const handleCreateEngineer = handleSubmit(async (formData) => {
-    try {
-      await createMutation.mutateAsync(formData)
-      handleDialogClose()
-    } catch {
-      // Error displayed via createMutation.isError
-    }
-  })
 
   const getStatusChipColor = (status: EngineerStatus) => {
     switch (status) {
@@ -297,71 +260,7 @@ export default function EngineerListPage() {
       )}
 
       {/* Create Engineer Dialog */}
-      <Dialog open={dialogOpen} onClose={handleDialogClose} fullWidth maxWidth="sm">
-        <DialogTitle>Create engineer</DialogTitle>
-        <Box
-          component="form"
-          onSubmit={(e) => {
-            void handleCreateEngineer(e)
-          }}
-        >
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {createMutation.isError && (
-              <Alert severity="error">
-                {createMutation.error instanceof Error
-                  ? createMutation.error.message
-                  : 'Failed to create engineer'}
-              </Alert>
-            )}
-            <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
-            <FormTextField name="email" control={control} label="Email" fullWidth type="email" />
-            <FormTextField
-              name="password"
-              control={control}
-              label="Password"
-              fullWidth
-              type="password"
-              helperText="Minimum 8 characters"
-            />
-            <FormTextField
-              name="capacityFte"
-              control={control}
-              label="Capacity FTE"
-              fullWidth
-              type="number"
-              inputProps={{ step: 0.01, min: 0 }}
-            />
-            <Controller
-              name="homeDivisionId"
-              control={control}
-              render={({ field, fieldState }) => (
-                <FormControl fullWidth error={!!fieldState.error}>
-                  <InputLabel>Division</InputLabel>
-                  <Select {...field} label="Division" displayEmpty disabled={divisionsLoading}>
-                    <MenuItem value="">Select a division</MenuItem>
-                    {divisions?.map((div) => (
-                      <MenuItem key={div.id} value={div.id}>
-                        {div.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldState.error && (
-                    <Typography color="error" variant="caption" sx={{ mt: 0.5 }}>
-                      {fieldState.error.message}
-                    </Typography>
-                  )}
-                </FormControl>
-              )}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={createMutation.isPending}>
-              Create
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
+      <CreateEngineerDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </Box>
   )
 }
