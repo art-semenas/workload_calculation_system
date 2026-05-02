@@ -6,7 +6,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
   InputAdornment,
+  MenuItem,
+  Select,
+  type SelectChangeEvent,
   TextField,
   Tooltip,
   Typography,
@@ -272,56 +276,8 @@ export default function SvodPage() {
         }
       />
 
-      {/* Division pill filter */}
-      <Box sx={{ mb: 2, overflowX: 'auto' }}>
-        <Box
-          sx={{
-            display: 'inline-flex',
-            backgroundColor: tokens.bgSunken,
-            borderRadius: 'var(--r-pill)',
-            p: '3px',
-            gap: '2px',
-            minWidth: 0,
-          }}
-        >
-          {[{ id: '', name: 'All' }, ...divisions].map((d) => (
-            <Box
-              key={d.id}
-              component="button"
-              onClick={() => {
-                setDivisionId(d.id)
-                setPage(0)
-              }}
-              sx={{
-                fontSize: 12,
-                fontWeight: divisionId === d.id ? 500 : 400,
-                color: divisionId === d.id ? tokens.ink : tokens.ink3,
-                background: divisionId === d.id ? tokens.bgElev : 'transparent',
-                border: 'none',
-                borderRadius: 'var(--r-pill)',
-                cursor: 'pointer',
-                px: '12px',
-                py: '5px',
-                whiteSpace: 'nowrap',
-                fontFamily: 'inherit',
-                transition: 'background 0.1s',
-              }}
-            >
-              {d.name}
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/* Search + precision row */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          mb: 2,
-        }}
-      >
+      {/* Filter row: search + division + precision */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
         <TextField
           size="small"
           placeholder="Search objects, addresses…"
@@ -356,8 +312,30 @@ export default function SvodPage() {
               </InputAdornment>
             ),
           }}
-          sx={{ width: 280 }}
+          sx={{ width: 260 }}
         />
+
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <Select
+            value={divisionId}
+            onChange={(e: SelectChangeEvent) => {
+              setDivisionId(e.target.value)
+              setPage(0)
+            }}
+            displayEmpty
+            sx={{
+              fontSize: 13,
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong },
+            }}
+          >
+            <MenuItem value="">All divisions</MenuItem>
+            {divisions.map((d) => (
+              <MenuItem key={d.id} value={d.id}>
+                {d.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <Box sx={{ flex: 1 }} />
 
