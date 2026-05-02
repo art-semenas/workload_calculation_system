@@ -1,8 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Box, Button, CircularProgress, Tooltip, Typography } from '@mui/material'
-import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
+import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { PageHead } from '../components/common/PageHead'
 import { useSvod } from '../hooks/useSvod'
 import { useUiStore } from '../stores/uiStore'
@@ -190,16 +200,14 @@ const quietGridSx = {
     fontWeight: 600,
     color: tokens.ink,
   },
-  '& .MuiDataGrid-footerContainer': {
-    borderTop: `1px solid ${tokens.line}`,
-    minHeight: 44,
-  },
 }
+
+const PAGE_SIZE = 10
 
 export default function SvodPage() {
   const [page, setPage] = useState(0)
-  const pageSize = 100
   const [divisionId, setDivisionId] = useState('')
+  const [search, setSearch] = useState('')
   const [exportError, setExportError] = useState<string | null>(null)
 
   const { svodPrecision, setSvodPrecision } = useUiStore()
@@ -209,9 +217,29 @@ export default function SvodPage() {
     queryFn: getDivisions,
   })
 
-  const { data, isLoading, isError } = useSvod(page, pageSize, divisionId || undefined)
+  const { data, isLoading, isError } = useSvod(page, PAGE_SIZE, divisionId || undefined)
 
   const columns = useMemo(() => buildColumns(svodPrecision), [svodPrecision])
+
+  const filteredRows = useMemo(() => {
+    const rows = data?.content ?? []
+    if (!search.trim()) return rows
+    const q = search.toLowerCase()
+    return rows.filter(
+      (r) =>
+        r.objectName.toLowerCase().includes(q) ||
+        (r.address ?? '').toLowerCase().includes(q) ||
+        r.divisionName.toLowerCase().includes(q)
+    )
+  }, [data?.content, search])
+
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
+  const rangeStart = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalElements)
+
+  const pageSum = filteredRows.reduce((s, r) => s + r.itogoChisloWithTravel, 0)
+  const pageAvg = filteredRows.length > 0 ? pageSum / filteredRows.length : 0
 
   const handleExport = () => {
     setExportError(null)
@@ -229,11 +257,6 @@ export default function SvodPage() {
       })
   }
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page)
-  }
-
-  const totalElements = data?.totalElements ?? 0
   const subtitle = `Consolidated workload across all objects${totalElements > 0 ? ` · ${totalElements.toLocaleString()} rows` : ''}`
 
   return (
@@ -249,29 +272,19 @@ export default function SvodPage() {
         }
       />
 
-      {/* Filter row */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        {/* Division filter — pill segmented control */}
+      {/* Division pill filter */}
+      <Box sx={{ mb: 2, overflowX: 'auto' }}>
         <Box
           sx={{
-            display: 'flex',
-            border: `1px solid ${tokens.line}`,
-            borderRadius: 'var(--r-pill)',
-            overflow: 'hidden',
+            display: 'inline-flex',
             backgroundColor: tokens.bgSunken,
-            flexShrink: 0,
+            borderRadius: 'var(--r-pill)',
+            p: '3px',
+            gap: '2px',
+            minWidth: 0,
           }}
         >
-          {[{ id: '', name: 'All' }, ...divisions].map((d, i) => (
+          {[{ id: '', name: 'All' }, ...divisions].map((d) => (
             <Box
               key={d.id}
               component="button"
@@ -285,39 +298,86 @@ export default function SvodPage() {
                 color: divisionId === d.id ? tokens.ink : tokens.ink3,
                 background: divisionId === d.id ? tokens.bgElev : 'transparent',
                 border: 'none',
-                borderLeft: i !== 0 ? `1px solid ${tokens.line}` : 'none',
+                borderRadius: 'var(--r-pill)',
                 cursor: 'pointer',
-                px: '10px',
+                px: '12px',
                 py: '5px',
                 whiteSpace: 'nowrap',
                 fontFamily: 'inherit',
+                transition: 'background 0.1s',
               }}
             >
               {d.name}
             </Box>
           ))}
         </Box>
+      </Box>
 
-        {/* Precision toggle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>Precision:</Typography>
+      {/* Search + precision row */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mb: 2,
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder="Search objects, addresses…"
+          aria-label="Search summary"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(0)
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Box
+                  component="kbd"
+                  sx={{
+                    fontSize: 10,
+                    color: tokens.ink4,
+                    border: `1px solid ${tokens.line}`,
+                    borderRadius: '3px',
+                    px: '4px',
+                    py: '1px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  ⌘K
+                </Box>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ width: 280 }}
+        />
+
+        <Box sx={{ flex: 1 }} />
+
+        <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+          Precision:{' '}
           <Box
-            component="button"
+            component="span"
             onClick={() => setSvodPrecision(svodPrecision === 2 ? 6 : 2)}
             sx={{
-              fontSize: 12,
-              color: tokens.accent,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              p: 0,
               fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              '&:hover': { opacity: 0.8 },
+              color: tokens.ink2,
+              textDecoration: 'underline',
+              textDecorationColor: tokens.lineStrong,
+              cursor: 'pointer',
+              '&:hover': { color: tokens.ink },
             }}
           >
             {svodPrecision === 2 ? '2 decimals · show full' : 'full · show 2'}
           </Box>
-        </Box>
+        </Typography>
       </Box>
 
       {exportError && (
@@ -335,18 +395,113 @@ export default function SvodPage() {
       ) : (
         <Box sx={{ width: '100%' }}>
           <DataGrid
-            rows={data?.content ?? []}
+            rows={filteredRows}
             columns={columns}
             getRowId={(row: SvodRow) => row.objectId}
-            paginationMode="server"
-            rowCount={totalElements}
-            paginationModel={{ page, pageSize }}
-            onPaginationModelChange={handlePaginationModelChange}
-            pageSizeOptions={[100]}
+            hideFooter
             disableRowSelectionOnClick
             disableVirtualization={import.meta.env.MODE === 'test'}
             sx={quietGridSx}
           />
+
+          {/* Custom footer */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: `1px solid ${tokens.line}`,
+              pt: '12px',
+              mt: 0,
+              fontSize: 12,
+              color: tokens.ink3,
+            }}
+          >
+            {/* Left: range */}
+            <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+              Showing{' '}
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  color: tokens.ink2,
+                }}
+              >
+                {rangeStart}–{rangeEnd}
+              </Box>{' '}
+              of{' '}
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  color: tokens.ink2,
+                }}
+              >
+                {totalElements.toLocaleString()}
+              </Box>
+            </Typography>
+
+            {/* Center: aggregates */}
+            <Box sx={{ display: 'flex', gap: 3, fontSize: 12, color: tokens.ink3 }}>
+              <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+                Avg{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    color: tokens.ink2,
+                  }}
+                >
+                  {pageAvg.toFixed(svodPrecision)}
+                </Box>
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+                Σ page{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    color: tokens.ink2,
+                  }}
+                >
+                  {pageSum.toFixed(svodPrecision)}
+                </Box>
+              </Typography>
+            </Box>
+
+            {/* Right: prev / page-of / next */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                ‹ Prev
+              </Button>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  color: tokens.ink3,
+                  minWidth: 60,
+                  textAlign: 'center',
+                }}
+              >
+                {page + 1} / {totalPages}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => p + 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                Next ›
+              </Button>
+            </Box>
+          </Box>
         </Box>
       )}
     </Box>
