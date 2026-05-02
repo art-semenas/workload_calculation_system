@@ -10,6 +10,7 @@ import {
   FormControl,
   FormHelperText,
   Grid,
+  IconButton,
   InputLabel,
   ListSubheader,
   MenuItem,
@@ -17,6 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
 import { getDivisionBranches } from '../../api/divisions'
@@ -105,30 +107,28 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
       }}
     >
       {/* Title Section with Eyebrow */}
-      <DialogTitle sx={{ pb: 0 }}>
+      <DialogTitle sx={{ position: 'relative', pb: 1 }}>
         <Typography
           sx={{
             fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            fontWeight: 500,
+            letterSpacing: '0.02em',
             color: tokens.ink3,
-            mb: 1,
+            mb: 0.5,
           }}
         >
           New object
         </Typography>
-        <Typography
-          sx={{
-            fontSize: 28,
-            fontWeight: 600,
-            letterSpacing: '-0.02em',
-            color: tokens.ink,
-            m: 0,
-          }}
-        >
+        <Typography sx={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.015em' }}>
           Create object
         </Typography>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{ position: 'absolute', right: 8, top: 8, color: tokens.ink3 }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
 
       {/* Form Content */}
@@ -140,7 +140,7 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
           }}
         >
           <Grid container spacing={2}>
-            {/* Object Name */}
+            {/* Object Name — full width */}
             <Grid item xs={12}>
               <FormTextField
                 name="name"
@@ -151,7 +151,17 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
               />
             </Grid>
 
-            {/* Branch Select */}
+            {/* Division Select — display-only, disabled */}
+            <Grid item xs={12}>
+              <FormControl fullWidth disabled>
+                <InputLabel>Division</InputLabel>
+                <Select value="" label="Division">
+                  <MenuItem value="">—</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Branch Select — full width (grouped select is wide) */}
             <Grid item xs={12}>
               <Controller
                 name="branchId"
@@ -178,47 +188,48 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
               />
             </Grid>
 
-            {/* Address */}
+            {/* Address — full width */}
             <Grid item xs={12}>
-              <FormTextField
-                name="address"
-                control={control}
-                label="Address"
+              <FormTextField name="address" control={control} label="Address" fullWidth optional />
+            </Grid>
+
+            {/* Tier + Object ID side-by-side */}
+            <Grid item xs={6}>
+              <FormControl fullWidth disabled>
+                <InputLabel>Tier</InputLabel>
+                <Select value="" label="Tier">
+                  <MenuItem value="">—</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Object ID"
+                value=""
+                disabled
                 fullWidth
-                optional
+                placeholder="Auto-assigned"
+                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
               />
             </Grid>
 
-            {/* Tier (Disabled - Future Scope) */}
-            <Grid item xs={12}>
+            {/* Travel norm + Visits/year side-by-side */}
+            <Grid item xs={6}>
               <TextField
-                label="Tier"
-                fullWidth
+                label="Travel norm h"
                 disabled
-                helperText="coming soon"
-                defaultValue=""
+                fullWidth
+                placeholder="Coming soon"
+                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
               />
             </Grid>
-
-            {/* Travel Norm (Disabled - Future Scope) */}
-            <Grid item xs={12}>
+            <Grid item xs={6}>
               <TextField
-                label="Travel norm"
-                fullWidth
+                label="Visits / year"
                 disabled
-                defaultValue=""
-                helperText="coming soon"
-              />
-            </Grid>
-
-            {/* Visits/Year (Disabled - Future Scope) */}
-            <Grid item xs={12}>
-              <TextField
-                label="Visits/year"
                 fullWidth
-                disabled
-                defaultValue=""
-                helperText="coming soon"
+                placeholder="Coming soon"
+                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
               />
             </Grid>
           </Grid>
