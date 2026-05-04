@@ -8,5 +8,6 @@ export function useObjectSummary(objectId: string) {
     queryKey: [SUMMARY_QUERY_KEY, objectId],
     queryFn: () => getObjectSummary(objectId),
     enabled: !!objectId,
+    retry: false,
   })
 }

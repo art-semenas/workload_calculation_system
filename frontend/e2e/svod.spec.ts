@@ -90,10 +90,13 @@ test.describe('Dashboard SVOD sections', () => {
 
     await loginAsAdmin(page)
 
-    await page.getByRole('button', { name: /details/i }).click()
     await expect(page.getByText(/\d+\.\d{6}/).first()).toBeVisible()
 
-    await page.locator('li').filter({ hasText: /\d+\.\d{6}/ }).first().click()
+    await page
+      .getByRole('row')
+      .filter({ hasText: /\d+\.\d{6}/ })
+      .first()
+      .click()
     await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+$/)
   })
 
@@ -104,6 +107,11 @@ test.describe('Dashboard SVOD sections', () => {
     await loginAsAdmin(page)
 
     await page.getByRole('button', { name: /details/i }).click()
+    // Wait for drawer section label to confirm drawer rendered
+    await expect(page.getByText(/uncovered objects/i).first()).toBeVisible()
+    // Wait for any loading spinners in the drawer to resolve
+    await page.locator('svg[role="progressbar"]').waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
+
     const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
     const uncoveredSection = page.getByText(/uncovered objects/i).first().locator('..')
     const gapListVisible = await uncoveredSection.locator('ul').isVisible()
@@ -196,6 +204,9 @@ test.describe('Summary page (/svod)', () => {
         .getByRole('columnheader', { name: /№/i })
         .or(page.getByRole('columnheader', { name: /object/i }).first())
     ).toBeVisible()
+
+    // PZV and Travel are in the full breakdown view — toggle it on first
+    await page.getByRole('button', { name: /show breakdown/i }).click()
 
     for (const pattern of [/object/i, /pzv/i, /travel/i]) {
       await expect(page.getByRole('columnheader', { name: pattern }).first()).toBeVisible()
@@ -298,9 +309,8 @@ test.describe('Summary page (/svod)', () => {
 
     await expect(
       page
-        .getByText(/rows per page/i)
-        .or(page.locator('[aria-label="Go to next page"]'))
-        .or(page.locator('.MuiTablePagination-root'))
+        .getByRole('button', { name: /prev/i })
+        .or(page.getByRole('button', { name: /next/i }))
         .first()
     ).toBeVisible()
   })

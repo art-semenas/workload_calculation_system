@@ -123,7 +123,7 @@ function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
       align: 'right',
       headerAlign: 'right',
       width: 130,
-      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, 6),
       cellClassName: 'itogo-cell',
     },
   ]

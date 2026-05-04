@@ -16,8 +16,8 @@ test.describe('PoC M-01 deterministic CRUD', () => {
       await loginAsAdmin(page)
       await page.goto('/divisions')
 
-      await page.getByRole('button', { name: 'Add division' }).click()
-      const addDivisionDialog = page.getByRole('dialog', { name: 'Add division' })
+      await page.getByRole('button', { name: 'Create division' }).click()
+      const addDivisionDialog = page.getByRole('dialog', { name: 'Create division' })
       await addDivisionDialog.getByLabel('Name').fill(names.divisionName)
       await addDivisionDialog.getByRole('button', { name: 'Create' }).click()
       await expect(addDivisionDialog).toBeHidden()
@@ -35,7 +35,7 @@ test.describe('PoC M-01 deterministic CRUD', () => {
       await expect(page.getByRole('heading', { name: updatedDivisionName })).toBeVisible()
 
       await page.getByRole('button', { name: 'Add branch' }).click()
-      const addBranchDialog = page.getByRole('dialog', { name: 'Add branch' })
+      const addBranchDialog = page.getByRole('dialog', { name: 'Create branch' })
       await addBranchDialog.getByLabel('Name').fill(names.branchName)
       await addBranchDialog.getByRole('button', { name: 'Create' }).click()
       await expect(addBranchDialog).toBeHidden()

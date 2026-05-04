@@ -168,9 +168,12 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
                 control={control}
                 rules={{ required: 'Branch is required' }}
                 render={({ field, fieldState: { error } }) => (
-                  <FormControl fullWidth error={!!error}>
+                  <FormControl fullWidth error={!!error} data-testid="dialog-branch-select-btn">
                     <InputLabel>Branch</InputLabel>
                     <Select {...field} label="Branch">
+                      <MenuItem value="" disabled>
+                        Select branch
+                      </MenuItem>
                       {divisions.map((div) => [
                         <ListSubheader key={`subheader-${div.id}`}>{div.name}</ListSubheader>,
                         ...branchOptions

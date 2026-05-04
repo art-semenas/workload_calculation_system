@@ -208,7 +208,7 @@ export default function DashboardPage() {
                       fontWeight: 600,
                     }}
                   >
-                    {row.itogoChisloWithTravel.toFixed(4)}
+                    {row.itogoChisloWithTravel.toFixed(6)}
                   </TableCell>
                 </TableRow>
               ))}
