@@ -32,7 +32,10 @@ const navSections: NavSection[] = [
   },
   {
     label: 'Reference',
-    items: [{ label: 'Divisions', path: '/divisions' }],
+    items: [
+      { label: 'Divisions', path: '/divisions' },
+      { label: 'Device Catalog', path: '/catalog' },
+    ],
   },
 ]
 
