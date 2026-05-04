@@ -69,7 +69,6 @@ class ObjectServiceTest {
   @Test
   void findAllReturnsAllObjects() {
     ObjectEntity entity = buildObject("Archive");
-    when(objectRepository.findAll()).thenReturn(List.of(entity));
     ObjectDto dto =
         new ObjectDto(
             entity.getId(),
@@ -79,9 +78,11 @@ class ObjectServiceTest {
             "Brest",
             "Archive",
             null,
+            null,
+            null,
             entity.getCreatedAt(),
             entity.getUpdatedAt());
-    when(objectMapper.toDto(entity)).thenReturn(dto);
+    when(objectRepository.findAllEnriched(null)).thenReturn(List.of(dto));
 
     List<ObjectDto> result = objectService.findAll(Optional.empty());
 
@@ -91,7 +92,6 @@ class ObjectServiceTest {
   @Test
   void findAllFiltersByDivision() {
     ObjectEntity entity = buildObject("Archive");
-    when(objectRepository.findAllByBranchDivisionId(divisionId)).thenReturn(List.of(entity));
     ObjectDto dto =
         new ObjectDto(
             entity.getId(),
@@ -101,9 +101,11 @@ class ObjectServiceTest {
             "Brest",
             "Archive",
             null,
+            null,
+            null,
             entity.getCreatedAt(),
             entity.getUpdatedAt());
-    when(objectMapper.toDto(entity)).thenReturn(dto);
+    when(objectRepository.findAllEnriched(divisionId)).thenReturn(List.of(dto));
 
     List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
 
@@ -145,6 +147,8 @@ class ObjectServiceTest {
                   "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
+                  null,
+                  null,
                   e.getCreatedAt(),
                   e.getUpdatedAt());
             });
@@ -173,6 +177,8 @@ class ObjectServiceTest {
                   "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
+                  null,
+                  null,
                   e.getCreatedAt(),
                   e.getUpdatedAt());
             });
@@ -211,6 +217,8 @@ class ObjectServiceTest {
                   "Brest",
                   e.getName(),
                   e.getImportSeqNo(),
+                  null,
+                  null,
                   e.getCreatedAt(),
                   e.getUpdatedAt());
             });
