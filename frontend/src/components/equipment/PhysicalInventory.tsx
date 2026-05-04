@@ -33,20 +33,22 @@ import {
   useRemoveDevice,
   useAssignments,
 } from '../../hooks/useEquipment'
-import { DeviceAddSchema, type DeviceAdd, type ObjectDevice } from '../../types/equipment'
+import {
+  DeviceAddSchema,
+  type DeviceAdd,
+  type ObjectDevice,
+  type SystemType,
+} from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
+import { SectionBlock } from '../common/SectionBlock'
 import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
+import { tokens } from '../../theme'
 
-function getSystemTypeLabel(systemType: 'OS' | 'PS' | 'VIDEO') {
-  switch (systemType) {
-    case 'OS':
-      return 'Security'
-    case 'PS':
-      return 'Fire'
-    case 'VIDEO':
-      return 'Video'
-  }
+const SYSTEM_LABELS: Record<SystemType, string> = {
+  OS: 'Security',
+  PS: 'Fire',
+  VIDEO: 'Video',
 }
 
 interface AddDeviceFormValues {
@@ -76,6 +78,18 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
   const availableDeviceTypes = catalogDevices.filter(
     (ct) => !devices.some((d) => d.deviceTypeId === ct.id)
   )
+
+  // Map deviceTypeId → system labels (for "Assigned to systems" column)
+  const deviceSystemsMap: Record<string, string[]> = {}
+  assignments.forEach((a) => {
+    if (!deviceSystemsMap[a.deviceTypeId]) deviceSystemsMap[a.deviceTypeId] = []
+    const label = SYSTEM_LABELS[a.systemType]
+    if (!deviceSystemsMap[a.deviceTypeId].includes(label)) {
+      deviceSystemsMap[a.deviceTypeId].push(label)
+    }
+  })
+
+  const totalUnits = devices.reduce((sum, d) => sum + d.quantityPhysical, 0)
 
   const addForm = useForm<AddDeviceFormValues>({
     resolver: zodResolver(DeviceAddSchema),
@@ -147,35 +161,32 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
     }
   }
 
-  if (isLoading) {
-    return <CircularProgress size={24} />
-  }
-
   const removalMessage = (() => {
-    if (!deviceToRemove) {
-      return 'Remove this device from the inventory?'
-    }
-
+    if (!deviceToRemove) return 'Remove this device from the inventory?'
     const deviceAssignments = assignments.filter(
-      (assignment) => assignment.deviceTypeId === deviceToRemove.deviceTypeId
+      (a) => a.deviceTypeId === deviceToRemove.deviceTypeId
     )
-
     if (deviceAssignments.length === 0) {
       return `Remove "${deviceToRemove.deviceTypeName}" from the inventory?`
     }
-
     const details = deviceAssignments
-      .map(
-        (assignment) =>
-          `${getSystemTypeLabel(assignment.systemType)} x ${assignment.quantityMaintained}`
-      )
+      .map((a) => `${SYSTEM_LABELS[a.systemType]} ×${a.quantityMaintained}`)
       .join(', ')
-
-    return `This will remove assignments: ${details}. Continue?`
+    return `This will also remove assignments: ${details}. Continue?`
   })()
 
+  if (isLoading) return <CircularProgress size={24} />
+
   return (
-    <Box>
+    <SectionBlock
+      label="A · Physical inventory"
+      meta={`${devices.length} device types · ${totalUnits} units total`}
+      actions={
+        <Button variant="outlined" size="small" onClick={handleOpenAdd}>
+          Add device
+        </Button>
+      }
+    >
       {mutationError && (
         <Alert severity="error" onClose={() => setMutationError(null)} sx={{ mb: 2 }}>
           {mutationError}
@@ -185,17 +196,25 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       <Table size="small" aria-label="physical inventory table">
         <TableHead>
           <TableRow>
-            <TableCell>Device Type</TableCell>
-            <TableCell>Qty Physical</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell>Device</TableCell>
+            <TableCell>Qty physical</TableCell>
+            <TableCell>Assigned to systems</TableCell>
+            <TableCell sx={{ width: 80 }} />
           </TableRow>
         </TableHead>
         <TableBody>
           {devices.map((device) => (
             <TableRow key={device.id}>
               <TableCell>{device.deviceTypeName}</TableCell>
-              <TableCell>{device.quantityPhysical}</TableCell>
-              <TableCell align="right">
+              <TableCell
+                sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 13 }}
+              >
+                {device.quantityPhysical}
+              </TableCell>
+              <TableCell sx={{ color: tokens.ink3, fontSize: 13 }}>
+                {(deviceSystemsMap[device.deviceTypeId] ?? []).join(', ') || '—'}
+              </TableCell>
+              <TableCell align="right" sx={{ p: '4px 8px' }}>
                 <IconButton
                   size="small"
                   aria-label={`edit ${device.deviceTypeName}`}
@@ -215,8 +234,8 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
           ))}
           {devices.length === 0 && (
             <TableRow>
-              <TableCell colSpan={3}>
-                <Typography variant="body2" color="text.secondary">
+              <TableCell colSpan={4}>
+                <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>
                   No devices in inventory.
                 </Typography>
               </TableCell>
@@ -225,14 +244,11 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
         </TableBody>
       </Table>
 
-      <Button sx={{ mt: 1 }} onClick={handleOpenAdd} variant="outlined" size="small">
-        Add device
-      </Button>
-
       {/* Add Device Dialog */}
       <Dialog open={addOpen} onClose={handleCloseAdd} maxWidth="xs" fullWidth>
-        <DialogTitle>Add Device</DialogTitle>
-        <form
+        <DialogTitle>Add device</DialogTitle>
+        <Box
+          component="form"
           onSubmit={(e) => {
             void addForm.handleSubmit(handleSubmitAdd)(e)
           }}
@@ -243,13 +259,8 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               control={addForm.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth size="small" error={!!fieldState.error}>
-                  <InputLabel id="add-device-type-label">Device Type</InputLabel>
-                  <Select
-                    {...field}
-                    labelId="add-device-type-label"
-                    label="Device Type"
-                    displayEmpty
-                  >
+                  <InputLabel>Device type</InputLabel>
+                  <Select {...field} label="Device type" displayEmpty>
                     <MenuItem value="">
                       <em>Select device type</em>
                     </MenuItem>
@@ -266,7 +277,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
             <FormTextField
               name="quantityPhysical"
               control={addForm.control}
-              label="Quantity Physical"
+              label="Qty physical"
               type="number"
               size="small"
               inputProps={{ min: 1 }}
@@ -279,13 +290,14 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               Add
             </Button>
           </DialogActions>
-        </form>
+        </Box>
       </Dialog>
 
       {/* Edit Device Dialog */}
       <Dialog open={!!editDevice} onClose={handleCloseEdit} maxWidth="xs" fullWidth>
-        <DialogTitle>Edit Device — {editDevice?.deviceTypeName}</DialogTitle>
-        <form
+        <DialogTitle>Edit — {editDevice?.deviceTypeName}</DialogTitle>
+        <Box
+          component="form"
           onSubmit={(e) => {
             void editForm.handleSubmit(handleSubmitEdit)(e)
           }}
@@ -294,7 +306,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
             <FormTextField
               name="quantityPhysical"
               control={editForm.control}
-              label="Quantity Physical"
+              label="Qty physical"
               type="number"
               size="small"
               inputProps={{ min: 1 }}
@@ -307,18 +319,18 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               Save
             </Button>
           </DialogActions>
-        </form>
+        </Box>
       </Dialog>
 
-      {/* Remove Confirm Dialog */}
+      {/* Remove Confirm */}
       <ConfirmDialog
         open={!!deviceToRemove}
-        title="Remove Device?"
+        title="Remove device?"
         message={removalMessage}
         onConfirm={() => void handleConfirmRemove()}
         onCancel={() => setDeviceToRemove(null)}
         confirmLabel="Remove"
       />
-    </Box>
+    </SectionBlock>
   )
 }
