@@ -203,7 +203,10 @@ export default function DashboardPage() {
                   <TableCell>{row.objectName}</TableCell>
                   <TableCell sx={{ color: tokens.ink3 }}>{row.divisionName}</TableCell>
                   <TableCell
-                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontWeight: 600 }}
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      fontWeight: 600,
+                    }}
                   >
                     {row.itogoChisloWithTravel.toFixed(4)}
                   </TableCell>

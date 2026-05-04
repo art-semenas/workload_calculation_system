@@ -9,7 +9,6 @@ const mockUseObjects = vi.fn()
 const mockUseDivisions = vi.fn()
 const mockUseCreateObject = vi.fn()
 const mockGetDivisionBranches = vi.fn()
-const mockUseObjectSummary = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -26,11 +25,6 @@ vi.mock('../hooks/useDivisions', () => ({
 vi.mock('../api/divisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args),
-}))
-
-vi.mock('../hooks/useSummary', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
-  useObjectSummary: (...args: unknown[]) => mockUseObjectSummary(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -61,6 +55,8 @@ describe('ObjectListPage', () => {
           divisionName: 'Division 1',
           branchName: 'Branch 1',
           address: '123 Street',
+          itogoChisloWithTravel: 0.123456,
+          engineerCount: 2,
         },
         {
           id: 'obj-2',
@@ -68,6 +64,8 @@ describe('ObjectListPage', () => {
           divisionName: 'Division 2',
           branchName: 'Branch 2',
           address: '456 Ave',
+          itogoChisloWithTravel: 0.123456,
+          engineerCount: 1,
         },
       ],
       isLoading: false,
@@ -98,12 +96,6 @@ describe('ObjectListPage', () => {
     mockUseCreateObject.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({ id: 'obj-3', name: 'Object 3' }),
       isPending: false,
-    })
-    mockUseObjectSummary.mockReturnValue({
-      data: {
-        itogoChisloWithTravel: 0.123456,
-      },
-      isLoading: false,
     })
   })
 
@@ -159,7 +151,7 @@ describe('ObjectListPage', () => {
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
     expect(screen.getByText('FTE')).toBeInTheDocument()
-    const staffingValues = screen.getAllByText('0.123456')
+    const staffingValues = screen.getAllByText('0.1235')
     expect(staffingValues).toHaveLength(2)
   })
 
@@ -172,7 +164,7 @@ describe('ObjectListPage', () => {
     renderPage()
 
     await waitFor(() => {
-      expect(screen.getByText('No objects')).toBeInTheDocument()
+      expect(screen.getByText('No objects found')).toBeInTheDocument()
     })
   })
 })

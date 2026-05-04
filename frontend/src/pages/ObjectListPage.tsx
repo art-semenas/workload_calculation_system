@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   Box,
   Button,
@@ -23,8 +22,6 @@ import { useNavigate } from 'react-router-dom'
 import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
-import { useObjectSummary } from '../hooks/useSummary'
-import { getObjectEngineers } from '../api/objectEngineers'
 import { PageHead } from '../components/common/PageHead'
 import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
 
@@ -35,20 +32,19 @@ function ObjectStaffingRow({
   name,
   divisionName,
   branchName,
+  engineerCount,
+  itogoChisloWithTravel,
   navigate,
 }: {
   objectId: string
   name: string
   divisionName: string
   branchName: string
+  engineerCount: number | null | undefined
+  itogoChisloWithTravel: number | null | undefined
   navigate: (path: string) => void
 }) {
-  const { data: summary, isLoading: summaryLoading } = useObjectSummary(objectId)
-  const { data: engineers } = useQuery({
-    queryKey: ['objectEngineers', objectId],
-    queryFn: () => getObjectEngineers(objectId),
-  })
-  const engCount = engineers?.length ?? null
+  const engCount = engineerCount ?? null
 
   return (
     <TableRow hover onClick={() => navigate(`/objects/${objectId}`)} sx={{ cursor: 'pointer' }}>
@@ -56,10 +52,10 @@ function ObjectStaffingRow({
       <TableCell sx={{ color: tokens.ink3 }}>{divisionName}</TableCell>
       <TableCell sx={{ color: tokens.ink3 }}>{branchName}</TableCell>
       <TableCell sx={{ color: engCount === 0 ? tokens.ink4 : tokens.ink3, textAlign: 'right' }}>
-        {engCount === null ? '…' : engCount === 0 ? '—' : engCount}
+        {engCount === null ? '—' : engCount === 0 ? '—' : engCount}
       </TableCell>
       <TableCell sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontWeight: 500 }}>
-        {summaryLoading ? '…' : (summary?.itogoChisloWithTravel.toFixed(4) ?? '—')}
+        {itogoChisloWithTravel != null ? itogoChisloWithTravel.toFixed(4) : '—'}
       </TableCell>
       <TableCell sx={{ width: 32, p: 0, pr: 1, textAlign: 'right' }}>
         <ChevronRightIcon sx={{ fontSize: 16, color: tokens.ink4, display: 'block' }} />
@@ -234,6 +230,8 @@ export default function ObjectListPage() {
                   name={obj.name}
                   divisionName={obj.divisionName ?? '—'}
                   branchName={obj.branchName ?? '—'}
+                  engineerCount={obj.engineerCount}
+                  itogoChisloWithTravel={obj.itogoChisloWithTravel}
                   navigate={navigate}
                 />
               ))}
