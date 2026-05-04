@@ -170,9 +170,9 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       return `Remove "${deviceToRemove.deviceTypeName}" from the inventory?`
     }
     const details = deviceAssignments
-      .map((a) => `${SYSTEM_LABELS[a.systemType]} ×${a.quantityMaintained}`)
+      .map((a) => `${SYSTEM_LABELS[a.systemType]} x ${a.quantityMaintained}`)
       .join(', ')
-    return `This will also remove assignments: ${details}. Continue?`
+    return `This will remove assignments: ${details}. Continue?`
   })()
 
   if (isLoading) return <CircularProgress size={24} />
@@ -246,7 +246,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
 
       {/* Add Device Dialog */}
       <Dialog open={addOpen} onClose={handleCloseAdd} maxWidth="xs" fullWidth>
-        <DialogTitle>Add device</DialogTitle>
+        <DialogTitle>Add Device</DialogTitle>
         <Box
           component="form"
           onSubmit={(e) => {
@@ -259,8 +259,13 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
               control={addForm.control}
               render={({ field, fieldState }) => (
                 <FormControl fullWidth size="small" error={!!fieldState.error}>
-                  <InputLabel>Device type</InputLabel>
-                  <Select {...field} label="Device type" displayEmpty>
+                  <InputLabel>Device Type</InputLabel>
+                  <Select
+                    {...field}
+                    label="Device Type"
+                    displayEmpty
+                    SelectDisplayProps={{ 'aria-label': 'Device Type' }}
+                  >
                     <MenuItem value="">
                       <em>Select device type</em>
                     </MenuItem>
@@ -325,7 +330,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       {/* Remove Confirm */}
       <ConfirmDialog
         open={!!deviceToRemove}
-        title="Remove device?"
+        title="Remove Device?"
         message={removalMessage}
         onConfirm={() => void handleConfirmRemove()}
         onCancel={() => setDeviceToRemove(null)}

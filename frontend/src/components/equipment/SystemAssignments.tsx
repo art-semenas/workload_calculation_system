@@ -124,6 +124,7 @@ function AddAssignmentDialog({
               value={selectedDeviceTypeId}
               label="Device"
               onChange={(e) => handleDeviceChange(e.target.value)}
+              SelectDisplayProps={{ 'aria-label': 'Device' }}
             >
               <MenuItem value="">
                 <em>Select device</em>
@@ -146,8 +147,12 @@ function AddAssignmentDialog({
                 error={!!fieldState.error}
                 disabled={!selectedDeviceTypeId}
               >
-                <InputLabel>System type</InputLabel>
-                <Select {...field} label="System type">
+                <InputLabel>System Type</InputLabel>
+                <Select
+                  {...field}
+                  label="System Type"
+                  SelectDisplayProps={{ 'aria-label': 'System Type' }}
+                >
                   <MenuItem value="">
                     <em>Select system type</em>
                   </MenuItem>
@@ -400,7 +405,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
                   </IconButton>
                   <IconButton
                     size="small"
-                    aria-label={`remove ${a.deviceTypeName} / ${SYSTEM_TYPE_LABELS[a.systemType]}`}
+                    aria-label={`unassign ${a.deviceTypeName} / ${SYSTEM_TYPE_LABELS[a.systemType]}`}
                     onClick={() => setAssignmentToRemove(a)}
                   >
                     <DeleteIcon fontSize="small" />
