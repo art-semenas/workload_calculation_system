@@ -14,8 +14,10 @@ import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -49,7 +51,53 @@ public class DivisionService {
   }
 
   public List<DivisionDto> findAll() {
-    return divisionRepository.findAll().stream().map(this::toDto).toList();
+    List<Division> divisions = divisionRepository.findAll();
+    if (divisions.isEmpty()) {
+      return List.of();
+    }
+
+    Map<UUID, Long> branchCounts = toCountMap(branchRepository.findCountsGroupedByDivisionId());
+    Map<UUID, Long> objectCounts = toCountMap(objectRepository.findCountsGroupedByDivisionId());
+    Map<UUID, Long> engineerCounts =
+        toCountMap(userRepository.findActiveCountsGroupedByDivisionId());
+
+    List<com.workload.entity.Summary> summaries = summaryRepository.findAllWithOrgHierarchy();
+
+    Map<UUID, BigDecimal> requiredFteMap = new HashMap<>();
+    Map<UUID, Long> coverageGapMap = new HashMap<>();
+    Set<UUID> assignedObjectIds =
+        new HashSet<>(objectEngineerRepository.findAllAssignedObjectIds());
+
+    for (com.workload.entity.Summary s : summaries) {
+      UUID divId = s.getObject().getBranch().getDivision().getId();
+      BigDecimal v =
+          s.getItogoChisloWithTravel() != null ? s.getItogoChisloWithTravel() : BigDecimal.ZERO;
+      requiredFteMap.merge(divId, v, BigDecimal::add);
+      if (!assignedObjectIds.contains(s.getObject().getId())) {
+        coverageGapMap.merge(divId, 1L, Long::sum);
+      }
+    }
+
+    return divisions.stream()
+        .map(
+            d ->
+                divisionMapper.toDto(
+                    d,
+                    branchCounts.getOrDefault(d.getId(), 0L),
+                    objectCounts.getOrDefault(d.getId(), 0L),
+                    engineerCounts.getOrDefault(d.getId(), 0L),
+                    requiredFteMap.getOrDefault(d.getId(), BigDecimal.ZERO),
+                    coverageGapMap.getOrDefault(d.getId(), 0L),
+                    null))
+        .toList();
+  }
+
+  private static Map<UUID, Long> toCountMap(List<Object[]> rows) {
+    Map<UUID, Long> map = new HashMap<>();
+    for (Object[] row : rows) {
+      map.put((UUID) row[0], (Long) row[1]);
+    }
+    return map;
   }
 
   public DivisionDto findById(UUID id) {

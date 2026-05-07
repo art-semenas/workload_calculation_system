@@ -21,6 +21,7 @@ import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,12 +54,15 @@ class DivisionServiceTest {
             .updatedAt(OffsetDateTime.now())
             .build();
     when(divisionRepository.findAll()).thenReturn(List.of(div));
-    when(branchRepository.countByDivisionId(div.getId())).thenReturn(2L);
-    when(objectRepository.countByBranchDivisionId(div.getId())).thenReturn(5L);
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(div.getId())).thenReturn(List.of());
-    when(userRepository.countByHomeDivisionIdAndActiveTrue(div.getId())).thenReturn(0L);
-    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(div.getId()))
-        .thenReturn(List.of());
+    List<Object[]> branchCountList = new ArrayList<>();
+    branchCountList.add(new Object[] {div.getId(), 2L});
+    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(branchCountList);
+    List<Object[]> objectCountList = new ArrayList<>();
+    objectCountList.add(new Object[] {div.getId(), 5L});
+    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(objectCountList);
+    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(new ArrayList<>());
+    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of());
+    when(objectEngineerRepository.findAllAssignedObjectIds()).thenReturn(List.of());
     DivisionDto dto =
         new DivisionDto(
             div.getId(),
@@ -206,11 +210,17 @@ class DivisionServiceTest {
             .updatedAt(OffsetDateTime.now())
             .build();
     when(divisionRepository.findAll()).thenReturn(List.of(div));
-    when(branchRepository.countByDivisionId(divId)).thenReturn(1L);
-    when(objectRepository.countByBranchDivisionId(divId)).thenReturn(5L);
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divId)).thenReturn(List.of());
-    when(userRepository.countByHomeDivisionIdAndActiveTrue(divId)).thenReturn(1L);
-    when(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divId)).thenReturn(List.of());
+    List<Object[]> branchCountList = new ArrayList<>();
+    branchCountList.add(new Object[] {divId, 1L});
+    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(branchCountList);
+    List<Object[]> objectCountList = new ArrayList<>();
+    objectCountList.add(new Object[] {divId, 5L});
+    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(objectCountList);
+    List<Object[]> engineerCountList = new ArrayList<>();
+    engineerCountList.add(new Object[] {divId, 1L});
+    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(engineerCountList);
+    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of());
+    when(objectEngineerRepository.findAllAssignedObjectIds()).thenReturn(List.of());
     DivisionDto dto =
         new DivisionDto(
             divId,
