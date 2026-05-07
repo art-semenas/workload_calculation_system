@@ -57,7 +57,7 @@ describe('CatalogPage', () => {
       {
         id: 'ctx1',
         deviceTypeId: 'dt1',
-        systemType: { id: 'sys1', name: 'ОС', systemTypeOrder: 1 },
+        systemType: 'OS',
         r1Minutes: 120,
         r2Minutes: 60,
       },
@@ -86,14 +86,14 @@ describe('CatalogPage', () => {
       {
         id: 'ctx1',
         deviceTypeId: 'dt1',
-        systemType: { id: 'sys1', name: 'ОС', systemTypeOrder: 1 },
+        systemType: 'OS',
         r1Minutes: 120,
         r2Minutes: 60,
       },
       {
         id: 'ctx2',
         deviceTypeId: 'dt1',
-        systemType: { id: 'sys2', name: 'ПС', systemTypeOrder: 2 },
+        systemType: 'PS',
         r1Minutes: 90,
         r2Minutes: 45,
       },
