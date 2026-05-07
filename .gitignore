@@ -62,6 +62,7 @@ logs/
 # Sensitive data
 # ========================
 docs/Шаблон_нагрузки_з_v_4_00.xlsx
+docs/review contradictions and gaps
 
 # ========================
 # Docker (runtime)
