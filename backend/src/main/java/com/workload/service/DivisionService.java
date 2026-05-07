@@ -7,6 +7,8 @@ import com.workload.entity.Division;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.DivisionMapper;
 import com.workload.repository.BranchRepository;
+import com.workload.repository.DivisionCount;
+import com.workload.repository.DivisionFteSum;
 import com.workload.repository.DivisionRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DivisionService {
@@ -50,6 +53,7 @@ public class DivisionService {
     this.objectEngineerRepository = objectEngineerRepository;
   }
 
+  @Transactional(readOnly = true)
   public List<DivisionDto> findAll() {
     List<Division> divisions = divisionRepository.findAll();
     if (divisions.isEmpty()) {
@@ -61,22 +65,12 @@ public class DivisionService {
     Map<UUID, Long> engineerCounts =
         toCountMap(userRepository.findActiveCountsGroupedByDivisionId());
 
-    List<com.workload.entity.Summary> summaries = summaryRepository.findAllWithOrgHierarchy();
-
     Map<UUID, BigDecimal> requiredFteMap = new HashMap<>();
-    Map<UUID, Long> coverageGapMap = new HashMap<>();
-    Set<UUID> assignedObjectIds =
-        new HashSet<>(objectEngineerRepository.findAllAssignedObjectIds());
-
-    for (com.workload.entity.Summary s : summaries) {
-      UUID divId = s.getObject().getBranch().getDivision().getId();
-      BigDecimal v =
-          s.getItogoChisloWithTravel() != null ? s.getItogoChisloWithTravel() : BigDecimal.ZERO;
-      requiredFteMap.merge(divId, v, BigDecimal::add);
-      if (!assignedObjectIds.contains(s.getObject().getId())) {
-        coverageGapMap.merge(divId, 1L, Long::sum);
-      }
+    for (DivisionFteSum r : summaryRepository.findRequiredFteGroupedByDivision()) {
+      requiredFteMap.put(r.getDivisionId(), r.getRequiredFte());
     }
+    Map<UUID, Long> coverageGapMap =
+        toCountMap(summaryRepository.findUnassignedCountGroupedByDivision());
 
     return divisions.stream()
         .map(
@@ -92,14 +86,15 @@ public class DivisionService {
         .toList();
   }
 
-  private static Map<UUID, Long> toCountMap(List<Object[]> rows) {
+  private static Map<UUID, Long> toCountMap(List<DivisionCount> rows) {
     Map<UUID, Long> map = new HashMap<>();
-    for (Object[] row : rows) {
-      map.put((UUID) row[0], (Long) row[1]);
+    for (DivisionCount row : rows) {
+      map.put(row.getDivisionId(), row.getCount());
     }
     return map;
   }
 
+  @Transactional(readOnly = true)
   public DivisionDto findById(UUID id) {
     Division division =
         divisionRepository
@@ -137,7 +132,6 @@ public class DivisionService {
     long branchCount = branchRepository.countByDivisionId(divisionId);
     long objectCount = objectRepository.countByBranchDivisionId(divisionId);
 
-    // Compute metrics
     long engineerCount = userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
 
     List<com.workload.entity.Summary> summaries =
@@ -156,8 +150,8 @@ public class DivisionService {
     long coverageGap =
         summaries.stream().filter(s -> !assignedObjectIds.contains(s.getObject().getId())).count();
 
-    // Utilisation is computed as SUM(total_load) / SUM(capacity_fte) for division engineers
-    // Nullable — return null if no engineers or data unavailable
+    // PoC (S-02): utilisation = SUM(total_load) / SUM(capacity_fte) per division engineer.
+    // Engineer load summaries are not yet aggregated in this phase. Always null until MVP M-06.
     BigDecimal utilisation = null;
 
     return divisionMapper.toDto(

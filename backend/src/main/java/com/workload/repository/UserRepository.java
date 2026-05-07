@@ -18,8 +18,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
   long countByHomeDivisionIdAndActiveTrue(UUID homeDivisionId);
 
   @Query(
-      "SELECT u.homeDivisionId, COUNT(u) FROM User u"
+      "SELECT u.homeDivisionId as divisionId, COUNT(u) as count FROM User u"
           + " WHERE u.active = true AND u.homeDivisionId IS NOT NULL"
           + " GROUP BY u.homeDivisionId")
-  List<Object[]> findActiveCountsGroupedByDivisionId();
+  List<DivisionCount> findActiveCountsGroupedByDivisionId();
 }

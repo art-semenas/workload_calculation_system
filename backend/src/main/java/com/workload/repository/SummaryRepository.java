@@ -22,6 +22,20 @@ public interface SummaryRepository extends JpaRepository<Summary, UUID> {
   List<Summary> findAllWithOrgHierarchy();
 
   @Query(
+      "SELECT s.object.branch.division.id as divisionId,"
+          + " SUM(COALESCE(s.itogoChisloWithTravel, 0)) as requiredFte"
+          + " FROM Summary s GROUP BY s.object.branch.division.id")
+  List<DivisionFteSum> findRequiredFteGroupedByDivision();
+
+  @Query(
+      "SELECT s.object.branch.division.id as divisionId, COUNT(s) as count"
+          + " FROM Summary s"
+          + " WHERE NOT EXISTS"
+          + " (SELECT oe FROM ObjectEngineer oe WHERE oe.object.id = s.object.id)"
+          + " GROUP BY s.object.branch.division.id")
+  List<DivisionCount> findUnassignedCountGroupedByDivision();
+
+  @Query(
       "SELECT s FROM Summary s"
           + " JOIN FETCH s.object o"
           + " JOIN FETCH o.branch b"

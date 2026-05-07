@@ -12,6 +12,9 @@ public interface ObjectMapper {
   @Mapping(target = "branchName", source = "branch.name")
   @Mapping(target = "divisionId", source = "branch.division.id")
   @Mapping(target = "divisionName", source = "branch.division.name")
+  // PoC (S-02): itogoChisloWithTravel and engineerCount are populated only via the
+  // findAllEnriched() JPQL projection query. The entity-based path (findById) returns null
+  // for both fields. Full population deferred to MVP M-06 when a dedicated summary endpoint lands.
   @Mapping(target = "itogoChisloWithTravel", ignore = true)
   @Mapping(target = "engineerCount", ignore = true)
   ObjectDto toDto(ObjectEntity entity);

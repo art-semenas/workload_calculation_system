@@ -11,6 +11,7 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
 
   long countByDivisionId(UUID divisionId);
 
-  @Query("SELECT b.division.id, COUNT(b) FROM Branch b GROUP BY b.division.id")
-  List<Object[]> findCountsGroupedByDivisionId();
+  @Query(
+      "SELECT b.division.id as divisionId, COUNT(b) as count FROM Branch b GROUP BY b.division.id")
+  List<DivisionCount> findCountsGroupedByDivisionId();
 }

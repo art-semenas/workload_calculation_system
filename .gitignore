@@ -72,3 +72,6 @@ postman/
 
 # Test artifacts
  test-results/
+
+# Claude Code worktrees (local git state — never commit)
+.claude/worktrees/

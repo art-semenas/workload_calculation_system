@@ -45,6 +45,8 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
       """)
   List<ObjectDto> findAllEnriched(@Param("divisionId") UUID divisionId);
 
-  @Query("SELECT o.branch.division.id, COUNT(o) FROM ObjectEntity o GROUP BY o.branch.division.id")
-  List<Object[]> findCountsGroupedByDivisionId();
+  @Query(
+      "SELECT o.branch.division.id as divisionId, COUNT(o) as count"
+          + " FROM ObjectEntity o GROUP BY o.branch.division.id")
+  List<DivisionCount> findCountsGroupedByDivisionId();
 }

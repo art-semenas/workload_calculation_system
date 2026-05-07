@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import com.workload.entity.Division;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.DivisionMapper;
 import com.workload.repository.BranchRepository;
+import com.workload.repository.DivisionCount;
 import com.workload.repository.DivisionRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
@@ -21,7 +23,6 @@ import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,15 +55,17 @@ class DivisionServiceTest {
             .updatedAt(OffsetDateTime.now())
             .build();
     when(divisionRepository.findAll()).thenReturn(List.of(div));
-    List<Object[]> branchCountList = new ArrayList<>();
-    branchCountList.add(new Object[] {div.getId(), 2L});
-    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(branchCountList);
-    List<Object[]> objectCountList = new ArrayList<>();
-    objectCountList.add(new Object[] {div.getId(), 5L});
-    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(objectCountList);
-    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(new ArrayList<>());
-    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of());
-    when(objectEngineerRepository.findAllAssignedObjectIds()).thenReturn(List.of());
+
+    DivisionCount branchRow = mockCount(div.getId(), 2L);
+    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(List.of(branchRow));
+
+    DivisionCount objectRow = mockCount(div.getId(), 5L);
+    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(List.of(objectRow));
+
+    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(List.of());
+    when(summaryRepository.findRequiredFteGroupedByDivision()).thenReturn(List.of());
+    when(summaryRepository.findUnassignedCountGroupedByDivision()).thenReturn(List.of());
+
     DivisionDto dto =
         new DivisionDto(
             div.getId(),
@@ -210,17 +213,19 @@ class DivisionServiceTest {
             .updatedAt(OffsetDateTime.now())
             .build();
     when(divisionRepository.findAll()).thenReturn(List.of(div));
-    List<Object[]> branchCountList = new ArrayList<>();
-    branchCountList.add(new Object[] {divId, 1L});
-    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(branchCountList);
-    List<Object[]> objectCountList = new ArrayList<>();
-    objectCountList.add(new Object[] {divId, 5L});
-    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(objectCountList);
-    List<Object[]> engineerCountList = new ArrayList<>();
-    engineerCountList.add(new Object[] {divId, 1L});
-    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(engineerCountList);
-    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of());
-    when(objectEngineerRepository.findAllAssignedObjectIds()).thenReturn(List.of());
+
+    DivisionCount branchRow = mockCount(divId, 1L);
+    when(branchRepository.findCountsGroupedByDivisionId()).thenReturn(List.of(branchRow));
+
+    DivisionCount objectRow = mockCount(divId, 5L);
+    when(objectRepository.findCountsGroupedByDivisionId()).thenReturn(List.of(objectRow));
+
+    DivisionCount engineerRow = mockCount(divId, 1L);
+    when(userRepository.findActiveCountsGroupedByDivisionId()).thenReturn(List.of(engineerRow));
+
+    when(summaryRepository.findRequiredFteGroupedByDivision()).thenReturn(List.of());
+    when(summaryRepository.findUnassignedCountGroupedByDivision()).thenReturn(List.of());
+
     DivisionDto dto =
         new DivisionDto(
             divId,
@@ -243,5 +248,12 @@ class DivisionServiceTest {
     assertThat(result.get(0).engineerCount()).isEqualTo(1L);
     assertThat(result.get(0).requiredFte()).isNotNull();
     assertThat(result.get(0).coverageGap()).isEqualTo(0L);
+  }
+
+  private static DivisionCount mockCount(UUID divisionId, long count) {
+    DivisionCount row = mock(DivisionCount.class);
+    when(row.getDivisionId()).thenReturn(divisionId);
+    when(row.getCount()).thenReturn(count);
+    return row;
   }
 }
