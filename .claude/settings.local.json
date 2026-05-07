@@ -12,7 +12,25 @@
       "Bash(npx tsc:*)",
       "Bash(npm test:*)",
       "Bash(npx vitest:*)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(xargs grep *)",
+      "Bash(git commit*)",
+      "Bash(git diff*)",
+      "Bash(git status*)",
+      "Bash(git log*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-commit.sh"
+          }
+        ]
+      }
     ]
   }
 }
