@@ -457,20 +457,21 @@ test.describe('Object Detail — Summary tab', () => {
     const addDeviceDialog = page.getByRole('dialog', { name: 'Add Device' })
     await addDeviceDialog.getByLabel('Device Type').click()
     await page.getByRole('option', { name: catalog.device.name }).click()
-    await addDeviceDialog.getByLabel('Quantity Physical').fill('2')
+    await addDeviceDialog.getByLabel('Qty physical').fill('2')
     await addDeviceDialog.getByRole('button', { name: 'Add' }).click()
     await expect(addDeviceDialog).toBeHidden()
 
-    await page
-      .getByRole('button', { name: `add assignment for ${catalog.device.name}` })
-      .click()
+    await page.getByRole('button', { name: 'Add assignment' }).click()
 
     const addAssignmentDialog = page.getByRole('dialog', { name: /add assignment/i })
     await expect(addAssignmentDialog).toBeVisible()
 
-    await page.getByLabel('System Type').click()
+    await page.getByLabel('Device').click()
+    await page.getByRole('option', { name: catalog.device.name }).click()
+    await expect(page.getByRole('option', { name: catalog.device.name })).toBeHidden()
+    await page.locator('[aria-label="System Type"]').click()
     await page.getByRole('option', { name: assignmentLabel }).click()
-    await page.getByLabel('Quantity Maintained').fill('1')
+    await page.getByLabel('Qty maintained').fill('1')
     await page.getByRole('button', { name: 'Add' }).click()
     await expect(addAssignmentDialog).toBeHidden()
 
