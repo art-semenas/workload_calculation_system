@@ -1,12 +1,5 @@
 import { useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Divider, Typography } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -38,8 +31,13 @@ export default function LoginPage() {
   const onSubmit = handleSubmit(async (data) => {
     setErrorMessage(null)
     try {
-      await loginMutation.mutateAsync(data)
-      navigate('/')
+      const result = await loginMutation.mutateAsync(data)
+      // Ensure token is saved to store before navigation
+      if (result.token && result.user) {
+        navigate('/')
+      } else {
+        setErrorMessage('Login response invalid: missing token or user')
+      }
     } catch (error: unknown) {
       if (isUnauthorizedError(error)) {
         setErrorMessage('Invalid email or password')
