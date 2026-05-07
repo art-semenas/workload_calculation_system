@@ -11,6 +11,7 @@
 # Java / Maven
 # ========================
 backend/target/
+backend/test_output.txt
 *.class
 *.jar
 *.war
@@ -24,6 +25,7 @@ replay_pid*
 frontend/node_modules/
 frontend/dist/
 frontend/coverage/
+frontend/vite.config.ts.timestamp-*.mjs
 *.tsbuildinfo
 
 # ========================
