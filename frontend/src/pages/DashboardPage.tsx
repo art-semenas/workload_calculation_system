@@ -133,7 +133,7 @@ export default function DashboardPage() {
             <CircularProgress />
           </Box>
         ) : (
-          <Table>
+          <Table data-testid="fte-division-table">
             <TableHead>
               <TableRow>
                 <TableCell>Division</TableCell>

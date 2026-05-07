@@ -68,7 +68,9 @@ test.describe('Dashboard SVOD sections', () => {
 
     await loginAsAdmin(page)
 
-    const divisionRows = page.getByRole('row').filter({ has: page.getByRole('cell').nth(0) })
+    const fteTable = page.getByTestId('fte-division-table')
+    const divisionRows = fteTable.getByRole('row').filter({ has: page.getByRole('cell') })
+    await expect(divisionRows.first()).toBeVisible()
     await divisionRows.first().click()
 
     await expect(page).toHaveURL(/\/divisions\/[0-9a-f-]+$/)
