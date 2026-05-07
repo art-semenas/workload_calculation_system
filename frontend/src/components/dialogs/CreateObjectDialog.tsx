@@ -254,11 +254,7 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
             Equipment & assignments are added after creation
           </Typography>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={createObject.isPending}
-          >
+          <Button type="submit" variant="contained" disabled={createObject.isPending}>
             Create object
           </Button>
         </DialogActions>
