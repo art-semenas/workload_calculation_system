@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Read stdin JSON and extract git command
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null || echo "")
+COMMAND=$(echo "$INPUT" | python -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" 2>/dev/null || echo "")
 
 # Only intercept git commit — let other commands pass through
 if ! echo "$COMMAND" | grep -q "git commit"; then
