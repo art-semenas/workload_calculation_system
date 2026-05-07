@@ -3,10 +3,8 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   CircularProgress,
   Divider,
-  FormControlLabel,
   Typography,
 } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -31,7 +29,6 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const loginMutation = useLogin()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [keepSignedIn, setKeepSignedIn] = useState(false)
 
   const { control, handleSubmit, formState } = useForm<LoginRequest>({
     resolver: zodResolver(LoginRequestSchema),
@@ -144,18 +141,6 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={keepSignedIn}
-                onChange={(e) => setKeepSignedIn(e.target.checked)}
-                size="small"
-              />
-            }
-            label={<Typography sx={{ fontSize: 13 }}>Keep me signed in</Typography>}
-            sx={{ mt: 1 }}
-          />
-
           <Button
             type="submit"
             fullWidth
@@ -169,7 +154,7 @@ export default function LoginPage() {
 
           <Divider sx={{ my: 2, fontSize: 12, color: tokens.ink3 }}>or</Divider>
 
-          <Button fullWidth variant="outlined">
+          <Button fullWidth variant="outlined" disabled>
             Continue with corporate SSO
           </Button>
         </Box>
