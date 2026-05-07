@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": ".claude/hooks/pre-commit.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-stage.sh"
           }
         ]
       }
