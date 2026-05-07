@@ -305,6 +305,7 @@ export default function SvodPage() {
   const rangeStart = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalElements)
 
+  // Display aggregation of server-computed FTE values for footer label — not a domain calculation
   const pageSum = filteredRows.reduce((s, r) => s + r.itogoChisloWithTravel, 0)
   const pageAvg = filteredRows.length > 0 ? pageSum / filteredRows.length : 0
 

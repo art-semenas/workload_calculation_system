@@ -117,7 +117,9 @@ public ResponseEntity<Division> getDivision(@PathVariable UUID id) { ... }
 
 ### Calculations are server-side only
 
-The frontend never computes workload values (TOR AD-07). The frontend reads only from `summaries` and `engineer_summaries`. Never add calculation logic to TypeScript code.
+The frontend never computes workload values (TOR AD-07). The frontend reads from `summaries` and `engineer_summaries`. Never add calculation engine logic to TypeScript: FTE formulas, normatives, repair thresholds, or any TOR §4–§6 formula.
+
+**Display-only aggregations are acceptable:** summing or averaging server-provided FTE values for a footer label or KPI chip (e.g. page sum in Svod, avg utilisation in Divisions) does not implement a domain formula and is permitted. Mark such code with a comment: `// Display aggregation of server-computed values — not a domain calculation`.
 
 ### Package structure
 

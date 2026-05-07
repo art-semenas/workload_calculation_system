@@ -398,6 +398,7 @@ export default function EngineerDetailPage() {
             </TableHead>
             <TableBody>
               {sortedObjects.map((obj) => {
+                // Display-only percentage for progress bar — normalises server-provided values
                 const pctOfTotal =
                   summary && summary.totalLoad > 0
                     ? (obj.engineerShare / summary.totalLoad) * 100

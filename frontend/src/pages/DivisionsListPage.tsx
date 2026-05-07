@@ -25,7 +25,7 @@ export default function DivisionsListPage() {
   const [open, setOpen] = useState(false)
   const { data, isLoading } = useDivisions()
 
-  // Compute KPI metrics
+  // Display aggregation of server-computed values — not a domain calculation (TOR AD-07 permits this)
   const divisionCount = data?.length ?? 0
   const totalObjects = data?.reduce((sum, d) => sum + (d.objectCount ?? 0), 0) ?? 0
   const totalEngineers = data?.reduce((sum, d) => sum + (d.engineerCount ?? 0), 0) ?? 0
