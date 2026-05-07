@@ -131,14 +131,15 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
         </IconButton>
       </DialogTitle>
 
-      {/* Form Content */}
-      <DialogContent sx={{ pt: 3 }}>
-        <Box
-          component="form"
-          onSubmit={(e) => {
-            void handleCreate(e)
-          }}
-        >
+      {/* Form wraps both content and actions so type="submit" button works */}
+      <Box
+        component="form"
+        onSubmit={(e) => {
+          void handleCreate(e)
+        }}
+      >
+        {/* Form Content */}
+        <DialogContent sx={{ pt: 3 }}>
           <Grid container spacing={2}>
             {/* Object Name — full width */}
             <Grid item xs={12}>
@@ -236,35 +237,32 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
               />
             </Grid>
           </Grid>
-        </Box>
-      </DialogContent>
+        </DialogContent>
 
-      {/* Footer with Hint and Actions */}
-      <DialogActions
-        sx={{
-          p: 2,
-          gap: 1,
-          justifyContent: 'space-between',
-          '& > :first-of-type': {
-            mr: 'auto',
-          },
-        }}
-      >
-        <Typography sx={{ fontSize: 12, color: tokens.ink3, flex: 1 }}>
-          Equipment & assignments are added after creation
-        </Typography>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={createObject.isPending}
-          onClick={(e) => {
-            void handleCreate(e)
+        {/* Footer with Hint and Actions */}
+        <DialogActions
+          sx={{
+            p: 2,
+            gap: 1,
+            justifyContent: 'space-between',
+            '& > :first-of-type': {
+              mr: 'auto',
+            },
           }}
         >
-          Create object
-        </Button>
-      </DialogActions>
+          <Typography sx={{ fontSize: 12, color: tokens.ink3, flex: 1 }}>
+            Equipment & assignments are added after creation
+          </Typography>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={createObject.isPending}
+          >
+            Create object
+          </Button>
+        </DialogActions>
+      </Box>
     </Dialog>
   )
 }
