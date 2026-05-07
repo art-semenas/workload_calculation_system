@@ -141,31 +141,30 @@ function AddAssignmentDialog({
             name="systemType"
             control={form.control}
             render={({ field, fieldState }) => (
-              <FormControl
-                fullWidth
-                size="small"
-                error={!!fieldState.error}
-                disabled={!selectedDeviceTypeId}
-              >
+              <FormControl fullWidth size="small" error={!!fieldState.error}>
                 <InputLabel>System Type</InputLabel>
                 <Select
                   {...field}
                   label="System Type"
                   SelectDisplayProps={{ 'aria-label': 'System Type' }}
                 >
-                  <MenuItem value="">
-                    <em>Select system type</em>
-                  </MenuItem>
-                  {availableSystemTypes.map((st) => (
-                    <MenuItem key={st} value={st}>
-                      {SYSTEM_TYPE_LABELS[st]}
+                  {!selectedDeviceTypeId ? (
+                    <MenuItem value="" disabled>
+                      <em>Select a device first</em>
                     </MenuItem>
-                  ))}
+                  ) : availableSystemTypes.length === 0 ? (
+                    <MenuItem value="" disabled>
+                      <em>No system types available</em>
+                    </MenuItem>
+                  ) : (
+                    availableSystemTypes.map((st) => (
+                      <MenuItem key={st} value={st}>
+                        {SYSTEM_TYPE_LABELS[st]}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
                 {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
-                {selectedDeviceTypeId && availableSystemTypes.length === 0 && (
-                  <FormHelperText>No available system types for this device.</FormHelperText>
-                )}
               </FormControl>
             )}
           />
