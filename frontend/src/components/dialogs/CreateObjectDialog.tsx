@@ -123,7 +123,7 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
           Create object
         </Typography>
         <IconButton
-          onClick={onClose}
+          onClick={handleClose}
           size="small"
           sx={{ position: 'absolute', right: 8, top: 8, color: tokens.ink3 }}
         >
