@@ -39,20 +39,7 @@ public class ObjectService {
 
   public List<ObjectDto> findAll(Optional<UUID> divisionId) {
     return objectRepository.findAllEnriched(divisionId.orElse(null)).stream()
-        .map(
-            r ->
-                new ObjectDto(
-                    r.getId(),
-                    r.getBranchId(),
-                    r.getBranchName(),
-                    r.getDivisionId(),
-                    r.getDivisionName(),
-                    r.getName(),
-                    r.getImportSeqNo(),
-                    r.getItogoChisloWithTravel(),
-                    r.getEngineerCount(),
-                    r.getCreatedAt(),
-                    r.getUpdatedAt()))
+        .map(objectMapper::toDto)
         .toList();
   }
 
