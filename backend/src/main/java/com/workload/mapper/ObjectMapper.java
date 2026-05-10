@@ -2,6 +2,7 @@ package com.workload.mapper;
 
 import com.workload.dto.ObjectDto;
 import com.workload.entity.ObjectEntity;
+import com.workload.repository.ObjectEnrichedRow;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,4 +19,6 @@ public interface ObjectMapper {
   @Mapping(target = "itogoChisloWithTravel", ignore = true)
   @Mapping(target = "engineerCount", ignore = true)
   ObjectDto toDto(ObjectEntity entity);
+
+  ObjectDto toDto(ObjectEnrichedRow row);
 }
