@@ -1,6 +1,5 @@
 package com.workload.repository;
 
-import com.workload.dto.ObjectDto;
 import com.workload.entity.ObjectEntity;
 import java.util.List;
 import java.util.UUID;
@@ -22,28 +21,26 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
 
   @Query(
       """
-      SELECT new com.workload.dto.ObjectDto(
-          o.id,
-          o.branch.id,
-          o.branch.name,
-          o.branch.division.id,
-          o.branch.division.name,
-          o.name,
-          o.importSeqNo,
-          s.itogoChisloWithTravel,
-          COUNT(oe.id),
-          o.createdAt,
-          o.updatedAt)
+      SELECT o.id          as id,
+             o.branch.id   as branchId,
+             o.branch.name as branchName,
+             o.branch.division.id   as divisionId,
+             o.branch.division.name as divisionName,
+             o.name         as name,
+             o.importSeqNo  as importSeqNo,
+             MAX(s.itogoChisloWithTravel) as itogoChisloWithTravel,
+             COUNT(oe.id)   as engineerCount,
+             o.createdAt    as createdAt,
+             o.updatedAt    as updatedAt
       FROM ObjectEntity o
       LEFT JOIN Summary s ON s.object.id = o.id
       LEFT JOIN ObjectEngineer oe ON oe.object.id = o.id
       WHERE (:divisionId IS NULL OR o.branch.division.id = :divisionId)
       GROUP BY o.id, o.branch.id, o.branch.name,
                o.branch.division.id, o.branch.division.name,
-               o.name, o.importSeqNo, s.itogoChisloWithTravel,
-               o.createdAt, o.updatedAt
+               o.name, o.importSeqNo, o.createdAt, o.updatedAt
       """)
-  List<ObjectDto> findAllEnriched(@Param("divisionId") UUID divisionId);
+  List<ObjectEnrichedRow> findAllEnriched(@Param("divisionId") UUID divisionId);
 
   @Query(
       "SELECT o.branch.division.id as divisionId, COUNT(o) as count"

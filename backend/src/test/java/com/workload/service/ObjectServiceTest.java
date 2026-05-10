@@ -3,6 +3,7 @@ package com.workload.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,9 +22,11 @@ import com.workload.mapper.ObjectMapper;
 import com.workload.mapper.SummaryMapper;
 import com.workload.repository.BranchRepository;
 import com.workload.repository.ObjectEngineerRepository;
+import com.workload.repository.ObjectEnrichedRow;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
 import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -68,10 +71,9 @@ class ObjectServiceTest {
 
   @Test
   void findAllReturnsAllObjects() {
-    ObjectEntity entity = buildObject("Archive");
-    ObjectDto dto =
-        new ObjectDto(
-            entity.getId(),
+    ObjectEnrichedRow row =
+        mockEnrichedRow(
+            UUID.randomUUID(),
             branchId,
             "Branch1",
             divisionId,
@@ -80,21 +82,21 @@ class ObjectServiceTest {
             null,
             null,
             null,
-            entity.getCreatedAt(),
-            entity.getUpdatedAt());
-    when(objectRepository.findAllEnriched(null)).thenReturn(List.of(dto));
+            OffsetDateTime.now(),
+            OffsetDateTime.now());
+    when(objectRepository.findAllEnriched(null)).thenReturn(List.of(row));
 
     List<ObjectDto> result = objectService.findAll(Optional.empty());
 
     assertThat(result).hasSize(1);
+    assertThat(result.get(0).name()).isEqualTo("Archive");
   }
 
   @Test
   void findAllFiltersByDivision() {
-    ObjectEntity entity = buildObject("Archive");
-    ObjectDto dto =
-        new ObjectDto(
-            entity.getId(),
+    ObjectEnrichedRow row =
+        mockEnrichedRow(
+            UUID.randomUUID(),
             branchId,
             "Branch1",
             divisionId,
@@ -103,13 +105,14 @@ class ObjectServiceTest {
             null,
             null,
             null,
-            entity.getCreatedAt(),
-            entity.getUpdatedAt());
-    when(objectRepository.findAllEnriched(divisionId)).thenReturn(List.of(dto));
+            OffsetDateTime.now(),
+            OffsetDateTime.now());
+    when(objectRepository.findAllEnriched(divisionId)).thenReturn(List.of(row));
 
     List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
 
     assertThat(result).hasSize(1);
+    assertThat(result.get(0).branchName()).isEqualTo("Branch1");
   }
 
   @Test
@@ -330,5 +333,32 @@ class ObjectServiceTest {
         .createdAt(OffsetDateTime.now())
         .updatedAt(OffsetDateTime.now())
         .build();
+  }
+
+  private static ObjectEnrichedRow mockEnrichedRow(
+      UUID id,
+      UUID branchId,
+      String branchName,
+      UUID divisionId,
+      String divisionName,
+      String name,
+      Integer importSeqNo,
+      BigDecimal itogoChisloWithTravel,
+      Long engineerCount,
+      OffsetDateTime createdAt,
+      OffsetDateTime updatedAt) {
+    ObjectEnrichedRow row = mock(ObjectEnrichedRow.class);
+    when(row.getId()).thenReturn(id);
+    when(row.getBranchId()).thenReturn(branchId);
+    when(row.getBranchName()).thenReturn(branchName);
+    when(row.getDivisionId()).thenReturn(divisionId);
+    when(row.getDivisionName()).thenReturn(divisionName);
+    when(row.getName()).thenReturn(name);
+    when(row.getImportSeqNo()).thenReturn(importSeqNo);
+    when(row.getItogoChisloWithTravel()).thenReturn(itogoChisloWithTravel);
+    when(row.getEngineerCount()).thenReturn(engineerCount);
+    when(row.getCreatedAt()).thenReturn(createdAt);
+    when(row.getUpdatedAt()).thenReturn(updatedAt);
+    return row;
   }
 }
