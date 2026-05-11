@@ -304,6 +304,7 @@ export default function SvodPage() {
 
   const totalElements = data?.totalElements ?? 0
   const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
+  const displayTotalPages = isSearchActive ? 1 : totalPages
   // When search is active show local filtered count; server range is meaningless across all pages
   const rangeStart = isSearchActive
     ? filteredRows.length === 0
@@ -568,7 +569,7 @@ export default function SvodPage() {
                   textAlign: 'center',
                 }}
               >
-                {page + 1} / {totalPages}
+                {page + 1} / {displayTotalPages}
               </Typography>
               <Button
                 variant="outlined"
