@@ -26,15 +26,20 @@ if [ -n "$MSG" ] && echo "$MSG" | grep -qE "$FORBIDDEN"; then
   exit 0
 fi
 
-# Auto-format staged files based on what changed
+# Auto-format staged files based on what changed, then re-stage them
 STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
 
-if echo "$STAGED" | grep -q "^backend/"; then
+BACKEND_STAGED=$(echo "$STAGED" | grep "^backend/" || true)
+FRONTEND_STAGED=$(echo "$STAGED" | grep "^frontend/" || true)
+
+if [ -n "$BACKEND_STAGED" ]; then
   cd backend && mvn spotless:apply -q 2>/dev/null || true && cd ..
+  echo "$BACKEND_STAGED" | xargs -r git add
 fi
 
-if echo "$STAGED" | grep -q "^frontend/"; then
+if [ -n "$FRONTEND_STAGED" ]; then
   cd frontend && npm run format --silent 2>/dev/null || true && cd ..
+  echo "$FRONTEND_STAGED" | xargs -r git add
 fi
 
 exit 0
