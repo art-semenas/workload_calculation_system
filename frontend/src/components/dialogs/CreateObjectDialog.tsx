@@ -3,7 +3,6 @@ import { useQueries } from '@tanstack/react-query'
 import {
   Box,
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -18,6 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { QuietDialog } from './QuietDialog'
 import CloseIcon from '@mui/icons-material/Close'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
@@ -93,19 +93,7 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
   })
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      fullWidth
-      maxWidth="sm"
-      sx={{
-        '& .MuiDialog-paper': {
-          width: 560,
-          borderRadius: 'var(--r-lg)',
-          border: '1px solid var(--line-strong)',
-        },
-      }}
-    >
+    <QuietDialog open={open} onClose={handleClose} paperWidth={560}>
       {/* Title Section with Eyebrow */}
       <DialogTitle sx={{ position: 'relative', pb: 1 }}>
         <Typography
@@ -259,6 +247,6 @@ export default function CreateObjectDialog({ open, onClose }: CreateObjectDialog
           </Button>
         </DialogActions>
       </Box>
-    </Dialog>
+    </QuietDialog>
   )
 }
