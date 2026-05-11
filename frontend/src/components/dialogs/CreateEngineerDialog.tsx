@@ -4,12 +4,10 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   Grid,
   IconButton,
   InputLabel,
@@ -18,7 +16,6 @@ import {
   Typography,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState } from 'react'
 import { QuietDialog } from './QuietDialog'
 import { FormTextField } from '../common/FormTextField'
 import { useDivisions } from '../../hooks/useDivisions'
@@ -32,7 +29,6 @@ interface CreateEngineerDialogProps {
 }
 
 export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProps) {
-  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(false)
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
   const createMutation = useCreateEngineer()
 
@@ -43,7 +39,6 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
 
   const handleClose = () => {
     reset()
-    setSendWelcomeEmail(false)
     onClose()
   }
 
@@ -139,17 +134,7 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={sendWelcomeEmail}
-                onChange={(e) => setSendWelcomeEmail(e.target.checked)}
-                size="small"
-              />
-            }
-            label={<Typography sx={{ fontSize: 13 }}>Send welcome email</Typography>}
-          />
+        <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'flex-end' }}>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button onClick={handleClose}>Cancel</Button>
             <Button type="submit" variant="contained" disabled={createMutation.isPending}>
