@@ -95,7 +95,7 @@ function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
       headerAlign: 'left',
       flex: 0.6,
       minWidth: 140,
-      renderCell: ({ value }: { value: string }) => (
+      renderCell: ({ value }: { value?: string }) => (
         <Box
           sx={{
             color: tokens.ink3,
@@ -104,7 +104,7 @@ function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
             whiteSpace: 'nowrap',
           }}
         >
-          {value}
+          {value ?? ''}
         </Box>
       ),
     },
@@ -288,9 +288,11 @@ export default function SvodPage() {
     [showBreakdown, svodPrecision]
   )
 
+  const isSearchActive = search.trim().length > 0
+
   const filteredRows = useMemo(() => {
     const rows = data?.content ?? []
-    if (!search.trim()) return rows
+    if (!isSearchActive) return rows
     const q = search.toLowerCase()
     return rows.filter(
       (r) =>
@@ -298,12 +300,13 @@ export default function SvodPage() {
         (r.address ?? '').toLowerCase().includes(q) ||
         r.divisionName.toLowerCase().includes(q)
     )
-  }, [data?.content, search])
+  }, [data?.content, search, isSearchActive])
 
   const totalElements = data?.totalElements ?? 0
   const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
-  const rangeStart = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
-  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalElements)
+  // When search is active show local filtered count; server range is meaningless across all pages
+  const rangeStart = isSearchActive ? (filteredRows.length === 0 ? 0 : 1) : totalElements === 0 ? 0 : page * PAGE_SIZE + 1
+  const rangeEnd = isSearchActive ? filteredRows.length : Math.min((page + 1) * PAGE_SIZE, totalElements)
 
   // Display aggregation of server-computed FTE values for footer label — not a domain calculation
   const pageSum = filteredRows.reduce((s, r) => s + r.itogoChisloWithTravel, 0)
@@ -468,28 +471,36 @@ export default function SvodPage() {
               color: tokens.ink3,
             }}
           >
-            {/* Left: range */}
+            {/* Left: range — shows local filtered count when search is active */}
             <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
-              Showing{' '}
-              <Box
-                component="span"
-                sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  color: tokens.ink2,
-                }}
-              >
-                {rangeStart}–{rangeEnd}
-              </Box>{' '}
-              of{' '}
-              <Box
-                component="span"
-                sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  color: tokens.ink2,
-                }}
-              >
-                {totalElements.toLocaleString()}
-              </Box>
+              {isSearchActive ? (
+                <>
+                  <Box
+                    component="span"
+                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                  >
+                    {filteredRows.length}
+                  </Box>
+                  {' matching on this page'}
+                </>
+              ) : (
+                <>
+                  Showing{' '}
+                  <Box
+                    component="span"
+                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                  >
+                    {rangeStart}–{rangeEnd}
+                  </Box>{' '}
+                  of{' '}
+                  <Box
+                    component="span"
+                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                  >
+                    {totalElements.toLocaleString()}
+                  </Box>
+                </>
+              )}
             </Typography>
 
             {/* Center: aggregates */}
@@ -525,7 +536,7 @@ export default function SvodPage() {
               <Button
                 variant="outlined"
                 size="small"
-                disabled={page === 0}
+                disabled={page === 0 || isSearchActive}
                 onClick={() => setPage((p) => p - 1)}
                 sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
               >
@@ -545,7 +556,7 @@ export default function SvodPage() {
               <Button
                 variant="outlined"
                 size="small"
-                disabled={page >= totalPages - 1}
+                disabled={page >= totalPages - 1 || isSearchActive}
                 onClick={() => setPage((p) => p + 1)}
                 sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
               >
