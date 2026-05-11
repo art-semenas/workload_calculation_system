@@ -115,8 +115,7 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
                 render={({ field, fieldState }) => (
                   <FormControl fullWidth error={!!fieldState.error}>
                     <InputLabel>Division</InputLabel>
-                    <Select {...field} label="Division" displayEmpty disabled={divisionsLoading}>
-                      <MenuItem value="">Select a division</MenuItem>
+                    <Select {...field} label="Division" disabled={divisionsLoading}>
                       {divisions?.map((div) => (
                         <MenuItem key={div.id} value={div.id}>
                           {div.name}
