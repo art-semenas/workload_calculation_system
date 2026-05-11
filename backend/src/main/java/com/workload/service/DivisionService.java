@@ -10,17 +10,14 @@ import com.workload.repository.BranchRepository;
 import com.workload.repository.DivisionCount;
 import com.workload.repository.DivisionFteSum;
 import com.workload.repository.DivisionRepository;
-import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +31,6 @@ public class DivisionService {
   private final DivisionMapper divisionMapper;
   private final SummaryRepository summaryRepository;
   private final UserRepository userRepository;
-  private final ObjectEngineerRepository objectEngineerRepository;
 
   public DivisionService(
       DivisionRepository divisionRepository,
@@ -42,15 +38,13 @@ public class DivisionService {
       ObjectRepository objectRepository,
       DivisionMapper divisionMapper,
       SummaryRepository summaryRepository,
-      UserRepository userRepository,
-      ObjectEngineerRepository objectEngineerRepository) {
+      UserRepository userRepository) {
     this.divisionRepository = divisionRepository;
     this.branchRepository = branchRepository;
     this.objectRepository = objectRepository;
     this.divisionMapper = divisionMapper;
     this.summaryRepository = summaryRepository;
     this.userRepository = userRepository;
-    this.objectEngineerRepository = objectEngineerRepository;
   }
 
   @Transactional(readOnly = true)
@@ -131,30 +125,21 @@ public class DivisionService {
     UUID divisionId = division.getId();
     long branchCount = branchRepository.countByDivisionId(divisionId);
     long objectCount = objectRepository.countByBranchDivisionId(divisionId);
-
     long engineerCount = userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
-
-    List<com.workload.entity.Summary> summaries =
-        summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId);
-    BigDecimal requiredFte =
-        summaries.stream()
-            .map(
-                s ->
-                    s.getItogoChisloWithTravel() != null
-                        ? s.getItogoChisloWithTravel()
-                        : BigDecimal.ZERO)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-    Set<UUID> assignedObjectIds =
-        new HashSet<>(objectEngineerRepository.findAllAssignedObjectIdsByDivision(divisionId));
-    long coverageGap =
-        summaries.stream().filter(s -> !assignedObjectIds.contains(s.getObject().getId())).count();
+    BigDecimal requiredFte = summaryRepository.findRequiredFteByDivisionId(divisionId);
+    Long coverageGap = summaryRepository.findUnassignedCountByDivisionId(divisionId);
 
     // PoC (S-02): utilisation = SUM(total_load) / SUM(capacity_fte) per division engineer.
     // Engineer load summaries are not yet aggregated in this phase. Always null until MVP M-06.
     BigDecimal utilisation = null;
 
     return divisionMapper.toDto(
-        division, branchCount, objectCount, engineerCount, requiredFte, coverageGap, utilisation);
+        division,
+        branchCount,
+        objectCount,
+        engineerCount,
+        requiredFte,
+        coverageGap != null ? coverageGap : 0L,
+        utilisation);
   }
 }
