@@ -17,42 +17,20 @@ export const BranchSchema = z.object({
   updatedAt: z.string().optional(),
 })
 
-// Internal schema matching the actual backend snake_case JSON keys from DivisionDto
-const DivisionRawSchema = z.object({
+export const DivisionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  branch_count: z.number().int(),
-  object_count: z.number().int(),
-  engineer_count: z.number().int().nullable().optional(),
-  required_fte: z.number().nullable().optional(),
-  coverage_gap: z.number().int().nullable().optional(),
+  branchCount: z.number().int(),
+  objectCount: z.number().int(),
+  engineerCount: z.number().int().nullable().optional(),
+  requiredFte: z.number().nullable().optional(),
+  coverageGap: z.number().int().nullable().optional(),
   utilisation: z.number().nullable().optional(),
 })
 
-export const DivisionSchema = DivisionRawSchema.transform((d) => ({
-  id: d.id,
-  name: d.name,
-  branchCount: d.branch_count,
-  objectCount: d.object_count,
-  engineerCount: d.engineer_count,
-  requiredFte: d.required_fte,
-  coverageGap: d.coverage_gap,
-  utilisation: d.utilisation,
-}))
-
-export const DivisionDetailSchema = DivisionRawSchema.extend({
+export const DivisionDetailSchema = DivisionSchema.extend({
   branches: z.array(BranchSchema).optional().default([]),
-}).transform((d) => ({
-  id: d.id,
-  name: d.name,
-  branchCount: d.branch_count,
-  objectCount: d.object_count,
-  engineerCount: d.engineer_count,
-  requiredFte: d.required_fte,
-  coverageGap: d.coverage_gap,
-  utilisation: d.utilisation,
-  branches: d.branches,
-}))
+})
 
 // BranchDetailSchema matches the actual BranchDto response (no embedded objects)
 export const BranchDetailSchema = BranchSchema

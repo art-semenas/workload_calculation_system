@@ -62,8 +62,8 @@ class DivisionControllerIT extends IntegrationTestBase {
         .statusCode(201)
         .body("data.name", equalTo("Brest"))
         .body("data.id", notNullValue())
-        .body("data.branch_count", equalTo(0))
-        .body("data.object_count", equalTo(0));
+        .body("data.branchCount", equalTo(0))
+        .body("data.objectCount", equalTo(0));
   }
 
   @Test
