@@ -80,30 +80,28 @@ function AddAssignmentDialog({
   onSubmit: (values: AddFormValues) => Promise<void>
   isPending: boolean
 }) {
-  const [selectedDeviceTypeId, setSelectedDeviceTypeId] = useState('')
-  const { data: contexts = [] } = useCatalogDeviceContexts(selectedDeviceTypeId)
+  const form = useForm<AddFormValues>({
+    resolver: zodResolver(AssignmentCreateSchema),
+    defaultValues: { deviceTypeId: '', systemType: '', quantityMaintained: 0 },
+  })
+
+  const watchedDeviceTypeId = form.watch('deviceTypeId')
+  const { data: contexts = [] } = useCatalogDeviceContexts(watchedDeviceTypeId)
 
   const existingSystemTypes = assignments
-    .filter((a) => a.deviceTypeId === selectedDeviceTypeId)
+    .filter((a) => a.deviceTypeId === watchedDeviceTypeId)
     .map((a) => a.systemType)
 
   const availableSystemTypes = contexts
     .map((c) => c.systemType)
     .filter((st) => !existingSystemTypes.includes(st))
 
-  const form = useForm<AddFormValues>({
-    resolver: zodResolver(AssignmentCreateSchema),
-    defaultValues: { deviceTypeId: '', systemType: '', quantityMaintained: 0 },
-  })
-
   function handleClose() {
     form.reset({ deviceTypeId: '', systemType: '', quantityMaintained: 0 })
-    setSelectedDeviceTypeId('')
     onClose()
   }
 
   function handleDeviceChange(deviceTypeId: string) {
-    setSelectedDeviceTypeId(deviceTypeId)
     form.setValue('deviceTypeId', deviceTypeId)
     form.setValue('systemType', '')
   }
@@ -121,7 +119,7 @@ function AddAssignmentDialog({
           <FormControl fullWidth size="small">
             <InputLabel>Device</InputLabel>
             <Select
-              value={selectedDeviceTypeId}
+              value={watchedDeviceTypeId}
               label="Device"
               onChange={(e) => handleDeviceChange(e.target.value)}
               SelectDisplayProps={{ 'aria-label': 'Device' }}
@@ -148,7 +146,7 @@ function AddAssignmentDialog({
                   label="System Type"
                   SelectDisplayProps={{ 'aria-label': 'System Type' }}
                 >
-                  {!selectedDeviceTypeId ? (
+                  {!watchedDeviceTypeId ? (
                     <MenuItem value="" disabled>
                       <em>Select a device first</em>
                     </MenuItem>
@@ -184,7 +182,7 @@ function AddAssignmentDialog({
           <Button
             type="submit"
             variant="contained"
-            disabled={isPending || !selectedDeviceTypeId || availableSystemTypes.length === 0}
+            disabled={isPending || !watchedDeviceTypeId || availableSystemTypes.length === 0}
           >
             Add
           </Button>
