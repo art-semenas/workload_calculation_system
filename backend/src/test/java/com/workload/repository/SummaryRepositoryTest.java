@@ -10,6 +10,7 @@ import com.workload.entity.Summary;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +103,43 @@ class SummaryRepositoryTest {
 
     assertThatThrownBy(() -> summaryRepository.saveAndFlush(second))
         .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  // Test 2b-bis: findUnassignedCountGroupedByDivision uses COUNT(DISTINCT s.object)
+  // so each unassigned object is counted exactly once per division.
+  @Test
+  void findUnassignedCount_countsDistinctObjects_notSummaryRows() {
+    Division div = saveDivision("Div Distinct Count");
+    Branch br = saveBranch(div, "Branch Distinct Count");
+    ObjectEntity obj1 = saveObject(br, "Object Distinct Count 1");
+    ObjectEntity obj2 = saveObject(br, "Object Distinct Count 2");
+
+    // Two summaries for two distinct objects — both unassigned (no ObjectEngineer row)
+    summaryRepository.saveAndFlush(
+        Summary.builder()
+            .id(UUID.randomUUID())
+            .object(obj1)
+            .itogoChisloWithTravel(BigDecimal.ONE)
+            .computedAt(OffsetDateTime.now())
+            .build());
+    summaryRepository.saveAndFlush(
+        Summary.builder()
+            .id(UUID.randomUUID())
+            .object(obj2)
+            .itogoChisloWithTravel(BigDecimal.ONE)
+            .computedAt(OffsetDateTime.now())
+            .build());
+
+    // Act — filter result to just the division created in this test
+    List<DivisionCount> result = summaryRepository.findUnassignedCountGroupedByDivision();
+    DivisionCount divisionResult =
+        result.stream()
+            .filter(r -> div.getId().equals(r.getDivisionId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No result found for division " + div.getId()));
+
+    // Assert — two distinct objects counted, not zero or some other number
+    assertThat(divisionResult.getCount()).isEqualTo(2L);
   }
 
   private Division saveDivision(String name) {

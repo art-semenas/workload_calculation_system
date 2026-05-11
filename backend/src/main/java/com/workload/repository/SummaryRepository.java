@@ -29,7 +29,7 @@ public interface SummaryRepository extends JpaRepository<Summary, UUID> {
   List<DivisionFteSum> findRequiredFteGroupedByDivision();
 
   @Query(
-      "SELECT s.object.branch.division.id as divisionId, COUNT(s) as count"
+      "SELECT s.object.branch.division.id as divisionId, COUNT(DISTINCT s.object) as count"
           + " FROM Summary s"
           + " WHERE NOT EXISTS"
           + " (SELECT oe FROM ObjectEngineer oe WHERE oe.object.id = s.object.id)"
