@@ -34,12 +34,12 @@ FRONTEND_STAGED=$(echo "$STAGED" | grep "^frontend/" || true)
 
 if [ -n "$BACKEND_STAGED" ]; then
   cd backend && mvn spotless:apply -q 2>/dev/null || true && cd ..
-  echo "$BACKEND_STAGED" | xargs -r git add
+  echo "$BACKEND_STAGED" | git add --pathspec-from-file=-
 fi
 
 if [ -n "$FRONTEND_STAGED" ]; then
   cd frontend && npm run format --silent 2>/dev/null || true && cd ..
-  echo "$FRONTEND_STAGED" | xargs -r git add
+  echo "$FRONTEND_STAGED" | git add --pathspec-from-file=-
 fi
 
 exit 0
