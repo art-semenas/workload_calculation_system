@@ -17,20 +17,17 @@
       "Bash(git commit*)",
       "Bash(git diff*)",
       "Bash(git status*)",
-      "Bash(git log*)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/pre-commit.sh"
-          }
-        ]
-      }
+      "Bash(git log*)",
+      "Bash(mvn test-compile *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\A48A0~1.SEM\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Work-Study-Projects-workload-calculation-system\\\\1d12741e-bf38-45f1-aea1-405f2ba64026\\\\tasks\\\\b41qigjzy.output\" -Wait)",
+      "Bash(Get-Content \"C:\\\\Users\\\\A48A0~1.SEM\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Work-Study-Projects-workload-calculation-system\\\\1d12741e-bf38-45f1-aea1-405f2ba64026\\\\tasks\\\\b41qigjzy.output\")",
+      "Bash(Select-String -Pattern \"BUILD SUCCESS|BUILD FAILURE|Tests run|ERROR\")",
+      "Bash(Select-Object -Last 20)",
+      "Bash(Get-Content \"C:\\\\Users\\\\A48A0~1.SEM\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Work-Study-Projects-workload-calculation-system\\\\1d12741e-bf38-45f1-aea1-405f2ba64026\\\\tasks\\\\batqlcr11.output\" -Tail 5)",
+      "Bash(Get-Content \"C:\\\\Users\\\\A48A0~1.SEM\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Work-Study-Projects-workload-calculation-system\\\\a117166e-cf92-4ebc-ad1b-b8c91a165d2a\\\\tasks\\\\b7ndn62mt.output\")",
+      "Bash(Select-String -Pattern \"Tests run:|BUILD|ERROR\")",
+      "Bash(Select-Object -Last 15)",
+      "Bash(mvn failsafe:integration-test -Dtest=DivisionControllerIT#createDivisionReturns201 -Dit.test=DivisionControllerIT#createDivisionReturns201)"
     ]
   }
 }
