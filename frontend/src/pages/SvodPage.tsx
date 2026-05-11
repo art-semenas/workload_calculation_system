@@ -305,8 +305,16 @@ export default function SvodPage() {
   const totalElements = data?.totalElements ?? 0
   const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
   // When search is active show local filtered count; server range is meaningless across all pages
-  const rangeStart = isSearchActive ? (filteredRows.length === 0 ? 0 : 1) : totalElements === 0 ? 0 : page * PAGE_SIZE + 1
-  const rangeEnd = isSearchActive ? filteredRows.length : Math.min((page + 1) * PAGE_SIZE, totalElements)
+  const rangeStart = isSearchActive
+    ? filteredRows.length === 0
+      ? 0
+      : 1
+    : totalElements === 0
+      ? 0
+      : page * PAGE_SIZE + 1
+  const rangeEnd = isSearchActive
+    ? filteredRows.length
+    : Math.min((page + 1) * PAGE_SIZE, totalElements)
 
   // Display aggregation of server-computed FTE values for footer label — not a domain calculation
   const pageSum = filteredRows.reduce((s, r) => s + r.itogoChisloWithTravel, 0)
@@ -477,7 +485,10 @@ export default function SvodPage() {
                 <>
                   <Box
                     component="span"
-                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
                   >
                     {filteredRows.length}
                   </Box>
@@ -488,14 +499,20 @@ export default function SvodPage() {
                   Showing{' '}
                   <Box
                     component="span"
-                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
                   >
                     {rangeStart}–{rangeEnd}
                   </Box>{' '}
                   of{' '}
                   <Box
                     component="span"
-                    sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: tokens.ink2 }}
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
                   >
                     {totalElements.toLocaleString()}
                   </Box>
