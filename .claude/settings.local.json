@@ -22,7 +22,8 @@
       "Bash(Select-String -Pattern \"BUILD SUCCESS|BUILD FAILURE|Tests run|ERROR\")",
       "Bash(Select-Object -Last 20)",
       "Bash(Select-String -Pattern \"Tests run:|BUILD|ERROR\")",
-      "Bash(Select-Object -Last 15)"
+      "Bash(Select-Object -Last 15)",
+      "Bash(npx prettier *)"
     ]
   }
 }
