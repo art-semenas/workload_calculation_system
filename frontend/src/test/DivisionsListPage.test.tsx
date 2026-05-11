@@ -46,7 +46,7 @@ describe('DivisionsListPage', () => {
         objectCount: 450,
         engineerCount: 32,
         requiredFte: 28.4,
-        coverageGap: 3,
+        unassignedObjectCount: 3,
         utilisation: 0.88,
       },
     ])
@@ -57,7 +57,7 @@ describe('DivisionsListPage', () => {
       objectCount: 450,
       engineerCount: 32,
       requiredFte: 28.4,
-      coverageGap: 3,
+      unassignedObjectCount: 3,
       utilisation: 0.88,
     })
 
@@ -77,7 +77,7 @@ describe('DivisionsListPage', () => {
         objectCount: 450,
         engineerCount: 32,
         requiredFte: 28.4,
-        coverageGap: 3,
+        unassignedObjectCount: 3,
         utilisation: 0.88,
       },
       {
@@ -87,7 +87,7 @@ describe('DivisionsListPage', () => {
         objectCount: 500,
         engineerCount: 40,
         requiredFte: 35.2,
-        coverageGap: 2,
+        unassignedObjectCount: 2,
         utilisation: 0.92,
       },
     ])
@@ -98,7 +98,7 @@ describe('DivisionsListPage', () => {
       objectCount: 100,
       engineerCount: 10,
       requiredFte: 10.0,
-      coverageGap: 1,
+      unassignedObjectCount: 1,
       utilisation: 0.85,
     })
 
@@ -123,7 +123,7 @@ describe('DivisionsListPage', () => {
         objectCount: 450,
         engineerCount: null,
         requiredFte: null,
-        coverageGap: null,
+        unassignedObjectCount: null,
         utilisation: null,
       },
     ])
@@ -134,7 +134,7 @@ describe('DivisionsListPage', () => {
       objectCount: 450,
       engineerCount: null,
       requiredFte: null,
-      coverageGap: null,
+      unassignedObjectCount: null,
       utilisation: null,
     })
 
