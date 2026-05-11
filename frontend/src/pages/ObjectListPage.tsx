@@ -91,12 +91,7 @@ export default function ObjectListPage() {
     if (selectedBranchId) result = result.filter((o) => o.branchId === selectedBranchId)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      // TODO: address search is always a no-op — `address` is not in the findAllEnriched JPQL
-      // projection (ObjectEnrichedRow). Fix requires: DB migration to ensure address is available,
-      // adding `o.address as address` to the query, and adding the field to ObjectEnrichedRow.
-      result = result.filter(
-        (o) => o.name.toLowerCase().includes(q) || (o.address ?? '').toLowerCase().includes(q)
-      )
+      result = result.filter((o) => o.name.toLowerCase().includes(q))
     }
     return result
   }, [objects, selectedBranchId, searchQuery])
@@ -151,24 +146,6 @@ export default function ObjectListPage() {
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <Box
-                  component="kbd"
-                  sx={{
-                    fontSize: 10,
-                    color: tokens.ink4,
-                    border: `1px solid ${tokens.line}`,
-                    borderRadius: '3px',
-                    px: '4px',
-                    py: '1px',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  ⌘K
-                </Box>
               </InputAdornment>
             ),
           }}
