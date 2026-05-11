@@ -49,8 +49,8 @@ export default function DivisionsListPage() {
     { label: 'Total engineers', value: totalEngineers },
     {
       label: 'Avg utilisation',
-      value: `${avgUtilisationPercent}%`,
-      tone: avgUtilisationTone,
+      value: validUtilisations.length > 0 ? `${avgUtilisationPercent}%` : '—',
+      tone: validUtilisations.length > 0 ? avgUtilisationTone : 'ok',
     },
   ]
 
@@ -86,7 +86,6 @@ export default function DivisionsListPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '8%', fontWeight: 600 }}>Code</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Division name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Head engineer</TableCell>
                   <TableCell sx={{ width: '8%', fontWeight: 600, textAlign: 'right' }}>
@@ -111,11 +110,6 @@ export default function DivisionsListPage() {
                       '&:hover': { backgroundColor: tokens.bgElev },
                     }}
                   >
-                    {/* Code */}
-                    <TableCell sx={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      {division.name.substring(0, 3).toUpperCase()}
-                    </TableCell>
-
                     {/* Division name */}
                     <TableCell>{division.name}</TableCell>
 
