@@ -42,7 +42,7 @@ public interface SummaryRepository extends JpaRepository<Summary, UUID> {
   BigDecimal findRequiredFteByDivisionId(@Param("divisionId") UUID divisionId);
 
   @Query(
-      "SELECT COUNT(s) FROM Summary s"
+      "SELECT COUNT(DISTINCT s.object) FROM Summary s"
           + " WHERE s.object.branch.division.id = :divisionId"
           + " AND NOT EXISTS"
           + " (SELECT oe FROM ObjectEngineer oe WHERE oe.object.id = s.object.id)")

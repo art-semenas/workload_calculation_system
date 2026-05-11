@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
+import com.workload.entity.ObjectEngineer;
 import com.workload.entity.ObjectEntity;
+import com.workload.entity.Role;
 import com.workload.entity.Summary;
+import com.workload.entity.User;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -28,6 +31,8 @@ class SummaryRepositoryTest {
   @Autowired private DivisionRepository divisionRepository;
   @Autowired private BranchRepository branchRepository;
   @Autowired private ObjectRepository objectRepository;
+  @Autowired private ObjectEngineerRepository objectEngineerRepository;
+  @Autowired private UserRepository userRepository;
   @Autowired private EntityManager entityManager;
 
   @Test
@@ -105,7 +110,7 @@ class SummaryRepositoryTest {
         .isInstanceOf(DataIntegrityViolationException.class);
   }
 
-  // Test 2b-bis: findUnassignedCountGroupedByDivision uses COUNT(DISTINCT s.object)
+  // findUnassignedCountGroupedByDivision uses COUNT(DISTINCT s.object)
   // so each unassigned object is counted exactly once per division.
   @Test
   void findUnassignedCount_countsDistinctObjects_notSummaryRows() {
@@ -113,6 +118,7 @@ class SummaryRepositoryTest {
     Branch br = saveBranch(div, "Branch Distinct Count");
     ObjectEntity obj1 = saveObject(br, "Object Distinct Count 1");
     ObjectEntity obj2 = saveObject(br, "Object Distinct Count 2");
+    ObjectEntity obj3 = saveObject(br, "Object Distinct Count 3");
 
     // Two summaries for two distinct objects — both unassigned (no ObjectEngineer row)
     summaryRepository.saveAndFlush(
@@ -130,6 +136,23 @@ class SummaryRepositoryTest {
             .computedAt(OffsetDateTime.now())
             .build());
 
+    // Third object has a summary but is assigned — must be excluded from the count
+    summaryRepository.saveAndFlush(
+        Summary.builder()
+            .id(UUID.randomUUID())
+            .object(obj3)
+            .itogoChisloWithTravel(BigDecimal.ONE)
+            .computedAt(OffsetDateTime.now())
+            .build());
+    User engineer = saveEngineer("engineer-distinct-count@test.local");
+    objectEngineerRepository.saveAndFlush(
+        ObjectEngineer.builder()
+            .id(UUID.randomUUID())
+            .object(obj3)
+            .engineer(engineer)
+            .assignedAt(OffsetDateTime.now())
+            .build());
+
     // Act — filter result to just the division created in this test
     List<DivisionCount> result = summaryRepository.findUnassignedCountGroupedByDivision();
     DivisionCount divisionResult =
@@ -138,8 +161,25 @@ class SummaryRepositoryTest {
             .findFirst()
             .orElseThrow(() -> new AssertionError("No result found for division " + div.getId()));
 
-    // Assert — two distinct objects counted, not zero or some other number
+    // Assert — only the two unassigned objects are counted; the assigned obj3 is excluded
     assertThat(divisionResult.getCount()).isEqualTo(2L);
+  }
+
+  private User saveEngineer(String email) {
+    User user =
+        User.builder()
+            .id(UUID.randomUUID())
+            .email(email)
+            .name("Test Engineer")
+            .passwordHash("hash")
+            .role(Role.ENGINEER)
+            .capacityFte(BigDecimal.ONE)
+            .active(true)
+            .requiresActivation(false)
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    return userRepository.saveAndFlush(user);
   }
 
   private Division saveDivision(String name) {
