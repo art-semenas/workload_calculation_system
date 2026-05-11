@@ -26,7 +26,6 @@ import com.workload.repository.ObjectEnrichedRow;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.SummaryRepository;
 import jakarta.persistence.EntityManager;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,9 +70,11 @@ class ObjectServiceTest {
 
   @Test
   void findAllReturnsAllObjects() {
-    ObjectEnrichedRow row =
-        mockEnrichedRow(
-            UUID.randomUUID(),
+    UUID id = UUID.randomUUID();
+    ObjectEnrichedRow row = mock(ObjectEnrichedRow.class);
+    ObjectDto dto =
+        new ObjectDto(
+            id,
             branchId,
             "Branch1",
             divisionId,
@@ -85,6 +86,7 @@ class ObjectServiceTest {
             OffsetDateTime.now(),
             OffsetDateTime.now());
     when(objectRepository.findAllEnriched(null)).thenReturn(List.of(row));
+    when(objectMapper.toDto(row)).thenReturn(dto);
 
     List<ObjectDto> result = objectService.findAll(Optional.empty());
 
@@ -94,9 +96,11 @@ class ObjectServiceTest {
 
   @Test
   void findAllFiltersByDivision() {
-    ObjectEnrichedRow row =
-        mockEnrichedRow(
-            UUID.randomUUID(),
+    UUID id = UUID.randomUUID();
+    ObjectEnrichedRow row = mock(ObjectEnrichedRow.class);
+    ObjectDto dto =
+        new ObjectDto(
+            id,
             branchId,
             "Branch1",
             divisionId,
@@ -108,6 +112,7 @@ class ObjectServiceTest {
             OffsetDateTime.now(),
             OffsetDateTime.now());
     when(objectRepository.findAllEnriched(divisionId)).thenReturn(List.of(row));
+    when(objectMapper.toDto(row)).thenReturn(dto);
 
     List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
 
@@ -333,32 +338,5 @@ class ObjectServiceTest {
         .createdAt(OffsetDateTime.now())
         .updatedAt(OffsetDateTime.now())
         .build();
-  }
-
-  private static ObjectEnrichedRow mockEnrichedRow(
-      UUID id,
-      UUID branchId,
-      String branchName,
-      UUID divisionId,
-      String divisionName,
-      String name,
-      Integer importSeqNo,
-      BigDecimal itogoChisloWithTravel,
-      Long engineerCount,
-      OffsetDateTime createdAt,
-      OffsetDateTime updatedAt) {
-    ObjectEnrichedRow row = mock(ObjectEnrichedRow.class);
-    when(row.getId()).thenReturn(id);
-    when(row.getBranchId()).thenReturn(branchId);
-    when(row.getBranchName()).thenReturn(branchName);
-    when(row.getDivisionId()).thenReturn(divisionId);
-    when(row.getDivisionName()).thenReturn(divisionName);
-    when(row.getName()).thenReturn(name);
-    when(row.getImportSeqNo()).thenReturn(importSeqNo);
-    when(row.getItogoChisloWithTravel()).thenReturn(itogoChisloWithTravel);
-    when(row.getEngineerCount()).thenReturn(engineerCount);
-    when(row.getCreatedAt()).thenReturn(createdAt);
-    when(row.getUpdatedAt()).thenReturn(updatedAt);
-    return row;
   }
 }
