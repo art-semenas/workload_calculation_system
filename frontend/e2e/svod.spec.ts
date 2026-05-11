@@ -111,12 +111,15 @@ test.describe('Dashboard SVOD sections', () => {
     await page.getByRole('button', { name: /details/i }).click()
     // Wait for drawer section label to confirm drawer rendered
     await expect(page.getByText(/uncovered objects/i).first()).toBeVisible()
-    // Wait for any loading spinners in the drawer to resolve
-    await page.locator('svg[role="progressbar"]').waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {})
+    // Scope spinner wait to this section only — the broad page locator can hit strict-mode
+    // violations when multiple spinners are present (main page + gaps section simultaneously).
+    // .last() selects the leaf Typography element (not a container ancestor), so '..' gives
+    // the DrawerSection box reliably.
+    const gapSection = page.getByText(/uncovered objects/i).last().locator('..')
+    await gapSection.locator('svg[role="progressbar"]').waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
 
     const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
-    const uncoveredSection = page.getByText(/uncovered objects/i).first().locator('..')
-    const gapListVisible = await uncoveredSection.locator('ul').isVisible()
+    const gapListVisible = await gapSection.locator('ul').isVisible()
 
     expect(emptyStateVisible || gapListVisible).toBeTruthy()
   })
