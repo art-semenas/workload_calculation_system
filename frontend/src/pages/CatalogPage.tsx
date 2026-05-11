@@ -95,25 +95,6 @@ export default function CatalogPage() {
                   <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
                 </InputAdornment>
               ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Box
-                    component="kbd"
-                    sx={{
-                      fontSize: 10,
-                      fontFamily: "'JetBrains Mono', monospace",
-                      color: tokens.ink4,
-                      border: `1px solid ${tokens.line}`,
-                      borderRadius: 'var(--r-sm)',
-                      px: '4px',
-                      py: '1px',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    ⌘K
-                  </Box>
-                </InputAdornment>
-              ),
             }}
           />
         </Box>
