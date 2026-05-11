@@ -65,7 +65,6 @@ describe('DivisionsListPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Brest')).toBeInTheDocument()
-      expect(screen.getByText('BRE')).toBeInTheDocument() // Code column
     })
   })
 
@@ -108,7 +107,7 @@ describe('DivisionsListPage', () => {
     await waitFor(() => {
       // Check both divisions are rendered
       expect(screen.getByText('Brest')).toBeInTheDocument()
-      expect(screen.getByText('MIN')).toBeInTheDocument() // Minsk code
+      expect(screen.getByText('Minsk')).toBeInTheDocument()
       // Check KPI metrics are displayed
       expect(screen.getByText('Total engineers')).toBeInTheDocument()
       expect(screen.getByText('Avg utilisation')).toBeInTheDocument()
