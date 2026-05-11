@@ -23,7 +23,7 @@ import { tokens } from '../theme'
 import { useObjects } from '../hooks/useObjects'
 import { useDivisions } from '../hooks/useDivisions'
 import { PageHead } from '../components/common/PageHead'
-import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
+import { CreateObjectDialog } from '../components/dialogs/CreateObjectDialog'
 
 const PAGE_SIZE = 20
 

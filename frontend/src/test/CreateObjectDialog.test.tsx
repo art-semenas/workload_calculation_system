@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import CreateObjectDialog from '../components/dialogs/CreateObjectDialog'
+import { CreateObjectDialog } from '../components/dialogs/CreateObjectDialog'
 
 const mockGetDivisions = vi.fn()
 const mockGetDivisionBranches = vi.fn()

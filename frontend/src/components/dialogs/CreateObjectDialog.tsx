@@ -40,7 +40,7 @@ interface BranchOption {
   branchName: string
 }
 
-export default function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
+export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
   const { data: divisions = [] } = useDivisions()
   const createObject = useCreateObject()
 
