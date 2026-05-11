@@ -40,12 +40,13 @@ Only use `--no-verify` in emergencies. The hook exists to catch issues before th
 
 ### How it works
 
-1. **Check what changed** — Compares your branch against `origin/main` to see if frontend or backend code changed
-2. **Run relevant checks** — Only runs quality gates for parts of the codebase you modified
-3. **Pass or fail** — If all checks pass, push proceeds. If any check fails, push is cancelled and you must fix the issues first.
+1. **Check what changed** — Compares your branch against the base branch to see if frontend or backend code changed
+2. **Run relevant checks** — Only runs quality gates for parts of the codebase you modified; all gates always run even if one fails
+3. **Summary** — After all gates finish, a clear block lists every failed gate and the exact command to fix it; push is blocked only if at least one gate failed
 
 ### Example
 
+All gates pass:
 ```bash
 $ git push origin feature/my-feature
 
@@ -53,21 +54,33 @@ $ git push origin feature/my-feature
 
 📦 Frontend code changed. Running frontend quality gates...
 
-  ✓ TypeScript type check...
-  ✓ ESLint...
-  ✓ Prettier (format check)...
-  ✓ Vitest (unit tests)...
+  ▸ TypeScript type check...
+  ✓ TypeScript passed
+
+  ▸ ESLint...
+  ✓ ESLint passed
+
+  ▸ Prettier format check...
+  ✓ Prettier passed
+
+  ▸ Vitest unit tests...
+  ✓ Vitest passed
 
 ✅ All quality gates passed! Proceeding with push.
 ```
 
-If a check fails:
+If checks fail, every failure is listed at the end:
 ```bash
-✗ ESLint check failed!
-❌ Quality gates failed. Fix the above issues before pushing.
-```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ Push blocked — 2 quality gate(s) failed:
 
-Then fix the issue and push again.
+  ✗ frontend · Prettier      → fix: cd frontend && npm run format
+  ✗ backend  · Maven verify  → fix: cd backend && mvn spotless:apply && mvn verify
+
+Fix the above, commit if needed, then push again.
+To bypass (NOT RECOMMENDED): git push --no-verify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ### Performance
 

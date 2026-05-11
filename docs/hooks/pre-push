@@ -5,8 +5,6 @@
 #
 # Bypass with: git push --no-verify (not recommended — use only for emergencies)
 
-set -e
-
 echo "🔍 Running quality gates before push..."
 echo ""
 
@@ -36,7 +34,7 @@ if echo "$CHANGED_FILES" | grep -q '^backend/'; then
   BACKEND_CHANGED=true
 fi
 
-EXIT_CODE=0
+FAILED_GATES=()
 
 # ============================================================================
 # Frontend Quality Gates
@@ -48,36 +46,43 @@ if [ "$FRONTEND_CHANGED" = true ]; then
 
   cd frontend
 
-  # TypeScript type check
-  echo "  ✓ TypeScript type check..."
-  if ! npx tsc --noEmit; then
-    echo "  ✗ TypeScript check failed!"
-    EXIT_CODE=1
+  echo "  ▸ TypeScript type check..."
+  if npx tsc --noEmit; then
+    echo "  ✓ TypeScript passed"
+  else
+    echo "  ✗ TypeScript FAILED"
+    FAILED_GATES+=("frontend · TypeScript    → fix: cd frontend && npx tsc --noEmit")
   fi
+  echo ""
 
-  # ESLint
-  echo "  ✓ ESLint..."
-  if ! npm run lint; then
-    echo "  ✗ ESLint check failed!"
-    EXIT_CODE=1
+  echo "  ▸ ESLint..."
+  if npm run lint; then
+    echo "  ✓ ESLint passed"
+  else
+    echo "  ✗ ESLint FAILED"
+    FAILED_GATES+=("frontend · ESLint        → fix: cd frontend && npm run lint")
   fi
+  echo ""
 
-  # Prettier format check
-  echo "  ✓ Prettier (format check)..."
-  if ! npm run format:check; then
-    echo "  ✗ Prettier check failed! Run: npm run format"
-    EXIT_CODE=1
+  echo "  ▸ Prettier format check..."
+  if npm run format:check; then
+    echo "  ✓ Prettier passed"
+  else
+    echo "  ✗ Prettier FAILED"
+    FAILED_GATES+=("frontend · Prettier      → fix: cd frontend && npm run format")
   fi
+  echo ""
 
-  # Vitest unit tests
-  echo "  ✓ Vitest (unit tests)..."
-  if ! npm test -- --run; then
-    echo "  ✗ Unit tests failed!"
-    EXIT_CODE=1
+  echo "  ▸ Vitest unit tests..."
+  if npm test -- --run; then
+    echo "  ✓ Vitest passed"
+  else
+    echo "  ✗ Vitest FAILED"
+    FAILED_GATES+=("frontend · Vitest        → fix: cd frontend && npm test -- --run")
   fi
+  echo ""
 
   cd ..
-  echo ""
 fi
 
 # ============================================================================
@@ -90,28 +95,36 @@ if [ "$BACKEND_CHANGED" = true ]; then
 
   cd backend
 
-  # Maven verify (format check + compile + tests + static analysis)
-  echo "  ✓ Maven verify (format, tests, analysis)..."
-  if ! mvn verify -q; then
-    echo "  ✗ Maven verify failed!"
-    EXIT_CODE=1
+  echo "  ▸ Maven verify (spotless · tests · SpotBugs · Jacoco)..."
+  if mvn verify -q; then
+    echo "  ✓ Maven verify passed"
+  else
+    echo "  ✗ Maven verify FAILED"
+    FAILED_GATES+=("backend  · Maven verify  → fix: cd backend && mvn spotless:apply && mvn verify")
   fi
+  echo ""
 
   cd ..
-  echo ""
 fi
 
 # ============================================================================
-# Exit
+# Summary
 # ============================================================================
 
-if [ $EXIT_CODE -eq 0 ]; then
+if [ ${#FAILED_GATES[@]} -eq 0 ]; then
   echo "✅ All quality gates passed! Proceeding with push."
   exit 0
 else
-  echo "❌ Quality gates failed. Fix the above issues before pushing."
+  COUNT=${#FAILED_GATES[@]}
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "❌ Push blocked — $COUNT quality gate(s) failed:"
   echo ""
-  echo "To skip these checks (NOT RECOMMENDED):"
-  echo "  git push --no-verify"
+  for gate in "${FAILED_GATES[@]}"; do
+    echo "  ✗ $gate"
+  done
+  echo ""
+  echo "Fix the above, commit if needed, then push again."
+  echo "To bypass (NOT RECOMMENDED): git push --no-verify"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   exit 1
 fi
