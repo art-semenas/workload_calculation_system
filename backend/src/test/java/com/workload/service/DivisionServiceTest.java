@@ -247,7 +247,7 @@ class DivisionServiceTest {
   }
 
   @Test
-  void findByIdCoverageGapUsesRepositoryQuery() {
+  void findByIdUnassignedCountUsesRepositoryQuery() {
     UUID divId = UUID.randomUUID();
     Division div =
         Division.builder()
