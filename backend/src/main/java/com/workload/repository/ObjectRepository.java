@@ -19,6 +19,8 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
   @Query("SELECT o.id FROM ObjectEntity o")
   List<UUID> findAllIds();
 
+  // MAX(itogoChisloWithTravel) is safe because PoC S-02 guarantees at most one active Summary
+  // per object (sync recalc, no background worker). Revisit when MVP M-06 adds background recalc.
   @Query(
       """
       SELECT o.id          as id,

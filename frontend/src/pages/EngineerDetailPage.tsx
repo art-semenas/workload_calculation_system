@@ -314,6 +314,7 @@ export default function EngineerDetailPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
             {SYSTEM_ROWS.map(({ key, label }) => {
               const load = summary[key]
+              // Display aggregation of server-computed values — not a domain calculation
               const pct = summary.totalLoad > 0 ? (load / summary.totalLoad) * 100 : 0
               return (
                 <Box key={label}>

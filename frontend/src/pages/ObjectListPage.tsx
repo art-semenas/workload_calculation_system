@@ -91,6 +91,9 @@ export default function ObjectListPage() {
     if (selectedBranchId) result = result.filter((o) => o.branchId === selectedBranchId)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
+      // TODO: address search is always a no-op — `address` is not in the findAllEnriched JPQL
+      // projection (ObjectEnrichedRow). Fix requires: DB migration to ensure address is available,
+      // adding `o.address as address` to the query, and adding the field to ObjectEnrichedRow.
       result = result.filter(
         (o) => o.name.toLowerCase().includes(q) || (o.address ?? '').toLowerCase().includes(q)
       )
