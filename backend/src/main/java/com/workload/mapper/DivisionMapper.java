@@ -17,7 +17,7 @@ public interface DivisionMapper {
   @Mapping(target = "objectCount", source = "objectCount")
   @Mapping(target = "engineerCount", source = "engineerCount")
   @Mapping(target = "requiredFte", source = "requiredFte")
-  @Mapping(target = "coverageGap", source = "coverageGap")
+  @Mapping(target = "unassignedObjectCount", source = "unassignedObjectCount")
   @Mapping(target = "utilisation", source = "utilisation")
   DivisionDto toDto(
       Division division,
@@ -25,6 +25,6 @@ public interface DivisionMapper {
       Long objectCount,
       Long engineerCount,
       BigDecimal requiredFte,
-      Long coverageGap,
+      Long unassignedObjectCount,
       BigDecimal utilisation);
 }

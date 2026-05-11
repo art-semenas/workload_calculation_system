@@ -24,7 +24,7 @@ export const DivisionSchema = z.object({
   objectCount: z.number().int(),
   engineerCount: z.number().int().nullable().optional(),
   requiredFte: z.number().nullable().optional(),
-  coverageGap: z.number().int().nullable().optional(),
+  unassignedObjectCount: z.number().int().nullable().optional(),
   utilisation: z.number().nullable().optional(),
 })
 

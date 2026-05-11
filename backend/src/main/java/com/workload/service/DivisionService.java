@@ -63,7 +63,7 @@ public class DivisionService {
     for (DivisionFteSum r : summaryRepository.findRequiredFteGroupedByDivision()) {
       requiredFteMap.put(r.getDivisionId(), r.getRequiredFte());
     }
-    Map<UUID, Long> coverageGapMap =
+    Map<UUID, Long> unassignedCountMap =
         toCountMap(summaryRepository.findUnassignedCountGroupedByDivision());
 
     return divisions.stream()
@@ -75,7 +75,7 @@ public class DivisionService {
                     objectCounts.getOrDefault(d.getId(), 0L),
                     engineerCounts.getOrDefault(d.getId(), 0L),
                     requiredFteMap.getOrDefault(d.getId(), BigDecimal.ZERO),
-                    coverageGapMap.getOrDefault(d.getId(), 0L),
+                    unassignedCountMap.getOrDefault(d.getId(), 0L),
                     null))
         .toList();
   }
@@ -121,13 +121,16 @@ public class DivisionService {
     return toDto(division);
   }
 
+  // PoC (S-02): fires 5 point queries for a single division. Acceptable for create/update (called
+  // once).
+  // Replace with a batch equivalent in MVP when division management sees higher write volume.
   private DivisionDto toDto(Division division) {
     UUID divisionId = division.getId();
     long branchCount = branchRepository.countByDivisionId(divisionId);
     long objectCount = objectRepository.countByBranchDivisionId(divisionId);
     long engineerCount = userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
     BigDecimal requiredFte = summaryRepository.findRequiredFteByDivisionId(divisionId);
-    Long coverageGap = summaryRepository.findUnassignedCountByDivisionId(divisionId);
+    Long unassignedObjectCount = summaryRepository.findUnassignedCountByDivisionId(divisionId);
 
     // PoC (S-02): utilisation = SUM(total_load) / SUM(capacity_fte) per division engineer.
     // Engineer load summaries are not yet aggregated in this phase. Always null until MVP M-06.
@@ -139,7 +142,7 @@ public class DivisionService {
         objectCount,
         engineerCount,
         requiredFte,
-        coverageGap != null ? coverageGap : 0L,
+        unassignedObjectCount != null ? unassignedObjectCount : 0L,
         utilisation);
   }
 }

@@ -135,13 +135,13 @@ export default function DivisionsListPage() {
                     <TableCell
                       sx={{
                         color:
-                          division.coverageGap && division.coverageGap > 0
+                          division.unassignedObjectCount && division.unassignedObjectCount > 0
                             ? tokens.danger
                             : 'inherit',
                       }}
                     >
-                      {division.coverageGap && division.coverageGap > 0
-                        ? division.coverageGap
+                      {division.unassignedObjectCount && division.unassignedObjectCount > 0
+                        ? division.unassignedObjectCount
                         : '—'}
                     </TableCell>
 

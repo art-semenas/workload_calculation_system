@@ -243,7 +243,7 @@ class DivisionServiceTest {
     assertThat(result).hasSize(1);
     assertThat(result.get(0).engineerCount()).isEqualTo(1L);
     assertThat(result.get(0).requiredFte()).isNotNull();
-    assertThat(result.get(0).coverageGap()).isEqualTo(0L);
+    assertThat(result.get(0).unassignedObjectCount()).isEqualTo(0L);
   }
 
   @Test
@@ -279,7 +279,7 @@ class DivisionServiceTest {
 
     DivisionDto result = divisionService.findById(divId);
 
-    assertThat(result.coverageGap()).isEqualTo(2L);
+    assertThat(result.unassignedObjectCount()).isEqualTo(2L);
     assertThat(result.requiredFte()).isEqualByComparingTo(BigDecimal.valueOf(1.5));
   }
 
