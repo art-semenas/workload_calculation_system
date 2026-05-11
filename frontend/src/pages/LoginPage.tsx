@@ -31,13 +31,8 @@ export default function LoginPage() {
   const onSubmit = handleSubmit(async (data) => {
     setErrorMessage(null)
     try {
-      const result = await loginMutation.mutateAsync(data)
-      // Ensure token is saved to store before navigation
-      if (result.token && result.user) {
-        navigate('/')
-      } else {
-        setErrorMessage('Login response invalid: missing token or user')
-      }
+      await loginMutation.mutateAsync(data)
+      navigate('/')
     } catch (error: unknown) {
       if (isUnauthorizedError(error)) {
         setErrorMessage('Invalid email or password')
