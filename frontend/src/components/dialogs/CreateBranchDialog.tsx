@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
+  Alert,
   Box,
   Button,
   DialogActions,
@@ -73,6 +74,13 @@ export function CreateBranchDialog({
         }}
       >
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {createBranch.isError && (
+            <Alert severity="error">
+              {createBranch.error instanceof Error
+                ? createBranch.error.message
+                : 'Failed to create branch'}
+            </Alert>
+          )}
           <FormTextField name="name" control={control} label="Branch name" fullWidth autoFocus />
           <FormControl fullWidth disabled>
             <InputLabel>Division</InputLabel>

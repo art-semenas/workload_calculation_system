@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
+  Alert,
   Box,
   Button,
   DialogActions,
@@ -60,7 +61,14 @@ export function CreateDivisionDialog({ open, onClose }: CreateDivisionDialogProp
           void onSubmit(e)
         }}
       >
-        <DialogContent sx={{ pt: 1 }}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {createDivision.isError && (
+            <Alert severity="error">
+              {createDivision.error instanceof Error
+                ? createDivision.error.message
+                : 'Failed to create division'}
+            </Alert>
+          )}
           <FormTextField name="name" control={control} label="Division name" fullWidth autoFocus />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
