@@ -19,8 +19,12 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
   @Query("SELECT o.id FROM ObjectEntity o")
   List<UUID> findAllIds();
 
-  // MAX(itogoChisloWithTravel) is safe because PoC S-02 guarantees at most one active Summary
-  // per object (sync recalc, no background worker). Revisit when MVP M-06 adds background recalc.
+  // PoC (S-02): both aggregates rely on the Summary–ObjectEntity 1:1 constraint.
+  //   - MAX(itogoChisloWithTravel): at most one Summary per object, so MAX == "the value".
+  //   - COUNT(oe.id): the LEFT JOIN to Summary does NOT inflate engineer count because
+  //     each object joins to ≤1 Summary row. If MVP M-06 (background recalc) allows multiple
+  //     Summary rows per object, this query will over-count engineers by n_summaries; rewrite
+  //     to use a subquery or DISTINCT before merging that change.
   @Query(
       """
       SELECT o.id          as id,
