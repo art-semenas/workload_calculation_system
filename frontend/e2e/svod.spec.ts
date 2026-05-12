@@ -116,7 +116,8 @@ test.describe('Dashboard SVOD sections', () => {
     // .last() selects the leaf Typography element (not a container ancestor), so '..' gives
     // the DrawerSection box reliably.
     const gapSection = page.getByText(/uncovered objects/i).last().locator('..')
-    await gapSection.locator('svg[role="progressbar"]').waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
+    // MUI CircularProgress renders <span role="progressbar"><svg>, not <svg role="progressbar">
+    await gapSection.locator('[role="progressbar"]').waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
 
     const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
     const gapListVisible = await gapSection.locator('ul').isVisible()
