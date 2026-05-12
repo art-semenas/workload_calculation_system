@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -71,7 +72,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
       response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       ApiResponse<Void> body =
-          ApiResponse.error(new ApiError("RATE_LIMIT_EXCEEDED", "Too many requests", null));
+          ApiResponse.error(
+                  ApiError.of(
+                      HttpStatus.TOO_MANY_REQUESTS,
+                      "Too many requests. Please wait before retrying."));
       objectMapper.writeValue(response.getOutputStream(), body);
     }
   }

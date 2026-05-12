@@ -25,7 +25,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleEntityNotFound(new EntityNotFoundException("DeviceType", "abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo(404);
     assertThat(response.getBody().error().message()).isEqualTo("Device type not found");
   }
 
@@ -34,7 +34,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDivisionNotFound(new DivisionNotFoundException("abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo(404);
     assertThat(response.getBody().error().message()).isEqualTo("Division not found");
   }
 
@@ -43,7 +43,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleBranchNotFound(new BranchNotFoundException("abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo(404);
     assertThat(response.getBody().error().message()).isEqualTo("Branch not found");
   }
 
@@ -52,42 +52,42 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleObjectNotFound(new ObjectNotFoundException("abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("OBJECT_NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo(404);
     assertThat(response.getBody().error().message()).isEqualTo("Object not found");
   }
 
   @Test
-  void summaryNotFoundReturns404WithSpecificCode() {
+  void summaryNotFoundReturns404() {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleSummaryNotFound(new SummaryNotFoundException("abc"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(response.getBody().error().code()).isEqualTo("SUMMARY_NOT_FOUND");
+    assertThat(response.getBody().error().code()).isEqualTo(404);
   }
 
   @Test
-  void dataIntegrityViolationWithDuplicateReturnsNameConflict() {
+  void dataIntegrityViolationWithDuplicateReturns409() {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDataIntegrityViolation(new DataIntegrityViolationException("duplicate key"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(response.getBody().error().code()).isEqualTo("NAME_CONFLICT");
+    assertThat(response.getBody().error().code()).isEqualTo(409);
   }
 
   @Test
-  void dataIntegrityViolationWithUniqueReturnsNameConflict() {
+  void dataIntegrityViolationWithUniqueReturns409() {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDataIntegrityViolation(
             new DataIntegrityViolationException("unique constraint violated"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(response.getBody().error().code()).isEqualTo("NAME_CONFLICT");
+    assertThat(response.getBody().error().code()).isEqualTo(409);
   }
 
   @Test
-  void dataIntegrityViolationGenericReturnsConstraintViolation() {
+  void dataIntegrityViolationGenericReturns409() {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDataIntegrityViolation(
             new DataIntegrityViolationException("foreign key constraint"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(response.getBody().error().code()).isEqualTo("CONSTRAINT_VIOLATION");
+    assertThat(response.getBody().error().code()).isEqualTo(409);
   }
 
   @Test
@@ -95,7 +95,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleDeviceNotInInventory(new DeviceNotInInventoryException("dev-1"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    assertThat(response.getBody().error().code()).isEqualTo("DEVICE_NOT_IN_INVENTORY");
+    assertThat(response.getBody().error().code()).isEqualTo(422);
   }
 
   @Test
@@ -103,7 +103,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleNoContextForSystem(new NoContextForSystemException("OS"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    assertThat(response.getBody().error().code()).isEqualTo("NO_CONTEXT_FOR_SYSTEM");
+    assertThat(response.getBody().error().code()).isEqualTo(422);
   }
 
   @Test
@@ -111,7 +111,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleRoundTripNotEditable(new RoundTripNotEditableException());
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
-    assertThat(response.getBody().error().code()).isEqualTo("ROUND_TRIP_NOT_EDITABLE");
+    assertThat(response.getBody().error().code()).isEqualTo(422);
   }
 
   @Test
@@ -119,7 +119,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleInvalidCredentials(new InvalidCredentialsException());
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    assertThat(response.getBody().error().code()).isEqualTo("INVALID_CREDENTIALS");
+    assertThat(response.getBody().error().code()).isEqualTo(401);
   }
 
   @Test
@@ -127,7 +127,7 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleBadCredentials(new BadCredentialsException("bad"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    assertThat(response.getBody().error().code()).isEqualTo("INVALID_CREDENTIALS");
+    assertThat(response.getBody().error().code()).isEqualTo(401);
   }
 
   @Test
@@ -135,14 +135,17 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<ApiResponse<Void>> response =
         handler.handleAccessDenied(new AccessDeniedException("denied"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(response.getBody().error().code()).isEqualTo("ACCESS_DENIED");
+    assertThat(response.getBody().error().code()).isEqualTo(403);
   }
 
   @Test
-  void unhandledRuntimeExceptionReturns500() {
+  void genericExceptionMapsTo500WithoutDetails() {
     ResponseEntity<ApiResponse<Void>> response =
-        handler.handleUnhandledException(new RuntimeException("oops"));
+        handler.handleGenericError(new RuntimeException("internal stacktrace detail"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-    assertThat(response.getBody().error().code()).isEqualTo("INTERNAL_ERROR");
+    assertThat(response.getBody().error().code()).isEqualTo(500);
+    assertThat(response.getBody().error().message())
+        .doesNotContain("stacktrace")
+        .isEqualTo("An unexpected error occurred. Please try again later.");
   }
 }

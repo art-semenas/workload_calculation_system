@@ -1,8 +1,27 @@
 package com.workload.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.http.HttpStatus;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiError(
-    String code, String message, @JsonProperty("affected_count") Integer affectedCount) {}
+public record ApiError(int code, String message) {
+  public static ApiError of(HttpStatus status, String message) {
+    return new ApiError(status.value(), message);
+  }
+
+  public static ApiError notFound(String resourceType, String identifier) {
+    return of(HttpStatus.NOT_FOUND, resourceType + " not found: " + identifier);
+  }
+
+  public static ApiError conflict(String message) {
+    return of(HttpStatus.CONFLICT, message);
+  }
+
+  public static ApiError validationError(String message) {
+    return of(HttpStatus.UNPROCESSABLE_ENTITY, message);
+  }
+
+  public static ApiError internalError() {
+    return of(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "An unexpected error occurred. Please try again later.");
+  }
+}
