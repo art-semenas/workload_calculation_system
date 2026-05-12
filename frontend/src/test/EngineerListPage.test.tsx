@@ -110,8 +110,11 @@ describe('EngineerListPage', () => {
     await userEvent.click(createBtn)
 
     await waitFor(() => {
-      // Dialog should be open - verify by looking for the form button
-      expect(screen.getByRole('button', { name: /Create engineer/i })).toBeInTheDocument()
+      // All four fields must be inside the open dialog
+      expect(screen.getByLabelText('Name')).toBeInTheDocument()
+      expect(screen.getByLabelText('Email')).toBeInTheDocument()
+      expect(screen.getByLabelText('Password')).toBeInTheDocument()
+      expect(screen.getByLabelText(/capacity/i)).toBeInTheDocument()
     })
   })
 
