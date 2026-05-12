@@ -46,12 +46,26 @@ describe('CreateObjectDialog', () => {
     mockGetDivisionBranches.mockImplementation((divId: string) => {
       if (divId === '11111111-1111-1111-1111-111111111111') {
         return Promise.resolve([
-          { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'Branch 1', divisionId: '11111111-1111-1111-1111-111111111111' },
-          { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', name: 'Branch 2', divisionId: '11111111-1111-1111-1111-111111111111' },
+          {
+            id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+            name: 'Branch 1',
+            divisionId: '11111111-1111-1111-1111-111111111111',
+          },
+          {
+            id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            name: 'Branch 2',
+            divisionId: '11111111-1111-1111-1111-111111111111',
+          },
         ])
       }
       if (divId === '22222222-2222-2222-2222-222222222222') {
-        return Promise.resolve([{ id: 'cccccccc-cccc-cccc-cccc-cccccccccccc', name: 'Branch 3', divisionId: '22222222-2222-2222-2222-222222222222' }])
+        return Promise.resolve([
+          {
+            id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+            name: 'Branch 3',
+            divisionId: '22222222-2222-2222-2222-222222222222',
+          },
+        ])
       }
       return Promise.resolve([])
     })
@@ -151,7 +165,10 @@ describe('CreateObjectDialog', () => {
 
     await waitFor(() => {
       expect(mockCreateObject).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Test Object', branchId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
+        expect.objectContaining({
+          name: 'Test Object',
+          branchId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        })
       )
     })
   })

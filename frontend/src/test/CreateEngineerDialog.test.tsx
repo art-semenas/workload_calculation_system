@@ -72,9 +72,7 @@ describe('CreateEngineerDialog', () => {
 
     await user.click(screen.getByRole('button', { name: /create engineer/i }))
 
-    await waitFor(() =>
-      expect(screen.getByText('Name is required')).toBeInTheDocument()
-    )
+    await waitFor(() => expect(screen.getByText('Name is required')).toBeInTheDocument())
     expect(mockCreateEngineer).not.toHaveBeenCalled()
   })
 
