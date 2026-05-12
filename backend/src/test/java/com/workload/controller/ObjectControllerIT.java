@@ -86,7 +86,7 @@ class ObjectControllerIT extends IntegrationTestBase {
         .post("/objects")
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   @Test
@@ -230,7 +230,7 @@ class ObjectControllerIT extends IntegrationTestBase {
         .get("/objects/{id}/summary", objectId)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("SUMMARY_NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   @Test

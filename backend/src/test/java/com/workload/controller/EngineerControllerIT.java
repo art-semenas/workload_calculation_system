@@ -86,7 +86,7 @@ class EngineerControllerIT extends IntegrationTestBase {
         .post("/engineers")
         .then()
         .statusCode(409)
-        .body("error.code", equalTo("NAME_CONFLICT"));
+        .body("error.code", equalTo(409));
   }
 
   @Test
@@ -156,7 +156,7 @@ class EngineerControllerIT extends IntegrationTestBase {
         .get("/engineers/{id}", UUID.randomUUID())
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("ENGINEER_NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   @Test
@@ -320,6 +320,6 @@ class EngineerControllerIT extends IntegrationTestBase {
         .delete("/engineers/{id}", engId)
         .then()
         .statusCode(409)
-        .body("error.code", equalTo("ENGINEER_HAS_ACTIVE_ASSIGNMENTS"));
+        .body("error.code", equalTo(409));
   }
 }

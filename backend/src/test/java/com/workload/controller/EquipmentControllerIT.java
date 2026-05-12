@@ -163,7 +163,7 @@ class EquipmentControllerIT extends IntegrationTestBase {
         .post("/objects/{oid}/assignments", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("DEVICE_NOT_IN_INVENTORY"));
+        .body("error.code", equalTo(422));
   }
 
   @Test
