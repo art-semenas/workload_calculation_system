@@ -38,8 +38,8 @@ describe('CreateEngineerDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetDivisions.mockResolvedValue([
-      { id: 'div1', name: 'Brest' },
-      { id: 'div2', name: 'Minsk' },
+      { id: '11111111-1111-1111-1111-111111111111', name: 'Brest' },
+      { id: '22222222-2222-2222-2222-222222222222', name: 'Minsk' },
     ])
     mockCreateEngineer.mockResolvedValue({ id: 'new-eng' })
   })
@@ -64,18 +64,69 @@ describe('CreateEngineerDialog', () => {
     })
   })
 
-  it('does not submit when required fields are empty', async () => {
+  it('does not submit when required fields are empty (no values typed)', async () => {
     const user = userEvent.setup()
     renderDialog()
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /create engineer/i })).toBeInTheDocument()
-    })
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: /create engineer/i }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Name is required')).toBeInTheDocument()
+    )
+    expect(mockCreateEngineer).not.toHaveBeenCalled()
+  })
+
+  it('does not submit when password is shorter than 8 characters', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeInTheDocument())
+
+    await user.type(screen.getByLabelText('Name'), 'Test Engineer')
+    await user.type(screen.getByLabelText('Email'), 'test@example.com')
+    await user.type(screen.getByLabelText('Password'), 'short')
+
+    await user.click(screen.getByRole('combobox', { name: /division/i }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Brest' })).toBeInTheDocument())
+    await user.click(screen.getByRole('option', { name: 'Brest' }))
+
+    await user.click(screen.getByRole('button', { name: /create engineer/i }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument()
+    )
+    expect(mockCreateEngineer).not.toHaveBeenCalled()
+  })
+
+  it('submits payload when all required fields are valid', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    await waitFor(() => expect(screen.getByLabelText('Name')).toBeInTheDocument())
+
+    await user.type(screen.getByLabelText('Name'), 'Test Engineer')
+    await user.type(screen.getByLabelText('Email'), 'test@example.com')
+    await user.type(screen.getByLabelText('Password'), 'longenoughpw')
+
+    // Open the Division select and pick Brest (aria-label set via inputProps to enable named selector)
+    await user.click(screen.getByRole('combobox', { name: /division/i }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Brest' })).toBeInTheDocument())
+    await user.click(screen.getByRole('option', { name: 'Brest' }))
 
     await user.click(screen.getByRole('button', { name: /create engineer/i }))
 
     await waitFor(() => {
-      expect(mockCreateEngineer).not.toHaveBeenCalled()
+      expect(mockCreateEngineer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Engineer',
+          email: 'test@example.com',
+          password: 'longenoughpw',
+          homeDivisionId: '11111111-1111-1111-1111-111111111111',
+          capacityFte: 1,
+        })
+      )
     })
   })
 

@@ -115,7 +115,7 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
                 render={({ field, fieldState }) => (
                   <FormControl fullWidth error={!!fieldState.error}>
                     <InputLabel>Division</InputLabel>
-                    <Select {...field} label="Division" disabled={divisionsLoading}>
+                    <Select {...field} label="Division" disabled={divisionsLoading} inputProps={{ 'aria-label': 'Division' }}>
                       {divisions?.map((div) => (
                         <MenuItem key={div.id} value={div.id}>
                           {div.name}
