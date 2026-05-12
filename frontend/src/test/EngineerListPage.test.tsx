@@ -110,9 +110,10 @@ describe('EngineerListPage', () => {
     await userEvent.click(createBtn)
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+      // All four fields must be inside the open dialog
+      expect(screen.getByLabelText('Name')).toBeInTheDocument()
+      expect(screen.getByLabelText('Email')).toBeInTheDocument()
+      expect(screen.getByLabelText('Password')).toBeInTheDocument()
       expect(screen.getByLabelText(/capacity/i)).toBeInTheDocument()
     })
   })

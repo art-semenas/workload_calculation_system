@@ -43,6 +43,7 @@ export const theme = createTheme({
     divider: tokens.line,
     primary: {
       main: tokens.ink,
+      contrastText: '#ffffff',
     },
     success: {
       main: tokens.ok,
@@ -103,6 +104,21 @@ export const theme = createTheme({
           textTransform: 'none',
           height: 32,
           fontSize: 13,
+          paddingLeft: 12,
+          paddingRight: 12,
+        },
+        contained: {
+          backgroundColor: tokens.ink,
+          color: '#ffffff',
+          '&:hover': {
+            backgroundColor: '#000000',
+          },
+        },
+        outlined: {
+          borderColor: tokens.lineStrong,
+          '&:hover': {
+            borderColor: tokens.ink4,
+          },
         },
       },
     },
@@ -150,10 +166,21 @@ export const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          height: 32,
           fontSize: 13,
           '& fieldset': {
             borderColor: tokens.lineStrong,
+          },
+        },
+        sizeSmall: {
+          height: 32,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          '& .MuiOutlinedInput-root': {
+            height: 38,
           },
         },
       },

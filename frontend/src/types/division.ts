@@ -17,30 +17,20 @@ export const BranchSchema = z.object({
   updatedAt: z.string().optional(),
 })
 
-// Internal schema matching the actual backend snake_case JSON keys from DivisionDto
-const DivisionRawSchema = z.object({
+export const DivisionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  branch_count: z.number().int(),
-  object_count: z.number().int(),
+  branchCount: z.number().int(),
+  objectCount: z.number().int(),
+  engineerCount: z.number().int().nullable().optional(),
+  requiredFte: z.number().nullable().optional(),
+  unassignedObjectCount: z.number().int().nullable().optional(),
+  utilisation: z.number().nullable().optional(),
 })
 
-export const DivisionSchema = DivisionRawSchema.transform((d) => ({
-  id: d.id,
-  name: d.name,
-  branchCount: d.branch_count,
-  objectCount: d.object_count,
-}))
-
-export const DivisionDetailSchema = DivisionRawSchema.extend({
+export const DivisionDetailSchema = DivisionSchema.extend({
   branches: z.array(BranchSchema).optional().default([]),
-}).transform((d) => ({
-  id: d.id,
-  name: d.name,
-  branchCount: d.branch_count,
-  objectCount: d.object_count,
-  branches: d.branches,
-}))
+})
 
 // BranchDetailSchema matches the actual BranchDto response (no embedded objects)
 export const BranchDetailSchema = BranchSchema

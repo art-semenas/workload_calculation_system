@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { LoginRequestSchema } from '../types/auth'
-import { DivisionCreateSchema } from '../types/division'
+import { DivisionCreateSchema, DivisionSchema } from '../types/division'
 import { TravelUpdateSchema } from '../types/travel'
 import { RepairUpdateSchema } from '../types/repairs'
 import { RecordsUpdateSchema } from '../types/records'
@@ -17,6 +17,20 @@ describe('Zod schemas', () => {
       password: 'secret',
     })
     expect(result.success).toBe(true)
+  })
+
+  it('DivisionSchema parses camelCase field names matching other API DTOs', () => {
+    const result = DivisionSchema.safeParse({
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'Brest',
+      branchCount: 3,
+      objectCount: 5,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.branchCount).toBe(3)
+      expect(result.data.objectCount).toBe(5)
+    }
   })
 
   it('DivisionCreateSchema rejects empty name', () => {

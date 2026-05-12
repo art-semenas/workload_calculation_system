@@ -155,7 +155,7 @@ describe('EquipmentTab', () => {
     renderTab()
 
     await waitFor(() => {
-      // Camera appears in both the inventory table and the assignment group heading
+      // Camera appears in both the inventory table and the assignments table
       expect(screen.getAllByText('Camera').length).toBeGreaterThanOrEqual(1)
     })
 
@@ -188,7 +188,7 @@ describe('EquipmentTab', () => {
 
     await waitFor(() => expect(screen.getAllByText('Camera').length).toBeGreaterThanOrEqual(1))
 
-    // click the remove (delete) button for "Camera"
+    // click the remove (delete) button for "Camera" in the physical inventory section
     const removeBtn = screen.getByRole('button', { name: /remove camera/i })
     await userEvent.click(removeBtn)
 
@@ -303,42 +303,55 @@ describe('EquipmentTab', () => {
 
     renderTab()
 
-    const warning = await screen.findByTestId('over-capacity-warning')
-    expect(warning).toBeInTheDocument()
+    // Both assignment rows are over-capacity — expect at least one warning icon
+    const warnings = await screen.findAllByTestId('over-capacity-warning')
+    expect(warnings.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders system assignments grouped by device', async () => {
+  it('renders system assignments flat table', async () => {
     renderTab()
 
     await waitFor(() => {
-      // Camera appears both in inventory table and as group heading in system assignments
+      // Camera appears in both the inventory table and in the flat assignments table
       const cameraEls = screen.getAllByText('Camera')
       expect(cameraEls.length).toBeGreaterThanOrEqual(2)
     })
 
-    expect(screen.getByText('Video')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    // "Video" appears in both the "Assigned to systems" column and the "System" column
+    expect(screen.getAllByText('Video').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows only unassigned system options for a device', async () => {
+  it('shows only unassigned system options for a device in add assignment dialog', async () => {
     renderTab()
 
+    // Global "Add assignment" button in the section header
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add assignment/i })).toBeInTheDocument()
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
+    await userEvent.click(screen.getByRole('button', { name: /add assignment/i }))
 
+    // Wait for the dialog to open
     await waitFor(() => {
-      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
 
+    // Select device "Camera" from the device dropdown
+    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
+
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
+
+    // Open the system type select
     await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
 
     await waitFor(() => {
+      // Security (OS) is available — not yet assigned to Camera
       expect(screen.getByRole('option', { name: 'Security' })).toBeInTheDocument()
     })
 
+    // Video is already assigned to Camera — should NOT appear as an option
     expect(screen.queryByRole('option', { name: 'Video' })).not.toBeInTheDocument()
   })
 
@@ -354,14 +367,19 @@ describe('EquipmentTab', () => {
     renderTab()
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add assignment/i })).toBeInTheDocument()
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
+    await userEvent.click(screen.getByRole('button', { name: /add assignment/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
+
+    // Select device "Camera"
+    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
 
     await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
     await waitFor(() =>
@@ -388,14 +406,19 @@ describe('EquipmentTab', () => {
     renderTab()
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: /add assignment for camera/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add assignment/i })).toBeInTheDocument()
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /add assignment for camera/i }))
+    await userEvent.click(screen.getByRole('button', { name: /add assignment/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Add Assignment - Camera')).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
+
+    // Select device "Camera"
+    await userEvent.click(screen.getByRole('combobox', { name: 'Device' }))
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Camera' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('option', { name: 'Camera' }))
 
     await userEvent.click(screen.getByRole('combobox', { name: 'System Type' }))
     await waitFor(() =>

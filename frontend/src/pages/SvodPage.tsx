@@ -7,12 +7,16 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  InputAdornment,
   MenuItem,
   Select,
+  type SelectChangeEvent,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
-import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
+import SearchIcon from '@mui/icons-material/Search'
+import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { PageHead } from '../components/common/PageHead'
 import { useSvod } from '../hooks/useSvod'
 import { useUiStore } from '../stores/uiStore'
@@ -28,49 +32,107 @@ function fmt(value: number, places: number): string {
   return value.toFixed(places)
 }
 
-function buildColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
+const colObjectName = (wide = false): GridColDef<SvodRow> => ({
+  field: 'objectName',
+  headerName: 'Object',
+  align: 'left',
+  headerAlign: 'left',
+  width: wide ? 280 : 340,
+  flex: wide ? undefined : 1,
+  renderCell: ({ row }: { row: SvodRow }) => (
+    <Link to={`/objects/${row.objectId}`} style={{ color: tokens.ink2, textDecoration: 'none' }}>
+      {row.objectName}
+    </Link>
+  ),
+})
+
+const colEngCount = (): GridColDef<SvodRow> => ({
+  field: 'engineers',
+  headerName: 'Eng',
+  align: 'right',
+  headerAlign: 'right',
+  width: 70,
+  renderCell: ({ value }: { value?: string[] }) => {
+    const n = Array.isArray(value) ? value.length : 0
+    return <Box sx={{ color: n === 0 ? tokens.ink4 : tokens.ink3 }}>{n === 0 ? '—' : n}</Box>
+  },
+})
+
+const colEngNames = (): GridColDef<SvodRow> => ({
+  field: 'engineers',
+  headerName: 'Engineers',
+  align: 'left',
+  headerAlign: 'left',
+  width: 200,
+  renderCell: ({ value }: { value?: string[] }) => {
+    const names = Array.isArray(value) ? value : []
+    if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
+    const text = names.join(', ')
+    return (
+      <Tooltip title={text}>
+        <Box
+          sx={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: tokens.ink3,
+          }}
+        >
+          {text}
+        </Box>
+      </Tooltip>
+    )
+  },
+})
+
+function buildCompactColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
   return [
+    colObjectName(false),
     {
-      field: 'objectName',
-      headerName: 'Object',
+      field: 'branchName',
+      headerName: 'Branch',
       align: 'left',
       headerAlign: 'left',
-      width: 220,
-      renderCell: ({ row }: { row: SvodRow }) => (
-        <Link
-          to={`/objects/${row.objectId}`}
-          style={{ color: tokens.ink2, textDecoration: 'none' }}
+      flex: 0.6,
+      minWidth: 140,
+      renderCell: ({ value }: { value?: string }) => (
+        <Box
+          sx={{
+            color: tokens.ink3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
-          {row.objectName}
-        </Link>
+          {value ?? ''}
+        </Box>
       ),
     },
+    colEngCount(),
     {
-      field: 'engineers',
-      headerName: 'Eng',
-      align: 'left',
-      headerAlign: 'left',
-      width: 200,
-      renderCell: ({ value }: { value?: string[] }) => {
-        const names = Array.isArray(value) ? value : []
-        if (names.length === 0) return <Box sx={{ color: tokens.ink4 }}>—</Box>
-        const text = names.join(', ')
-        return (
-          <Tooltip title={text}>
-            <Box
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                color: tokens.ink3,
-              }}
-            >
-              {text}
-            </Box>
-          </Tooltip>
-        )
-      },
+      field: 'itogoChisloNoTravel',
+      headerName: 'FTE no travel',
+      align: 'right',
+      headerAlign: 'right',
+      width: 130,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, precision),
     },
+    {
+      field: 'itogoChisloWithTravel',
+      headerName: 'ИТОГО Числ',
+      align: 'right',
+      headerAlign: 'right',
+      width: 130,
+      valueFormatter: ({ value }: NumericFormatterParams) => fmt(value, 6),
+      cellClassName: 'itogo-cell',
+    },
+  ]
+}
+
+function buildFullColumns(precision: 2 | 6): GridColDef<SvodRow>[] {
+  return [
+    colObjectName(true),
+    colEngNames(),
     {
       field: 'pzvMinutes',
       headerName: 'PZV',
@@ -200,17 +262,17 @@ const quietGridSx = {
     fontWeight: 600,
     color: tokens.ink,
   },
-  '& .MuiDataGrid-footerContainer': {
-    borderTop: `1px solid ${tokens.line}`,
-    minHeight: 44,
-  },
 }
+
+const PAGE_SIZE = 10
 
 export default function SvodPage() {
   const [page, setPage] = useState(0)
-  const pageSize = 100
   const [divisionId, setDivisionId] = useState('')
+  const [search, setSearch] = useState('')
   const [exportError, setExportError] = useState<string | null>(null)
+
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   const { svodPrecision, setSvodPrecision } = useUiStore()
 
@@ -219,9 +281,45 @@ export default function SvodPage() {
     queryFn: getDivisions,
   })
 
-  const { data, isLoading, isError } = useSvod(page, pageSize, divisionId || undefined)
+  const { data, isLoading, isError } = useSvod(page, PAGE_SIZE, divisionId || undefined)
 
-  const columns = useMemo(() => buildColumns(svodPrecision), [svodPrecision])
+  const columns = useMemo(
+    () => (showBreakdown ? buildFullColumns(svodPrecision) : buildCompactColumns(svodPrecision)),
+    [showBreakdown, svodPrecision]
+  )
+
+  const isSearchActive = search.trim().length > 0
+
+  const filteredRows = useMemo(() => {
+    const rows = data?.content ?? []
+    if (!isSearchActive) return rows
+    const q = search.toLowerCase()
+    return rows.filter(
+      (r) =>
+        r.objectName.toLowerCase().includes(q) ||
+        (r.address ?? '').toLowerCase().includes(q) ||
+        r.divisionName.toLowerCase().includes(q)
+    )
+  }, [data?.content, search, isSearchActive])
+
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
+  const displayTotalPages = isSearchActive ? 1 : totalPages
+  // When search is active show local filtered count; server range is meaningless across all pages
+  const rangeStart = isSearchActive
+    ? filteredRows.length === 0
+      ? 0
+      : 1
+    : totalElements === 0
+      ? 0
+      : page * PAGE_SIZE + 1
+  const rangeEnd = isSearchActive
+    ? filteredRows.length
+    : Math.min((page + 1) * PAGE_SIZE, totalElements)
+
+  // Display aggregation of server-computed FTE values for footer label — not a domain calculation
+  const pageSum = filteredRows.reduce((s, r) => s + r.itogoChisloWithTravel, 0)
+  const pageAvg = filteredRows.length > 0 ? pageSum / filteredRows.length : 0
 
   const handleExport = () => {
     setExportError(null)
@@ -239,11 +337,6 @@ export default function SvodPage() {
       })
   }
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page)
-  }
-
-  const totalElements = data?.totalElements ?? 0
   const subtitle = `Consolidated workload across all objects${totalElements > 0 ? ` · ${totalElements.toLocaleString()} rows` : ''}`
 
   return (
@@ -259,68 +352,95 @@ export default function SvodPage() {
         }
       />
 
-      {/* Filter row */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        {/* Division filter dropdown */}
-        <FormControl size="small" sx={{ minWidth: 200 }}>
+      {/* Filter row: search + division + precision */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+        <TextField
+          size="small"
+          placeholder="Search objects, addresses…"
+          aria-label="Search summary"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(0)
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 16, color: tokens.ink4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Box
+                  component="kbd"
+                  sx={{
+                    fontSize: 10,
+                    color: tokens.ink4,
+                    border: `1px solid ${tokens.line}`,
+                    borderRadius: '3px',
+                    px: '4px',
+                    py: '1px',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  ⌘K
+                </Box>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ width: 260 }}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 160 }}>
           <Select
-            displayEmpty
             value={divisionId}
-            onChange={(e) => {
+            onChange={(e: SelectChangeEvent) => {
               setDivisionId(e.target.value)
               setPage(0)
             }}
-            renderValue={(value) => {
-              if (!value) return <span style={{ color: tokens.ink3 }}>All divisions</span>
-              return divisions.find((d) => d.id === value)?.name ?? value
-            }}
+            displayEmpty
             sx={{
               fontSize: 13,
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.line },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: tokens.ink4 },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong },
             }}
           >
-            <MenuItem value="" sx={{ fontSize: 13, color: tokens.ink3 }}>
-              All divisions
-            </MenuItem>
+            <MenuItem value="">All divisions</MenuItem>
             {divisions.map((d) => (
-              <MenuItem key={d.id} value={d.id} sx={{ fontSize: 13 }}>
+              <MenuItem key={d.id} value={d.id}>
                 {d.name}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        {/* Precision toggle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>Precision:</Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setShowBreakdown((v) => !v)}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+        </Button>
+
+        <Box sx={{ flex: 1 }} />
+
+        <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+          Precision:{' '}
           <Box
-            component="button"
+            component="span"
             onClick={() => setSvodPrecision(svodPrecision === 2 ? 6 : 2)}
             sx={{
-              fontSize: 12,
-              color: tokens.accent,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              p: 0,
               fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              '&:hover': { opacity: 0.8 },
+              color: tokens.ink2,
+              textDecoration: 'underline',
+              textDecorationColor: tokens.lineStrong,
+              cursor: 'pointer',
+              '&:hover': { color: tokens.ink },
             }}
           >
             {svodPrecision === 2 ? '2 decimals · show full' : 'full · show 2'}
           </Box>
-        </Box>
+        </Typography>
       </Box>
 
       {exportError && (
@@ -338,18 +458,130 @@ export default function SvodPage() {
       ) : (
         <Box sx={{ width: '100%' }}>
           <DataGrid
-            rows={data?.content ?? []}
+            rows={filteredRows}
             columns={columns}
             getRowId={(row: SvodRow) => row.objectId}
-            paginationMode="server"
-            rowCount={totalElements}
-            paginationModel={{ page, pageSize }}
-            onPaginationModelChange={handlePaginationModelChange}
-            pageSizeOptions={[100]}
+            hideFooter
             disableRowSelectionOnClick
             disableVirtualization={import.meta.env.MODE === 'test'}
             sx={quietGridSx}
           />
+
+          {/* Custom footer */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: `1px solid ${tokens.line}`,
+              pt: '12px',
+              mt: 0,
+              fontSize: 12,
+              color: tokens.ink3,
+            }}
+          >
+            {/* Left: range — shows local filtered count when search is active */}
+            <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+              {isSearchActive ? (
+                <>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
+                  >
+                    {filteredRows.length}
+                  </Box>
+                  {' matching on this page'}
+                </>
+              ) : (
+                <>
+                  Showing{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
+                  >
+                    {rangeStart}–{rangeEnd}
+                  </Box>{' '}
+                  of{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: tokens.ink2,
+                    }}
+                  >
+                    {totalElements.toLocaleString()}
+                  </Box>
+                </>
+              )}
+            </Typography>
+
+            {/* Center: aggregates */}
+            <Box sx={{ display: 'flex', gap: 3, fontSize: 12, color: tokens.ink3 }}>
+              <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+                Avg{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    color: tokens.ink2,
+                  }}
+                >
+                  {pageAvg.toFixed(svodPrecision)}
+                </Box>
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: tokens.ink3 }}>
+                Σ page{' '}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    color: tokens.ink2,
+                  }}
+                >
+                  {pageSum.toFixed(svodPrecision)}
+                </Box>
+              </Typography>
+            </Box>
+
+            {/* Right: prev / page-of / next */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page === 0 || isSearchActive}
+                onClick={() => setPage((p) => p - 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                ‹ Prev
+              </Button>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  color: tokens.ink3,
+                  minWidth: 60,
+                  textAlign: 'center',
+                }}
+              >
+                {page + 1} / {displayTotalPages}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={page >= totalPages - 1 || isSearchActive}
+                onClick={() => setPage((p) => p + 1)}
+                sx={{ minWidth: 0, px: '10px', height: 28, fontSize: 12 }}
+              >
+                Next ›
+              </Button>
+            </Box>
+          </Box>
         </Box>
       )}
     </Box>

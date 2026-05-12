@@ -49,7 +49,21 @@ export async function loginAsAdmin(page: Page) {
   await page.getByLabel(/email/i).fill(adminEmail)
   await page.getByLabel(/password/i).fill(adminPassword)
   await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page).toHaveURL(/\/$/)
+
+  // Wait for navigation after login or check for error
+  try {
+    await expect(page).toHaveURL(/\/$/, { timeout: 8000 })
+  } catch {
+    // Check if there's an error message displayed
+    const errorMessage = await page.getByRole('alert').textContent()
+    if (errorMessage) {
+      throw new Error(`Login failed: ${errorMessage}`)
+    }
+    // Check if still on /login
+    const url = page.url()
+    throw new Error(`Login did not redirect to /. Current URL: ${url}`)
+  }
+
   await expect(page.getByRole('heading', { name: 'Maintenance workload' })).toBeVisible()
 }
 

@@ -32,15 +32,18 @@ export function KPIRow({ items }: KPIRowProps) {
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: 0,
         width: '100%',
+        borderTop: `1px solid ${tokens.line}`,
+        borderBottom: `1px solid ${tokens.line}`,
       }}
     >
       {items.map((item, idx) => (
         <Box
           key={idx}
           sx={{
-            paddingRight: idx < items.length - 1 ? 'var(--gap-m)' : 0,
-            marginRight: idx < items.length - 1 ? 'var(--gap-m)' : 0,
-            borderRight: idx < items.length - 1 ? `1px solid var(--line)` : 'none',
+            px: '24px',
+            py: '18px',
+            pl: idx === 0 ? 0 : '24px',
+            borderLeft: idx === 0 ? 'none' : `1px solid ${tokens.line}`,
           }}
         >
           {/* Label */}

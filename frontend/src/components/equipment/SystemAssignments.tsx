@@ -8,7 +8,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
   IconButton,
+  InputLabel,
   MenuItem,
   Select,
   Table,
@@ -38,22 +41,15 @@ import {
   SystemTypeSchema,
   type AssignmentCreate,
   type AssignmentUpdate,
+  type ObjectDevice,
   type ObjectSystemAssignment,
   type SystemType,
 } from '../../types/equipment'
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
+import { SectionBlock } from '../common/SectionBlock'
 import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
-
-interface AddAssignmentFormValues {
-  deviceTypeId: string
-  systemType: string
-  quantityMaintained: number
-}
-
-interface EditAssignmentFormValues {
-  quantityMaintained: number
-}
+import { tokens } from '../../theme'
 
 const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
   OS: 'Security',
@@ -61,97 +57,120 @@ const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
   VIDEO: 'Video',
 }
 
+// ── Add assignment dialog ────────────────────────────────────────────────────
+
+interface AddFormValues {
+  deviceTypeId: string
+  systemType: string
+  quantityMaintained: number
+}
+
 function AddAssignmentDialog({
   open,
-  deviceName,
-  deviceTypeId,
-  existingSystemTypes,
+  devices,
+  assignments,
   onClose,
   onSubmit,
   isPending,
 }: {
   open: boolean
-  deviceName: string
-  deviceTypeId: string
-  existingSystemTypes: SystemType[]
+  devices: ObjectDevice[]
+  assignments: ObjectSystemAssignment[]
   onClose: () => void
-  onSubmit: (values: AddAssignmentFormValues) => Promise<void>
+  onSubmit: (values: AddFormValues) => Promise<void>
   isPending: boolean
 }) {
-  const form = useForm<AddAssignmentFormValues>({
+  const form = useForm<AddFormValues>({
     resolver: zodResolver(AssignmentCreateSchema),
-    defaultValues: { deviceTypeId, systemType: '', quantityMaintained: 0 },
+    defaultValues: { deviceTypeId: '', systemType: '', quantityMaintained: 0 },
   })
 
-  const { data: contexts = [] } = useCatalogDeviceContexts(deviceTypeId)
-  const availableSystemTypes = contexts
-    .map((context) => context.systemType)
-    .filter((systemType) => !existingSystemTypes.includes(systemType))
+  const watchedDeviceTypeId = form.watch('deviceTypeId')
+  const { data: contexts = [] } = useCatalogDeviceContexts(watchedDeviceTypeId)
 
-  useEffect(() => {
-    form.reset({ deviceTypeId, systemType: '', quantityMaintained: 0 })
-  }, [deviceTypeId, form])
+  const existingSystemTypes = assignments
+    .filter((a) => a.deviceTypeId === watchedDeviceTypeId)
+    .map((a) => a.systemType)
+
+  const availableSystemTypes = contexts
+    .map((c) => c.systemType)
+    .filter((st) => !existingSystemTypes.includes(st))
 
   function handleClose() {
-    form.reset({ deviceTypeId, systemType: '', quantityMaintained: 0 })
+    form.reset({ deviceTypeId: '', systemType: '', quantityMaintained: 0 })
     onClose()
+  }
+
+  function handleDeviceChange(deviceTypeId: string) {
+    form.setValue('deviceTypeId', deviceTypeId)
+    form.setValue('systemType', '')
   }
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Add Assignment - {deviceName}</DialogTitle>
-      <form
+      <DialogTitle>Add assignment</DialogTitle>
+      <Box
+        component="form"
         onSubmit={(e) => {
           void form.handleSubmit(onSubmit)(e)
         }}
       >
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Device: {deviceName}
-          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Device</InputLabel>
+            <Select
+              value={watchedDeviceTypeId}
+              label="Device"
+              onChange={(e) => handleDeviceChange(e.target.value)}
+              SelectDisplayProps={{ 'aria-label': 'Device' }}
+            >
+              <MenuItem value="">
+                <em>Select device</em>
+              </MenuItem>
+              {devices.map((d) => (
+                <MenuItem key={d.deviceTypeId} value={d.deviceTypeId}>
+                  {d.deviceTypeName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Controller
             name="systemType"
             control={form.control}
             render={({ field, fieldState }) => (
-              <Box>
-                <Typography variant="caption">System Type</Typography>
+              <FormControl fullWidth size="small" error={!!fieldState.error}>
+                <InputLabel>System Type</InputLabel>
                 <Select
                   {...field}
-                  fullWidth
-                  displayEmpty
-                  size="small"
-                  error={!!fieldState.error}
-                  disabled={availableSystemTypes.length === 0}
-                  inputProps={{ 'aria-label': 'System Type' }}
+                  label="System Type"
+                  SelectDisplayProps={{ 'aria-label': 'System Type' }}
                 >
-                  <MenuItem value="">
-                    <em>Select system type</em>
-                  </MenuItem>
-                  {availableSystemTypes.map((st) => (
-                    <MenuItem key={st} value={st}>
-                      {SYSTEM_TYPE_LABELS[st]}
+                  {!watchedDeviceTypeId ? (
+                    <MenuItem value="" disabled>
+                      <em>Select a device first</em>
                     </MenuItem>
-                  ))}
+                  ) : availableSystemTypes.length === 0 ? (
+                    <MenuItem value="" disabled>
+                      <em>No system types available</em>
+                    </MenuItem>
+                  ) : (
+                    availableSystemTypes.map((st) => (
+                      <MenuItem key={st} value={st}>
+                        {SYSTEM_TYPE_LABELS[st]}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
-                {fieldState.error && (
-                  <Typography variant="caption" color="error">
-                    {fieldState.error.message}
-                  </Typography>
-                )}
-                {availableSystemTypes.length === 0 && (
-                  <Typography variant="caption" color="text.secondary">
-                    No available systems remain for this device.
-                  </Typography>
-                )}
-              </Box>
+                {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
+              </FormControl>
             )}
           />
 
           <FormTextField
             name="quantityMaintained"
             control={form.control}
-            label="Quantity Maintained"
+            label="Qty maintained"
             type="number"
             size="small"
             inputProps={{ min: 0 }}
@@ -163,138 +182,77 @@ function AddAssignmentDialog({
           <Button
             type="submit"
             variant="contained"
-            disabled={isPending || availableSystemTypes.length === 0}
+            disabled={isPending || !watchedDeviceTypeId || availableSystemTypes.length === 0}
           >
             Add
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   )
 }
 
-function AssignmentWarning({
-  totalQuantityMaintained,
-  quantityPhysical,
+// ── Edit assignment dialog ───────────────────────────────────────────────────
+
+interface EditFormValues {
+  quantityMaintained: number
+}
+
+function EditAssignmentDialog({
+  assignment,
+  onClose,
+  onSubmit,
+  isPending,
 }: {
-  totalQuantityMaintained: number
-  quantityPhysical: number
+  assignment: ObjectSystemAssignment | null
+  onClose: () => void
+  onSubmit: (values: EditFormValues) => Promise<void>
+  isPending: boolean
 }) {
-  if (totalQuantityMaintained <= quantityPhysical) {
-    return null
-  }
+  const form = useForm<EditFormValues>({
+    resolver: zodResolver(AssignmentUpdateSchema),
+    defaultValues: { quantityMaintained: 0 },
+  })
+
+  useEffect(() => {
+    if (assignment) form.reset({ quantityMaintained: assignment.quantityMaintained })
+  }, [assignment, form])
 
   return (
-    <Tooltip
-      title={`Maintained quantity (${totalQuantityMaintained}) exceeds physical quantity (${quantityPhysical})`}
-    >
+    <Dialog open={!!assignment} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>
+        Edit — {assignment?.deviceTypeName}
+        {assignment ? ` / ${SYSTEM_TYPE_LABELS[assignment.systemType]}` : ''}
+      </DialogTitle>
       <Box
-        component="span"
-        aria-label="over-capacity warning"
-        data-testid="over-capacity-warning"
-        sx={{ display: 'inline-flex' }}
+        component="form"
+        onSubmit={(e) => {
+          void form.handleSubmit(onSubmit)(e)
+        }}
       >
-        <WarningAmberOutlinedIcon color="warning" fontSize="small" />
-      </Box>
-    </Tooltip>
-  )
-}
-
-function DeviceAssignmentsGroup({
-  device,
-  assignments,
-  onEdit,
-  onRemove,
-  onAdd,
-}: {
-  device: { deviceTypeId: string; deviceTypeName: string; quantityPhysical: number }
-  assignments: ObjectSystemAssignment[]
-  onEdit: (assignment: ObjectSystemAssignment) => void
-  onRemove: (assignment: ObjectSystemAssignment) => void
-  onAdd: (deviceTypeId: string) => void
-}) {
-  const { data: contexts = [] } = useCatalogDeviceContexts(device.deviceTypeId)
-  const availableSystemTypes = contexts
-    .map((context) => context.systemType)
-    .filter((systemType) => !assignments.some((assignment) => assignment.systemType === systemType))
-  const totalQuantityMaintained = assignments.reduce(
-    (sum, assignment) => sum + assignment.quantityMaintained,
-    0
-  )
-
-  return (
-    <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="subtitle2">{device.deviceTypeName}</Typography>
-          <AssignmentWarning
-            totalQuantityMaintained={totalQuantityMaintained}
-            quantityPhysical={device.quantityPhysical}
+        <DialogContent sx={{ pt: 1 }}>
+          <FormTextField
+            name="quantityMaintained"
+            control={form.control}
+            label="Qty maintained"
+            type="number"
+            size="small"
+            inputProps={{ min: 0 }}
+            fullWidth
           />
-        </Box>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => onAdd(device.deviceTypeId)}
-          aria-label={`add assignment for ${device.deviceTypeName}`}
-          disabled={availableSystemTypes.length === 0}
-        >
-          Add assignment
-        </Button>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained" disabled={isPending}>
+            Save
+          </Button>
+        </DialogActions>
       </Box>
-      <Table size="small" aria-label={`assignments for ${device.deviceTypeName}`}>
-        <TableHead>
-          <TableRow>
-            <TableCell>System Type</TableCell>
-            <TableCell>Qty Maintained</TableCell>
-            <TableCell>R1 Min</TableCell>
-            <TableCell>R2 Min</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {assignments.map((assignment) => (
-            <TableRow key={assignment.id}>
-              <TableCell>
-                <Typography component="span">
-                  {SYSTEM_TYPE_LABELS[assignment.systemType]}
-                </Typography>
-              </TableCell>
-              <TableCell>{assignment.quantityMaintained}</TableCell>
-              <TableCell>{assignment.r1Minutes}</TableCell>
-              <TableCell>{assignment.r2Minutes}</TableCell>
-              <TableCell align="right">
-                <IconButton
-                  size="small"
-                  aria-label={`edit assignment ${SYSTEM_TYPE_LABELS[assignment.systemType]}`}
-                  onClick={() => onEdit(assignment)}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  aria-label={`remove assignment ${SYSTEM_TYPE_LABELS[assignment.systemType]}`}
-                  onClick={() => onRemove(assignment)}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
-          {assignments.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5}>
-                <Typography variant="body2" color="text.secondary">
-                  No assignments for this device.
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Box>
+    </Dialog>
   )
 }
+
+// ── Main component ───────────────────────────────────────────────────────────
 
 export function SystemAssignments({ objectId }: { objectId: string }) {
   const { data: devices = [], isLoading: devicesLoading } = useDevices(objectId)
@@ -303,27 +261,23 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
   const updateAssignment = useUpdateAssignment(objectId)
   const removeAssignment = useRemoveAssignment(objectId)
 
-  const [addDeviceTypeId, setAddDeviceTypeId] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
   const [editAssignment, setEditAssignment] = useState<ObjectSystemAssignment | null>(null)
   const [assignmentToRemove, setAssignmentToRemove] = useState<ObjectSystemAssignment | null>(null)
   const [mutationError, setMutationError] = useState<string | null>(null)
 
-  const editForm = useForm<EditAssignmentFormValues>({
-    resolver: zodResolver(AssignmentUpdateSchema),
-    defaultValues: { quantityMaintained: 0 },
+  // Over-capacity check: sum quantityMaintained per device
+  const deviceCapacity: Record<string, { totalMaintained: number; physical: number }> = {}
+  devices.forEach((d) => {
+    deviceCapacity[d.deviceTypeId] = { totalMaintained: 0, physical: d.quantityPhysical }
+  })
+  assignments.forEach((a) => {
+    if (deviceCapacity[a.deviceTypeId]) {
+      deviceCapacity[a.deviceTypeId].totalMaintained += a.quantityMaintained
+    }
   })
 
-  const deviceGroups = devices.map((device) => ({
-    device,
-    assignments: assignments.filter((a) => a.deviceTypeId === device.deviceTypeId),
-  }))
-
-  const addDevice = devices.find((device) => device.deviceTypeId === addDeviceTypeId) ?? null
-  const addDeviceAssignments = assignments.filter(
-    (assignment) => assignment.deviceTypeId === addDeviceTypeId
-  )
-
-  async function handleSubmitAdd(values: AddAssignmentFormValues) {
+  async function handleSubmitAdd(values: AddFormValues) {
     try {
       const parsed = SystemTypeSchema.parse(values.systemType)
       const data: AssignmentCreate = {
@@ -332,24 +286,14 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
         quantityMaintained: values.quantityMaintained,
       }
       await addAssignment.mutateAsync(data)
-      setAddDeviceTypeId(null)
+      setAddOpen(false)
     } catch (err) {
       const code = extractErrorCode(err)
       setMutationError(mapEquipmentErrorCode(code))
     }
   }
 
-  function handleOpenEdit(assignment: ObjectSystemAssignment) {
-    editForm.reset({ quantityMaintained: assignment.quantityMaintained })
-    setMutationError(null)
-    setEditAssignment(assignment)
-  }
-
-  function handleCloseEdit() {
-    setEditAssignment(null)
-  }
-
-  async function handleSubmitEdit(values: EditAssignmentFormValues) {
+  async function handleSubmitEdit(values: EditFormValues) {
     if (!editAssignment) return
     try {
       const data: AssignmentUpdate = { quantityMaintained: values.quantityMaintained }
@@ -373,89 +317,140 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
     }
   }
 
-  if (devicesLoading || assignmentsLoading) {
-    return <CircularProgress size={24} />
-  }
+  if (devicesLoading || assignmentsLoading) return <CircularProgress size={24} />
 
   return (
-    <Box>
+    <SectionBlock
+      label="B · System assignments"
+      meta={`${assignments.length} entries`}
+      actions={
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={devices.length === 0}
+          onClick={() => setAddOpen(true)}
+        >
+          Add assignment
+        </Button>
+      }
+    >
       {mutationError && (
         <Alert severity="error" onClose={() => setMutationError(null)} sx={{ mb: 2 }}>
           {mutationError}
         </Alert>
       )}
 
-      {deviceGroups.map(({ device, assignments: groupAssignments }) => (
-        <DeviceAssignmentsGroup
-          key={device.deviceTypeId}
-          device={device}
-          assignments={groupAssignments}
-          onEdit={handleOpenEdit}
-          onRemove={setAssignmentToRemove}
-          onAdd={setAddDeviceTypeId}
-        />
-      ))}
+      <Table size="small" aria-label="system assignments table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Device</TableCell>
+            <TableCell>System</TableCell>
+            <TableCell>Qty maintained</TableCell>
+            <TableCell>R1</TableCell>
+            <TableCell>R2</TableCell>
+            <TableCell sx={{ width: 80 }} />
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {assignments.map((a) => {
+            const cap = deviceCapacity[a.deviceTypeId]
+            const overCapacity = cap ? cap.totalMaintained > cap.physical : false
+            return (
+              <TableRow key={a.id}>
+                <TableCell>{a.deviceTypeName}</TableCell>
+                <TableCell sx={{ color: tokens.ink3 }}>
+                  {SYSTEM_TYPE_LABELS[a.systemType]}
+                </TableCell>
+                <TableCell
+                  sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 13 }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {a.quantityMaintained}
+                    {overCapacity && (
+                      <Tooltip
+                        title={`Total maintained (${cap?.totalMaintained}) exceeds physical (${cap?.physical})`}
+                      >
+                        <Box
+                          component="span"
+                          aria-label="over-capacity warning"
+                          data-testid="over-capacity-warning"
+                          sx={{ display: 'inline-flex', ml: 0.5 }}
+                        >
+                          <WarningAmberOutlinedIcon color="warning" sx={{ fontSize: 14 }} />
+                        </Box>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 13 }}
+                >
+                  {a.r1Minutes != null ? a.r1Minutes.toFixed(4) : '—'}
+                </TableCell>
+                <TableCell
+                  sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", fontSize: 13 }}
+                >
+                  {a.r2Minutes != null ? a.r2Minutes.toFixed(4) : '—'}
+                </TableCell>
+                <TableCell align="right" sx={{ p: '4px 8px' }}>
+                  <IconButton
+                    size="small"
+                    aria-label={`edit ${a.deviceTypeName} / ${SYSTEM_TYPE_LABELS[a.systemType]}`}
+                    onClick={() => setEditAssignment(a)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    aria-label={`unassign ${a.deviceTypeName} / ${SYSTEM_TYPE_LABELS[a.systemType]}`}
+                    onClick={() => setAssignmentToRemove(a)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {assignments.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6}>
+                <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>
+                  {devices.length === 0
+                    ? 'Add devices to inventory first before creating assignments.'
+                    : 'No assignments yet.'}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {devices.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
-          No devices in inventory. Add devices above before creating assignments.
-        </Typography>
-      )}
+      <AddAssignmentDialog
+        open={addOpen}
+        devices={devices}
+        assignments={assignments}
+        onClose={() => setAddOpen(false)}
+        onSubmit={handleSubmitAdd}
+        isPending={addAssignment.isPending}
+      />
 
-      {addDevice ? (
-        <AddAssignmentDialog
-          open={!!addDevice}
-          deviceName={addDevice.deviceTypeName}
-          deviceTypeId={addDevice.deviceTypeId}
-          existingSystemTypes={addDeviceAssignments.map((assignment) => assignment.systemType)}
-          onClose={() => setAddDeviceTypeId(null)}
-          onSubmit={handleSubmitAdd}
-          isPending={addAssignment.isPending}
-        />
-      ) : null}
+      <EditAssignmentDialog
+        assignment={editAssignment}
+        onClose={() => setEditAssignment(null)}
+        onSubmit={handleSubmitEdit}
+        isPending={updateAssignment.isPending}
+      />
 
-      {/* Edit Assignment Dialog */}
-      <Dialog open={!!editAssignment} onClose={handleCloseEdit} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          Edit Assignment — {editAssignment?.deviceTypeName} /{' '}
-          {editAssignment ? SYSTEM_TYPE_LABELS[editAssignment.systemType] : ''}
-        </DialogTitle>
-        <form
-          onSubmit={(e) => {
-            void editForm.handleSubmit(handleSubmitEdit)(e)
-          }}
-        >
-          <DialogContent sx={{ pt: 1 }}>
-            <FormTextField
-              name="quantityMaintained"
-              control={editForm.control}
-              label="Quantity Maintained"
-              type="number"
-              size="small"
-              inputProps={{ min: 0 }}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseEdit}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={updateAssignment.isPending}>
-              Save
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* Remove Confirm Dialog */}
       <ConfirmDialog
         open={!!assignmentToRemove}
-        title="Remove Assignment?"
-        message={`Remove assignment for ${assignmentToRemove?.deviceTypeName} / ${
+        title="Remove assignment?"
+        message={`Remove ${assignmentToRemove?.deviceTypeName ?? ''} / ${
           assignmentToRemove ? SYSTEM_TYPE_LABELS[assignmentToRemove.systemType] : ''
-        }? This action cannot be undone.`}
+        }? This cannot be undone.`}
         onConfirm={() => void handleConfirmRemove()}
         onCancel={() => setAssignmentToRemove(null)}
         confirmLabel="Remove"
       />
-    </Box>
+    </SectionBlock>
   )
 }

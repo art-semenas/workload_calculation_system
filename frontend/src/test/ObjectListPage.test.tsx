@@ -9,7 +9,6 @@ const mockUseObjects = vi.fn()
 const mockUseDivisions = vi.fn()
 const mockUseCreateObject = vi.fn()
 const mockGetDivisionBranches = vi.fn()
-const mockUseObjectSummary = vi.fn()
 
 vi.mock('../hooks/useObjects', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
@@ -26,11 +25,6 @@ vi.mock('../hooks/useDivisions', () => ({
 vi.mock('../api/divisions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
   getDivisionBranches: (...args: unknown[]) => mockGetDivisionBranches(...args),
-}))
-
-vi.mock('../hooks/useSummary', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- vi.fn() mock, no safe generic available
-  useObjectSummary: (...args: unknown[]) => mockUseObjectSummary(...args),
 }))
 
 const mockNavigate = vi.fn()
@@ -61,6 +55,8 @@ describe('ObjectListPage', () => {
           divisionName: 'Division 1',
           branchName: 'Branch 1',
           address: '123 Street',
+          itogoChisloWithTravel: 0.123456,
+          engineerCount: 2,
         },
         {
           id: 'obj-2',
@@ -68,6 +64,8 @@ describe('ObjectListPage', () => {
           divisionName: 'Division 2',
           branchName: 'Branch 2',
           address: '456 Ave',
+          itogoChisloWithTravel: 0.123456,
+          engineerCount: 1,
         },
       ],
       isLoading: false,
@@ -99,12 +97,6 @@ describe('ObjectListPage', () => {
       mutateAsync: vi.fn().mockResolvedValue({ id: 'obj-3', name: 'Object 3' }),
       isPending: false,
     })
-    mockUseObjectSummary.mockReturnValue({
-      data: {
-        itogoChisloWithTravel: 0.123456,
-      },
-      isLoading: false,
-    })
   })
 
   it('renders object table with name and address', async () => {
@@ -133,7 +125,7 @@ describe('ObjectListPage', () => {
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
-    await userEvent.click(screen.getByText('Add object'))
+    await userEvent.click(screen.getByText('Create object'))
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
   })
 
@@ -153,41 +145,26 @@ describe('ObjectListPage', () => {
     })
   })
 
-  it('shows TOTAL Staffing column header and values for each row', async () => {
+  it('shows FTE column header and values for each row', async () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
 
-    expect(screen.getByText('TOTAL Staffing')).toBeInTheDocument()
-    const staffingValues = screen.getAllByText('0.123456')
+    expect(screen.getByText('FTE')).toBeInTheDocument()
+    const staffingValues = screen.getAllByText('0.1235')
     expect(staffingValues).toHaveLength(2)
   })
 
-  it('populates grouped branch selector in the dialog', async () => {
+  it('displays object count and shows no objects message when empty', async () => {
+    mockUseObjects.mockReturnValue({
+      data: [],
+      isLoading: false,
+    })
+
     renderPage()
 
-    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
-
-    await userEvent.click(screen.getByText('Add object'))
-
-    const branchSelect = screen.getByTestId('dialog-branch-select-btn')
-    await userEvent.click(branchSelect)
-
-    expect(await screen.findByRole('option', { name: 'Branch 1A' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Branch 1B' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Branch 2A' })).toBeInTheDocument()
-
-    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-1')
-    expect(mockGetDivisionBranches).toHaveBeenCalledWith('div-2')
-  })
-
-  it('keeps Create button disabled until a branch is selected', async () => {
-    renderPage()
-
-    await waitFor(() => expect(screen.getByText('Object 1')).toBeInTheDocument())
-
-    await userEvent.click(screen.getByText('Add object'))
-
-    expect(screen.getByRole('button', { name: /create/i })).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByText('No objects found')).toBeInTheDocument()
+    })
   })
 })

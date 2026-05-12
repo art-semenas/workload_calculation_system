@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Divider, Typography } from '@mui/material'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { FormTextField } from '../components/common/FormTextField'
 import { useLogin } from '../hooks/useAuth'
 import { LoginRequestSchema, type LoginRequest } from '../types/auth'
+import { tokens } from '../theme'
 
 function isUnauthorizedError(error: unknown): boolean {
   return (
@@ -51,65 +52,106 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         px: 2,
-        background:
-          'linear-gradient(135deg, rgba(232,240,254,1) 0%, rgba(245,247,250,1) 50%, rgba(226,239,218,1) 100%)',
+        backgroundColor: tokens.bg,
       }}
     >
-      <Card sx={{ width: '100%', maxWidth: 420 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Workload Calculation System
-          </Typography>
-          <Typography variant="h6" component="h2" color="text.secondary" gutterBottom>
-            Sign In
-          </Typography>
-
-          {errorMessage ? (
-            <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
-              {errorMessage}
-            </Alert>
-          ) : null}
-
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: 380,
+          backgroundColor: tokens.bgElev,
+          borderRadius: 'var(--r-lg)',
+          border: `1px solid ${tokens.line}`,
+          p: '40px 36px 32px',
+        }}
+      >
+        {/* Brand mark + wordmark */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
           <Box
-            component="form"
-            onSubmit={(e) => {
-              void onSubmit(e)
+            sx={{
+              width: 28,
+              height: 28,
+              backgroundColor: tokens.ink,
+              borderRadius: 'var(--r-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
-            noValidate
+          >
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+              W
+            </Typography>
+          </Box>
+          <Typography
+            sx={{ fontSize: 15, fontWeight: 600, color: tokens.ink, letterSpacing: '-0.01em' }}
+          >
+            Workload
+          </Typography>
+        </Box>
+
+        {/* Page heading */}
+        <Typography
+          component="h1"
+          sx={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.015em', mb: 0.5 }}
+        >
+          Sign in
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: tokens.ink3, mb: 3 }}>
+          Internal maintenance workload system
+        </Typography>
+
+        {errorMessage ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errorMessage}
+          </Alert>
+        ) : null}
+
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            void onSubmit(e)
+          }}
+          noValidate
+        >
+          <FormTextField
+            name="email"
+            control={control}
+            label="Email"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            autoComplete="email"
+          />
+          <FormTextField
+            name="password"
+            control={control}
+            label="Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            autoComplete="current-password"
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disableRipple
+            disabled={isSubmitting}
             sx={{ mt: 2 }}
           >
-            <FormTextField
-              name="email"
-              control={control}
-              label="Email"
-              variant="standard"
-              fullWidth
-              margin="normal"
-              autoComplete="email"
-            />
-            <FormTextField
-              name="password"
-              control={control}
-              label="Password"
-              type="password"
-              variant="standard"
-              fullWidth
-              margin="normal"
-              autoComplete="current-password"
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disableRipple
-              disabled={isSubmitting}
-              sx={{ mt: 3, minHeight: 44 }}
-            >
-              {isSubmitting ? <CircularProgress size={22} color="inherit" /> : 'Sign In'}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+            {isSubmitting ? <CircularProgress size={16} color="inherit" /> : 'Sign in'}
+          </Button>
+
+          <Divider sx={{ my: 2, fontSize: 12, color: tokens.ink3 }}>or</Divider>
+
+          <Button fullWidth variant="outlined" disabled>
+            Continue with corporate SSO
+          </Button>
+        </Box>
+      </Box>
     </Box>
   )
 }

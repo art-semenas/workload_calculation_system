@@ -68,7 +68,9 @@ test.describe('Dashboard SVOD sections', () => {
 
     await loginAsAdmin(page)
 
-    const divisionRows = page.getByRole('row').filter({ has: page.getByRole('cell').nth(0) })
+    const fteTable = page.getByTestId('fte-division-table')
+    const divisionRows = fteTable.getByRole('row').filter({ has: page.getByRole('cell') })
+    await expect(divisionRows.first()).toBeVisible()
     await divisionRows.first().click()
 
     await expect(page).toHaveURL(/\/divisions\/[0-9a-f-]+$/)
@@ -90,10 +92,13 @@ test.describe('Dashboard SVOD sections', () => {
 
     await loginAsAdmin(page)
 
-    await page.getByRole('button', { name: /details/i }).click()
     await expect(page.getByText(/\d+\.\d{6}/).first()).toBeVisible()
 
-    await page.locator('li').filter({ hasText: /\d+\.\d{6}/ }).first().click()
+    await page
+      .getByRole('row')
+      .filter({ hasText: /\d+\.\d{6}/ })
+      .first()
+      .click()
     await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+$/)
   })
 
@@ -104,9 +109,18 @@ test.describe('Dashboard SVOD sections', () => {
     await loginAsAdmin(page)
 
     await page.getByRole('button', { name: /details/i }).click()
+    // Wait for drawer section label to confirm drawer rendered
+    await expect(page.getByText(/uncovered objects/i).first()).toBeVisible()
+    // Scope spinner wait to this section only — the broad page locator can hit strict-mode
+    // violations when multiple spinners are present (main page + gaps section simultaneously).
+    // .last() selects the leaf Typography element (not a container ancestor), so '..' gives
+    // the DrawerSection box reliably.
+    const gapSection = page.getByText(/uncovered objects/i).last().locator('..')
+    // MUI CircularProgress renders <span role="progressbar"><svg>, not <svg role="progressbar">
+    await gapSection.locator('[role="progressbar"]').waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
+
     const emptyStateVisible = await page.getByText(/no uncovered objects/i).isVisible()
-    const uncoveredSection = page.getByText(/uncovered objects/i).first().locator('..')
-    const gapListVisible = await uncoveredSection.locator('ul').isVisible()
+    const gapListVisible = await gapSection.locator('ul').isVisible()
 
     expect(emptyStateVisible || gapListVisible).toBeTruthy()
   })
@@ -196,6 +210,9 @@ test.describe('Summary page (/svod)', () => {
         .getByRole('columnheader', { name: /№/i })
         .or(page.getByRole('columnheader', { name: /object/i }).first())
     ).toBeVisible()
+
+    // PZV and Travel are in the full breakdown view — toggle it on first
+    await page.getByRole('button', { name: /show breakdown/i }).click()
 
     for (const pattern of [/object/i, /pzv/i, /travel/i]) {
       await expect(page.getByRole('columnheader', { name: pattern }).first()).toBeVisible()
@@ -298,9 +315,8 @@ test.describe('Summary page (/svod)', () => {
 
     await expect(
       page
-        .getByText(/rows per page/i)
-        .or(page.locator('[aria-label="Go to next page"]'))
-        .or(page.locator('.MuiTablePagination-root'))
+        .getByRole('button', { name: /prev/i })
+        .or(page.getByRole('button', { name: /next/i }))
         .first()
     ).toBeVisible()
   })
@@ -447,20 +463,21 @@ test.describe('Object Detail — Summary tab', () => {
     const addDeviceDialog = page.getByRole('dialog', { name: 'Add Device' })
     await addDeviceDialog.getByLabel('Device Type').click()
     await page.getByRole('option', { name: catalog.device.name }).click()
-    await addDeviceDialog.getByLabel('Quantity Physical').fill('2')
+    await addDeviceDialog.getByLabel('Qty physical').fill('2')
     await addDeviceDialog.getByRole('button', { name: 'Add' }).click()
     await expect(addDeviceDialog).toBeHidden()
 
-    await page
-      .getByRole('button', { name: `add assignment for ${catalog.device.name}` })
-      .click()
+    await page.getByRole('button', { name: 'Add assignment' }).click()
 
     const addAssignmentDialog = page.getByRole('dialog', { name: /add assignment/i })
     await expect(addAssignmentDialog).toBeVisible()
 
-    await page.getByLabel('System Type').click()
+    await page.getByLabel('Device').click()
+    await page.getByRole('option', { name: catalog.device.name }).click()
+    await expect(page.getByRole('option', { name: catalog.device.name })).toBeHidden()
+    await page.locator('[aria-label="System Type"]').click()
     await page.getByRole('option', { name: assignmentLabel }).click()
-    await page.getByLabel('Quantity Maintained').fill('1')
+    await page.getByLabel('Qty maintained').fill('1')
     await page.getByRole('button', { name: 'Add' }).click()
     await expect(addAssignmentDialog).toBeHidden()
 

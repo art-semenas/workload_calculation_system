@@ -3,10 +3,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Paper,
   Table,
   TableBody,
@@ -22,23 +18,14 @@ import { FormTextField } from '../components/common/FormTextField'
 import { PageHead } from '../components/common/PageHead'
 import { KPIRow } from '../components/common/KPIRow'
 import { SectionBlock } from '../components/common/SectionBlock'
-import {
-  useCreateBranch,
-  useDivision,
-  useDivisionBranches,
-  useUpdateDivision,
-} from '../hooks/useDivisions'
+import { CreateBranchDialog } from '../components/dialogs/CreateBranchDialog'
+import { useDivision, useDivisionBranches, useUpdateDivision } from '../hooks/useDivisions'
 import {
   useBranchesAggregation,
   useDivisionAggregation,
   useCoverageGaps,
 } from '../hooks/useAggregations'
-import {
-  BranchCreateSchema,
-  DivisionCreateSchema,
-  type BranchCreate,
-  type DivisionCreate,
-} from '../types/division'
+import { DivisionCreateSchema, type DivisionCreate } from '../types/division'
 
 export default function DivisionDetailPage() {
   const navigate = useNavigate()
@@ -49,7 +36,6 @@ export default function DivisionDetailPage() {
   const { data: division, isLoading } = useDivision(id ?? '')
   const { data: branches = [], isLoading: branchesLoading } = useDivisionBranches(id ?? '')
   const updateDivision = useUpdateDivision()
-  const createBranch = useCreateBranch(id ?? '')
 
   const { data: divAgg } = useDivisionAggregation(id ?? '')
   const { data: gaps } = useCoverageGaps(id)
@@ -58,15 +44,6 @@ export default function DivisionDetailPage() {
 
   const nameForm = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
-  })
-
-  const {
-    control,
-    handleSubmit: handleBranchSubmit,
-    reset: resetBranchForm,
-  } = useForm<BranchCreate>({
-    resolver: zodResolver(BranchCreateSchema),
-    defaultValues: { name: '' },
   })
 
   const handleEditName = () => {
@@ -87,16 +64,6 @@ export default function DivisionDetailPage() {
     setEditingName(false)
     nameForm.reset()
   }
-
-  const handleCloseBranchDialog = () => {
-    setOpenBranchDialog(false)
-    resetBranchForm()
-  }
-
-  const handleCreateBranch = handleBranchSubmit(async (formData) => {
-    await createBranch.mutateAsync(formData)
-    handleCloseBranchDialog()
-  })
 
   if (isLoading || branchesLoading) {
     return (
@@ -249,32 +216,14 @@ export default function DivisionDetailPage() {
       )}
 
       {/* Create Branch Dialog */}
-      <Dialog open={openBranchDialog} onClose={handleCloseBranchDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Add branch</DialogTitle>
-        <Box
-          component="form"
-          onSubmit={(e) => {
-            void handleCreateBranch(e)
-          }}
-        >
-          <DialogContent>
-            <FormTextField
-              name="name"
-              control={control}
-              label="Name"
-              fullWidth
-              autoFocus
-              sx={{ mt: 2 }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseBranchDialog}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={createBranch.isPending}>
-              Create
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
+      {division && (
+        <CreateBranchDialog
+          open={openBranchDialog}
+          onClose={() => setOpenBranchDialog(false)}
+          divisionId={division.id}
+          divisionName={division.name}
+        />
+      )}
     </Box>
   )
 }

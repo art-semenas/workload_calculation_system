@@ -95,13 +95,13 @@ test.describe('PoC M-01 object detail flows', () => {
       await loginAsAdmin(page)
       await page.goto(`/objects/${hierarchy.object.id}`)
 
-      await expect(page.getByText('Physical Equipment')).toBeVisible()
+      await expect(page.getByText('A · Physical inventory')).toBeVisible()
       await page.getByRole('button', { name: 'Add device' }).click()
 
       const addDeviceDialog = page.getByRole('dialog', { name: 'Add Device' })
       await addDeviceDialog.getByLabel('Device Type').click()
       await page.getByRole('option', { name: catalog.device.name }).click()
-      await addDeviceDialog.getByLabel('Quantity Physical').fill('2')
+      await addDeviceDialog.getByLabel('Qty physical').fill('2')
       await addDeviceDialog.getByRole('button', { name: 'Add' }).click()
       await expect(addDeviceDialog).toBeHidden()
 
@@ -120,9 +120,9 @@ test.describe('PoC M-01 object detail flows', () => {
 
       await deviceRow.getByRole('button', { name: `edit ${catalog.device.name}` }).click()
       const editDeviceDialog = page.getByRole('dialog', {
-        name: new RegExp(`Edit Device .+${escapeRegExp(catalog.device.name)}`),
+        name: new RegExp(`Edit — ${escapeRegExp(catalog.device.name)}`),
       })
-      await editDeviceDialog.getByLabel('Quantity Physical').fill('3')
+      await editDeviceDialog.getByLabel('Qty physical').fill('3')
       await editDeviceDialog.getByRole('button', { name: 'Save' }).click()
       await expect(editDeviceDialog).toBeHidden()
 
@@ -133,23 +133,20 @@ test.describe('PoC M-01 object detail flows', () => {
         })
         .toBe(3)
 
-      await page
-        .getByRole('button', { name: `add assignment for ${catalog.device.name}` })
-        .click()
+      await page.getByRole('button', { name: 'Add assignment' }).click()
 
-      const addAssignmentDialog = page.getByRole('dialog', {
-        name: new RegExp(`Add Assignment - ${escapeRegExp(catalog.device.name)}`),
-      })
-      await addAssignmentDialog.getByLabel('System Type').click()
+      const addAssignmentDialog = page.getByRole('dialog', { name: 'Add assignment' })
+      await addAssignmentDialog.getByLabel('Device').click()
+      await page.getByRole('option', { name: catalog.device.name }).click()
+      await expect(page.getByRole('option', { name: catalog.device.name })).toBeHidden()
+      await page.locator('[aria-label="System Type"]').click()
       await page.getByRole('option', { name: assignmentLabel }).click()
-      await addAssignmentDialog.getByLabel('Quantity Maintained').fill('2')
+      await addAssignmentDialog.getByLabel('Qty maintained').fill('2')
       await addAssignmentDialog.getByRole('button', { name: 'Add' }).click()
       await expect(addAssignmentDialog).toBeHidden()
 
-      const assignmentTable = page.getByRole('table', {
-        name: `assignments for ${catalog.device.name}`,
-      })
-      const assignmentRow = assignmentTable.getByRole('row', { name: new RegExp(assignmentLabel) })
+      const assignmentTable = page.getByRole('table', { name: 'system assignments table' })
+      const assignmentRow = assignmentTable.getByRole('row', { name: new RegExp(escapeRegExp(assignmentLabel)) })
       await expect(assignmentRow).toContainText('2')
 
       await expect
@@ -165,11 +162,11 @@ test.describe('PoC M-01 object detail flows', () => {
         })
         .toBe(2)
 
-      await assignmentRow.getByRole('button', { name: `edit assignment ${assignmentLabel}` }).click()
+      await assignmentRow.getByRole('button', { name: `edit ${catalog.device.name} / ${assignmentLabel}` }).click()
       const editAssignmentDialog = page.getByRole('dialog', {
-        name: new RegExp(`Edit Assignment .+${assignmentLabel}`),
+        name: new RegExp(`Edit — .+${escapeRegExp(assignmentLabel)}`),
       })
-      await editAssignmentDialog.getByLabel('Quantity Maintained').fill('1')
+      await editAssignmentDialog.getByLabel('Qty maintained').fill('1')
       await editAssignmentDialog.getByRole('button', { name: 'Save' }).click()
       await expect(editAssignmentDialog).toBeHidden()
 
@@ -186,8 +183,8 @@ test.describe('PoC M-01 object detail flows', () => {
         })
         .toBe(1)
 
-      await assignmentRow.getByRole('button', { name: `remove assignment ${assignmentLabel}` }).click()
-      const removeAssignmentDialog = page.getByRole('dialog', { name: 'Remove Assignment?' })
+      await assignmentRow.getByRole('button', { name: `unassign ${catalog.device.name} / ${assignmentLabel}` }).click()
+      const removeAssignmentDialog = page.getByRole('dialog', { name: 'Remove assignment?' })
       await removeAssignmentDialog.getByRole('button', { name: 'Remove' }).click()
 
       await expect
@@ -205,9 +202,7 @@ test.describe('PoC M-01 object detail flows', () => {
       const removeDeviceDialog = page.getByRole('dialog', { name: 'Remove Device?' })
       await removeDeviceDialog.getByRole('button', { name: 'Remove' }).click()
 
-      await expect(
-        page.getByText('No devices in inventory. Add devices above before creating assignments.')
-      ).toBeVisible()
+      await expect(page.getByText('No devices in inventory.')).toBeVisible()
       await expect
         .poll(async () => {
           const devices = await getDevicesSnapshot(request, hierarchy.object.id, token)

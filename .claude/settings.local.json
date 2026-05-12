@@ -3,7 +3,7 @@
     "allow": [
       "Bash(grep -v \"//.*double\\\\|//.*float\")",
       "Bash(mvn test:*)",
-      "Bash(mvn spotless:apply -q)",
+      "Bash(mvn spotless:apply *)",
       "Bash(mvn verify:*)",
       "Bash(mvn clean:*)",
       "Bash(mvn compile:*)",
@@ -12,7 +12,18 @@
       "Bash(npx tsc:*)",
       "Bash(npm test:*)",
       "Bash(npx vitest:*)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(xargs grep *)",
+      "Bash(git commit*)",
+      "Bash(git diff*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(mvn test-compile *)",
+      "Bash(Select-String -Pattern \"BUILD SUCCESS|BUILD FAILURE|Tests run|ERROR\")",
+      "Bash(Select-Object -Last 20)",
+      "Bash(Select-String -Pattern \"Tests run:|BUILD|ERROR\")",
+      "Bash(Select-Object -Last 15)",
+      "Bash(npx prettier *)"
     ]
   }
 }

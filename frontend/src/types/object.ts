@@ -8,6 +8,9 @@ export const ObjectRecordSchema = z.object({
   divisionName: z.string().optional(),
   address: z.string().optional(),
   importSeqNo: z.number().int().nullish(),
+  itogoChisloWithTravel: z.number().nullable().optional(),
+  engineerCount: z.number().int().nullable().optional(),
+  divisionId: z.string().uuid().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 })

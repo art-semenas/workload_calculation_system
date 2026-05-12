@@ -30,7 +30,7 @@ test.describe('PoC M-01 smoke', () => {
   test('login page loads directly', async ({ page }) => {
     await page.goto('/login')
 
-    await expect(page.getByRole('heading', { name: /workload calculation system/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible()
     await expect(page.getByLabel(/email/i)).toBeVisible()
     await expect(page.getByLabel(/password/i)).toBeVisible()
   })
@@ -81,12 +81,12 @@ test.describe('PoC M-01 smoke', () => {
     await page.goto('/objects')
 
     await expect(page.getByRole('heading', { name: 'Objects' })).toBeVisible()
-    // TOTAL Staffing column header is only rendered when objects exist (beforeAll creates one)
-    await expect(page.getByText('TOTAL Staffing')).toBeVisible()
+    // FTE column header is only rendered when objects exist (beforeAll creates one)
+    await expect(page.getByRole('columnheader', { name: 'FTE' })).toBeVisible()
     await expect(page.getByRole('combobox').first()).toBeVisible()
 
-    await page.getByRole('button', { name: 'Add object' }).click()
-    await expect(page.getByRole('heading', { name: 'Add object' })).toBeVisible()
+    await page.getByRole('button', { name: 'Create object' }).click()
+    await expect(page.getByRole('heading', { name: 'Create object' })).toBeVisible()
     await expect(page.getByLabel('Name')).toBeVisible()
 
     await page.getByTestId('dialog-branch-select-btn').click()

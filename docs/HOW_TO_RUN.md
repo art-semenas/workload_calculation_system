@@ -148,6 +148,12 @@ The multi-stage Dockerfile installs dependencies, builds the React app, and prod
 docker compose -f docker-compose.poc.yml up --build
 ```
 
+Run frontend without its dependencies
+```bash
+docker compose -f docker-compose.poc.yml up --build --no-deps frontend
+```
+
+
 This starts four services:
 
 | Service      | Description                                                           |

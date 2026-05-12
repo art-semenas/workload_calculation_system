@@ -38,11 +38,9 @@ public class ObjectService {
   private final EntityManager entityManager;
 
   public List<ObjectDto> findAll(Optional<UUID> divisionId) {
-    List<ObjectEntity> entities =
-        divisionId
-            .map(objectRepository::findAllByBranchDivisionId)
-            .orElseGet(objectRepository::findAll);
-    return entities.stream().map(objectMapper::toDto).toList();
+    return objectRepository.findAllEnriched(divisionId.orElse(null)).stream()
+        .map(objectMapper::toDto)
+        .toList();
   }
 
   public ObjectDto findById(UUID id) {
