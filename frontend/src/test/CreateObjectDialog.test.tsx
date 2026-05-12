@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CreateObjectDialog } from '../components/dialogs/CreateObjectDialog'
 
@@ -39,18 +40,18 @@ describe('CreateObjectDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetDivisions.mockResolvedValue([
-      { id: 'div1', name: 'Brest' },
-      { id: 'div2', name: 'Minsk' },
+      { id: '11111111-1111-1111-1111-111111111111', name: 'Brest' },
+      { id: '22222222-2222-2222-2222-222222222222', name: 'Minsk' },
     ])
-    mockGetDivisionBranches.mockImplementation((divId) => {
-      if (divId === 'div1') {
+    mockGetDivisionBranches.mockImplementation((divId: string) => {
+      if (divId === '11111111-1111-1111-1111-111111111111') {
         return Promise.resolve([
-          { id: 'br1', name: 'Branch 1', divisionId: 'div1' },
-          { id: 'br2', name: 'Branch 2', divisionId: 'div1' },
+          { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'Branch 1', divisionId: '11111111-1111-1111-1111-111111111111' },
+          { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', name: 'Branch 2', divisionId: '11111111-1111-1111-1111-111111111111' },
         ])
       }
-      if (divId === 'div2') {
-        return Promise.resolve([{ id: 'br3', name: 'Branch 3', divisionId: 'div2' }])
+      if (divId === '22222222-2222-2222-2222-222222222222') {
+        return Promise.resolve([{ id: 'cccccccc-cccc-cccc-cccc-cccccccccccc', name: 'Branch 3', divisionId: '22222222-2222-2222-2222-222222222222' }])
       }
       return Promise.resolve([])
     })
@@ -97,5 +98,74 @@ describe('CreateObjectDialog', () => {
       const createButton = screen.getByRole('button', { name: /create object/i })
       expect(createButton).toBeInTheDocument()
     })
+  })
+
+  it('renders grouped branch options with division subheaders', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    await waitFor(() => expect(screen.getByLabelText(/object name/i)).toBeInTheDocument())
+
+    // Open the Branch select via its container testid
+    const branchContainer = screen.getByTestId('dialog-branch-select-btn')
+    const branchCombobox = within(branchContainer).getByRole('combobox')
+    await user.click(branchCombobox)
+
+    // Both division subheaders and all three branches appear in the dropdown listbox
+    await waitFor(
+      () => {
+        const listbox = screen.getByRole('listbox')
+        expect(within(listbox).getByText('Brest')).toBeInTheDocument()
+        expect(within(listbox).getByText('Minsk')).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: 'Branch 1' })).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: 'Branch 2' })).toBeInTheDocument()
+        expect(screen.getByRole('option', { name: 'Branch 3' })).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+  })
+
+  it('submits selected branch + name and calls createObject mutation', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    await waitFor(() => expect(screen.getByLabelText(/object name/i)).toBeInTheDocument())
+
+    await user.type(screen.getByLabelText(/object name/i), 'Test Object')
+
+    const branchContainer = screen.getByTestId('dialog-branch-select-btn')
+    const branchCombobox = within(branchContainer).getByRole('combobox')
+    await user.click(branchCombobox)
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: 'Branch 1' })).toBeInTheDocument()
+    )
+    await user.click(screen.getByRole('option', { name: 'Branch 1' }))
+
+    // Wait for the select to close (listbox disappears) before submitting
+    await waitFor(() =>
+      expect(screen.queryByRole('option', { name: 'Branch 1' })).not.toBeInTheDocument()
+    )
+
+    await user.click(screen.getByRole('button', { name: /create object/i }))
+
+    await waitFor(() => {
+      expect(mockCreateObject).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Test Object', branchId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
+      )
+    })
+  })
+
+  it('does not call createObject when no branch is selected (Zod validation fails)', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    await waitFor(() => expect(screen.getByLabelText(/object name/i)).toBeInTheDocument())
+
+    await user.type(screen.getByLabelText(/object name/i), 'Test Object')
+    // intentionally do NOT pick a branch
+    await user.click(screen.getByRole('button', { name: /create object/i }))
+
+    // Give the form a tick to validate
+    await waitFor(() => expect(mockCreateObject).not.toHaveBeenCalled())
   })
 })
