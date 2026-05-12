@@ -28,6 +28,10 @@ import { useDivisions } from '../../hooks/useDivisions'
 import { ObjectCreateSchema, type ObjectCreate } from '../../types/object'
 import { tokens } from '../../theme'
 
+// PoC (S-02): MVP M-06 will add Tier, Travel norm, Visits/year, and auto-assigned Object ID.
+// Until then the disabled placeholders only confuse users — hide them.
+const SHOW_FUTURE_FIELDS = false
+
 interface CreateObjectDialogProps {
   open: boolean
   onClose: () => void
@@ -140,16 +144,6 @@ export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
               />
             </Grid>
 
-            {/* Division Select — display-only, disabled */}
-            <Grid item xs={12}>
-              <FormControl fullWidth disabled>
-                <InputLabel>Division</InputLabel>
-                <Select value="" label="Division">
-                  <MenuItem value="">—</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
             {/* Branch Select — full width (grouped select is wide) */}
             <Grid item xs={12}>
               <Controller
@@ -185,45 +179,59 @@ export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
               <FormTextField name="address" control={control} label="Address" fullWidth optional />
             </Grid>
 
-            {/* Tier + Object ID side-by-side */}
-            <Grid item xs={6}>
-              <FormControl fullWidth disabled>
-                <InputLabel>Tier</InputLabel>
-                <Select value="" label="Tier">
-                  <MenuItem value="">—</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Object ID"
-                value=""
-                disabled
-                fullWidth
-                placeholder="Auto-assigned"
-                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
-              />
-            </Grid>
+            {SHOW_FUTURE_FIELDS && (
+              <>
+                {/* Division Select — display-only, disabled */}
+                <Grid item xs={12}>
+                  <FormControl fullWidth disabled>
+                    <InputLabel>Division</InputLabel>
+                    <Select value="" label="Division">
+                      <MenuItem value="">—</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-            {/* Travel norm + Visits/year side-by-side */}
-            <Grid item xs={6}>
-              <TextField
-                label="Travel norm h"
-                disabled
-                fullWidth
-                placeholder="Coming soon"
-                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Visits / year"
-                disabled
-                fullWidth
-                placeholder="Coming soon"
-                inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
-              />
-            </Grid>
+                {/* Tier + Object ID side-by-side */}
+                <Grid item xs={6}>
+                  <FormControl fullWidth disabled>
+                    <InputLabel>Tier</InputLabel>
+                    <Select value="" label="Tier">
+                      <MenuItem value="">—</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Object ID"
+                    value=""
+                    disabled
+                    fullWidth
+                    placeholder="Auto-assigned"
+                    inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
+                  />
+                </Grid>
+
+                {/* Travel norm + Visits/year side-by-side */}
+                <Grid item xs={6}>
+                  <TextField
+                    label="Travel norm h"
+                    disabled
+                    fullWidth
+                    placeholder="Coming soon"
+                    inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Visits / year"
+                    disabled
+                    fullWidth
+                    placeholder="Coming soon"
+                    inputProps={{ style: { fontFamily: "'JetBrains Mono', monospace" } }}
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
 

@@ -68,16 +68,17 @@ describe('CreateObjectDialog', () => {
     })
   })
 
-  it('shows disabled future-scope fields', async () => {
+  it('hides future-scope fields by default (SHOW_FUTURE_FIELDS=false)', async () => {
     renderDialog()
 
-    await waitFor(() => {
-      // Verify that Tier, Travel norm, and Visits/year fields are present and disabled
-      const allInputs = screen.getAllByRole('textbox')
-      const disabledInputs = allInputs.filter((inp) => (inp as HTMLInputElement).disabled)
-      // Should have at least Object ID, Travel norm, and Visits/year disabled
-      expect(disabledInputs.length).toBeGreaterThanOrEqual(3)
-    })
+    await waitFor(() => expect(screen.getByLabelText(/object name/i)).toBeInTheDocument())
+
+    // The future-scope inputs (Tier, Object ID, Travel norm, Visits/year, dummy Division)
+    // are gated behind SHOW_FUTURE_FIELDS and must NOT be in the DOM by default.
+    expect(screen.queryByLabelText('Tier')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Object ID')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Travel norm h')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Visits / year')).not.toBeInTheDocument()
   })
 
   it('handles address field as optional', async () => {
