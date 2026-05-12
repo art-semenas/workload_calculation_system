@@ -165,6 +165,16 @@ class SummaryRepositoryTest {
     assertThat(divisionResult.getCount()).isEqualTo(2L);
   }
 
+  @Test
+  void findUnassignedCountByDivisionId_returnsZero_whenNoSummaries() {
+    Division div = saveDivision("Div With No Summaries");
+
+    Long result = summaryRepository.findUnassignedCountByDivisionId(div.getId());
+
+    assertThat(result).isNotNull();
+    assertThat(result).isEqualTo(0L);
+  }
+
   private User saveEngineer(String email) {
     User user =
         User.builder()

@@ -46,7 +46,7 @@ public interface SummaryRepository extends JpaRepository<Summary, UUID> {
           + " WHERE s.object.branch.division.id = :divisionId"
           + " AND NOT EXISTS"
           + " (SELECT oe FROM ObjectEngineer oe WHERE oe.object.id = s.object.id)")
-  Long findUnassignedCountByDivisionId(@Param("divisionId") UUID divisionId);
+  long findUnassignedCountByDivisionId(@Param("divisionId") UUID divisionId);
 
   @Query(
       "SELECT s FROM Summary s"

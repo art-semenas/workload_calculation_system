@@ -130,7 +130,7 @@ public class DivisionService {
     long objectCount = objectRepository.countByBranchDivisionId(divisionId);
     long engineerCount = userRepository.countByHomeDivisionIdAndActiveTrue(divisionId);
     BigDecimal requiredFte = summaryRepository.findRequiredFteByDivisionId(divisionId);
-    Long unassignedObjectCount = summaryRepository.findUnassignedCountByDivisionId(divisionId);
+    long unassignedObjectCount = summaryRepository.findUnassignedCountByDivisionId(divisionId);
 
     // PoC (S-02): utilisation = SUM(total_load) / SUM(capacity_fte) per division engineer.
     // Engineer load summaries are not yet aggregated in this phase. Always null until MVP M-06.
@@ -142,7 +142,7 @@ public class DivisionService {
         objectCount,
         engineerCount,
         requiredFte,
-        unassignedObjectCount != null ? unassignedObjectCount : 0L,
+        unassignedObjectCount,
         utilisation);
   }
 }
