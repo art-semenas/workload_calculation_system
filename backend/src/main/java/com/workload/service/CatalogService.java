@@ -170,8 +170,9 @@ public class CatalogService {
         contextRepository
             .findByIdAndDeviceTypeId(contextId, deviceTypeId)
             .orElseThrow(() -> new EntityNotFoundException("Context", contextId.toString()));
-    if (assignmentRepository.existsByContextId(contextId)) {
-      throw new ContextInUseException(contextId.toString());
+    long usageCount = assignmentRepository.countByContextId(contextId);
+    if (usageCount > 0) {
+      throw new ContextInUseException(usageCount);
     }
     contextRepository.delete(ctx);
   }

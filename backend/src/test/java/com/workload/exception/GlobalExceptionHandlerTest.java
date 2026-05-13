@@ -124,7 +124,7 @@ class GlobalExceptionHandlerTest {
   @Test
   void contextInUseMapsTo409() {
     ResponseEntity<ApiResponse<Void>> response =
-        handler.handleContextInUse(new ContextInUseException("ctx-id"));
+        handler.handleContextInUse(new ContextInUseException(3));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     assertThat(response.getBody().error().code()).isEqualTo(409);
   }
