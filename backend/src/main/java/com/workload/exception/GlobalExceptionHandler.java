@@ -188,8 +188,7 @@ public class GlobalExceptionHandler {
         .body(
             ApiResponse.error(
                 ApiError.of(
-                    HttpStatus.FORBIDDEN,
-                    "You don't have permission to access this resource")));
+                    HttpStatus.FORBIDDEN, "You don't have permission to access this resource")));
   }
 
   @ExceptionHandler(Exception.class)

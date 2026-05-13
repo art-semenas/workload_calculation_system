@@ -55,8 +55,7 @@ public class SecurityConfig {
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       ApiResponse<Void> body =
           ApiResponse.error(
-                  ApiError.of(
-                      HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token"));
+              ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token"));
       objectMapper.writeValue(response.getOutputStream(), body);
     };
   }

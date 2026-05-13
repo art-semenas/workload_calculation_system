@@ -73,9 +73,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       ApiResponse<Void> body =
           ApiResponse.error(
-                  ApiError.of(
-                      HttpStatus.TOO_MANY_REQUESTS,
-                      "Too many requests. Please wait before retrying."));
+              ApiError.of(
+                  HttpStatus.TOO_MANY_REQUESTS, "Too many requests. Please wait before retrying."));
       objectMapper.writeValue(response.getOutputStream(), body);
     }
   }

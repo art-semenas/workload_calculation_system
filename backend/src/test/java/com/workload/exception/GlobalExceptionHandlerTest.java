@@ -135,8 +135,7 @@ class GlobalExceptionHandlerTest {
     BindingResult bindingResult = mock(BindingResult.class);
     when(ex.getBindingResult()).thenReturn(bindingResult);
     when(bindingResult.getFieldErrors())
-        .thenReturn(
-            List.of(new FieldError("obj", "name", "must not be blank")));
+        .thenReturn(List.of(new FieldError("obj", "name", "must not be blank")));
     ResponseEntity<ApiResponse<Void>> response = handler.handleValidation(ex);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     assertThat(response.getBody().error().code()).isEqualTo(422);

@@ -21,7 +21,6 @@ public record ApiError(int code, String message) {
 
   public static ApiError internalError() {
     return of(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "An unexpected error occurred. Please try again later.");
+        HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred. Please try again later.");
   }
 }
