@@ -23,7 +23,11 @@
       "Bash(Select-Object -Last 20)",
       "Bash(Select-String -Pattern \"Tests run:|BUILD|ERROR\")",
       "Bash(Select-Object -Last 15)",
-      "Bash(npx prettier *)"
+      "Bash(npx prettier *)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:writing-plans:*)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:brainstorming:*)"
     ]
   }
 }
