@@ -68,7 +68,7 @@ class RateLimitFilterTest {
 
     assertThat(response.getStatus()).isEqualTo(429);
     assertThat(response.getHeader("Retry-After")).isNotBlank();
-    assertThat(response.getContentAsString()).contains("RATE_LIMIT_EXCEEDED");
+    assertThat(response.getContentAsString()).contains("\"code\":429");
   }
 
   @Test

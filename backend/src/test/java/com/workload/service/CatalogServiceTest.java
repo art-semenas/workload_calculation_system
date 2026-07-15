@@ -211,7 +211,7 @@ class CatalogServiceTest {
     when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
     when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
         .thenReturn(Optional.of(ctx));
-    when(assignmentRepository.existsByContextId(contextId)).thenReturn(true);
+    when(assignmentRepository.countByContextId(contextId)).thenReturn(1L);
 
     assertThatThrownBy(() -> catalogService.deleteContext(deviceTypeId, contextId))
         .isInstanceOf(ContextInUseException.class);
@@ -242,7 +242,7 @@ class CatalogServiceTest {
     when(deviceTypeRepository.findById(deviceTypeId)).thenReturn(Optional.of(dt));
     when(contextRepository.findByIdAndDeviceTypeId(contextId, deviceTypeId))
         .thenReturn(Optional.of(ctx));
-    when(assignmentRepository.existsByContextId(contextId)).thenReturn(false);
+    when(assignmentRepository.countByContextId(contextId)).thenReturn(0L);
 
     catalogService.deleteContext(deviceTypeId, contextId);
 

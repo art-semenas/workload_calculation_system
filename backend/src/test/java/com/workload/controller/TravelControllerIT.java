@@ -60,7 +60,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("ROUND_TRIP_NOT_EDITABLE"));
+        .body("error.code", equalTo(422));
   }
 
   @Test
@@ -76,7 +76,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("ROUND_TRIP_NOT_EDITABLE"));
+        .body("error.code", equalTo(422));
   }
 
   @Test
@@ -105,7 +105,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("VALIDATION_ERROR"));
+        .body("error.code", equalTo(422));
   }
 
   @Test
@@ -118,7 +118,7 @@ class TravelControllerIT extends IntegrationTestBase {
         .put("/objects/{oid}/travel", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("VALIDATION_ERROR"));
+        .body("error.code", equalTo(422));
   }
 
   @Test
@@ -130,8 +130,8 @@ class TravelControllerIT extends IntegrationTestBase {
         .when()
         .put("/objects/{oid}/travel", objectId)
         .then()
-        .statusCode(422)
-        .body("error.code", equalTo("VALIDATION_ERROR"));
+        .statusCode(400)
+        .body("error.code", equalTo(400));
   }
 
   private String createTestObject(String token) {

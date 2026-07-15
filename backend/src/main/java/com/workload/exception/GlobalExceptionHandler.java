@@ -22,25 +22,25 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(SummaryNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleSummaryNotFound(SummaryNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("SUMMARY_NOT_FOUND", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, ex.getMessage())));
   }
 
   @ExceptionHandler(DivisionNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleDivisionNotFound(DivisionNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("NOT_FOUND", "Division not found", null)));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "Division not found")));
   }
 
   @ExceptionHandler(BranchNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleBranchNotFound(BranchNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("NOT_FOUND", "Branch not found", null)));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "Branch not found")));
   }
 
   @ExceptionHandler(ObjectNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleObjectNotFound(ObjectNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("OBJECT_NOT_FOUND", "Object not found", null)));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "Object not found")));
   }
 
   @ExceptionHandler(EntityNotFoundException.class)
@@ -48,99 +48,86 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(
             ApiResponse.error(
-                new ApiError(
-                    getEntityNotFoundCode(ex.getEntityType()),
-                    getEntityNotFoundMessage(ex.getEntityType()),
-                    null)));
+                ApiError.of(HttpStatus.NOT_FOUND, getEntityNotFoundMessage(ex.getEntityType()))));
   }
 
   @ExceptionHandler(EngineerHasActiveAssignmentsException.class)
   public ResponseEntity<ApiResponse<Void>> handleEngineerHasActiveAssignments(
       EngineerHasActiveAssignmentsException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(
-            ApiResponse.error(
-                new ApiError("ENGINEER_HAS_ACTIVE_ASSIGNMENTS", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(EngineerInactiveException.class)
   public ResponseEntity<ApiResponse<Void>> handleEngineerInactive(EngineerInactiveException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("ENGINEER_INACTIVE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(InvalidEngineerRoleException.class)
   public ResponseEntity<ApiResponse<Void>> handleInvalidEngineerRole(
       InvalidEngineerRoleException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("INVALID_ENGINEER_ROLE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(AssignmentNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleAssignmentNotFound(
       AssignmentNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.error(new ApiError("ASSIGNMENT_NOT_FOUND", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, ex.getMessage())));
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
       DataIntegrityViolationException ex) {
     String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
-    // Check if it's an object-engineer assignment constraint violation
     if (msg.contains("uq_oe_object_engineer")) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
           .body(
               ApiResponse.error(
-                  new ApiError(
-                      "ENGINEER_ALREADY_ASSIGNED",
-                      "This engineer is already assigned to the object",
-                      null)));
+                  ApiError.conflict("This engineer is already assigned to the object")));
     }
     if (msg.contains("unique") || msg.contains("duplicate")) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
-          .body(
-              ApiResponse.error(
-                  new ApiError("NAME_CONFLICT", "A record with that name already exists", null)));
+          .body(ApiResponse.error(ApiError.conflict("A record with that name already exists")));
     }
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(
-            ApiResponse.error(
-                new ApiError("CONSTRAINT_VIOLATION", "A database constraint was violated", null)));
+        .body(ApiResponse.error(ApiError.conflict("A database constraint was violated")));
   }
 
   @ExceptionHandler(DeviceNotInInventoryException.class)
   public ResponseEntity<ApiResponse<Void>> handleDeviceNotInInventory(
       DeviceNotInInventoryException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("DEVICE_NOT_IN_INVENTORY", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(NoContextForSystemException.class)
   public ResponseEntity<ApiResponse<Void>> handleNoContextForSystem(
       NoContextForSystemException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("NO_CONTEXT_FOR_SYSTEM", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(RoundTripNotEditableException.class)
   public ResponseEntity<ApiResponse<Void>> handleRoundTripNotEditable(
       RoundTripNotEditableException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("ROUND_TRIP_NOT_EDITABLE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(RequestValidationException.class)
   public ResponseEntity<ApiResponse<Void>> handleRequestValidation(RequestValidationException ex) {
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("VALIDATION_ERROR", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(
       HttpMessageNotReadableException ex) {
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("VALIDATION_ERROR", "Invalid request body", null)));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ApiResponse.error(ApiError.of(HttpStatus.BAD_REQUEST, "Malformed request body")));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -151,38 +138,40 @@ public class GlobalExceptionHandler {
             .reduce((a, b) -> a + "; " + b)
             .orElse("Validation failed");
     return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-        .body(ApiResponse.error(new ApiError("VALIDATION_ERROR", message, null)));
+        .body(ApiResponse.error(ApiError.validationError(message)));
   }
 
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(
       InvalidCredentialsException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-        .body(ApiResponse.error(new ApiError("INVALID_CREDENTIALS", ex.getMessage(), null)));
+        .body(
+            ApiResponse.error(
+                ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token")));
   }
 
   @ExceptionHandler(DeviceTypeInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleDeviceTypeInUse(DeviceTypeInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(new ApiError("DEVICE_IN_USE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(DeviceInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleDeviceInUse(DeviceInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(new ApiError("INVENTORY_DEVICE_IN_USE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(ContextInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleContextInUse(ContextInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(new ApiError("CONTEXT_IN_USE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(RepairTypeInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleRepairTypeInUse(RepairTypeInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(ApiResponse.error(new ApiError("REPAIR_TYPE_IN_USE", ex.getMessage(), null)));
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(BadCredentialsException.class)
@@ -190,29 +179,23 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(
             ApiResponse.error(
-                new ApiError("INVALID_CREDENTIALS", "Invalid email or password", null)));
+                ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token")));
   }
 
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-        .body(ApiResponse.error(new ApiError("ACCESS_DENIED", ex.getMessage(), null)));
-  }
-
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<ApiResponse<Void>> handleUnhandledException(RuntimeException ex) {
-    log.error("Unhandled exception", ex);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
             ApiResponse.error(
-                new ApiError("INTERNAL_ERROR", "An unexpected error occurred", null)));
+                ApiError.of(
+                    HttpStatus.FORBIDDEN, "You don't have permission to access this resource")));
   }
 
-  private String getEntityNotFoundCode(String entityType) {
-    return switch (entityType) {
-      case "Engineer" -> "ENGINEER_NOT_FOUND";
-      default -> "NOT_FOUND";
-    };
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Void>> handleGenericError(Exception ex) {
+    log.error("Unhandled exception", ex);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponse.error(ApiError.internalError()));
   }
 
   private String getEntityNotFoundMessage(String entityType) {

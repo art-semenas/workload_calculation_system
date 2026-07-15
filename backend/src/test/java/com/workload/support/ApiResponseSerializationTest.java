@@ -8,6 +8,7 @@ import com.workload.dto.ApiMeta;
 import com.workload.dto.ApiResponse;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 class ApiResponseSerializationTest {
 
@@ -28,22 +29,26 @@ class ApiResponseSerializationTest {
 
   @Test
   void serializesErrorEnvelope() throws Exception {
-    ApiResponse<Void> response = ApiResponse.error(new ApiError("TEST_ERROR", "failure", null));
+    ApiResponse<Void> response =
+        ApiResponse.error(ApiError.of(HttpStatus.UNPROCESSABLE_ENTITY, "failure"));
 
     String json = objectMapper.writeValueAsString(response);
 
     assertThat(json).contains("\"data\":null");
     assertThat(json).contains("\"error\"");
-    assertThat(json).contains("TEST_ERROR");
+    assertThat(json).contains("422");
   }
 
   @Test
-  void serializesAffectedCountWhenPresent() throws Exception {
-    ApiResponse<Void> response = ApiResponse.error(new ApiError("TEST_ERROR", "failure", 3));
+  void errorEnvelopeUsesNumericCode() throws Exception {
+    ApiResponse<Void> response =
+        ApiResponse.error(
+            ApiError.of(HttpStatus.CONFLICT, "A division with this name already exists"));
 
     String json = objectMapper.writeValueAsString(response);
 
-    assertThat(json).contains("\"affected_count\"");
-    assertThat(json).contains("3");
+    assertThat(json).contains("\"code\":409");
+    assertThat(json).contains("\"data\":null");
+    assertThat(json).doesNotContain("NAME_CONFLICT");
   }
 }

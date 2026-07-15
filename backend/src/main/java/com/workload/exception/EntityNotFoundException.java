@@ -4,7 +4,7 @@ public class EntityNotFoundException extends RuntimeException {
   private final String entityType;
 
   public EntityNotFoundException(String entityType, String identifier) {
-    super(entityType + " not found: " + identifier);
+    super(entityType + " not found");
     this.entityType = entityType;
   }
 

@@ -282,7 +282,7 @@ class CatalogControllerIT extends IntegrationTestBase {
         .delete("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId, contextId)
         .then()
         .statusCode(409)
-        .body("error.code", equalTo("CONTEXT_IN_USE"));
+        .body("error.code", equalTo(409));
   }
 
   // ── Repair type write endpoint tests ─────────────────────────────────────
@@ -408,7 +408,7 @@ class CatalogControllerIT extends IntegrationTestBase {
         .put("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   @Test
@@ -458,6 +458,6 @@ class CatalogControllerIT extends IntegrationTestBase {
         .delete("/catalog/devices/{dtId}/contexts/{cId}", deviceTypeId2, contextId)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 }

@@ -160,7 +160,7 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .post("/objects/{id}/engineers", objectId)
         .then()
         .statusCode(422)
-        .body("error.code", equalTo("ENGINEER_INACTIVE"));
+        .body("error.code", equalTo(422));
   }
 
   // =========================================================================
@@ -197,7 +197,7 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .post("/objects/{id}/engineers", objectId)
         .then()
         .statusCode(409)
-        .body("error.code", equalTo("ENGINEER_ALREADY_ASSIGNED"));
+        .body("error.code", equalTo(409));
   }
 
   // =========================================================================
@@ -241,7 +241,7 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .delete("/objects/{id}/engineers/{eid}", objectId, engineerId1)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("ASSIGNMENT_NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   // =========================================================================
@@ -369,7 +369,7 @@ class ObjectEngineerControllerIT extends IntegrationTestBase {
         .get("/engineers/{id}/summary", engineerId1)
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("SUMMARY_NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   // =========================================================================

@@ -100,7 +100,7 @@ class DivisionControllerIT extends IntegrationTestBase {
         .get("/divisions/{id}", UUID.randomUUID())
         .then()
         .statusCode(404)
-        .body("error.code", equalTo("NOT_FOUND"));
+        .body("error.code", equalTo(404));
   }
 
   @Test

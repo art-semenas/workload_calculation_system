@@ -16,6 +16,8 @@ public interface ObjectSystemAssignmentRepository
 
   boolean existsByContextId(UUID contextId);
 
+  long countByContextId(UUID contextId);
+
   boolean existsByObjectIdAndDeviceTypeId(UUID objectId, UUID deviceTypeId);
 
   void deleteAllByObjectIdAndDeviceTypeId(UUID objectId, UUID deviceTypeId);
