@@ -355,9 +355,13 @@ describe('EquipmentTab', () => {
     expect(screen.queryByRole('option', { name: 'Video' })).not.toBeInTheDocument()
   })
 
-  it('shows backend error NO_CONTEXT_FOR_SYSTEM as alert', async () => {
+  it('shows the backend no-context message as alert', async () => {
     const axiosError = {
-      response: { data: { error: { code: 'NO_CONTEXT_FOR_SYSTEM' } } },
+      response: {
+        data: {
+          error: { code: 422, message: 'No calculation norms configured for this system type' },
+        },
+      },
     }
     mockUseAddAssignment.mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue(axiosError),
@@ -390,13 +394,19 @@ describe('EquipmentTab', () => {
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('No norms configured for this system')).toBeInTheDocument()
+      expect(
+        screen.getByText('No calculation norms configured for this system type')
+      ).toBeInTheDocument()
     })
   })
 
-  it('shows backend error DEVICE_NOT_IN_INVENTORY as alert', async () => {
+  it('shows the backend device-not-in-inventory message as alert', async () => {
     const axiosError = {
-      response: { data: { error: { code: 'DEVICE_NOT_IN_INVENTORY' } } },
+      response: {
+        data: {
+          error: { code: 422, message: 'Device not found in inventory for this object' },
+        },
+      },
     }
     mockUseAddAssignment.mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue(axiosError),
@@ -429,7 +439,9 @@ describe('EquipmentTab', () => {
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Device is not in inventory')).toBeInTheDocument()
+      expect(
+        screen.getByText('Device not found in inventory for this object')
+      ).toBeInTheDocument()
     })
   })
 })

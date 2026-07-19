@@ -42,7 +42,7 @@ import {
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
 import { SectionBlock } from '../common/SectionBlock'
-import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
+import { extractApiError, mapEquipmentError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 const SYSTEM_LABELS: Record<SystemType, string> = {
@@ -120,8 +120,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       await addDevice.mutateAsync(data)
       setAddOpen(false)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
     }
   }
 
@@ -144,8 +143,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       })
       setEditDevice(null)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
     }
   }
 
@@ -155,8 +153,7 @@ export function PhysicalInventory({ objectId }: { objectId: string }) {
       await removeDevice.mutateAsync(deviceToRemove.deviceTypeId)
       setDeviceToRemove(null)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
       setDeviceToRemove(null)
     }
   }

@@ -48,7 +48,7 @@ import {
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
 import { SectionBlock } from '../common/SectionBlock'
-import { extractErrorCode, mapEquipmentErrorCode } from '../../utils/errorMessages'
+import { extractApiError, mapEquipmentError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
@@ -288,8 +288,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await addAssignment.mutateAsync(data)
       setAddOpen(false)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
     }
   }
 
@@ -300,8 +299,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await updateAssignment.mutateAsync({ assignmentId: editAssignment.id, data })
       setEditAssignment(null)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
     }
   }
 
@@ -311,8 +309,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await removeAssignment.mutateAsync(assignmentToRemove.id)
       setAssignmentToRemove(null)
     } catch (err) {
-      const code = extractErrorCode(err)
-      setMutationError(mapEquipmentErrorCode(code))
+      setMutationError(mapEquipmentError(extractApiError(err)))
       setAssignmentToRemove(null)
     }
   }

@@ -6,7 +6,7 @@ import { TravelUpdateSchema } from '../../types/travel'
 import type { TravelUpdate } from '../../types/travel'
 import { useTravel, useUpdateTravel } from '../../hooks/useTravel'
 import { FormTextField } from '../common/FormTextField'
-import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
+import { extractApiError, mapSaveError } from '../../utils/errorMessages'
 
 export function TravelTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useTravel(objectId)
@@ -39,7 +39,7 @@ export function TravelTab({ objectId }: { objectId: string }) {
       await updateMutation.mutateAsync(values)
       setSuccessOpen(true)
     } catch (err) {
-      setErrorMessage(mapSaveErrorCode(extractErrorCode(err)))
+      setErrorMessage(mapSaveError(extractApiError(err)))
       setErrorOpen(true)
     }
   }

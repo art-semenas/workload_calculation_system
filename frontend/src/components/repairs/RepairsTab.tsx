@@ -20,7 +20,7 @@ import { useRepairs, useUpdateRepair } from '../../hooks/useRepairs'
 import { RepairUpdateSchema, type RepairUpdate } from '../../types/repairs'
 import type { RepairType } from '../../types/catalog'
 import type { ObjectRepair } from '../../types/repairs'
-import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
+import { extractApiError, mapSaveError } from '../../utils/errorMessages'
 import { useState } from 'react'
 
 function getCount(repairs: ObjectRepair[], repairTypeId: string): number {
@@ -61,7 +61,7 @@ function RepairRow({
       await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: data.count } })
       onSaveSuccess()
     } catch (err) {
-      onSaveError(mapSaveErrorCode(extractErrorCode(err)))
+      onSaveError(mapSaveError(extractApiError(err)))
     }
   })
 

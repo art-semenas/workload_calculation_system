@@ -6,7 +6,7 @@ import { RecordsUpdateSchema } from '../../types/records'
 import type { RecordsUpdate } from '../../types/records'
 import { useRecords, useUpdateRecords } from '../../hooks/useRecords'
 import { FormTextField } from '../common/FormTextField'
-import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
+import { extractApiError, mapSaveError } from '../../utils/errorMessages'
 
 export function RecordsTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useRecords(objectId)
@@ -43,7 +43,7 @@ export function RecordsTab({ objectId }: { objectId: string }) {
       await updateMutation.mutateAsync(values)
       setSuccessOpen(true)
     } catch (err) {
-      setErrorMessage(mapSaveErrorCode(extractErrorCode(err)))
+      setErrorMessage(mapSaveError(extractApiError(err)))
       setErrorOpen(true)
     }
   }
