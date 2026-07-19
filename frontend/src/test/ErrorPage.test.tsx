@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ErrorPage, isServerError } from '../components/common/ErrorPage'
+import { ErrorPage } from '../components/common/ErrorPage'
+import { isServerError } from '../utils/errorMessages'
 
 describe('ErrorPage', () => {
   it('renders the heading, message, and retry button', () => {

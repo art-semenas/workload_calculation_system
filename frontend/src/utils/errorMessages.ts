@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { showNotification } from '../stores/notificationStore'
 
 function isObject(val: unknown): val is Record<string, unknown> {
@@ -7,6 +8,11 @@ function isObject(val: unknown): val is Record<string, unknown> {
 export interface ApiErrorInfo {
   code: number
   message: string
+}
+
+// True for unrecoverable 5xx responses — the case the full-page ErrorPage is meant for.
+export function isServerError(error: unknown): boolean {
+  return isAxiosError(error) && (error.response?.status ?? 0) >= 500
 }
 
 export function extractApiError(err: unknown): ApiErrorInfo | undefined {

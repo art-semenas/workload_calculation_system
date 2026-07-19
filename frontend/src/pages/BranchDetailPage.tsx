@@ -108,9 +108,7 @@ export default function BranchDetailPage() {
       await createObject.mutateAsync(formData)
       handleCloseObjectDialog()
     } catch (error) {
-      handleFormError(error, (message) =>
-        objectNameSetError('name', { type: 'server', message })
-      )
+      handleFormError(error, (message) => objectNameSetError('name', { type: 'server', message }))
     }
   })
 

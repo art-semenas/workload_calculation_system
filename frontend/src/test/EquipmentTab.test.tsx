@@ -439,9 +439,7 @@ describe('EquipmentTab', () => {
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Device not found in inventory for this object')
-      ).toBeInTheDocument()
+      expect(screen.getByText('Device not found in inventory for this object')).toBeInTheDocument()
     })
   })
 })

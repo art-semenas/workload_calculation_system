@@ -1,12 +1,6 @@
 import { Box, Button, Typography } from '@mui/material'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import { isAxiosError } from 'axios'
 import { tokens } from '../../theme'
-
-// True for unrecoverable 5xx responses — the case ErrorPage is meant for.
-export function isServerError(error: unknown): boolean {
-  return isAxiosError(error) && (error.response?.status ?? 0) >= 500
-}
 
 interface ErrorPageProps {
   message?: string
