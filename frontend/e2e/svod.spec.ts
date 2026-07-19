@@ -260,13 +260,10 @@ test.describe('Summary page (/svod)', () => {
     await loginAsAdmin(page)
     await page.goto('/svod')
 
-    await page.waitForSelector(
-      '[role="grid"] [role="row"]:nth-child(2), [role="table"] tbody tr',
-      { timeout: 10_000 }
-    )
+    await page.waitForSelector('[role="grid"], [role="table"]', { timeout: 10_000 })
 
     const objectLink = page.locator('a[href^="/objects/"]').first()
-    await expect(objectLink).toBeVisible()
+    await expect(objectLink).toBeVisible({ timeout: 10_000 })
     await objectLink.click()
     await expect(page).toHaveURL(/\/objects\/[0-9a-f-]+$/)
   })

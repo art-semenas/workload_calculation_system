@@ -7,7 +7,7 @@ interface ApiEnvelope<T> {
   data: T | null
   meta: unknown
   error: {
-    code: string
+    code: number
     message: string
   } | null
 }
