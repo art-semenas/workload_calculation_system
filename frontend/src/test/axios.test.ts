@@ -1,0 +1,60 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { notifyResponseError } from '../api/axios'
+import { useNotificationStore } from '../stores/notificationStore'
+
+describe('notifyResponseError', () => {
+  beforeEach(() => {
+    useNotificationStore.setState({ notifications: [] })
+  })
+
+  it('shows a network error toast when there is no response', () => {
+    notifyResponseError({ isAxiosError: true, config: {}, request: {} })
+
+    const { notifications } = useNotificationStore.getState()
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].message).toBe(
+      'Network error. Please check your connection and try again.'
+    )
+    expect(notifications[0].severity).toBe('error')
+  })
+
+  it('shows the server message as an error toast for 5xx', () => {
+    notifyResponseError({
+      isAxiosError: true,
+      response: { status: 500, data: { error: { code: 500, message: 'Database unavailable' } } },
+    })
+
+    const { notifications } = useNotificationStore.getState()
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].message).toBe('Database unavailable')
+    expect(notifications[0].severity).toBe('error')
+  })
+
+  it('falls back to a generic message for 5xx without an error body', () => {
+    notifyResponseError({ isAxiosError: true, response: { status: 502, data: null } })
+
+    const { notifications } = useNotificationStore.getState()
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].message).toBe('An unexpected error occurred.')
+  })
+
+  it('does not toast 4xx errors — callers handle them', () => {
+    notifyResponseError({
+      isAxiosError: true,
+      response: { status: 409, data: { error: { code: 409, message: 'Already exists' } } },
+    })
+    notifyResponseError({
+      isAxiosError: true,
+      response: { status: 422, data: { error: { code: 422, message: 'Validation failed' } } },
+    })
+    notifyResponseError({ isAxiosError: true, response: { status: 404, data: null } })
+
+    expect(useNotificationStore.getState().notifications).toHaveLength(0)
+  })
+
+  it('does not toast non-axios errors', () => {
+    notifyResponseError(new Error('boom'))
+
+    expect(useNotificationStore.getState().notifications).toHaveLength(0)
+  })
+})
