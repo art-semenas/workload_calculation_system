@@ -16,7 +16,9 @@ import { PageHead } from '../components/common/PageHead'
 import { KPIRow } from '../components/common/KPIRow'
 import { SectionBlock } from '../components/common/SectionBlock'
 import { QuietDrawer, DrawerSection } from '../components/common/QuietDrawer'
+import { ErrorPage, isServerError } from '../components/common/ErrorPage'
 import { useDivisionsAggregation, useCoverageGaps } from '../hooks/useAggregations'
+import { extractApiError } from '../utils/errorMessages'
 import { useSvod } from '../hooks/useSvod'
 import { tokens } from '../theme'
 import type { AggregationDivision } from '../types/m02'
@@ -44,7 +46,13 @@ export default function DashboardPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [period, setPeriod] = useState<Period>('FY25')
 
-  const { data: divisions, isLoading: divisionsLoading } = useDivisionsAggregation()
+  const {
+    data: divisions,
+    isLoading: divisionsLoading,
+    isError: divisionsIsError,
+    error: divisionsError,
+    refetch: refetchDivisions,
+  } = useDivisionsAggregation()
   const { data: svodPage, isLoading: svodLoading } = useSvod(0, 10)
   const { data: gaps, isLoading: gapsLoading } = useCoverageGaps()
 
@@ -55,6 +63,15 @@ export default function DashboardPage() {
   const totalObjects = divsList.reduce((sum, d) => sum + d.objectCount, 0)
   const totalGaps = divsList.reduce((sum, d) => sum + d.coverageGapCount, 0)
   const totalOverloaded = divsList.reduce((sum, d) => sum + d.engineersOverloaded, 0)
+
+  if (divisionsIsError && isServerError(divisionsError)) {
+    return (
+      <ErrorPage
+        message={extractApiError(divisionsError)?.message}
+        onRetry={() => void refetchDivisions()}
+      />
+    )
+  }
 
   return (
     <Box>

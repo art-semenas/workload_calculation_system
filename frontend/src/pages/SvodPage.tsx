@@ -18,6 +18,8 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { PageHead } from '../components/common/PageHead'
+import { ErrorPage, isServerError } from '../components/common/ErrorPage'
+import { extractApiError } from '../utils/errorMessages'
 import { useSvod } from '../hooks/useSvod'
 import { useUiStore } from '../stores/uiStore'
 import { exportSvodXlsx } from '../api/svod'
@@ -281,7 +283,11 @@ export default function SvodPage() {
     queryFn: getDivisions,
   })
 
-  const { data, isLoading, isError } = useSvod(page, PAGE_SIZE, divisionId || undefined)
+  const { data, isLoading, isError, error, refetch } = useSvod(
+    page,
+    PAGE_SIZE,
+    divisionId || undefined
+  )
 
   const columns = useMemo(
     () => (showBreakdown ? buildFullColumns(svodPrecision) : buildCompactColumns(svodPrecision)),
@@ -454,7 +460,11 @@ export default function SvodPage() {
           <CircularProgress />
         </Box>
       ) : isError ? (
-        <Alert severity="error">Failed to load data</Alert>
+        isServerError(error) ? (
+          <ErrorPage message={extractApiError(error)?.message} onRetry={() => void refetch()} />
+        ) : (
+          <Alert severity="error">Failed to load data</Alert>
+        )
       ) : (
         <Box sx={{ width: '100%' }}>
           <DataGrid

@@ -53,7 +53,8 @@ import {
   useRemoveEngineerFromObject,
 } from '../hooks/useObjectEngineers'
 import { useEngineers } from '../hooks/useEngineers'
-import { handleFormError } from '../utils/errorMessages'
+import { ErrorPage, isServerError } from '../components/common/ErrorPage'
+import { extractApiError, handleFormError } from '../utils/errorMessages'
 import { tokens } from '../theme'
 import type { EngineerStatus } from '../types/engineer'
 
@@ -544,7 +545,13 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const { data: object, isLoading } = useObject(mode !== 'create' ? id : undefined)
+  const {
+    data: object,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useObject(mode !== 'create' ? id : undefined)
   const { data: summary, isLoading: summaryLoading } = useObjectSummary(
     mode === 'detail' ? (id ?? '') : ''
   )
@@ -571,6 +578,10 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
         <CircularProgress />
       </Box>
     )
+  }
+
+  if (isError && isServerError(error)) {
+    return <ErrorPage message={extractApiError(error)?.message} onRetry={() => void refetch()} />
   }
 
   if (!object) {
