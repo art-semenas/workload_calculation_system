@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@mui/icons-material/*": ["../frontend/node_modules/@mui/icons-material/esm/*"]
+    }
+  }
+}

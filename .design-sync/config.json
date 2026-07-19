@@ -1,0 +1,36 @@
+{
+  "projectId": "9b8dec7e-0988-4694-a239-40bf92cec14e",
+  "shape": "package",
+  "pkg": "frontend",
+  "globalName": "WorkloadDS",
+  "srcDir": "src",
+  "tsconfig": "../.design-sync/tsconfig.ds.json",
+  "cssEntry": "src/index.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraFonts": ["../.design-sync/ds-fonts.css"],
+  "extraEntries": ["../.design-sync/preview-providers.tsx"],
+  "provider": {
+    "component": "MuiThemeProvider",
+    "props": { "theme": { "$ref": "dsTheme" } },
+    "inner": { "component": "PreviewRouter" }
+  },
+  "overrides": {
+    "QuietDrawer": { "cardMode": "single", "viewport": "460x560" },
+    "HeroCard": { "cardMode": "column" },
+    "KPIRow": { "cardMode": "column" },
+    "PageHead": { "cardMode": "column" },
+    "SectionBlock": { "cardMode": "column" },
+    "DistBar": { "cardMode": "column" }
+  },
+  "componentSrcMap": {
+    "PageHead": "src/components/common/PageHead.tsx",
+    "KPIRow": "src/components/common/KPIRow.tsx",
+    "QuietDrawer": "src/components/common/QuietDrawer.tsx",
+    "DrawerSection": null,
+    "CapBar": "src/components/common/CapBar.tsx",
+    "DistBar": "src/components/common/DistBar.tsx",
+    "SectionBlock": "src/components/common/SectionBlock.tsx",
+    "HeroCard": "src/components/common/HeroCard.tsx",
+    "Spark": "src/components/common/Spark.tsx"
+  }
+}
