@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import {
+  Alert,
   Box,
   Button,
   DialogActions,
@@ -26,6 +27,7 @@ import { FormTextField } from '../common/FormTextField'
 import { useCreateObject } from '../../hooks/useObjects'
 import { useDivisions } from '../../hooks/useDivisions'
 import { ObjectCreateSchema, type ObjectCreate } from '../../types/object'
+import { handleFormError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 // PoC (S-02): MVP M-06 will add Tier, Travel norm, Visits/year, and auto-assigned Object ID.
@@ -77,6 +79,8 @@ export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
     return options
   }, [divisionQueries, divisions])
 
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
   const { control, handleSubmit, reset } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
     defaultValues: {
@@ -88,12 +92,18 @@ export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
 
   const handleClose = () => {
     reset()
+    setSubmitError(null)
     onClose()
   }
 
   const handleCreate = handleSubmit(async (formData) => {
-    await createObject.mutateAsync(formData)
-    handleClose()
+    setSubmitError(null)
+    try {
+      await createObject.mutateAsync(formData)
+      handleClose()
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   return (
@@ -132,6 +142,11 @@ export function CreateObjectDialog({ open, onClose }: CreateObjectDialogProps) {
       >
         {/* Form Content */}
         <DialogContent sx={{ pt: 3 }}>
+          {submitError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submitError}
+            </Alert>
+          )}
           <Grid container spacing={2}>
             {/* Object Name — full width */}
             <Grid item xs={12}>

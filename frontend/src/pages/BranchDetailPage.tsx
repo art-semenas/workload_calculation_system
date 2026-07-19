@@ -28,6 +28,7 @@ import { useObjectSummary } from '../hooks/useSummary'
 import { useBranchAggregation } from '../hooks/useAggregations'
 import { BranchCreateSchema, type BranchCreate } from '../types/division'
 import { ObjectCreateSchema, type ObjectCreate } from '../types/object'
+import { handleFormError } from '../utils/errorMessages'
 
 function ObjectStaffingRow({
   objectId,
@@ -69,6 +70,7 @@ export default function BranchDetailPage() {
     control,
     handleSubmit: handleObjectSubmit,
     reset: resetObjectForm,
+    setError: objectNameSetError,
   } = useForm<ObjectCreate>({
     resolver: zodResolver(ObjectCreateSchema),
     defaultValues: { name: '', branchId: id || '' },
@@ -82,9 +84,12 @@ export default function BranchDetailPage() {
   }
 
   const handleSaveName = nameForm.handleSubmit(async (data) => {
-    if (id) {
+    if (!id) return
+    try {
       await updateBranch.mutateAsync({ id, data: { name: data.name } })
       setEditingName(false)
+    } catch (error) {
+      handleFormError(error, (message) => nameForm.setError('name', { type: 'server', message }))
     }
   })
 
@@ -99,8 +104,14 @@ export default function BranchDetailPage() {
   }
 
   const handleCreateObject = handleObjectSubmit(async (formData) => {
-    await createObject.mutateAsync(formData)
-    handleCloseObjectDialog()
+    try {
+      await createObject.mutateAsync(formData)
+      handleCloseObjectDialog()
+    } catch (error) {
+      handleFormError(error, (message) =>
+        objectNameSetError('name', { type: 'server', message })
+      )
+    }
   })
 
   if (isLoading) {

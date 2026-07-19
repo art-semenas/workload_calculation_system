@@ -26,6 +26,7 @@ import {
   useCoverageGaps,
 } from '../hooks/useAggregations'
 import { DivisionCreateSchema, type DivisionCreate } from '../types/division'
+import { handleFormError } from '../utils/errorMessages'
 
 export default function DivisionDetailPage() {
   const navigate = useNavigate()
@@ -54,9 +55,12 @@ export default function DivisionDetailPage() {
   }
 
   const handleSaveName = nameForm.handleSubmit(async (data) => {
-    if (id) {
+    if (!id) return
+    try {
       await updateDivision.mutateAsync({ id, data: { name: data.name } })
       setEditingName(false)
+    } catch (error) {
+      handleFormError(error, (message) => nameForm.setError('name', { type: 'server', message }))
     }
   })
 

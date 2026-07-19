@@ -1,3 +1,5 @@
+import { showNotification } from '../stores/notificationStore'
+
 function isObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null
 }
@@ -28,4 +30,19 @@ export function mapEquipmentError(info: ApiErrorInfo | undefined): string {
 export function mapSaveError(info: ApiErrorInfo | undefined): string {
   if (info?.code === 404) return 'Object no longer exists. Refresh the page.'
   return info?.message ?? 'Failed to save. Please try again.'
+}
+
+// Standard form-submission error handling (unified-error-handling epic):
+// 422 → inline message below the form, 409 → warning toast, other 4xx → error toast.
+// 401 redirect, 5xx toast, and network toast are handled by the Axios interceptor.
+export function handleFormError(err: unknown, setInlineError?: (message: string) => void): void {
+  const info = extractApiError(err)
+  if (!info) return
+  if (info.code === 409) {
+    showNotification(info.message, 'warning')
+  } else if (info.code === 422 && setInlineError) {
+    setInlineError(info.message)
+  } else if (info.code !== 401 && info.code < 500) {
+    showNotification(info.message, 'error')
+  }
 }

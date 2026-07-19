@@ -44,6 +44,7 @@ import {
   type EngineerUpdateRequest,
   type EngineerStatus,
 } from '../types/engineer'
+import { handleFormError } from '../utils/errorMessages'
 import { tokens } from '../theme'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ export default function EngineerDetailPage() {
       await updateMutation.mutateAsync(data)
       setEditOpen(false)
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Failed to update engineer')
+      handleFormError(err, setEditError)
     }
   }
 
@@ -145,7 +146,7 @@ export default function EngineerDetailPage() {
       setConfirmOpen(false)
       setRemoveObjectId(null)
     } catch (err) {
-      setRemoveError(err instanceof Error ? err.message : 'Failed to remove assignment')
+      handleFormError(err, setRemoveError)
     }
   }
 
@@ -154,7 +155,7 @@ export default function EngineerDetailPage() {
       setAssignError(null)
       await assignMutation.mutateAsync(objectId)
     } catch (err) {
-      setAssignError(err instanceof Error ? err.message : 'Failed to assign object')
+      handleFormError(err, setAssignError)
     }
   }
 

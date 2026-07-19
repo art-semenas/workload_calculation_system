@@ -53,6 +53,7 @@ import {
   useRemoveEngineerFromObject,
 } from '../hooks/useObjectEngineers'
 import { useEngineers } from '../hooks/useEngineers'
+import { handleFormError } from '../utils/errorMessages'
 import { tokens } from '../theme'
 import type { EngineerStatus } from '../types/engineer'
 
@@ -153,17 +154,24 @@ function EngineersTab({ objectId }: { objectId: string }) {
   const [engineerToRemove, setEngineerToRemove] = useState<string | null>(null)
 
   const handleAssignConfirm = async () => {
-    if (selectedEngineer) {
+    if (!selectedEngineer) return
+    try {
       await assignMutation.mutateAsync(selectedEngineer)
       setShowTravelBanner(true)
       setAssignDialogOpen(false)
       setSelectedEngineer(null)
+    } catch (error) {
+      handleFormError(error)
     }
   }
 
   const handleRemoveConfirm = async () => {
-    if (engineerToRemove) {
+    if (!engineerToRemove) return
+    try {
       await removeMutation.mutateAsync(engineerToRemove)
+    } catch (error) {
+      handleFormError(error)
+    } finally {
       setRemoveConfirmOpen(false)
       setEngineerToRemove(null)
     }
@@ -338,10 +346,16 @@ function CreateObjectForm() {
   })
 
   const watchedBranchId = watch('branchId')
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const onSubmit = handleSubmit(async (data) => {
-    const result = await createObject.mutateAsync(data)
-    navigate(`/objects/${result.id}`)
+    setSubmitError(null)
+    try {
+      const result = await createObject.mutateAsync(data)
+      navigate(`/objects/${result.id}`)
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   if (divisionsLoading) {
@@ -371,6 +385,7 @@ function CreateObjectForm() {
         }}
         sx={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 2 }}
       >
+        {submitError && <Alert severity="error">{submitError}</Alert>}
         <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
         <FormTextField name="address" control={control} label="Address" fullWidth />
 
@@ -446,9 +461,16 @@ function EditObjectForm({ id }: { id: string }) {
     }
   }, [object, reset])
 
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
   const onSubmit = handleSubmit(async (data) => {
-    await updateObject.mutateAsync({ id, data })
-    void navigate(`/objects/${id}`)
+    setSubmitError(null)
+    try {
+      await updateObject.mutateAsync({ id, data })
+      void navigate(`/objects/${id}`)
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   if (isLoading) {
@@ -486,6 +508,7 @@ function EditObjectForm({ id }: { id: string }) {
         }}
         sx={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 2 }}
       >
+        {submitError && <Alert severity="error">{submitError}</Alert>}
         <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
         <FormTextField name="address" control={control} label="Address" fullWidth />
 
@@ -530,9 +553,12 @@ export default function ObjectDetailPage({ mode }: ObjectDetailPageProps) {
   const deleteObject = useDeleteObject()
 
   const handleDeleteConfirm = async () => {
-    if (id) {
+    if (!id) return
+    try {
       await deleteObject.mutateAsync(id)
       void navigate('/objects')
+    } catch (error) {
+      handleFormError(error)
     }
   }
 

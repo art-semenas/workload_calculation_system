@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -21,6 +22,7 @@ import { FormTextField } from '../common/FormTextField'
 import { useDivisions } from '../../hooks/useDivisions'
 import { useCreateEngineer } from '../../hooks/useEngineers'
 import { EngineerCreateSchema, type EngineerCreateRequest } from '../../types/engineer'
+import { handleFormError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 interface CreateEngineerDialogProps {
@@ -31,6 +33,7 @@ interface CreateEngineerDialogProps {
 export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProps) {
   const { data: divisions, isLoading: divisionsLoading } = useDivisions()
   const createMutation = useCreateEngineer()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { control, handleSubmit, reset } = useForm<EngineerCreateRequest>({
     resolver: zodResolver(EngineerCreateSchema),
@@ -39,12 +42,18 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
 
   const handleClose = () => {
     reset()
+    setSubmitError(null)
     onClose()
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    await createMutation.mutateAsync(data)
-    handleClose()
+    setSubmitError(null)
+    try {
+      await createMutation.mutateAsync(data)
+      handleClose()
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   return (
@@ -80,13 +89,7 @@ export function CreateEngineerDialog({ open, onClose }: CreateEngineerDialogProp
         }}
       >
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          {createMutation.isError && (
-            <Alert severity="error">
-              {createMutation.error instanceof Error
-                ? createMutation.error.message
-                : 'Failed to create engineer'}
-            </Alert>
-          )}
+          {submitError && <Alert severity="error">{submitError}</Alert>}
           <FormTextField name="name" control={control} label="Name" fullWidth autoFocus />
           <FormTextField name="email" control={control} label="Email" fullWidth type="email" />
           <FormTextField
