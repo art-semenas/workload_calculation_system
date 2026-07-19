@@ -338,7 +338,92 @@ git commit -m "feat: add ErrorPage component and wire 5xx error boundary to crit
 
 ---
 
-## Task 6: Audit string code comparisons
+## Task 6: Migrate `errorMessages.ts` helpers to numeric codes + server messages
+
+**Files:**
+- Modify: `frontend/src/utils/errorMessages.ts`
+- Modify: `frontend/src/test/errorMessages.test.ts`
+- Modify: `frontend/src/test/EquipmentTab.test.tsx`
+- Modify: call sites (listed in Step 4)
+
+**Why this is a separate task:** the Task 7 audit greps for `error.code ==` comparisons and does **not** match this file — its string dependency is a `typeof code === 'string'` guard and `case 'DEVICE_NOT_IN_INVENTORY':` switch arms. This is the file behind the current UX regression: with numeric codes, `extractErrorCode` always returns `undefined`, so every error in the Equipment / Travel / Repairs / Records tabs shows the generic fallback.
+
+**Design change:** the old codes `DEVICE_NOT_IN_INVENTORY` and `NO_CONTEXT_FOR_SYSTEM` are both HTTP 422 now — the code alone can no longer discriminate them. Backend messages are user-facing by design (ws-b-01 Task 3), so display `error.message` from the server and use the code only for fallback categories.
+
+- [ ] **Step 1: Write failing tests**
+
+```ts
+describe('extractApiError', () => {
+  it('extracts numeric code and message', () => {
+    const err = { response: { data: { error: { code: 422, message: 'Device not found in inventory for this object' } } } }
+    expect(extractApiError(err)).toEqual({ code: 422, message: 'Device not found in inventory for this object' })
+  })
+  it('returns undefined for non-API errors', () => {
+    expect(extractApiError(new Error('network'))).toBeUndefined()
+  })
+})
+
+describe('mapSaveError', () => {
+  it('prefers the server message when present', () => {
+    expect(mapSaveError({ code: 422, message: 'Round trip time is auto-calculated and cannot be edited directly' }))
+      .toBe('Round trip time is auto-calculated and cannot be edited directly')
+  })
+  it('maps 404 to a refresh hint', () => {
+    expect(mapSaveError({ code: 404, message: 'Object not found' })).toBe('Object no longer exists. Refresh the page.')
+  })
+  it('falls back to a generic message', () => {
+    expect(mapSaveError(undefined)).toBe('Failed to save. Please try again.')
+  })
+})
+```
+
+- [ ] **Step 2: Run — expect FAIL** (`npm test -- errorMessages`)
+
+- [ ] **Step 3: Rewrite `errorMessages.ts`**
+
+```ts
+export interface ApiErrorInfo {
+  code: number
+  message: string
+}
+
+export function extractApiError(err: unknown): ApiErrorInfo | undefined {
+  // same narrowing chain as the old extractErrorCode, but accept
+  // typeof code === 'number' && typeof message === 'string'
+}
+
+// Server messages are user-facing per the unified-error-handling epic — show them directly.
+export function mapEquipmentError(info: ApiErrorInfo | undefined): string {
+  return info?.message || 'An unexpected error occurred.'
+}
+
+export function mapSaveError(info: ApiErrorInfo | undefined): string {
+  if (info?.code === 404) return 'Object no longer exists. Refresh the page.'
+  return info?.message || 'Failed to save. Please try again.'
+}
+```
+
+- [ ] **Step 4: Update the call sites** (mechanical rename `extractErrorCode`/`mapEquipmentErrorCode`/`mapSaveErrorCode` → new helpers):
+  - `frontend/src/components/travel/TravelTab.tsx`
+  - `frontend/src/components/repairs/RepairsTab.tsx`
+  - `frontend/src/components/records/RecordsTab.tsx`
+  - `frontend/src/components/equipment/PhysicalInventory.tsx` (3 usages)
+  - `frontend/src/components/equipment/SystemAssignments.tsx` (3 usages)
+
+- [ ] **Step 5: Fix tests that mock the old string contract** — they pass today while asserting a contract the backend no longer honors:
+  - `frontend/src/test/EquipmentTab.test.tsx` ("shows backend error DEVICE_NOT_IN_INVENTORY as alert") — mock `{ error: { code: 422, message: 'Device not found in inventory for this object' } }` and assert the server message renders
+  - sweep for the rest: `grep -rn "code: '" frontend/src/test/` and `grep -rn 'code: "' frontend/src/test/`
+
+- [ ] **Step 6: Run — expect PASS, commit**
+
+```bash
+git add frontend/src/utils/errorMessages.ts frontend/src/components/ frontend/src/test/
+git commit -m "fix: migrate error extraction to numeric codes and server-provided messages"
+```
+
+---
+
+## Task 7: Audit string code comparisons
 
 Find any remaining places that check `error.code === 'STRING'` or `error.code === 'NAME_CONFLICT'` etc. and update them to numeric comparisons.
 
@@ -358,7 +443,7 @@ git commit -m "fix: replace string error code comparisons with numeric HTTP stat
 
 ---
 
-## Task 7: Run quality gates and push
+## Task 8: Run quality gates and push
 
 - [ ] **Step 1:**
 
@@ -372,7 +457,19 @@ npm test
 
 Expected: all pass.
 
-- [ ] **Step 2: Push**
+- [ ] **Step 2: E2E against the real backend contract**
+
+The unit-test mocks were wrong once already (they asserted string codes after the backend went numeric) — verify against the real stack:
+
+```bash
+docker compose -f docker-compose.poc.yml up --build -d
+cd frontend
+npx playwright test
+```
+
+Spot-check one real 422: add a repair for a device not in inventory — the alert must show "Device not found in inventory for this object", **not** "An unexpected error occurred."
+
+- [ ] **Step 3: Push**
 
 ```bash
 git push -u origin feature/error-handling-frontend
@@ -391,6 +488,9 @@ git push -u origin feature/error-handling-frontend
 - [ ] **AC-FE-07:** Toast has × close button. 409 = warning (yellow), others = error (red).
 - [ ] TanStack Query retries 5xx up to 3 times with exponential backoff; does not retry 4xx.
 - [ ] `<Toast />` component wired at app root level.
+- [ ] `errorMessages.ts` helpers accept numeric codes and surface server `error.message`; Equipment/Travel/Repairs/Records tabs no longer show generic fallbacks for specific errors.
+- [ ] No frontend test mocks `error.code` as a string.
+- [ ] E2E: a real backend 422 renders its specific message in the UI.
 - [ ] All tests pass, lint clean, TypeScript 0 errors.
 
 ## References
