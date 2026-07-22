@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import EngineerDetailPage from '../pages/EngineerDetailPage'
@@ -24,7 +25,13 @@ vi.mock('../hooks/useDivisions', () => ({
   useDivisions: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
-import { useEngineer, useEngineerSummary, useEngineerObjects } from '../hooks/useEngineers'
+import {
+  useEngineer,
+  useEngineerSummary,
+  useEngineerObjects,
+  useAssignObjectToEngineer,
+} from '../hooks/useEngineers'
+import { useObjects } from '../hooks/useObjects'
 
 const mockUseEngineer = vi.mocked(useEngineer)
 const mockUseEngineerSummary = vi.mocked(useEngineerSummary)
@@ -161,5 +168,38 @@ describe('EngineerDetailPage', () => {
 
     renderPage()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
+  })
+
+  describe('assign failure', () => {
+    it('keeps the dialog open and shows the server message when assign fails', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useAssignObjectToEngineer).mockReturnValue({
+        mutateAsync: vi.fn().mockRejectedValue({
+          isAxiosError: true,
+          response: {
+            status: 422,
+            data: { error: { code: 422, message: 'Engineer is inactive' } },
+          },
+        }),
+        isPending: false,
+      } as unknown as ReturnType<typeof useAssignObjectToEngineer>)
+      vi.mocked(useObjects).mockReturnValue({
+        data: [{ id: 'obj-9', name: 'Warehouse', division_name: 'Brest' }],
+        isLoading: false,
+      } as unknown as ReturnType<typeof useObjects>)
+
+      renderPage()
+
+      await user.click(await screen.findByRole('button', { name: /assign object/i }))
+      const dialog = await screen.findByRole('dialog')
+
+      await user.type(within(dialog).getByRole('combobox', { name: /select object/i }), 'Warehouse')
+      await user.click(await screen.findByRole('option', { name: /Warehouse/ }))
+      await user.click(within(dialog).getByRole('button', { name: /^assign$/i }))
+
+      // The failure must be visible inside the dialog, and the dialog must stay open.
+      expect(await within(dialog).findByText('Engineer is inactive')).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
   })
 })

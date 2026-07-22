@@ -12,7 +12,7 @@ import {
   Box,
 } from '@mui/material'
 import { useObjects } from '../../hooks/useObjects'
-import { extractApiError } from '../../utils/errorMessages'
+import { handleFormError } from '../../utils/errorMessages'
 
 interface EngineerAssignDialogProps {
   open: boolean
@@ -39,7 +39,7 @@ export default function EngineerAssignDialog({
       setSelectedObjectId(null)
       onClose()
     } catch (err) {
-      setError(extractApiError(err)?.message ?? 'Failed to assign object to engineer')
+      handleFormError(err, setError)
     }
   }
 

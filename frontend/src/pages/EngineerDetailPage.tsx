@@ -92,7 +92,6 @@ export default function EngineerDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [removeObjectId, setRemoveObjectId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
-  const [assignError, setAssignError] = useState<string | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
 
   const { control, handleSubmit } = useForm<EngineerUpdateRequest>({
@@ -143,20 +142,18 @@ export default function EngineerDetailPage() {
     try {
       setRemoveError(null)
       await removeMutation.mutateAsync(removeObjectId)
-      setConfirmOpen(false)
-      setRemoveObjectId(null)
     } catch (err) {
       handleFormError(err, setRemoveError)
+    } finally {
+      // Close either way — the error renders on the page, behind this dialog.
+      setConfirmOpen(false)
+      setRemoveObjectId(null)
     }
   }
 
+  // Errors propagate to EngineerAssignDialog, which owns the message and stays open.
   const handleAssignSubmit = async (objectId: string) => {
-    try {
-      setAssignError(null)
-      await assignMutation.mutateAsync(objectId)
-    } catch (err) {
-      handleFormError(err, setAssignError)
-    }
+    await assignMutation.mutateAsync(objectId)
   }
 
   const status = summary?.status ?? engineer.status ?? 'NORMAL'
@@ -372,11 +369,6 @@ export default function EngineerDetailPage() {
           </Button>
         }
       >
-        {assignError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setAssignError(null)}>
-            {assignError}
-          </Alert>
-        )}
         {removeError && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setRemoveError(null)}>
             {removeError}
