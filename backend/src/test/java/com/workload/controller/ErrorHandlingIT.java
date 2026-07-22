@@ -1,6 +1,8 @@
 package com.workload.controller;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -44,7 +46,8 @@ class ErrorHandlingIT extends IntegrationTestBase {
         .statusCode(405)
         .body("data", nullValue())
         .body("error.code", equalTo(405))
-        .body("error.message", equalTo("Method not allowed"));
+        .body("error.message", equalTo("Method not allowed"))
+        .header("Allow", allOf(containsString("GET"), containsString("POST")));
   }
 
   @Test
@@ -70,6 +73,22 @@ class ErrorHandlingIT extends IntegrationTestBase {
         .then()
         .statusCode(415)
         .body("error.code", equalTo(415))
-        .body("error.message", equalTo("Unsupported media type"));
+        .body("error.message", equalTo("Unsupported media type"))
+        .header("Accept", containsString("application/json"));
+  }
+
+  /**
+   * 406 carries no body by design: the client's Accept header cannot be satisfied, so the JSON
+   * envelope is not a representation it would accept. Matches Spring's own handling.
+   */
+  @Test
+  void unacceptableResponseFormatReturns406WithoutBody() {
+    given()
+        .header("Authorization", bearerToken)
+        .accept("application/xml")
+        .when()
+        .get("/divisions")
+        .then()
+        .statusCode(406);
   }
 }

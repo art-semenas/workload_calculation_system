@@ -2,14 +2,21 @@ package com.workload.exception;
 
 import com.workload.dto.ApiError;
 import com.workload.dto.ApiResponse;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -207,8 +214,14 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
       HttpRequestMethodNotSupportedException ex) {
-    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-        .body(ApiResponse.error(ApiError.of(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed")));
+    BodyBuilder builder = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+    // RFC 9110 §15.5.6: a 405 must advertise the methods the resource does support.
+    Set<HttpMethod> supportedMethods = ex.getSupportedHttpMethods();
+    if (!CollectionUtils.isEmpty(supportedMethods)) {
+      builder.allow(supportedMethods.toArray(new HttpMethod[0]));
+    }
+    return builder.body(
+        ApiResponse.error(ApiError.of(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed")));
   }
 
   @ExceptionHandler(MissingServletRequestParameterException.class)
@@ -235,10 +248,34 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
   public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotSupported(
       HttpMediaTypeNotSupportedException ex) {
-    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-        .body(
-            ApiResponse.error(
-                ApiError.of(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported media type")));
+    BodyBuilder builder = ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    // Advertise what the endpoint does accept, so the client can correct its Content-Type.
+    List<MediaType> supportedTypes = ex.getSupportedMediaTypes();
+    if (!CollectionUtils.isEmpty(supportedTypes)) {
+      builder.headers(headers -> headers.setAccept(supportedTypes));
+    }
+    return builder.body(
+        ApiResponse.error(
+            ApiError.of(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported media type")));
+  }
+
+  /**
+   * 406 is returned without a body on purpose. The client's {@code Accept} header cannot be
+   * satisfied, so the JSON error envelope is not a representation it would accept — writing one
+   * would fail content negotiation a second time, inside exception handling. This mirrors Spring's
+   * own {@code ResponseEntityExceptionHandler}, and is the one documented exception to the
+   * envelope-everywhere rule in {@code docs/impl/epics/unified-error-handling.md}.
+   *
+   * <p>Do not "improve" this by attaching a body. Without this handler the generic {@code
+   * Exception} handler builds a 500 envelope, writing <em>that</em> fails negotiation too, and the
+   * exception escapes the DispatcherServlet into the container's error dispatch — which re-enters
+   * the security filter chain with an empty SecurityContext and answers <b>401</b>. A bogus 401 on
+   * a perfectly authenticated request is a long debugging detour; the empty 406 avoids it.
+   */
+  @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotAcceptable(
+      HttpMediaTypeNotAcceptableException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
   }
 
   @ExceptionHandler(Exception.class)

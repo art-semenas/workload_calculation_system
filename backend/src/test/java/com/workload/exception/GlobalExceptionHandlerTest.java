@@ -19,6 +19,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -204,6 +205,25 @@ class GlobalExceptionHandlerTest {
     assertThat(response.getBody().error().message()).isEqualTo("Method not allowed");
   }
 
+  /** RFC 9110 §15.5.6: a 405 response must advertise the methods the resource does support. */
+  @Test
+  void methodNotSupportedSetsAllowHeader() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMethodNotSupported(
+            new HttpRequestMethodNotSupportedException("DELETE", List.of("GET", "POST")));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    assertThat(response.getHeaders().getAllow())
+        .containsExactlyInAnyOrder(HttpMethod.GET, HttpMethod.POST);
+  }
+
+  @Test
+  void methodNotSupportedWithoutSupportedMethodsOmitsAllowHeader() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMethodNotSupported(new HttpRequestMethodNotSupportedException("DELETE"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    assertThat(response.getHeaders().getAllow()).isEmpty();
+  }
+
   @Test
   void missingRequestParameterMapsTo400WithParameterName() {
     ResponseEntity<ApiResponse<Void>> response =
@@ -235,6 +255,34 @@ class GlobalExceptionHandlerTest {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     assertThat(response.getBody().error().code()).isEqualTo(415);
     assertThat(response.getBody().error().message()).isEqualTo("Unsupported media type");
+  }
+
+  /** A 415 response should advertise the media types the endpoint does accept. */
+  @Test
+  void unsupportedMediaTypeSetsAcceptHeader() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMediaTypeNotSupported(
+            new HttpMediaTypeNotSupportedException(
+                MediaType.TEXT_PLAIN, List.of(MediaType.APPLICATION_JSON)));
+    assertThat(response.getHeaders().getAccept()).containsExactly(MediaType.APPLICATION_JSON);
+  }
+
+  @Test
+  void unsupportedMediaTypeWithoutSupportedTypesOmitsAcceptHeader() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMediaTypeNotSupported(
+            new HttpMediaTypeNotSupportedException("no converter for text/plain"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    assertThat(response.getHeaders().getAccept()).isEmpty();
+  }
+
+  @Test
+  void mediaTypeNotAcceptableMapsTo406() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMediaTypeNotAcceptable(
+            new HttpMediaTypeNotAcceptableException(List.of(MediaType.APPLICATION_JSON)));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+    assertThat(response.getBody()).isNull();
   }
 
   @Test
