@@ -28,26 +28,39 @@ export function extractApiError(err: unknown): ApiErrorInfo | undefined {
   return { code, message }
 }
 
-// Server messages are user-facing per the unified-error-handling epic — show them directly.
-export function mapEquipmentError(info: ApiErrorInfo | undefined): string {
-  return info?.message ?? 'An unexpected error occurred.'
+const GENERIC_ERROR = 'Something went wrong. Please try again.'
+const GONE_ERROR = 'This item no longer exists. Refresh the page.'
+
+// Inline when the caller has somewhere to put it, toast otherwise.
+function report(message: string, setInlineError?: (message: string) => void): void {
+  if (setInlineError) {
+    setInlineError(message)
+  } else {
+    showNotification(message, 'error')
+  }
 }
 
-export function mapSaveError(info: ApiErrorInfo | undefined): string {
-  if (info?.code === 404) return 'Object no longer exists. Refresh the page.'
-  return info?.message ?? 'Failed to save. Please try again.'
-}
-
-// Standard form-submission error handling (unified-error-handling epic):
-// 422 → inline message below the form, 409 → warning toast, other 4xx → error toast.
-// 401 redirect, 5xx toast, and network toast are handled by the Axios interceptor.
+// Standard form-submission error handling (unified-error-handling epic).
+// Server messages are user-facing by design, so they are shown directly.
+// 401 redirect, 5xx toast, and network toast belong to the Axios interceptor —
+// this function stays silent for those so the user is not told twice.
 export function handleFormError(err: unknown, setInlineError?: (message: string) => void): void {
   const info = extractApiError(err)
-  if (!info) return
-  if (info.code === 409) {
+
+  if (!info) {
+    // An Axios failure with no envelope is a network error or a 5xx the
+    // interceptor already surfaced. Anything else is a client-side bug that
+    // would otherwise leave the form frozen with no feedback at all.
+    if (!isAxiosError(err)) report(GENERIC_ERROR, setInlineError)
+    return
+  }
+
+  if (info.code === 422) {
+    report(info.message, setInlineError)
+  } else if (info.code === 409) {
     showNotification(info.message, 'warning')
-  } else if (info.code === 422 && setInlineError) {
-    setInlineError(info.message)
+  } else if (info.code === 404) {
+    showNotification(GONE_ERROR, 'error')
   } else if (info.code !== 401 && info.code < 500) {
     showNotification(info.message, 'error')
   }

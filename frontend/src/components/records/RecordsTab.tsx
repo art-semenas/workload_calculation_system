@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Box, Button, CircularProgress, Snackbar, Alert, Stack, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Alert, Stack, Typography } from '@mui/material'
 import { RecordsUpdateSchema } from '../../types/records'
 import type { RecordsUpdate } from '../../types/records'
 import { useRecords, useUpdateRecords } from '../../hooks/useRecords'
 import { FormTextField } from '../common/FormTextField'
-import { extractApiError, mapSaveError } from '../../utils/errorMessages'
+import { handleFormError } from '../../utils/errorMessages'
+import { showNotification } from '../../stores/notificationStore'
 
 export function RecordsTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useRecords(objectId)
   const updateMutation = useUpdateRecords(objectId)
-  const [successOpen, setSuccessOpen] = useState(false)
-  const [errorOpen, setErrorOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('Failed to save records.')
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { control, handleSubmit, reset } = useForm<RecordsUpdate>({
     resolver: zodResolver(RecordsUpdateSchema),
@@ -39,12 +38,12 @@ export function RecordsTab({ objectId }: { objectId: string }) {
   }, [data, reset])
 
   const onValid = async (values: RecordsUpdate) => {
+    setSubmitError(null)
     try {
       await updateMutation.mutateAsync(values)
-      setSuccessOpen(true)
+      showNotification('Records saved successfully.', 'success')
     } catch (err) {
-      setErrorMessage(mapSaveError(extractApiError(err)))
-      setErrorOpen(true)
+      handleFormError(err, setSubmitError)
     }
   }
 
@@ -67,6 +66,7 @@ export function RecordsTab({ objectId }: { objectId: string }) {
         Records
       </Typography>
       <Stack spacing={2} sx={{ maxWidth: 400 }}>
+        {submitError && <Alert severity="error">{submitError}</Alert>}
         <FormTextField
           name="accessRequests"
           control={control}
@@ -106,16 +106,6 @@ export function RecordsTab({ objectId }: { objectId: string }) {
           Save
         </Button>
       </Stack>
-      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-        <Alert severity="success" onClose={() => setSuccessOpen(false)}>
-          Records saved successfully.
-        </Alert>
-      </Snackbar>
-      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-        <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   )
 }

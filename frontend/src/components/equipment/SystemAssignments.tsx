@@ -48,7 +48,7 @@ import {
 import { ConfirmDialog } from '../common/ConfirmDialog'
 import { FormTextField } from '../common/FormTextField'
 import { SectionBlock } from '../common/SectionBlock'
-import { extractApiError, mapEquipmentError } from '../../utils/errorMessages'
+import { handleFormError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
@@ -288,7 +288,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await addAssignment.mutateAsync(data)
       setAddOpen(false)
     } catch (err) {
-      setMutationError(mapEquipmentError(extractApiError(err)))
+      handleFormError(err, setMutationError)
     }
   }
 
@@ -299,7 +299,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await updateAssignment.mutateAsync({ assignmentId: editAssignment.id, data })
       setEditAssignment(null)
     } catch (err) {
-      setMutationError(mapEquipmentError(extractApiError(err)))
+      handleFormError(err, setMutationError)
     }
   }
 
@@ -309,7 +309,7 @@ export function SystemAssignments({ objectId }: { objectId: string }) {
       await removeAssignment.mutateAsync(assignmentToRemove.id)
       setAssignmentToRemove(null)
     } catch (err) {
-      setMutationError(mapEquipmentError(extractApiError(err)))
+      handleFormError(err, setMutationError)
       setAssignmentToRemove(null)
     }
   }

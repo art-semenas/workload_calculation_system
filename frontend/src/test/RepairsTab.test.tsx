@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { RepairsTab } from '../components/repairs/RepairsTab'
+import { useNotificationStore } from '../stores/notificationStore'
 
 // ─── mock useRepairs ──────────────────────────────────────────────────────────
 const mockUseRepairs = vi.fn()
@@ -73,6 +74,7 @@ describe('RepairsTab', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupDefaultMocks()
+    useNotificationStore.setState({ notifications: [] })
   })
 
   it('renders dynamic rows from catalog', async () => {
@@ -184,10 +186,13 @@ describe('RepairsTab', () => {
       })
     })
 
-    expect(screen.getByText('Repairs saved successfully.')).toBeInTheDocument()
+    // Success goes to the app-level Toast, which renders outside this component.
+    expect(useNotificationStore.getState().notifications).toEqual([
+      expect.objectContaining({ message: 'Repairs saved successfully.', severity: 'success' }),
+    ])
   })
 
-  it('shows error snackbar when save fails', async () => {
+  it('shows an inline error when save fails with a non-API error', async () => {
     const mockMutateAsync = vi.fn().mockRejectedValue(new Error('save failed'))
     mockUseUpdateRepair.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
 
@@ -204,7 +209,31 @@ describe('RepairsTab', () => {
     await user.click(saveButtons[1])
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to save. Please try again.')).toBeInTheDocument()
+      expect(screen.getByText('Something went wrong. Please try again.')).toBeInTheDocument()
     })
+  })
+
+  it('shows the server message inline when save fails with a 422', async () => {
+    const mockMutateAsync = vi.fn().mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 422,
+        data: { error: { code: 422, message: 'Repair count must not be negative' } },
+      },
+    })
+    mockUseUpdateRepair.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false })
+
+    const user = userEvent.setup()
+    renderTab()
+
+    await waitFor(() => expect(screen.getByText('Battery Swap')).toBeInTheDocument())
+
+    const saveButtons = screen.getAllByRole('button', { name: /save/i })
+    await user.click(saveButtons[1])
+
+    await waitFor(() => {
+      expect(screen.getByText('Repair count must not be negative')).toBeInTheDocument()
+    })
+    expect(useNotificationStore.getState().notifications).toHaveLength(0)
   })
 })

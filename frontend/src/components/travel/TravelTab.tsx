@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Box, Button, CircularProgress, Snackbar, Alert, Stack, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Alert, Stack, Typography } from '@mui/material'
 import { TravelUpdateSchema } from '../../types/travel'
 import type { TravelUpdate } from '../../types/travel'
 import { useTravel, useUpdateTravel } from '../../hooks/useTravel'
 import { FormTextField } from '../common/FormTextField'
-import { extractApiError, mapSaveError } from '../../utils/errorMessages'
+import { handleFormError } from '../../utils/errorMessages'
+import { showNotification } from '../../stores/notificationStore'
 
 export function TravelTab({ objectId }: { objectId: string }) {
   const { data, isLoading } = useTravel(objectId)
   const updateMutation = useUpdateTravel(objectId)
-  const [successOpen, setSuccessOpen] = useState(false)
-  const [errorOpen, setErrorOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('Failed to save travel.')
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { control, handleSubmit, reset } = useForm<TravelUpdate>({
     resolver: zodResolver(TravelUpdateSchema),
@@ -35,12 +34,12 @@ export function TravelTab({ objectId }: { objectId: string }) {
   }, [data, reset])
 
   const onValid = async (values: TravelUpdate) => {
+    setSubmitError(null)
     try {
       await updateMutation.mutateAsync(values)
-      setSuccessOpen(true)
+      showNotification('Travel saved successfully.', 'success')
     } catch (err) {
-      setErrorMessage(mapSaveError(extractApiError(err)))
-      setErrorOpen(true)
+      handleFormError(err, setSubmitError)
     }
   }
 
@@ -63,6 +62,7 @@ export function TravelTab({ objectId }: { objectId: string }) {
         Travel
       </Typography>
       <Stack spacing={2} sx={{ maxWidth: 400 }}>
+        {submitError && <Alert severity="error">{submitError}</Alert>}
         <FormTextField name="transportType" control={control} label="Transport Type" />
         <FormTextField
           name="distanceKm"
@@ -90,16 +90,6 @@ export function TravelTab({ objectId }: { objectId: string }) {
           Save
         </Button>
       </Stack>
-      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-        <Alert severity="success" onClose={() => setSuccessOpen(false)}>
-          Travel saved successfully.
-        </Alert>
-      </Snackbar>
-      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-        <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   )
 }
