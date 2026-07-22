@@ -945,7 +945,8 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 404 | Object does not exist | `Object not found` |
 | 404 | Device type / context / repair type / engineer / assignment not found | `{Entity} not found` |
 | 404 | User does not exist **(MVP)** | `User not found` |
-| 405 | HTTP method not supported by the route | `Method not allowed` |
+| 405 | HTTP method not supported by the route | `Method not allowed` (response carries an `Allow` header) |
+| 406 | No response format matches the client's `Accept` header | _(no body — see note below)_ |
 | 409 | A resource with this name already exists (divisions, branches) | `A record with that name already exists` |
 | 409 | Cannot delete device context: active assignments reference it | `Cannot delete: {n} object(s) use this context` |
 | 409 | Cannot delete repair type: has recorded usage (count > 0) | `Repair type {id} has recorded usage with count > 0` |
@@ -955,7 +956,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 409 | Any other database constraint violation | `A database constraint was violated` |
 | 409 | Cannot delete division: it has branches **(MVP)** | `Cannot delete: division has {n} branches` |
 | 409 | Cannot delete branch: it has objects **(MVP)** | `Cannot delete: branch has {n} objects` |
-| 415 | Request `Content-Type` not supported | `Unsupported media type` |
+| 415 | Request `Content-Type` not supported | `Unsupported media type` (response carries an `Accept` header) |
 | 422 | Bean Validation failure on the request body | `{field}: {constraint message}` (joined with `; `) |
 | 422 | Device has no context for the requested system type | `No norms configured for this system type` |
 | 422 | Device not in the object's inventory; assignment rejected | `Device not found in inventory for this object` |
@@ -971,6 +972,8 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 422 | `REPAIR_PRODUCTIVE_MONTHS > PLANNING_PERIOD_MONTHS` **(MVP)** | `REPAIR_PRODUCTIVE_MONTHS must not exceed PLANNING_PERIOD_MONTHS` |
 | 429 | Rate limit exceeded | `Too many requests. Please wait before retrying.` |
 | 500 | Unexpected server error | `An unexpected error occurred. Please try again later.` |
+
+> **406 is the sole exception to the envelope rule.** No available representation matches the client's `Accept` header, so returning the JSON envelope would contradict the status. The server returns a bare 406 status line with no body. Every other status above carries the full envelope.
 
 ---
 

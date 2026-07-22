@@ -35,6 +35,12 @@ This epic defines a complete error handling strategy spanning both backend and f
 
 **Design Principle:** The `error.code` field mirrors the HTTP status code. This unifies error classification: no need for separate semantic codes like `NAME_CONFLICT` or `DEVICE_NOT_IN_INVENTORY`.
 
+**The one exception — 406 Not Acceptable carries no body.** A 406 means no available representation matches the client's `Accept` header, so returning the JSON envelope would contradict the status: content negotiation would simply fail a second time, inside exception handling. The server returns a bare 406 status line, matching Spring's own `ResponseEntityExceptionHandler`. Clients must treat a missing body on 406 as expected — the frontend's `getServerErrorMessage` already type-guards for this and falls back cleanly.
+
+> **Why this must not be "fixed" by attaching a body.** Verified empirically: with no dedicated 406 handler, the generic `Exception` handler builds a 500 envelope, writing that envelope fails negotiation as well, and the exception escapes the `DispatcherServlet` into the servlet container's error dispatch. That dispatch re-enters the security filter chain with an empty `SecurityContext`, so the authentication entry point answers **401** — on a request that was correctly authenticated. Anyone debugging that symptom would go hunting through JWT handling for a content-negotiation bug.
+
+**Response headers on 405 and 415.** A 405 response carries an `Allow` header listing the methods the route does support (required by RFC 9110 §15.5.6); a 415 response carries an `Accept` header listing the media types the endpoint consumes. Handlers that map these exceptions must set those headers, since routing through `@RestControllerAdvice` bypasses the Spring defaults that would otherwise add them.
+
 ### HTTP Status Code Mapping
 
 | Code | Status | When to Use | Backend Exception | Example |
@@ -42,8 +48,11 @@ This epic defines a complete error handling strategy spanning both backend and f
 | **400** | Bad Request | Malformed JSON or invalid request payload | `HttpMessageNotReadableException` | Missing `{` in JSON body |
 | **401** | Unauthorized | JWT token missing, invalid, or expired | `JwtAuthenticationException` | Token not sent or expired |
 | **403** | Forbidden | User authenticated but lacks RBAC permission | `AccessDeniedException` | Editor accessing another division |
-| **404** | Not Found | Resource (Division, Branch, Object, etc.) doesn't exist | `EntityNotFoundException` | Division ID doesn't exist |
+| **404** | Not Found | Resource (Division, Branch, Object, etc.) doesn't exist, or unknown route | `EntityNotFoundException`, `NoResourceFoundException` | Division ID doesn't exist |
+| **405** | Method Not Allowed | HTTP method not supported by the route | `HttpRequestMethodNotSupportedException` | `DELETE /divisions` |
+| **406** | Not Acceptable | No response representation matches the client's `Accept` header | `HttpMediaTypeNotAcceptableException` | Client sends `Accept: application/xml` |
 | **409** | Conflict | Business rule violation or resource conflict | Custom domain exceptions | Division name already exists, cannot delete division with branches |
+| **415** | Unsupported Media Type | Request `Content-Type` not supported | `HttpMediaTypeNotSupportedException` | Body sent as `text/plain` |
 | **422** | Unprocessable Entity | Validation failed (Bean Validation, business logic) | `MethodArgumentNotValidException`, custom validators | Invalid `branchId`, missing required field, device context not found |
 | **429** | Too Many Requests | Rate limit exceeded (Bucket4j) | `RateLimitExceededException` | IP has exceeded request quota |
 | **500** | Server Error | Unexpected backend error | Uncaught exceptions | Database connection lost, NullPointerException in calculation |
