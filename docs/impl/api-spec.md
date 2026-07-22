@@ -25,13 +25,15 @@ On error:
 ```json
 {
   "data": null,
+  "meta": null,
   "error": {
-    "code": "CONTEXT_IN_USE",
-    "message": "Cannot delete: 42 objects have active assignments using this context",
-    "affectedCount": 42
+    "code": 409,
+    "message": "Cannot delete: 42 objects have active assignments using this context"
   }
 }
 ```
+
+`error.code` is always the numeric HTTP status mirroring the response status line — never a semantic string. `error.message` is user-facing and carries any detail (such as an affected count); it never exposes stack traces or internals. See `docs/impl/epics/unified-error-handling.md`.
 
 ---
 
@@ -81,7 +83,7 @@ On error:
 ```
 
 **Errors:**
-- `409 NAME_CONFLICT` — a division with this name already exists.
+- Returns HTTP 409 with message "A record with that name already exists".
 
 ---
 
@@ -107,7 +109,7 @@ On error:
 ```
 
 **Errors:**
-- `404 NOT_FOUND` — division not found.
+- Returns HTTP 404 with message "Division not found".
 
 ---
 
@@ -131,8 +133,8 @@ On error:
 ```
 
 **Errors:**
-- `409 NAME_CONFLICT` — a division with this name already exists.
-- `404 NOT_FOUND` — division not found.
+- Returns HTTP 409 with message "A record with that name already exists".
+- Returns HTTP 404 with message "Division not found".
 
 ---
 
@@ -174,7 +176,7 @@ On error:
 ```
 
 **Errors:**
-- `409 NAME_CONFLICT` — a branch with this name already exists in this division.
+- Returns HTTP 409 with message "A record with that name already exists".
 
 ---
 
@@ -211,7 +213,7 @@ On error:
 
 **Notes:** Empty state: `objects.data` is `[]`, `objects.meta.total` is `0`.
 **Errors:**
-- `404 NOT_FOUND` — branch not found.
+- Returns HTTP 404 with message "Branch not found".
 
 ---
 
@@ -236,8 +238,8 @@ On error:
 ```
 
 **Errors:**
-- `409 NAME_CONFLICT` — a branch with this name already exists in this division.
-- `404 NOT_FOUND` — branch not found.
+- Returns HTTP 409 with message "A record with that name already exists".
+- Returns HTTP 404 with message "Branch not found".
 
 ---
 
@@ -474,7 +476,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** Delete a system context. Blocked if there are active assignments referencing this context.
 **Errors:**
-- `409 CONTEXT_IN_USE` — cannot delete: N objects have active assignments using this context.
+- Returns HTTP 409 with message "Cannot delete: N object(s) use this context".
 
 ---
 
@@ -508,7 +510,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** Delete a repair type. Blocked if any `object_repairs` row references it with `count > 0` in any period (past or active). Rows with `count = 0` do not block deletion.
 **Errors:**
-- `409 REPAIR_TYPE_IN_USE` — cannot delete: repair type has recorded usage.
+- Returns HTTP 409 with message "Repair type {id} has recorded usage with count > 0".
 
 ---
 
@@ -565,7 +567,7 @@ On error:
 **Phase:** PoC (any authenticated user) / MVP (admin only)
 **Description:** Deactivate an engineer. Blocked if the engineer has active assignments.
 **Errors:**
-- `409 ENGINEER_HAS_ACTIVE_ASSIGNMENTS` — deactivation blocked; remove assignments first.
+- Returns HTTP 409 with message "Engineer has active assignments: {id}".
 
 ---
 
@@ -700,8 +702,8 @@ On error:
 **Description:** Delete a division. Blocked with 409 if branches exist.
 **Response:** HTTP 204 on success.
 **Errors:**
-- `409 DIVISION_HAS_BRANCHES` — cannot delete: division has N branches.
-- `404 NOT_FOUND` — division not found.
+- Returns HTTP 409 with message "Cannot delete: division has N branches".
+- Returns HTTP 404 with message "Division not found".
 
 ---
 
@@ -711,8 +713,8 @@ On error:
 **Description:** Delete a branch. Blocked with 409 if objects exist.
 **Response:** HTTP 204 on success.
 **Errors:**
-- `409 BRANCH_HAS_OBJECTS` — cannot delete: branch has N objects.
-- `404 NOT_FOUND` — branch not found.
+- Returns HTTP 409 with message "Cannot delete: branch has N objects".
+- Returns HTTP 404 with message "Branch not found".
 
 ---
 
@@ -727,8 +729,8 @@ On error:
 **Response:** HTTP 200 with `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and `Content-Disposition: attachment; filename="object_{id}_export.xlsx"`.
 **File contents:** One sheet per data group — physical devices (device type, physical quantity), system assignments (device type, system type, maintained quantity), records task quantities, repair counts by type, and travel data (transport type, distance km, one-way minutes, round-trip minutes). All values match the corresponding `GET` API responses for the same object at the time of export.
 **Errors:**
-- `404 OBJECT_NOT_FOUND` — object does not exist.
-- `403 FORBIDDEN` — caller role is not permitted.
+- Returns HTTP 404 with message "Object not found".
+- Returns HTTP 403 with message "You don't have permission to access this resource".
 
 ---
 
@@ -788,17 +790,16 @@ On error:
 
 ```json
 {
-  "status": 422,
-  "code": "CONFIG_CONSTRAINT_VIOLATED",
-  "violations": [
-    {
-      "key": "REPAIR_TRAVEL_CAP",
-      "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
-      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
-    }
-  ]
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 422,
+    "message": "Configuration constraint violated: REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
+  }
 }
 ```
+
+Each violated constraint is reported in `error.message`; multiple violations are joined with `; `.
 
 See §6.11.1 for complete per-key and cross-key constraint definitions.
 
@@ -888,7 +889,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 **Description:** Create a non-engineer user. Admin only.
 **Request body:** `{ name, email, role, divisionId? }` where `role` is `admin`, `editor`, or `viewer`. To create an `engineer`, use `POST /engineers`.
 **Errors:**
-- `422 INVALID_ROLE_FOR_ENDPOINT` — attempted to create role `engineer` via this endpoint.
+- Returns HTTP 422 with message "Engineer accounts cannot be created through this endpoint".
 
 #### `GET /admin/users/:id`
 
@@ -912,8 +913,8 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 **Phase:** MVP only (M-02)
 **Description:** Deactivate a user — sets `is_active = FALSE`. Admin only. Blocked if the user is an engineer with active object assignments.
 **Errors:**
-- `404 USER_NOT_FOUND` — user does not exist.
-- `409 ENGINEER_HAS_ACTIVE_ASSIGNMENTS` — deactivation blocked; remove assignments first.
+- Returns HTTP 404 with message "User not found".
+- Returns HTTP 409 with message "Engineer has active assignments: {id}".
 
 ---
 
@@ -926,30 +927,50 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 ---
 
-## Error Code Reference
+## Error Reference
 
-All error code strings referenced across §10:
+`error.code` carries the numeric HTTP status; the condition is conveyed by `error.message`. The table below lists every error condition referenced across §10 with its status and canonical message. Rows marked **(MVP)** describe endpoints not yet implemented in PoC — their messages are the intended wording.
 
-| Code | HTTP | Description |
+| HTTP | Condition | Canonical message |
 |---|---|---|
-| `NAME_CONFLICT` | 409 | A resource with this name already exists (divisions, branches) |
-| `DIVISION_HAS_BRANCHES` | 409 | Cannot delete division: it has branches |
-| `BRANCH_HAS_OBJECTS` | 409 | Cannot delete branch: it has objects |
-| `NOT_FOUND` | 404 | Division / branch not found (generic for `/:id` routes) |
-| `OBJECT_NOT_FOUND` | 404 | Object does not exist |
-| `FORBIDDEN` | 403 | Caller role is not permitted |
-| `REPAIR_TYPE_IN_USE` | 409 | Cannot delete repair type: has recorded usage (count > 0) |
-| `CONTEXT_IN_USE` | 409 | Cannot delete device context: active assignments reference it |
-| `CONFIG_CONSTRAINT_VIOLATED` | 422 | One or more config key constraints violated (batch) |
-| `CONFIG_REPAIR_THRESHOLDS_INVERTED` | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD >= REPAIR_TRAVEL_CAP` |
-| `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE` | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD < 0` |
-| `CONFIG_REPAIR_TRAVEL_CAP_ZERO` | 422 | `REPAIR_TRAVEL_CAP < 1` |
-| `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO` | 422 | `REPAIR_PRODUCTIVE_MONTHS < 1` |
-| `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | 422 | `REPAIR_PRODUCTIVE_MONTHS > PLANNING_PERIOD_MONTHS` |
-| `USER_NOT_FOUND` | 404 | User does not exist |
-| `ENGINEER_HAS_ACTIVE_ASSIGNMENTS` | 409 | Engineer deactivation blocked; active assignments exist |
-| `INVALID_ROLE_FOR_ENDPOINT` | 422 | Attempted to create role `engineer` via `POST /admin/users` |
-| `NO_CONTEXT_FOR_SYSTEM` | 422 | Device has no context for the requested system type; assignment rejected |
+| 400 | Malformed JSON request body | `Malformed request body` |
+| 400 | Required query parameter absent | `Missing required parameter: {name}` |
+| 400 | Path or query parameter fails type conversion | `Invalid value for parameter '{name}'` |
+| 401 | Wrong email or password at login | `Invalid email or password` |
+| 401 | JWT missing, malformed, or expired on a protected endpoint | `Invalid or expired authentication token` |
+| 403 | Caller role is not permitted | `You don't have permission to access this resource` |
+| 404 | Unknown route | `Resource not found` |
+| 404 | Division not found | `Division not found` |
+| 404 | Branch not found | `Branch not found` |
+| 404 | Object does not exist | `Object not found` |
+| 404 | Device type / context / repair type / engineer / assignment not found | `{Entity} not found` |
+| 404 | User does not exist **(MVP)** | `User not found` |
+| 405 | HTTP method not supported by the route | `Method not allowed` |
+| 409 | A resource with this name already exists (divisions, branches) | `A record with that name already exists` |
+| 409 | Cannot delete device context: active assignments reference it | `Cannot delete: {n} object(s) use this context` |
+| 409 | Cannot delete repair type: has recorded usage (count > 0) | `Repair type {id} has recorded usage with count > 0` |
+| 409 | Cannot delete device type: in use by object inventory | `Device type {id} is in use by object inventory` |
+| 409 | Engineer deactivation blocked; active assignments exist | `Engineer has active assignments: {id}` |
+| 409 | Engineer already assigned to the object | `This engineer is already assigned to the object` |
+| 409 | Any other database constraint violation | `A database constraint was violated` |
+| 409 | Cannot delete division: it has branches **(MVP)** | `Cannot delete: division has {n} branches` |
+| 409 | Cannot delete branch: it has objects **(MVP)** | `Cannot delete: branch has {n} objects` |
+| 415 | Request `Content-Type` not supported | `Unsupported media type` |
+| 422 | Bean Validation failure on the request body | `{field}: {constraint message}` (joined with `; `) |
+| 422 | Device has no context for the requested system type | `No norms configured for this system type` |
+| 422 | Device not in the object's inventory; assignment rejected | `Device not found in inventory for this object` |
+| 422 | Attempt to set `round_trip_min` directly | `Round trip time is auto-calculated and cannot be edited directly` |
+| 422 | Engineer is inactive | `Engineer is inactive: {id}` |
+| 422 | Target user is not an engineer | `User is not an engineer: {id}, role={role}` |
+| 422 | Attempted to create role `engineer` via `POST /admin/users` **(MVP)** | `Engineer accounts cannot be created through this endpoint` |
+| 422 | One or more config key constraints violated (batch) **(MVP)** | `Configuration constraint violated: {detail}` |
+| 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD >= REPAIR_TRAVEL_CAP` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must be less than REPAIR_TRAVEL_CAP` |
+| 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD < 0` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must not be negative` |
+| 422 | `REPAIR_TRAVEL_CAP < 1` **(MVP)** | `REPAIR_TRAVEL_CAP must be at least 1` |
+| 422 | `REPAIR_PRODUCTIVE_MONTHS < 1` **(MVP)** | `REPAIR_PRODUCTIVE_MONTHS must be at least 1` |
+| 422 | `REPAIR_PRODUCTIVE_MONTHS > PLANNING_PERIOD_MONTHS` **(MVP)** | `REPAIR_PRODUCTIVE_MONTHS must not exceed PLANNING_PERIOD_MONTHS` |
+| 429 | Rate limit exceeded | `Too many requests. Please wait before retrying.` |
+| 500 | Unexpected server error | `An unexpected error occurred. Please try again later.` |
 
 ---
 
