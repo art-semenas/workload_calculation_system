@@ -61,6 +61,33 @@ describe('notificationStore', () => {
 
     expect(useNotificationStore.getState().notifications).toHaveLength(2)
   })
+
+  // Deduping must not eat a genuine second event: the repeat has to restart the
+  // dismiss countdown, or the user sees the toast vanish right after acting.
+  it('gives a duplicate a fresh id so its dismiss timer restarts', () => {
+    useNotificationStore.getState().show('Saved successfully.', 'success')
+    const firstId = useNotificationStore.getState().notifications[0].id
+
+    useNotificationStore.getState().show('Saved successfully.', 'success')
+    const { notifications } = useNotificationStore.getState()
+
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].id).not.toBe(firstId)
+  })
+
+  it('works when crypto.randomUUID is unavailable (non-secure context)', () => {
+    const original = crypto.randomUUID
+    // @ts-expect-error — simulating a browser on a plain-http origin
+    crypto.randomUUID = undefined
+    try {
+      expect(() => useNotificationStore.getState().show('No uuid here', 'error')).not.toThrow()
+      const { notifications } = useNotificationStore.getState()
+      expect(notifications).toHaveLength(1)
+      expect(notifications[0].id).toBeTruthy()
+    } finally {
+      crypto.randomUUID = original
+    }
+  })
 })
 
 describe('Toast', () => {

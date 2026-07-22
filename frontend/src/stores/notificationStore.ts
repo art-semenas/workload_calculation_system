@@ -14,15 +14,30 @@ interface NotificationState {
   dismiss: (id: string) => void
 }
 
+let fallbackIdCounter = 0
+
+// crypto.randomUUID is undefined outside a secure context (plain http on a
+// hostname or IP). This runs inside the Axios rejection handler, where throwing
+// would replace the original error and hide the server's message.
+function nextId(): string {
+  return crypto.randomUUID?.() ?? `n-${Date.now()}-${fallbackIdCounter++}`
+}
+
 export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [],
   show: (message, severity) =>
     set((state) => {
       // Query retries and parallel page queries report the same failure repeatedly.
-      if (state.notifications.some((n) => n.message === message)) return state
-      return {
-        notifications: [...state.notifications, { id: crypto.randomUUID(), message, severity }],
+      // A repeat replaces the existing entry rather than stacking, which also gives
+      // it a fresh id so the auto-dismiss countdown starts over.
+      const existing = state.notifications.find((n) => n.message === message)
+      const entry = { id: nextId(), message, severity }
+      if (existing) {
+        return {
+          notifications: state.notifications.map((n) => (n === existing ? entry : n)),
+        }
       }
+      return { notifications: [...state.notifications, entry] }
     }),
   dismiss: (id) =>
     set((state) => ({
