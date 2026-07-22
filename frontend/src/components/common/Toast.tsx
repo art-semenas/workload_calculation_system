@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Alert, Stack } from '@mui/material'
+import { Alert, Portal, Stack } from '@mui/material'
 import { useNotificationStore, type Notification } from '../../stores/notificationStore'
 
 const AUTO_DISMISS_MS = 5000
@@ -10,21 +10,25 @@ export function Toast() {
 
   if (notifications.length === 0) return null
 
+  // Portalled to document.body: MUI's modal manager marks every other body child
+  // aria-hidden while a dialog is open, which would hide toasts from screen readers.
   return (
-    <Stack
-      spacing={1}
-      sx={{
-        position: 'fixed',
-        bottom: 24,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: (theme) => theme.zIndex.snackbar,
-      }}
-    >
-      {notifications.map((notification) => (
-        <ToastItem key={notification.id} notification={notification} onDismiss={dismiss} />
-      ))}
-    </Stack>
+    <Portal>
+      <Stack
+        spacing={1}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: (theme) => theme.zIndex.snackbar + 1,
+        }}
+      >
+        {notifications.map((notification) => (
+          <ToastItem key={notification.id} notification={notification} onDismiss={dismiss} />
+        ))}
+      </Stack>
+    </Portal>
   )
 }
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Dialog } from '@mui/material'
 import { Toast } from '../components/common/Toast'
 import { showNotification, useNotificationStore } from '../stores/notificationStore'
 
@@ -91,6 +92,23 @@ describe('Toast', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveClass('MuiAlert-standardError')
+  })
+
+  // MUI marks every body child except the modal portal aria-hidden, which would
+  // silence the 409-while-dialog-open case in AC-FE-01.
+  it('stays in the accessibility tree while a dialog is open', async () => {
+    useNotificationStore.getState().show('Already exists', 'warning')
+    render(
+      <>
+        <Dialog open>
+          <div>dialog body</div>
+        </Dialog>
+        <Toast />
+      </>
+    )
+
+    const alert = await screen.findByText('Already exists')
+    expect(alert.closest('[aria-hidden="true"]')).toBeNull()
   })
 
   it('stacks multiple notifications', async () => {

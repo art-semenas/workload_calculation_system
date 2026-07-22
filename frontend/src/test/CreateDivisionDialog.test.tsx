@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CreateDivisionDialog } from '../components/dialogs/CreateDivisionDialog'
+import { Toast } from '../components/common/Toast'
 import { useNotificationStore } from '../stores/notificationStore'
 
 const mockCreateDivision = vi.fn()
@@ -20,6 +21,7 @@ function renderDialog(onClose = vi.fn()) {
   return render(
     <QueryClientProvider client={qc}>
       <CreateDivisionDialog open onClose={onClose} />
+      <Toast />
     </QueryClientProvider>
   )
 }
@@ -56,12 +58,13 @@ describe('CreateDivisionDialog error handling', () => {
     await user.type(screen.getByLabelText('Division name'), 'Brest')
     await user.click(screen.getByRole('button', { name: /create division/i }))
 
-    await waitFor(() => {
-      const { notifications } = useNotificationStore.getState()
-      expect(notifications).toHaveLength(1)
-      expect(notifications[0].message).toBe('Division name already exists')
-      expect(notifications[0].severity).toBe('warning')
-    })
+    // Asserted through the DOM so this fails if <Toast /> is not mounted or is
+    // hidden from the accessibility tree by the open dialog.
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Division name already exists')
+    expect(alert).toHaveClass('MuiAlert-standardWarning')
+    expect(alert.closest('[aria-hidden="true"]')).toBeNull()
+
     // Dialog stays open so the user can correct the name
     expect(onClose).not.toHaveBeenCalled()
   })
