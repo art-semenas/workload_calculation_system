@@ -10,6 +10,8 @@ interface ApiRequestConfig {
 const api = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
+  // AC-FE-05: without this a hung backend never rejects and the UI spins forever.
+  timeout: 30_000,
 })
 
 function isResponseStatus(error: unknown, status: number): boolean {

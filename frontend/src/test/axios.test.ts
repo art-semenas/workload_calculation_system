@@ -1,10 +1,27 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { notifyResponseError } from '../api/axios'
+import api, { notifyResponseError } from '../api/axios'
 import { useNotificationStore } from '../stores/notificationStore'
+
+describe('api instance', () => {
+  // AC-FE-05: a hung backend must fail within 30s, not wait forever.
+  it('times out requests after 30 seconds', () => {
+    expect(api.defaults.timeout).toBe(30_000)
+  })
+})
 
 describe('notifyResponseError', () => {
   beforeEach(() => {
     useNotificationStore.setState({ notifications: [] })
+  })
+
+  it('shows a network error toast for a timed-out request', () => {
+    notifyResponseError({ isAxiosError: true, code: 'ECONNABORTED', config: {}, request: {} })
+
+    const { notifications } = useNotificationStore.getState()
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].message).toBe(
+      'Network error. Please check your connection and try again.'
+    )
   })
 
   it('shows a network error toast when there is no response', () => {

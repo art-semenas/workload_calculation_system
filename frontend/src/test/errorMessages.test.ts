@@ -100,8 +100,32 @@ describe('handleFormError', () => {
   it('stays silent for 5xx and network errors already toasted by the interceptor', () => {
     handleFormError(apiError(500, 'Database unavailable'))
     handleFormError({ isAxiosError: true, request: {} })
+    // A 5xx whose body is not the envelope (proxy-generated) is also the interceptor's.
+    handleFormError({ isAxiosError: true, response: { status: 503, data: '<html>oops</html>' } })
 
     expect(toasts()).toHaveLength(0)
+  })
+
+  // A proxy or ingress can return 4xx with a non-envelope body; nobody else reports those.
+  it('reports a 4xx whose body is not the standard envelope', () => {
+    handleFormError({ isAxiosError: true, response: { status: 413, data: '<html>too big</html>' } })
+
+    expect(toasts()).toEqual([
+      expect.objectContaining({
+        message: 'Something went wrong. Please try again.',
+        severity: 'error',
+      }),
+    ])
+  })
+
+  it('shows an envelope-less 4xx inline when the caller has a slot', () => {
+    const setInlineError = vi.fn()
+    handleFormError(
+      { isAxiosError: true, response: { status: 400, data: 'Bad Request' } },
+      setInlineError
+    )
+
+    expect(setInlineError).toHaveBeenCalledWith('Something went wrong. Please try again.')
   })
 
   it('reports non-Axios errors instead of swallowing them', () => {
