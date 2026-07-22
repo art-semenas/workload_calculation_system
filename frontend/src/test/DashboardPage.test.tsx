@@ -146,6 +146,31 @@ describe('DashboardPage', () => {
     })
   })
 
+  // A failed query must never read as "zero gaps" — that is a false all-clear on a
+  // staffing-risk metric.
+  it('does not claim zero coverage gaps when the gaps query fails', async () => {
+    mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
+      typeof useDivisionsAggregation
+    >)
+    mockSvod.mockReturnValue({
+      data: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 },
+      isLoading: false,
+    } as ReturnType<typeof useSvod>)
+    mockGaps.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    } as ReturnType<typeof useCoverageGaps>)
+
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: /Details/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/couldn't be loaded/i)).toBeInTheDocument()
+    })
+    expect(screen.queryByText('No uncovered objects')).not.toBeInTheDocument()
+  })
+
   it('shows "No uncovered objects" in drawer when no coverage gaps', async () => {
     mockDivisions.mockReturnValue({ data: [], isLoading: false } as ReturnType<
       typeof useDivisionsAggregation

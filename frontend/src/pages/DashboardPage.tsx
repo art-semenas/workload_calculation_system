@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -54,7 +55,7 @@ export default function DashboardPage() {
     refetch: refetchDivisions,
   } = useDivisionsAggregation()
   const { data: svodPage, isLoading: svodLoading } = useSvod(0, 10)
-  const { data: gaps, isLoading: gapsLoading } = useCoverageGaps()
+  const { data: gaps, isLoading: gapsLoading, isError: gapsIsError } = useCoverageGaps()
 
   const topObjects = svodPage?.content ?? []
   const divsList = divisions ?? []
@@ -238,6 +239,11 @@ export default function DashboardPage() {
         <DrawerSection label="Uncovered objects">
           {gapsLoading ? (
             <CircularProgress size={20} />
+          ) : gapsIsError ? (
+            // Never render a failed query as "none" — that reads as an all-clear.
+            <Alert severity="warning" sx={{ fontSize: 13 }}>
+              Coverage gaps couldn&apos;t be loaded. The count above may be incomplete.
+            </Alert>
           ) : (gaps ?? []).length === 0 ? (
             <Typography sx={{ fontSize: 13, color: tokens.ink3 }}>No uncovered objects</Typography>
           ) : (
