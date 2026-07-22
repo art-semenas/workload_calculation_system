@@ -1301,19 +1301,16 @@ On application startup, `AppConfigValidator` must:
 
 ```json
 {
-  "status": 422,
-  "code": "CONFIG_CONSTRAINT_VIOLATED",
-  "violations": [
-    {
-      "key": "REPAIR_TRAVEL_CAP",
-      "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
-      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
-    }
-  ]
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 422,
+    "message": "Configuration constraint violated: REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
+  }
 }
 ```
 
-All violations in a single save are reported together (not fail-fast per key).
+All violations in a single save are reported together (not fail-fast per key) — they are joined into `error.message` with `; `.
 
 ### 6.12 Engineer Workload Calculation
 
@@ -1988,7 +1985,7 @@ DELETE /branches/:id                  Delete branch — admin only (MVP); blocke
 }
 ```
 
-HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
+HTTP 409 on duplicate name within division: `{ "data": null, "meta": null, "error": { "code": 409, "message": "A branch with this name already exists in this division" } }`
 
 **`GET /branches/:id`** — HTTP 200 (pagination: `?page=1&size=50`; defaults: page 1, size 50)
 
@@ -2033,7 +2030,7 @@ Empty state: `objects.data` is `[]`, `objects.meta.total` is `0`.
 }
 ```
 
-HTTP 409 on duplicate name within division: `{ "data": null, "error": { "code": "NAME_CONFLICT", "message": "A branch with this name already exists in this division" } }`
+HTTP 409 on duplicate name within division: `{ "data": null, "meta": null, "error": { "code": 409, "message": "A branch with this name already exists in this division" } }`
 
 **`DELETE /branches/:id`** — HTTP 204 on success. HTTP 409 when blocked:
 
@@ -2202,15 +2199,12 @@ All violations in a single save are reported together (not fail-fast per key). S
 
 ```json
 {
-  "status": 422,
-  "code": "CONFIG_CONSTRAINT_VIOLATED",
-  "violations": [
-    {
-      "key": "REPAIR_TRAVEL_CAP",
-      "rule": "CONFIG_REPAIR_THRESHOLDS_INVERTED",
-      "detail": "REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
-    }
-  ]
+  "data": null,
+  "meta": null,
+  "error": {
+    "code": 422,
+    "message": "Configuration constraint violated: REPAIR_TRAVEL_ZERO_THRESHOLD (8) must be less than REPAIR_TRAVEL_CAP (5)"
+  }
 }
 ```
 
@@ -3512,10 +3506,11 @@ When a conflict is detected (0 rows updated), the API returns:
 ```json
 HTTP 409 Conflict
 {
+  "data": null,
+  "meta": null,
   "error": {
-    "code": "EDIT_CONFLICT",
-    "message": "Данные изменены другим пользователем. Перезагрузите страницу.",
-    "current_updated_at": "2025-06-15T14:23:11Z"
+    "code": 409,
+    "message": "Данные изменены другим пользователем. Перезагрузите страницу."
   }
 }
 ```
