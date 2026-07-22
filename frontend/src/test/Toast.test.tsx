@@ -33,6 +33,33 @@ describe('notificationStore', () => {
     expect(notifications).toHaveLength(1)
     expect(notifications[0].severity).toBe('warning')
   })
+
+  // Query retries and parallel page queries produce the same failure repeatedly —
+  // without dedup a single outage stacks a dozen identical toasts.
+  it('does not stack a message that is already displayed', () => {
+    useNotificationStore.getState().show('Server error', 'error')
+    useNotificationStore.getState().show('Server error', 'error')
+    useNotificationStore.getState().show('Server error', 'error')
+
+    expect(useNotificationStore.getState().notifications).toHaveLength(1)
+  })
+
+  it('shows the message again once the earlier one is dismissed', () => {
+    useNotificationStore.getState().show('Server error', 'error')
+    const [first] = useNotificationStore.getState().notifications
+    useNotificationStore.getState().dismiss(first.id)
+
+    useNotificationStore.getState().show('Server error', 'error')
+
+    expect(useNotificationStore.getState().notifications).toHaveLength(1)
+  })
+
+  it('keeps distinct messages', () => {
+    useNotificationStore.getState().show('First error', 'error')
+    useNotificationStore.getState().show('Second error', 'error')
+
+    expect(useNotificationStore.getState().notifications).toHaveLength(2)
+  })
 })
 
 describe('Toast', () => {
