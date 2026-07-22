@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from 'vitest'
 import { z } from 'zod'
 import { shouldRedirectToLogin } from '../api/axios'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore } from '../stores/authStore'
 import { ApiResponseSchema } from '../types/api'
 
 describe('ApiResponseSchema', () => {

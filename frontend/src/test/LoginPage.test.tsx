@@ -18,7 +18,7 @@ vi.mock('../hooks/useAuth', () => ({
 }))
 
 // Also mock the auth store so login doesn't throw
-vi.mock('../store/authStore', () => ({
+vi.mock('../stores/authStore', () => ({
   useAuthStore: (
     selector: (s: { login: () => void; logout: () => void; token: null }) => unknown
   ) => selector({ login: vi.fn(), logout: vi.fn(), token: null }),

@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore } from '../stores/authStore'
 import { showNotification } from '../stores/notificationStore'
 
 interface ApiRequestConfig {
