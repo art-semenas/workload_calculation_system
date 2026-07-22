@@ -48,12 +48,11 @@ export function handleFormError(err: unknown, setInlineError?: (message: string)
   const info = extractApiError(err)
 
   if (!info) {
-    // The interceptor already surfaced network errors and 5xx. Everything else —
-    // a client-side bug, or a 4xx from a proxy that never produced our envelope —
-    // reaches no other handler, so report it rather than freeze the form silently.
-    // No response at all is a network error or timeout; the interceptor toasts those too.
-    const handledByInterceptor =
-      isAxiosError(err) && (!err.response || err.response.status >= 500)
+    // The interceptor already surfaced 5xx and, when there is no response at all,
+    // network errors and timeouts. Everything else — a client-side bug, or a 4xx
+    // from a proxy that never produced our envelope — reaches no other handler,
+    // so report it rather than freeze the form silently.
+    const handledByInterceptor = isAxiosError(err) && (!err.response || err.response.status >= 500)
     if (!handledByInterceptor) report(GENERIC_ERROR, setInlineError)
     return
   }

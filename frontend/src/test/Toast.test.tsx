@@ -109,16 +109,16 @@ describe('notificationStore', () => {
   })
 
   it('works when crypto.randomUUID is unavailable (non-secure context)', () => {
-    const original = crypto.randomUUID
-    // @ts-expect-error — simulating a browser on a plain-http origin
-    crypto.randomUUID = undefined
+    const descriptor = Object.getOwnPropertyDescriptor(crypto, 'randomUUID')
+    // Simulate a browser on a plain-http origin, where randomUUID is undefined.
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true })
     try {
       expect(() => useNotificationStore.getState().show('No uuid here', 'error')).not.toThrow()
       const { notifications } = useNotificationStore.getState()
       expect(notifications).toHaveLength(1)
       expect(notifications[0].id).toBeTruthy()
     } finally {
-      crypto.randomUUID = original
+      if (descriptor) Object.defineProperty(crypto, 'randomUUID', descriptor)
     }
   })
 })
