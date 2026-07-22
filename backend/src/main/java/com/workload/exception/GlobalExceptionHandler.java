@@ -149,10 +149,10 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(
       InvalidCredentialsException ex) {
+    // Login failure, not token failure — the token message belongs to the SecurityConfig
+    // authentication entry point (missing/expired JWT on a protected endpoint).
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-        .body(
-            ApiResponse.error(
-                ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token")));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid email or password")));
   }
 
   @ExceptionHandler(DeviceTypeInUseException.class)
@@ -182,9 +182,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(BadCredentialsException.class)
   public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-        .body(
-            ApiResponse.error(
-                ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token")));
+        .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid email or password")));
   }
 
   @ExceptionHandler(AccessDeniedException.class)

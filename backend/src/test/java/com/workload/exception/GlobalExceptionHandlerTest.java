@@ -165,6 +165,7 @@ class GlobalExceptionHandlerTest {
         handler.handleInvalidCredentials(new InvalidCredentialsException());
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody().error().code()).isEqualTo(401);
+    assertThat(response.getBody().error().message()).isEqualTo("Invalid email or password");
   }
 
   @Test
@@ -173,6 +174,7 @@ class GlobalExceptionHandlerTest {
         handler.handleBadCredentials(new BadCredentialsException("bad"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody().error().code()).isEqualTo(401);
+    assertThat(response.getBody().error().message()).isEqualTo("Invalid email or password");
   }
 
   @Test
