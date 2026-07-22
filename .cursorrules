@@ -144,10 +144,10 @@ The following tests must exist and pass before the calculation epic is complete:
 
 All API errors use the standard envelope (TOR §10):
 ```json
-{ "data": null, "meta": null, "error": { "code": "DEVICE_NOT_IN_INVENTORY", "message": "..." } }
+{ "data": null, "meta": null, "error": { "code": 422, "message": "Device not found in inventory for this object" } }
 ```
 
-Use `GlobalExceptionHandler` to map exceptions to codes. Error codes are defined in the TOR — use them exactly, do not invent new ones.
+Use `GlobalExceptionHandler` to map exceptions to codes. `error.code` is always the numeric HTTP status mirroring the response status line (see `docs/impl/epics/unified-error-handling.md`) — never a semantic string; messages are user-facing, no stack traces or internals.
 
 ### Logging
 

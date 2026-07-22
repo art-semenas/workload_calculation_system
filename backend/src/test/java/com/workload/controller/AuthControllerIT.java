@@ -1,6 +1,7 @@
 package com.workload.controller;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -44,7 +45,8 @@ class AuthControllerIT extends IntegrationTestBase {
         .when()
         .post("/auth/login")
         .then()
-        .statusCode(401);
+        .statusCode(401)
+        .body("error.message", equalTo("Invalid email or password"));
   }
 
   @Test
@@ -61,12 +63,19 @@ class AuthControllerIT extends IntegrationTestBase {
         .when()
         .post("/auth/login")
         .then()
-        .statusCode(401);
+        .statusCode(401)
+        .body("error.message", equalTo("Invalid email or password"));
   }
 
+  /** The token message belongs to the SecurityConfig entry point only, never to a login failure. */
   @Test
   void getMeWithoutTokenReturns401() {
-    given().when().get("/auth/me").then().statusCode(401);
+    given()
+        .when()
+        .get("/auth/me")
+        .then()
+        .statusCode(401)
+        .body("error.message", equalTo("Invalid or expired authentication token"));
   }
 
   @Test

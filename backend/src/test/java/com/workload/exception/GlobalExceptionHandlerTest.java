@@ -6,17 +6,25 @@ import static org.mockito.Mockito.when;
 
 import com.workload.dto.ApiResponse;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 class GlobalExceptionHandlerTest {
 
@@ -157,6 +165,7 @@ class GlobalExceptionHandlerTest {
         handler.handleInvalidCredentials(new InvalidCredentialsException());
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody().error().code()).isEqualTo(401);
+    assertThat(response.getBody().error().message()).isEqualTo("Invalid email or password");
   }
 
   @Test
@@ -165,6 +174,7 @@ class GlobalExceptionHandlerTest {
         handler.handleBadCredentials(new BadCredentialsException("bad"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(response.getBody().error().code()).isEqualTo(401);
+    assertThat(response.getBody().error().message()).isEqualTo("Invalid email or password");
   }
 
   @Test
@@ -173,6 +183,58 @@ class GlobalExceptionHandlerTest {
         handler.handleAccessDenied(new AccessDeniedException("denied"));
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     assertThat(response.getBody().error().code()).isEqualTo(403);
+  }
+
+  @Test
+  void noResourceFoundMapsTo404() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleNoResourceFound(
+            new NoResourceFoundException(HttpMethod.GET, "/api/v1/nonexistent-path"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(response.getBody().error().code()).isEqualTo(404);
+    assertThat(response.getBody().error().message()).isEqualTo("Resource not found");
+  }
+
+  @Test
+  void methodNotSupportedMapsTo405() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMethodNotSupported(new HttpRequestMethodNotSupportedException("DELETE"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    assertThat(response.getBody().error().code()).isEqualTo(405);
+    assertThat(response.getBody().error().message()).isEqualTo("Method not allowed");
+  }
+
+  @Test
+  void missingRequestParameterMapsTo400WithParameterName() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMissingRequestParameter(
+            new MissingServletRequestParameterException("branchId", "UUID"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getBody().error().code()).isEqualTo(400);
+    assertThat(response.getBody().error().message())
+        .isEqualTo("Missing required parameter: branchId");
+  }
+
+  @Test
+  void argumentTypeMismatchMapsTo400WithParameterName() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleArgumentTypeMismatch(
+            new MethodArgumentTypeMismatchException(
+                "not-a-uuid", UUID.class, "id", null, new IllegalArgumentException("bad uuid")));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getBody().error().code()).isEqualTo(400);
+    assertThat(response.getBody().error().message()).isEqualTo("Invalid value for parameter 'id'");
+  }
+
+  @Test
+  void unsupportedMediaTypeMapsTo415() {
+    ResponseEntity<ApiResponse<Void>> response =
+        handler.handleMediaTypeNotSupported(
+            new HttpMediaTypeNotSupportedException(
+                MediaType.TEXT_PLAIN, List.of(MediaType.APPLICATION_JSON)));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    assertThat(response.getBody().error().code()).isEqualTo(415);
+    assertThat(response.getBody().error().message()).isEqualTo("Unsupported media type");
   }
 
   @Test
