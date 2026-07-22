@@ -212,13 +212,13 @@ All responses follow the standard envelope:
   "data": null,
   "meta": null,
   "error": {
-    "code": "404", // error code is in numeric format (404, 422, 500), no custom string codes
+    "code": 404, // numeric HTTP status (404, 422, 500), no custom string codes
     "message": "Human-readable message"
   }
 }
 ```
 
-Error codes are defined in the TOR — use them exactly, do not invent new ones.
+`error.code` is always the numeric HTTP status mirroring the response status line (see `docs/impl/epics/unified-error-handling.md`) — never a semantic string; messages are user-facing, no stack traces or internals.
 
 ---
 
