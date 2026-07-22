@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -20,7 +19,8 @@ import { useRepairs, useUpdateRepair } from '../../hooks/useRepairs'
 import { RepairUpdateSchema, type RepairUpdate } from '../../types/repairs'
 import type { RepairType } from '../../types/catalog'
 import type { ObjectRepair } from '../../types/repairs'
-import { extractErrorCode, mapSaveErrorCode } from '../../utils/errorMessages'
+import { handleFormError } from '../../utils/errorMessages'
+import { showNotification } from '../../stores/notificationStore'
 import { useState } from 'react'
 
 function getCount(repairs: ObjectRepair[], repairTypeId: string): number {
@@ -38,7 +38,7 @@ function RepairRow({
   initialCount: number
   objectId: string
   onSaveSuccess: () => void
-  onSaveError: (message: string) => void
+  onSaveError: (err: unknown) => void
 }) {
   const updateMutation = useUpdateRepair(objectId)
 
@@ -61,7 +61,7 @@ function RepairRow({
       await updateMutation.mutateAsync({ repairTypeId: repairType.id, data: { count: data.count } })
       onSaveSuccess()
     } catch (err) {
-      onSaveError(mapSaveErrorCode(extractErrorCode(err)))
+      onSaveError(err)
     }
   })
 
@@ -99,9 +99,7 @@ function RepairRow({
 export function RepairsTab({ objectId }: { objectId: string }) {
   const { data: catalogRepairs, isLoading: catalogLoading } = useCatalogRepairs()
   const { data: repairs, isLoading: repairsLoading } = useRepairs(objectId)
-  const [successOpen, setSuccessOpen] = useState(false)
-  const [errorOpen, setErrorOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('Failed to save repairs.')
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   if (catalogLoading || repairsLoading) {
     return (
@@ -118,6 +116,11 @@ export function RepairsTab({ objectId }: { objectId: string }) {
       <Typography variant="h6" gutterBottom>
         Repairs
       </Typography>
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSubmitError(null)}>
+          {submitError}
+        </Alert>
+      )}
       <Table>
         <TableHead>
           <TableRow>
@@ -134,25 +137,15 @@ export function RepairsTab({ objectId }: { objectId: string }) {
               repairType={repairType}
               initialCount={getCount(repairList, repairType.id)}
               objectId={objectId}
-              onSaveSuccess={() => setSuccessOpen(true)}
-              onSaveError={(msg) => {
-                setErrorMessage(msg)
-                setErrorOpen(true)
+              onSaveSuccess={() => {
+                setSubmitError(null)
+                showNotification('Repairs saved successfully.', 'success')
               }}
+              onSaveError={(err) => handleFormError(err, setSubmitError)}
             />
           ))}
         </TableBody>
       </Table>
-      <Snackbar open={successOpen} autoHideDuration={3000} onClose={() => setSuccessOpen(false)}>
-        <Alert severity="success" onClose={() => setSuccessOpen(false)}>
-          Repairs saved successfully.
-        </Alert>
-      </Snackbar>
-      <Snackbar open={errorOpen} autoHideDuration={3000} onClose={() => setErrorOpen(false)}>
-        <Alert severity="error" onClose={() => setErrorOpen(false)}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   )
 }

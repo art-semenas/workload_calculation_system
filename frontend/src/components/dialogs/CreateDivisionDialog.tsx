@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -15,6 +16,7 @@ import { QuietDialog } from './QuietDialog'
 import { FormTextField } from '../common/FormTextField'
 import { useCreateDivision } from '../../hooks/useDivisions'
 import { DivisionCreateSchema, type DivisionCreate } from '../../types/division'
+import { handleFormError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 interface CreateDivisionDialogProps {
@@ -24,6 +26,7 @@ interface CreateDivisionDialogProps {
 
 export function CreateDivisionDialog({ open, onClose }: CreateDivisionDialogProps) {
   const createDivision = useCreateDivision()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { control, handleSubmit, reset } = useForm<DivisionCreate>({
     resolver: zodResolver(DivisionCreateSchema),
@@ -32,12 +35,18 @@ export function CreateDivisionDialog({ open, onClose }: CreateDivisionDialogProp
 
   const handleClose = () => {
     reset()
+    setSubmitError(null)
     onClose()
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    await createDivision.mutateAsync(data)
-    handleClose()
+    setSubmitError(null)
+    try {
+      await createDivision.mutateAsync(data)
+      handleClose()
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   return (
@@ -62,13 +71,7 @@ export function CreateDivisionDialog({ open, onClose }: CreateDivisionDialogProp
         }}
       >
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          {createDivision.isError && (
-            <Alert severity="error">
-              {createDivision.error instanceof Error
-                ? createDivision.error.message
-                : 'Failed to create division'}
-            </Alert>
-          )}
+          {submitError && <Alert severity="error">{submitError}</Alert>}
           <FormTextField name="name" control={control} label="Division name" fullWidth autoFocus />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>

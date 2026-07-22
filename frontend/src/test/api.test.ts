@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from 'vitest'
 import { z } from 'zod'
 import { shouldRedirectToLogin } from '../api/axios'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore } from '../stores/authStore'
 import { ApiResponseSchema } from '../types/api'
 
 describe('ApiResponseSchema', () => {
@@ -12,9 +12,9 @@ describe('ApiResponseSchema', () => {
   })
 
   it('parses an error envelope', () => {
-    const raw = { data: null, meta: null, error: { code: 'NOT_FOUND', message: 'not found' } }
+    const raw = { data: null, meta: null, error: { code: 404, message: 'not found' } }
     const result = ApiResponseSchema(z.null()).parse(raw)
-    expect(result.error?.code).toBe('NOT_FOUND')
+    expect(result.error?.code).toBe(404)
   })
 })
 

@@ -1,5 +1,6 @@
-import axios from 'axios'
-import { useAuthStore } from '../store/authStore'
+import axios, { isAxiosError } from 'axios'
+import { useAuthStore } from '../stores/authStore'
+import { showNotification } from '../stores/notificationStore'
 
 interface ApiRequestConfig {
   url?: string
@@ -9,6 +10,8 @@ interface ApiRequestConfig {
 const api = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
+  // AC-FE-05: without this a hung backend never rejects and the UI spins forever.
+  timeout: 30_000,
 })
 
 function isResponseStatus(error: unknown, status: number): boolean {
@@ -66,6 +69,38 @@ export function shouldRedirectToLogin(error: unknown, currentPathname?: string):
   return !isLoginRequest(getErrorRequestUrl(error))
 }
 
+function getServerErrorMessage(data: unknown): string | undefined {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'error' in data &&
+    typeof (data as { error?: { message?: unknown } }).error?.message === 'string'
+  ) {
+    return (data as { error: { message: string } }).error.message
+  }
+
+  return undefined
+}
+
+// Network errors and 5xx get a global toast; 4xx re-throw for callers to handle.
+export function notifyResponseError(error: unknown): void {
+  if (!isAxiosError(error)) {
+    return
+  }
+
+  if (!error.response) {
+    showNotification('Network error. Please check your connection and try again.', 'error')
+    return
+  }
+
+  if (error.response.status >= 500) {
+    showNotification(
+      getServerErrorMessage(error.response.data) ?? 'An unexpected error occurred.',
+      'error'
+    )
+  }
+}
+
 // Inject JWT token on every request
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
@@ -75,14 +110,17 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// 401 → clear auth and redirect to /login
+// 401 → clear auth and redirect to /login; network/5xx → global toast
 api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
     if (shouldRedirectToLogin(error, window.location.pathname)) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
+      return Promise.reject(error)
     }
+
+    notifyResponseError(error)
     return Promise.reject(error)
   }
 )

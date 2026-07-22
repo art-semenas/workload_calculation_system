@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 
-vi.mock('../store/authStore', () => ({
+vi.mock('../stores/authStore', () => ({
   useAuthStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       logout: vi.fn(),

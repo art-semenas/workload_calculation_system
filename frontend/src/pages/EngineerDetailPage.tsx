@@ -44,6 +44,7 @@ import {
   type EngineerUpdateRequest,
   type EngineerStatus,
 } from '../types/engineer'
+import { handleFormError } from '../utils/errorMessages'
 import { tokens } from '../theme'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,7 +92,6 @@ export default function EngineerDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [removeObjectId, setRemoveObjectId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
-  const [assignError, setAssignError] = useState<string | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
 
   const { control, handleSubmit } = useForm<EngineerUpdateRequest>({
@@ -128,7 +128,7 @@ export default function EngineerDetailPage() {
       await updateMutation.mutateAsync(data)
       setEditOpen(false)
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : 'Failed to update engineer')
+      handleFormError(err, setEditError)
     }
   }
 
@@ -142,20 +142,18 @@ export default function EngineerDetailPage() {
     try {
       setRemoveError(null)
       await removeMutation.mutateAsync(removeObjectId)
+    } catch (err) {
+      handleFormError(err, setRemoveError)
+    } finally {
+      // Close either way — the error renders on the page, behind this dialog.
       setConfirmOpen(false)
       setRemoveObjectId(null)
-    } catch (err) {
-      setRemoveError(err instanceof Error ? err.message : 'Failed to remove assignment')
     }
   }
 
+  // Errors propagate to EngineerAssignDialog, which owns the message and stays open.
   const handleAssignSubmit = async (objectId: string) => {
-    try {
-      setAssignError(null)
-      await assignMutation.mutateAsync(objectId)
-    } catch (err) {
-      setAssignError(err instanceof Error ? err.message : 'Failed to assign object')
-    }
+    await assignMutation.mutateAsync(objectId)
   }
 
   const status = summary?.status ?? engineer.status ?? 'NORMAL'
@@ -371,11 +369,6 @@ export default function EngineerDetailPage() {
           </Button>
         }
       >
-        {assignError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setAssignError(null)}>
-            {assignError}
-          </Alert>
-        )}
         {removeError && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setRemoveError(null)}>
             {removeError}

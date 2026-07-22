@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -19,6 +20,7 @@ import { QuietDialog } from './QuietDialog'
 import { FormTextField } from '../common/FormTextField'
 import { useCreateBranch } from '../../hooks/useDivisions'
 import { BranchCreateSchema, type BranchCreate } from '../../types/division'
+import { handleFormError } from '../../utils/errorMessages'
 import { tokens } from '../../theme'
 
 interface CreateBranchDialogProps {
@@ -36,6 +38,7 @@ export function CreateBranchDialog({
   divisionName,
 }: CreateBranchDialogProps) {
   const createBranch = useCreateBranch(divisionId)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { control, handleSubmit, reset } = useForm<BranchCreate>({
     resolver: zodResolver(BranchCreateSchema),
@@ -44,12 +47,18 @@ export function CreateBranchDialog({
 
   const handleClose = () => {
     reset()
+    setSubmitError(null)
     onClose()
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    await createBranch.mutateAsync(data)
-    handleClose()
+    setSubmitError(null)
+    try {
+      await createBranch.mutateAsync(data)
+      handleClose()
+    } catch (error) {
+      handleFormError(error, setSubmitError)
+    }
   })
 
   return (
@@ -74,13 +83,7 @@ export function CreateBranchDialog({
         }}
       >
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          {createBranch.isError && (
-            <Alert severity="error">
-              {createBranch.error instanceof Error
-                ? createBranch.error.message
-                : 'Failed to create branch'}
-            </Alert>
-          )}
+          {submitError && <Alert severity="error">{submitError}</Alert>}
           <FormTextField name="name" control={control} label="Branch name" fullWidth autoFocus />
           <FormControl fullWidth disabled>
             <InputLabel>Division</InputLabel>

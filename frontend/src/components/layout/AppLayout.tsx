@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Avatar, Box, Typography } from '@mui/material'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore } from '../../stores/authStore'
 import { tokens } from '../../theme'
 
 const NAV_WIDTH = 200
