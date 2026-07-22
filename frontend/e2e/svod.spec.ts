@@ -499,7 +499,7 @@ test.describe('Object Detail — Summary tab', () => {
     await page.getByRole('tab', { name: /records/i }).click()
     await page.getByLabel('Access Requests').fill('2')
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByRole('alert')).toContainText(/saved/i)
+    await expect(page.getByRole('alert').filter({ hasText: /saved/i })).toBeVisible()
 
     await page.getByRole('button', { name: /fte breakdown/i }).click()
 

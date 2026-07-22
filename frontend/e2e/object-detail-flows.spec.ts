@@ -35,7 +35,10 @@ test.describe('PoC M-01 object detail flows', () => {
       await page.getByLabel('Backup Control').fill('1')
       await page.getByLabel('Security Admin').fill('5')
       await page.getByRole('button', { name: 'Save' }).click()
-      await expect(page.getByRole('alert')).toContainText('Records saved successfully.')
+      // Toasts stack, so scope to this message rather than the only alert on the page.
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'Records saved successfully.' })
+      ).toBeVisible()
 
       await expect
         .poll(async () => {
@@ -50,7 +53,9 @@ test.describe('PoC M-01 object detail flows', () => {
       })
       await repairRow.getByRole('spinbutton', { name: `count-${catalog.repair.name}` }).fill('3')
       await repairRow.getByRole('button', { name: 'Save' }).click()
-      await expect(page.getByRole('alert')).toContainText('Repairs saved successfully.')
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'Repairs saved successfully.' })
+      ).toBeVisible()
 
       await expect
         .poll(async () => {
@@ -64,7 +69,9 @@ test.describe('PoC M-01 object detail flows', () => {
       await page.getByLabel('Distance (km)').fill('42')
       await page.getByLabel('One-Way Time (min)').fill('35')
       await page.getByRole('button', { name: 'Save' }).click()
-      await expect(page.getByRole('alert')).toContainText('Travel saved successfully.')
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'Travel saved successfully.' })
+      ).toBeVisible()
       await expect(page.getByText(/70 min \(auto-calculated\)/i)).toBeVisible()
 
       await expect
