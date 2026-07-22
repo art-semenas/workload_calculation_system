@@ -7,10 +7,6 @@ public record ApiError(int code, String message) {
     return new ApiError(status.value(), message);
   }
 
-  public static ApiError notFound(String resourceType, String identifier) {
-    return of(HttpStatus.NOT_FOUND, resourceType + " not found: " + identifier);
-  }
-
   public static ApiError conflict(String message) {
     return of(HttpStatus.CONFLICT, message);
   }
