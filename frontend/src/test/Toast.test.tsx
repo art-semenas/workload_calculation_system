@@ -7,7 +7,7 @@ import { showNotification, useNotificationStore } from '../stores/notificationSt
 
 describe('notificationStore', () => {
   beforeEach(() => {
-    useNotificationStore.setState({ notifications: [] })
+    useNotificationStore.setState({ notifications: [], suppressed: [] })
   })
 
   it('adds a notification via show', () => {
@@ -75,6 +75,39 @@ describe('notificationStore', () => {
     expect(notifications[0].id).not.toBe(firstId)
   })
 
+  // A 5xx that a page renders as a full-page error must not also arrive as a toast,
+  // including on the retries that follow.
+  describe('suppression by a full-page error', () => {
+    it('drops an existing toast for the suppressed message', () => {
+      useNotificationStore.getState().show('Database unavailable', 'error')
+      useNotificationStore.getState().suppress('Database unavailable')
+
+      expect(useNotificationStore.getState().notifications).toHaveLength(0)
+    })
+
+    it('ignores later repeats while suppressed', () => {
+      useNotificationStore.getState().suppress('Database unavailable')
+      useNotificationStore.getState().show('Database unavailable', 'error')
+
+      expect(useNotificationStore.getState().notifications).toHaveLength(0)
+    })
+
+    it('still shows unrelated messages while suppressed', () => {
+      useNotificationStore.getState().suppress('Database unavailable')
+      useNotificationStore.getState().show('Saved successfully.', 'success')
+
+      expect(useNotificationStore.getState().notifications).toHaveLength(1)
+    })
+
+    it('shows the message again once unsuppressed', () => {
+      useNotificationStore.getState().suppress('Database unavailable')
+      useNotificationStore.getState().unsuppress('Database unavailable')
+      useNotificationStore.getState().show('Database unavailable', 'error')
+
+      expect(useNotificationStore.getState().notifications).toHaveLength(1)
+    })
+  })
+
   it('works when crypto.randomUUID is unavailable (non-secure context)', () => {
     const original = crypto.randomUUID
     // @ts-expect-error — simulating a browser on a plain-http origin
@@ -92,7 +125,7 @@ describe('notificationStore', () => {
 
 describe('Toast', () => {
   beforeEach(() => {
-    useNotificationStore.setState({ notifications: [] })
+    useNotificationStore.setState({ notifications: [], suppressed: [] })
   })
 
   it('shows and dismisses a notification', async () => {

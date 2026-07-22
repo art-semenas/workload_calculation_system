@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ErrorPage } from '../components/common/ErrorPage'
 import { isServerError } from '../utils/errorMessages'
+import { showNotification, useNotificationStore } from '../stores/notificationStore'
 
 describe('ErrorPage', () => {
   it('renders the heading, message, and retry button', () => {
@@ -25,6 +26,19 @@ describe('ErrorPage', () => {
     render(<ErrorPage />)
 
     expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument()
+  })
+
+  it('suppresses a toast repeating the message it already displays', () => {
+    useNotificationStore.setState({ notifications: [], suppressed: [] })
+    const { unmount } = render(<ErrorPage message="Database unavailable" />)
+
+    showNotification('Database unavailable', 'error')
+    expect(useNotificationStore.getState().notifications).toHaveLength(0)
+
+    // Once the page recovers, the message can be toasted again.
+    unmount()
+    showNotification('Database unavailable', 'error')
+    expect(useNotificationStore.getState().notifications).toHaveLength(1)
   })
 })
 

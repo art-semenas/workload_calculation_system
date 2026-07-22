@@ -10,8 +10,12 @@ export interface Notification {
 
 interface NotificationState {
   notifications: Notification[]
+  /** Messages owned by a full-page error; they must not also appear as a toast. */
+  suppressed: string[]
   show: (message: string, severity: NotificationSeverity) => void
   dismiss: (id: string) => void
+  suppress: (message: string) => void
+  unsuppress: (message: string) => void
 }
 
 let fallbackIdCounter = 0
@@ -25,8 +29,10 @@ function nextId(): string {
 
 export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [],
+  suppressed: [],
   show: (message, severity) =>
     set((state) => {
+      if (state.suppressed.includes(message)) return state
       // Query retries and parallel page queries report the same failure repeatedly.
       // A repeat replaces the existing entry rather than stacking, which also gives
       // it a fresh id so the auto-dismiss countdown starts over.
@@ -43,6 +49,20 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     set((state) => ({
       notifications: state.notifications.filter((n) => n.id !== id),
     })),
+  suppress: (message) =>
+    set((state) => ({
+      suppressed: [...state.suppressed, message],
+      notifications: state.notifications.filter((n) => n.message !== message),
+    })),
+  unsuppress: (message) =>
+    set((state) => {
+      // Remove one registration — nested pages may suppress the same message.
+      const index = state.suppressed.indexOf(message)
+      if (index === -1) return state
+      const suppressed = [...state.suppressed]
+      suppressed.splice(index, 1)
+      return { suppressed }
+    }),
 }))
 
 // Convenience accessor for use outside React components (e.g., Axios interceptor)

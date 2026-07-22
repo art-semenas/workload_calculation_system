@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import { useNotificationStore } from '../../stores/notificationStore'
 import { tokens } from '../../theme'
 
 interface ErrorPageProps {
@@ -8,6 +10,17 @@ interface ErrorPageProps {
 }
 
 export function ErrorPage({ message, onRetry }: ErrorPageProps) {
+  const suppress = useNotificationStore((state) => state.suppress)
+  const unsuppress = useNotificationStore((state) => state.unsuppress)
+
+  // This page already shows the failure; the interceptor must not toast it too,
+  // including on the retries React Query fires behind us.
+  useEffect(() => {
+    if (!message) return
+    suppress(message)
+    return () => unsuppress(message)
+  }, [message, suppress, unsuppress])
+
   return (
     <Box
       sx={{
