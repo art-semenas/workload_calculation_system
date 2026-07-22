@@ -252,8 +252,33 @@ public void requireAdminOrEditor(Principal principal, UUID targetDivisionId) {
 
 - [ ] **Step 4: Add `@PreAuthorize` or service-level checks to controllers**
 - [ ] **Step 5: Add `@EnableMethodSecurity` to `SecurityConfig`**
-- [ ] **Step 6: Run tests — expect PASS**
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Register an `accessDeniedHandler` in `SecurityConfig`**
+
+`AccessDeniedException` thrown by the security **filter chain** (URL-level `authorizeHttpRequests` rules) never reaches `@RestControllerAdvice` — the exception is handled inside the filter chain, before the `DispatcherServlet`. Without a handler, filter-level 403s bypass the `ApiResponse` envelope entirely and the frontend's error parsing gets an empty or Spring-default body.
+
+Register an `accessDeniedHandler` alongside the existing `authenticationEntryPoint`, mirroring its shape, so filter-level 403s return the envelope with `code: 403`:
+
+```java
+http.exceptionHandling(exceptions -> exceptions
+    .authenticationEntryPoint(authenticationEntryPoint)
+    .accessDeniedHandler(accessDeniedHandler));
+
+@Bean
+AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {
+  return (request, response, ex) -> {
+    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    ApiResponse<Void> body = ApiResponse.error(
+        ApiError.of(HttpStatus.FORBIDDEN, "You don't have permission to access this resource"));
+    objectMapper.writeValue(response.getOutputStream(), body);
+  };
+}
+```
+
+The message must match `GlobalExceptionHandler.handleAccessDenied` so method-level and filter-level 403s are indistinguishable to the client. Cover it with an IT that hits a URL-rule-protected route with an insufficient role and asserts `error.code == 403` in the envelope.
+
+- [ ] **Step 7: Run tests — expect PASS**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/java/com/workload/security/RbacService.java backend/src/main/java/com/workload/config/SecurityConfig.java backend/src/main/java/com/workload/controller/
