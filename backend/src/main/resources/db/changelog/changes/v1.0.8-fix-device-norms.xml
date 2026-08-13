@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    Seven R1 normatives were seeded from `Таблица3` (Нормативы!A37:D77) — a 40-row table that
+    looks like a device catalogue but which no formula in the workbook references. The values the
+    calculation actually uses live in Нормативы_ОС / Нормативы_ПС.
+
+    Proof from the workbook's own cached values: the reference object has 12 шлейфы and
+    ОС Расчет!L2 = 2.4, i.e. 12 × 0.2. With the seeded 0.06 it would be 0.72, and ОС R1_per_visit
+    would come out 27.46 instead of the cached 29.14.
+
+    Same root cause as the records normatives corrected in v1.0.7 / TOR v2.27.
+    See docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md §3.6 and §8.3.
+  -->
+  <changeSet id="v1.0.8-1" author="a.semenas">
+    <comment>Correct 7 R1 device normatives taken from the unreferenced Таблица3</comment>
+
+    <!-- ОС -->
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="2"/>
+      <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Выносная панель управления ВПУ–А-16')</where>
+    </update>
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.2"/>
+      <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Шлейфы сигнализации')</where>
+    </update>
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.3"/>
+      <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Расширитель')</where>
+    </update>
+
+    <!-- ПС -->
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.2"/>
+      <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Шлейфы сигнализации')</where>
+    </update>
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.3"/>
+      <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Расширитель')</where>
+    </update>
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.3"/>
+      <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Адресный модуль')</where>
+    </update>
+    <update tableName="device_system_contexts">
+      <column name="r1_minutes" valueNumeric="0.3"/>
+      <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Адресный шлейфно-релейный модуль')</where>
+    </update>
+
+    <rollback>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="4.5"/>
+        <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Выносная панель управления ВПУ–А-16')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.06"/>
+        <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Шлейфы сигнализации')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.03"/>
+        <where>system_type = 'OS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Расширитель')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.06"/>
+        <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Шлейфы сигнализации')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.03"/>
+        <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Расширитель')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.03"/>
+        <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Адресный модуль')</where>
+      </update>
+      <update tableName="device_system_contexts">
+        <column name="r1_minutes" valueNumeric="0.03"/>
+        <where>system_type = 'PS' AND device_type_id = (SELECT id FROM device_types WHERE name = 'Адресный шлейфно-релейный модуль')</where>
+      </update>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>
