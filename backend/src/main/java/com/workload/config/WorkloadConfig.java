@@ -21,10 +21,13 @@ public class WorkloadConfig {
   @Min(1)
   private Integer planningPeriodMonths;
 
-  // Repair productive months (must be <= planningPeriodMonths — cross-key; MVP validation only)
+  // Productive months within the planning period — the divisor that converts 6-month repair and
+  // records totals to a monthly average. Fewer than planningPeriodMonths because one month is
+  // absorbed by leave and other non-productive time.
+  // (must be <= planningPeriodMonths — cross-key; MVP validation only)
   @NotNull
   @Min(1)
-  private Integer repairProductiveMonths;
+  private Integer productiveMonths;
 
   // Repair travel threshold formula (§6.6)
   @NotNull
@@ -88,9 +91,14 @@ public class WorkloadConfig {
   @Min(0)
   private Integer recordsFootageMinutes;
 
+  /**
+   * Fractional by nature: the source normative is {@code 0.15 × 21} = 3.15 min, i.e. 0.15 min/day
+   * of backup monitoring over a 21-working-day month. BigDecimal, not Integer, per the numeric
+   * precision rule for calculation values.
+   */
   @NotNull
-  @Min(0)
-  private Integer recordsBackupMinutes;
+  @DecimalMin("0.0")
+  private BigDecimal recordsBackupMinutes;
 
   @NotNull
   @Min(0)

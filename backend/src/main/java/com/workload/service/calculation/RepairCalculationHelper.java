@@ -16,8 +16,14 @@ public class RepairCalculationHelper {
   public RepairResult calculate(
       List<ObjectRepair> repairs, BigDecimal roundTripMin, WorkloadConfig config) {
 
-    // kvo = COUNT of distinct repair types with count > 0
-    long kvo = repairs.stream().filter(r -> r.getCount() != null && r.getCount() > 0).count();
+    // kvo = SUM of repair quantities over work types; document types (акты) are excluded.
+    // Matches Ремонт!AE in the source workbook, which sums the 16 work columns F:U only.
+    long kvo =
+        repairs.stream()
+            .filter(r -> r.getCount() != null && r.getCount() > 0)
+            .filter(r -> !r.getRepairType().isDocument())
+            .mapToLong(ObjectRepair::getCount)
+            .sum();
 
     // repairWork6months = SUM(repair.count × repairType.timeMinutes) for repairs with count > 0
     BigDecimal repairWork6months =
@@ -43,16 +49,16 @@ public class RepairCalculationHelper {
     BigDecimal repairPzv6months =
         effectiveTrips.multiply(BigDecimal.valueOf(config.getPzvMinutes()));
 
-    BigDecimal repairProductiveMonths = BigDecimal.valueOf(config.getRepairProductiveMonths());
+    BigDecimal productiveMonths = BigDecimal.valueOf(config.getProductiveMonths());
 
     BigDecimal repairNoTravelMonthly =
-        repairWork6months.divide(repairProductiveMonths, 10, RoundingMode.HALF_UP);
+        repairWork6months.divide(productiveMonths, 10, RoundingMode.HALF_UP);
 
     BigDecimal repairWithTravelMonthly =
         repairWork6months
             .add(repairTravel6months)
             .add(repairPzv6months)
-            .divide(repairProductiveMonths, 10, RoundingMode.HALF_UP);
+            .divide(productiveMonths, 10, RoundingMode.HALF_UP);
 
     return new RepairResult(repairNoTravelMonthly, repairWithTravelMonthly);
   }

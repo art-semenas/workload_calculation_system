@@ -50,7 +50,7 @@ class EngineerWorkloadServiceTest {
   void setUp() {
     config = new WorkloadConfig();
     config.setPlanningPeriodMonths(6);
-    config.setRepairProductiveMonths(5);
+    config.setProductiveMonths(5);
     config.setRepairTravelZeroThreshold(5);
     config.setRepairTravelCap(10);
     config.setPzvMinutes(20);
@@ -65,7 +65,7 @@ class EngineerWorkloadServiceTest {
     config.setRecordsAccessMinutes(30);
     config.setRecordsMonitoringMinutes(20);
     config.setRecordsFootageMinutes(15);
-    config.setRecordsBackupMinutes(10);
+    config.setRecordsBackupMinutes(new BigDecimal("10"));
     config.setRecordsAdminMinutes(5);
     config.setMonthlyHoursFund(new BigDecimal("142.8"));
     config.setAbsenceCoefficient(new BigDecimal("1.12"));
@@ -562,7 +562,7 @@ class EngineerWorkloadServiceTest {
 
   @Test
   void componentBreakdown_singleObject() {
-    // Reference: Brest Archive object with known summary values.
+    // Illustrative summary values — stubbed, not computed, so they need not match PAC-01.
     // os_monthly_avg=40.683, ps_monthly_avg=30.417, video=0, records=0,
     // repair_with_travel_monthly=136.2, itogo=0.032327
     // component_coef = monthly_avg / 60 / 142.8 * 1.12

@@ -44,7 +44,7 @@ class AggregationServiceEngineerTest {
   void setUp() {
     config = new WorkloadConfig();
     config.setPlanningPeriodMonths(6);
-    config.setRepairProductiveMonths(6);
+    config.setProductiveMonths(6);
     config.setRepairTravelZeroThreshold(2);
     config.setRepairTravelCap(10);
     config.setPzvMinutes(15);
@@ -59,7 +59,7 @@ class AggregationServiceEngineerTest {
     config.setRecordsAccessMinutes(30);
     config.setRecordsMonitoringMinutes(20);
     config.setRecordsFootageMinutes(15);
-    config.setRecordsBackupMinutes(10);
+    config.setRecordsBackupMinutes(new BigDecimal("10"));
     config.setRecordsAdminMinutes(5);
     config.setMonthlyHoursFund(new BigDecimal("160"));
     config.setAbsenceCoefficient(new BigDecimal("1.1"));

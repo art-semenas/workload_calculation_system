@@ -30,6 +30,13 @@ public class RepairType {
   @Column(name = "time_minutes", nullable = false, precision = 10, scale = 4)
   private BigDecimal timeMinutes;
 
+  /**
+   * TRUE for the 9 paperwork types (акты). Their minutes count toward repair workload, but they are
+   * excluded from К-во ремонтов, which drives the travel/PZV threshold. See TOR §4.5.
+   */
+  @Column(name = "is_document", nullable = false)
+  private boolean isDocument;
+
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
 

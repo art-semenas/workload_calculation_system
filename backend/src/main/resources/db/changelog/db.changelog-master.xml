@@ -12,4 +12,5 @@
   <include file="db/changelog/changes/v1.0.4-records-bigdecimal.xml"/>
   <include file="db/changelog/changes/v1.0.5-object-address.xml"/>
   <include file="db/changelog/changes/v1.0.6-seed-org-data.sql"/>
+  <include file="db/changelog/changes/v1.0.7-repair-type-document-flag.xml"/>
 </databaseChangeLog>

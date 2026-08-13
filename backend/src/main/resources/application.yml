@@ -40,7 +40,7 @@ jwt:
 workload:
   config:
     planning-period-months: ${WORKLOAD_CONFIG_PLANNING_PERIOD_MONTHS}
-    repair-productive-months: ${WORKLOAD_CONFIG_REPAIR_PRODUCTIVE_MONTHS}
+    productive-months: ${WORKLOAD_CONFIG_PRODUCTIVE_MONTHS}
     repair-travel-zero-threshold: ${WORKLOAD_CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD}
     repair-travel-cap: ${WORKLOAD_CONFIG_REPAIR_TRAVEL_CAP}
     pzv-minutes: ${WORKLOAD_CONFIG_PZV_MINUTES}

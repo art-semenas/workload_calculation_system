@@ -52,7 +52,7 @@ class CalculationServiceTest {
   void setUp() {
     config = new WorkloadConfig();
     config.setPlanningPeriodMonths(6);
-    config.setRepairProductiveMonths(5);
+    config.setProductiveMonths(5);
     config.setRepairTravelZeroThreshold(5);
     config.setRepairTravelCap(10);
     config.setPzvMinutes(20);
@@ -66,8 +66,8 @@ class CalculationServiceTest {
     config.setVideoR2VisitsPerYear(2);
     config.setRecordsAccessMinutes(60);
     config.setRecordsMonitoringMinutes(180);
-    config.setRecordsFootageMinutes(180);
-    config.setRecordsBackupMinutes(120);
+    config.setRecordsFootageMinutes(20);
+    config.setRecordsBackupMinutes(new BigDecimal("3.15"));
     config.setRecordsAdminMinutes(60);
     config.setMonthlyHoursFund(new BigDecimal("142.8"));
     config.setAbsenceCoefficient(new BigDecimal("1.12"));
@@ -91,16 +91,19 @@ class CalculationServiceTest {
   // --- PAC-01 reference test data setup helpers ---
 
   /**
-   * Builds the OS assignment for PAC-01. Single device: qty=1, R1=48.81996, R2=0 → os_monthly_avg =
-   * (48.81996×10 + 0×2) / 12 = 40.6833
+   * Builds the OS assignment for PAC-01, collapsing the reference object's real ОС inventory into
+   * one equivalent unit: серий А6 ×2, устройство доступа ×2, шлейфы ×12, каналы ×2, извещатели ×21.
+   *
+   * <p>R1_per_visit = 29.14, R2_per_visit = 98.4 → os_monthly_avg = (29.14×10 + 98.4×2) / 12 =
+   * 40.6833. Both R1 and R2 are non-zero so the assignment exercises the additive rule.
    */
   private ObjectSystemAssignment buildOsAssignment() {
     DeviceSystemContext ctx =
         DeviceSystemContext.builder()
             .id(UUID.randomUUID())
             .systemType(SystemType.OS)
-            .r1Minutes(new BigDecimal("48.81996"))
-            .r2Minutes(BigDecimal.ZERO)
+            .r1Minutes(new BigDecimal("29.14"))
+            .r2Minutes(new BigDecimal("98.4"))
             .build();
     return ObjectSystemAssignment.builder()
         .id(UUID.randomUUID())
@@ -111,16 +114,23 @@ class CalculationServiceTest {
   }
 
   /**
-   * Builds the PS assignment for PAC-01. Single device: qty=1, R1=45.6255, R2=0 → ps_monthly_avg =
-   * (45.6255×8 + 0×4) / 12 = 30.417
+   * Builds the PS assignment for PAC-01, collapsing the reference object's real ПС inventory into
+   * one equivalent unit: серий А6 ×1, шлейфы ×5, каналы ×1, извещатели ×13, таблички ×2.
+   *
+   * <p>R1_per_visit = 10.52, R2_per_visit = 73.0 → ps_monthly_avg = (10.52×8 + 73×4) / 12 =
+   * 31.3467.
+   *
+   * <p>The workbook reports 30.4167 here because ПС Расчет!AT sums AR:AS — the two R2 columns only
+   * — dropping R1 and double-counting an R2 cycle. That is a defect in the spreadsheet, not a rule.
+   * See docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md §8.4.
    */
   private ObjectSystemAssignment buildPsAssignment() {
     DeviceSystemContext ctx =
         DeviceSystemContext.builder()
             .id(UUID.randomUUID())
             .systemType(SystemType.PS)
-            .r1Minutes(new BigDecimal("45.6255"))
-            .r2Minutes(BigDecimal.ZERO)
+            .r1Minutes(new BigDecimal("10.52"))
+            .r2Minutes(new BigDecimal("73.0"))
             .build();
     return ObjectSystemAssignment.builder()
         .id(UUID.randomUUID())
@@ -179,10 +189,10 @@ class CalculationServiceTest {
 
     Summary result = calculationService.recalculate(objectId);
 
-    // total_with_travel ≈ 247.3; itogo = 247.3 / (60 × 142.8 / 1.12) = 247.3 / 7650 ≈ 0.032327
+    // total_with_travel = 248.23; itogo = 248.23 / (60 × 142.8 / 1.12) = 248.23 / 7650 ≈ 0.032448
     assertThat(result.getItogoChisloWithTravel())
         .usingComparator(BigDecimal::compareTo)
-        .isBetween(new BigDecimal("0.032326"), new BigDecimal("0.032328"));
+        .isBetween(new BigDecimal("0.032447"), new BigDecimal("0.032449"));
   }
 
   @Test
@@ -191,10 +201,10 @@ class CalculationServiceTest {
 
     Summary result = calculationService.recalculate(objectId);
 
-    // total_no_travel ≈ 183.3; itogo = 183.3 / 7650 ≈ 0.023961
+    // total_no_travel = 184.23; itogo = 184.23 / 7650 ≈ 0.024082
     assertThat(result.getItogoChisloNoTravel())
         .usingComparator(BigDecimal::compareTo)
-        .isBetween(new BigDecimal("0.023960"), new BigDecimal("0.023962"));
+        .isBetween(new BigDecimal("0.024081"), new BigDecimal("0.024083"));
   }
 
   @Test
@@ -203,7 +213,7 @@ class CalculationServiceTest {
 
     Summary result = calculationService.recalculate(objectId);
 
-    // os_monthly_avg = (48.81996×10 + 0×2) / 12 ≈ 40.683
+    // os_monthly_avg = (29.14×10 + 98.4×2) / 12 = 488.2 / 12 ≈ 40.683
     assertThat(result.getOsMonthlyAvg())
         .usingComparator(BigDecimal::compareTo)
         .isBetween(new BigDecimal("40.67"), new BigDecimal("40.70"));
@@ -215,10 +225,42 @@ class CalculationServiceTest {
 
     Summary result = calculationService.recalculate(objectId);
 
-    // ps_monthly_avg = (45.6255×8 + 0×4) / 12 ≈ 30.417
+    // ps_monthly_avg = (10.52×8 + 73×4) / 12 = 376.16 / 12 ≈ 31.3467
     assertThat(result.getPsMonthlyAvg())
         .usingComparator(BigDecimal::compareTo)
-        .isBetween(new BigDecimal("30.41"), new BigDecimal("30.42"));
+        .isBetween(new BigDecimal("31.34"), new BigDecimal("31.35"));
+  }
+
+  /**
+   * Regression guard for the ПС formula defect in the source workbook (spec §8.4).
+   *
+   * <p>{@code ПС Расчет!AT = SUM([Р2 за мес]:[Р2 за 4 раз в году])} covers only the two R2 columns,
+   * so the spreadsheet drops R1 entirely and counts an extra R2 cycle: it reports Р2×5 = 365 where
+   * the additive rule gives Р1×8 + Р2×4 = 376.16. Anyone diffing the engine against the workbook
+   * will see ПС run high on every object with R1 equipment and may be tempted to "fix" it.
+   *
+   * <p>This test fails if that happens: it pins ПС to the additive rule and asserts the result is
+   * strictly greater than the workbook's figure.
+   */
+  @Test
+  void psMonthlyAvg_includesR1_notJustR2() {
+    stubPac01Mocks();
+
+    Summary result = calculationService.recalculate(objectId);
+
+    // Additive: (R1 10.52 × 8) + (R2 73.0 × 4) = 84.16 + 292 = 376.16 → / 12 = 31.346667
+    BigDecimal expected =
+        new BigDecimal("376.16").divide(new BigDecimal("12"), 10, java.math.RoundingMode.HALF_UP);
+    assertThat(result.getPsMonthlyAvg())
+        .usingComparator(BigDecimal::compareTo)
+        .isCloseTo(expected, org.assertj.core.data.Offset.offset(new BigDecimal("0.0001")));
+
+    // Workbook value (Р2 + Р2×4) / 12 = 365 / 12 = 30.4167 — must NOT be reproduced.
+    BigDecimal workbookValue =
+        new BigDecimal("365").divide(new BigDecimal("12"), 10, java.math.RoundingMode.HALF_UP);
+    assertThat(result.getPsMonthlyAvg())
+        .usingComparator(BigDecimal::compareTo)
+        .isGreaterThan(workbookValue);
   }
 
   // --- Zero-guard tests (C-39) ---
@@ -301,7 +343,7 @@ class CalculationServiceTest {
   @Test
   void recordsOnlyTest() {
     // Records: access=2, all others=0
-    // records_6months = 2×60 = 120; records_monthly = 120/6 = 20
+    // records_6months = 2×60 = 120; records_monthly = 120/5 = 24
     RecordsTask records =
         RecordsTask.builder()
             .id(UUID.randomUUID())
@@ -320,10 +362,10 @@ class CalculationServiceTest {
 
     Summary result = calculationService.recalculate(objectId);
 
-    // records_monthly = (2×60) / 6 = 20
+    // records_monthly = (2×60) / 5 = 24
     assertThat(result.getRecordsMonthly())
         .usingComparator(BigDecimal::compareTo)
-        .isEqualByComparingTo(new BigDecimal("20"));
+        .isEqualByComparingTo(new BigDecimal("24"));
     // With only records work, itogo should be > 0
     assertThat(result.getItogoChisloWithTravel())
         .usingComparator(BigDecimal::compareTo)

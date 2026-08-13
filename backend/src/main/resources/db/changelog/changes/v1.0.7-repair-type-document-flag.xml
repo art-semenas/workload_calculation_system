@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    К-во ремонтов sums quantities over the 16 WORK types only; the 9 paperwork types (акты)
+    contribute minutes but never drive the travel/PZV threshold. In the source workbook this
+    split is implicit in two different formula ranges (Ремонт!AE spans F:U, Ремонт Расчет!AE
+    spans F:AD) and is not marked anywhere. Making it explicit here.
+    See docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md §3.4 and §8.1.
+  -->
+  <changeSet id="v1.0.7-1" author="a.semenas">
+    <comment>Add is_document flag to repair_types</comment>
+
+    <addColumn tableName="repair_types">
+      <column name="is_document" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+
+    <rollback>
+      <dropColumn tableName="repair_types" columnName="is_document"/>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="v1.0.7-2" author="a.semenas">
+    <comment>Flag the 9 paperwork repair types (акты) as documents</comment>
+
+    <update tableName="repair_types">
+      <column name="is_document" valueBoolean="true"/>
+      <where>name IN (
+        'Акт о выполненных работах ОС',
+        'Дефектный акт ОС',
+        'Акт на списание ТМЦ из подотчета ОС',
+        'Акт о выполненных работах ПС',
+        'Дефектный акт ПС',
+        'Акт на списание ТМЦ из подотчета ПС',
+        'Акт о выполненных работах Видео',
+        'Дефектный акт Видео',
+        'Акт на списание ТМЦ из подотчета Видео')</where>
+    </update>
+
+    <rollback>
+      <update tableName="repair_types">
+        <column name="is_document" valueBoolean="false"/>
+      </update>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

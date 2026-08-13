@@ -26,16 +26,16 @@ public class RecordsCalculationHelper {
                 records
                     .getFootageRequests()
                     .multiply(BigDecimal.valueOf(config.getRecordsFootageMinutes())))
-            .add(
-                records
-                    .getBackupControl()
-                    .multiply(BigDecimal.valueOf(config.getRecordsBackupMinutes())))
+            .add(records.getBackupControl().multiply(config.getRecordsBackupMinutes()))
             .add(
                 records
                     .getSecurityAdmin()
                     .multiply(BigDecimal.valueOf(config.getRecordsAdminMinutes())));
 
+    // Divisor is PRODUCTIVE_MONTHS (5), not the 6-month period length: the workbook spreads a
+    // 6-month total over 5 productive months, the sixth being absorbed by leave and other
+    // non-productive time. Matches Записи Расчет!L = K / 5. Same basis as repairs.
     return records6months.divide(
-        BigDecimal.valueOf(config.getPlanningPeriodMonths()), 10, RoundingMode.HALF_UP);
+        BigDecimal.valueOf(config.getProductiveMonths()), 10, RoundingMode.HALF_UP);
   }
 }

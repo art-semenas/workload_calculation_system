@@ -17,7 +17,7 @@ class RepairCalculationTest {
   private RepairCalculationHelper helper;
   private WorkloadConfig config;
 
-  // round_trip_min = 20, pzv_minutes = 20, repairProductiveMonths = 5
+  // round_trip_min = 20, pzv_minutes = 20, productiveMonths = 5
   private static final BigDecimal ROUND_TRIP_MIN = new BigDecimal("20");
 
   @BeforeEach
@@ -26,7 +26,7 @@ class RepairCalculationTest {
 
     config = new WorkloadConfig();
     config.setPlanningPeriodMonths(6);
-    config.setRepairProductiveMonths(5);
+    config.setProductiveMonths(5);
     config.setRepairTravelZeroThreshold(5);
     config.setRepairTravelCap(10);
     config.setPzvMinutes(20);
@@ -40,8 +40,8 @@ class RepairCalculationTest {
     config.setVideoR2VisitsPerYear(2);
     config.setRecordsAccessMinutes(60);
     config.setRecordsMonitoringMinutes(180);
-    config.setRecordsFootageMinutes(180);
-    config.setRecordsBackupMinutes(120);
+    config.setRecordsFootageMinutes(20);
+    config.setRecordsBackupMinutes(new BigDecimal("3.15"));
     config.setRecordsAdminMinutes(60);
     config.setMonthlyHoursFund(new BigDecimal("142.8"));
     config.setAbsenceCoefficient(new BigDecimal("1.12"));
@@ -67,7 +67,7 @@ class RepairCalculationTest {
 
   /**
    * Computes expected repair_no_travel_monthly for N repairs × timeMinutes=10, count=1.
-   * repairWork6months = N × 10 repairNoTravelMonthly = repairWork6months / repairProductiveMonths
+   * repairWork6months = N × 10 repairNoTravelMonthly = repairWork6months / productiveMonths
    */
   private BigDecimal expectedNoTravel(int kvo) {
     // repairWork6months = kvo × 10
@@ -79,7 +79,7 @@ class RepairCalculationTest {
   /**
    * Computes expected repair_with_travel_monthly given effective_trips. repairWork6months = kvo ×
    * 10 repairTravel6months = effective_trips × round_trip_min repairPzv6months = effective_trips ×
-   * pzv_minutes repairWithTravelMonthly = (work + travel + pzv) / repairProductiveMonths
+   * pzv_minutes repairWithTravelMonthly = (work + travel + pzv) / productiveMonths
    */
   private BigDecimal expectedWithTravel(int kvo, int effectiveTrips) {
     BigDecimal work = new BigDecimal(kvo * 10);
@@ -213,52 +213,95 @@ class RepairCalculationTest {
         .isEqualByComparingTo(expectedWithTravel(17, 10)); // capped at 10
   }
 
-  // --- kvo counts distinct types with count > 0, not sum of quantities ---
+  // --- kvo sums quantities over work types, excluding document types ---
+
+  private static ObjectRepair repair(String name, int count, boolean isDocument, String minutes) {
+    RepairType rt =
+        RepairType.builder()
+            .id(UUID.randomUUID())
+            .name(name)
+            .timeMinutes(new BigDecimal(minutes))
+            .isDocument(isDocument)
+            .build();
+    return ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt).count(count).build();
+  }
 
   @Test
-  void kvoCountsDistinctTypes_notSumOfQuantities() {
-    // 3 repair types: counts = [3, 5, 0]
-    // kvo should be 2 (types with count > 0), NOT 8 (sum) and NOT 3 (total types)
-    List<ObjectRepair> repairs = new ArrayList<>();
-
-    RepairType rt1 =
-        RepairType.builder()
-            .id(UUID.randomUUID())
-            .name("RT1")
-            .timeMinutes(new BigDecimal("10"))
-            .build();
-    repairs.add(ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt1).count(3).build());
-
-    RepairType rt2 =
-        RepairType.builder()
-            .id(UUID.randomUUID())
-            .name("RT2")
-            .timeMinutes(new BigDecimal("10"))
-            .build();
-    repairs.add(ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt2).count(5).build());
-
-    RepairType rt3 =
-        RepairType.builder()
-            .id(UUID.randomUUID())
-            .name("RT3")
-            .timeMinutes(new BigDecimal("10"))
-            .build();
-    repairs.add(ObjectRepair.builder().id(UUID.randomUUID()).repairType(rt3).count(0).build());
+  void kvoSumsQuantities_notDistinctTypes() {
+    // 3 work types: counts = [3, 5, 0]
+    // kvo = 8 (sum of quantities), NOT 2 (distinct types with count > 0)
+    List<ObjectRepair> repairs =
+        List.of(
+            repair("RT1", 3, false, "10"),
+            repair("RT2", 5, false, "10"),
+            repair("RT3", 0, false, "10"));
 
     RepairCalculationHelper.RepairResult result = helper.calculate(repairs, ROUND_TRIP_MIN, config);
 
-    // kvo = 2 (only RT1 and RT2 have count > 0)
-    // kvo=2 ≤ threshold=5 → Band A, effectiveTrips=0
-    // repairWork6months = 3×10 + 5×10 + 0×10 = 80
-    // repairNoTravel = 80/5 = 16
-    // repairWithTravel = 80/5 = 16 (no travel, no pzv)
-    BigDecimal expectedWork =
-        new BigDecimal("80").divide(new BigDecimal("5"), 10, java.math.RoundingMode.HALF_UP);
+    // kvo = 3 + 5 + 0 = 8 → Band B (5 < 8 ≤ 10) → effectiveTrips = 8
+    // repairWork6months = 3×10 + 5×10 = 80
+    // repairNoTravel   = 80 / 5 = 16
+    // repairWithTravel = (80 + 8×20 + 8×20) / 5 = 400 / 5 = 80
     assertThat(result.repairNoTravelMonthly())
         .usingComparator(BigDecimal::compareTo)
-        .isEqualByComparingTo(expectedWork);
+        .isEqualByComparingTo(new BigDecimal("16"));
     assertThat(result.repairWithTravelMonthly())
         .usingComparator(BigDecimal::compareTo)
-        .isEqualByComparingTo(expectedWork);
+        .isEqualByComparingTo(new BigDecimal("80"));
+  }
+
+  @Test
+  void kvoExcludesDocumentTypes_butTheirMinutesStillCount() {
+    // 1 work type ×2 and 1 document type ×9.
+    // kvo counts only the work quantities (2) → Band A → no travel.
+    // Both contribute minutes.
+    List<ObjectRepair> repairs =
+        List.of(
+            repair("Замена аккумулятора ОС", 2, false, "10"),
+            repair("Дефектный акт ОС", 9, true, "60"));
+
+    RepairCalculationHelper.RepairResult result = helper.calculate(repairs, ROUND_TRIP_MIN, config);
+
+    // kvo = 2 (documents excluded) ≤ 5 → effectiveTrips = 0
+    // repairWork6months = 2×10 + 9×60 = 560
+    BigDecimal expected =
+        new BigDecimal("560").divide(new BigDecimal("5"), 10, java.math.RoundingMode.HALF_UP);
+    assertThat(result.repairNoTravelMonthly())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(expected);
+    assertThat(result.repairWithTravelMonthly())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(expected);
+  }
+
+  /**
+   * Reference object "Архив г. Брест, ул. Московская, 202Д" — the PAC-01 object, taken straight
+   * from the source workbook (sheet Ремонт row 2). Anchors kvo, both bands and both outputs against
+   * values Excel itself computed: Ремонт Расчет!AF = 72.2 and !AI = 136.2.
+   */
+  @Test
+  void referenceObject_matchesWorkbook() {
+    List<ObjectRepair> repairs =
+        List.of(
+            repair("Замена извещателя пожарного дымового", 1, false, "12"),
+            repair("Замена шунтирующих/оконечного резисторов шлейфа ОС", 3, false, "35"),
+            repair("Замена шунтирующих/оконечного резисторов шлейфа ПС", 3, false, "35"),
+            repair("Замена аккумулятора ОС", 1, false, "5"),
+            repair("Акт о выполненных работах ОС", 1, true, "7"),
+            repair("Дефектный акт ОС", 1, true, "60"),
+            repair("Акт о выполненных работах ПС", 1, true, "7"),
+            repair("Дефектный акт ПС", 1, true, "60"));
+
+    RepairCalculationHelper.RepairResult result = helper.calculate(repairs, ROUND_TRIP_MIN, config);
+
+    // kvo = 1 + 3 + 3 + 1 = 8 (the four document rows are excluded)
+    // repairWork6months = 12 + 105 + 105 + 5 + 7 + 60 + 7 + 60 = 361
+    // 5 < kvo=8 ≤ 10 → effectiveTrips = 8; travel = 8×20 = 160; pzv = 8×20 = 160
+    assertThat(result.repairNoTravelMonthly())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(new BigDecimal("72.2"));
+    assertThat(result.repairWithTravelMonthly())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(new BigDecimal("136.2"));
   }
 }
