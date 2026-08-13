@@ -125,14 +125,14 @@ w("-- Generated artefact — see docs/Excel_to_md/Шаблон_нагрузки_
 w("-- Foreign keys resolve by name, so this file is independent of generated UUIDs.")
 w("")
 
-w("--changeset a.semenas:v1.0.6-1")
+w("--changeset a.semenas:v1.0.6-1 context:demo-data")
 w("--comment: Seed divisions (%d)" % len(divisions))
 w("INSERT INTO divisions (name) VALUES")
 w(",\n".join("  (%s)" % q(d) for d in divisions) + ";")
 w("--rollback DELETE FROM divisions;")
 w("")
 
-w("--changeset a.semenas:v1.0.6-2")
+w("--changeset a.semenas:v1.0.6-2 context:demo-data")
 w("--comment: Seed branches (%d) — all 135 names are globally unique, but the FK is resolved by (division, name) anyway" % len(branches))
 w("INSERT INTO branches (division_id, name)")
 w("SELECT d.id, v.branch_name")
@@ -143,7 +143,7 @@ w("JOIN divisions d ON d.name = v.division_name;")
 w("--rollback DELETE FROM branches;")
 w("")
 
-w("--changeset a.semenas:v1.0.6-3")
+w("--changeset a.semenas:v1.0.6-3 context:demo-data")
 w("--comment: Seed engineer placeholder accounts (%d) — TOR C-31: requires_activation, unusable password" % len(engineers))
 w("INSERT INTO users (email, name, password_hash, role, home_division_id, capacity_fte, employee_id, is_active, requires_activation)")
 w("SELECT v.email, v.full_name, '!', 'engineer', d.id, 1.00, v.employee_id, TRUE, TRUE")
@@ -155,7 +155,7 @@ w("JOIN divisions d ON d.name = v.home_division;")
 w("--rollback DELETE FROM users WHERE role = 'engineer' AND email LIKE '%@workload.local';")
 w("")
 
-w("--changeset a.semenas:v1.0.6-4")
+w("--changeset a.semenas:v1.0.6-4 context:demo-data")
 w("--comment: Seed objects (%d) — import_seq_no preserves the workbook row order (№)" % len(rows))
 w("INSERT INTO objects (branch_id, name, address, import_seq_no)")
 w("SELECT b.id, v.name, NULLIF(v.address, ''), v.seq")
@@ -169,7 +169,7 @@ w("--rollback DELETE FROM objects;")
 w("")
 
 assigned = [x for x in rows if x["eng"]]
-w("--changeset a.semenas:v1.0.6-5")
+w("--changeset a.semenas:v1.0.6-5 context:demo-data")
 w("--comment: Seed object-engineer assignments (%d of %d objects, %d unassigned in source)"
   % (len(assigned), len(rows), len(rows) - len(assigned)))
 w("INSERT INTO object_engineers (object_id, engineer_id)")

@@ -4,7 +4,7 @@
 -- Generated artefact — see docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md §3.
 -- Foreign keys resolve by name, so this file is independent of generated UUIDs.
 
---changeset a.semenas:v1.0.6-1
+--changeset a.semenas:v1.0.6-1 context:demo-data
 --comment: Seed divisions (6)
 INSERT INTO divisions (name) VALUES
   ('Брестское областное управление №100'),
@@ -15,7 +15,7 @@ INSERT INTO divisions (name) VALUES
   ('Могилевское областное управление №700');
 --rollback DELETE FROM divisions;
 
---changeset a.semenas:v1.0.6-2
+--changeset a.semenas:v1.0.6-2 context:demo-data
 --comment: Seed branches (135) — all 135 names are globally unique, but the FK is resolved by (division, name) anyway
 INSERT INTO branches (division_id, name)
 SELECT d.id, v.branch_name
@@ -159,7 +159,7 @@ FROM (VALUES
 JOIN divisions d ON d.name = v.division_name;
 --rollback DELETE FROM branches;
 
---changeset a.semenas:v1.0.6-3
+--changeset a.semenas:v1.0.6-3 context:demo-data
 --comment: Seed engineer placeholder accounts (123) — TOR C-31: requires_activation, unusable password
 INSERT INTO users (email, name, password_hash, role, home_division_id, capacity_fte, employee_id, is_active, requires_activation)
 SELECT v.email, v.full_name, '!', 'engineer', d.id, 1.00, v.employee_id, TRUE, TRUE
@@ -291,7 +291,7 @@ FROM (VALUES
 JOIN divisions d ON d.name = v.home_division;
 --rollback DELETE FROM users WHERE role = 'engineer' AND email LIKE '%@workload.local';
 
---changeset a.semenas:v1.0.6-4
+--changeset a.semenas:v1.0.6-4 context:demo-data
 --comment: Seed objects (2934) — import_seq_no preserves the workbook row order (№)
 INSERT INTO objects (branch_id, name, address, import_seq_no)
 SELECT b.id, v.name, NULLIF(v.address, ''), v.seq
@@ -3235,7 +3235,7 @@ JOIN divisions d ON d.name = v.division_name
 JOIN branches  b ON b.division_id = d.id AND b.name = v.branch_name;
 --rollback DELETE FROM objects;
 
---changeset a.semenas:v1.0.6-5
+--changeset a.semenas:v1.0.6-5 context:demo-data
 --comment: Seed object-engineer assignments (2492 of 2934 objects, 442 unassigned in source)
 INSERT INTO object_engineers (object_id, engineer_id)
 SELECT o.id, u.id

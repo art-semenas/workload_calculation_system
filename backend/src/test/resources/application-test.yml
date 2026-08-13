@@ -7,6 +7,9 @@ spring:
       ddl-auto: none
   liquibase:
     enabled: true
+    # Exclude the 2934-object demo dataset (v1.0.6 / v1.0.9). Tests build their own fixtures,
+    # and the startup recalculation would otherwise process every seeded object on each boot.
+    contexts: '!demo-data'
 
 jwt:
   secret: test-secret-key-minimum-32-characters-long-for-hmac
