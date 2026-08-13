@@ -99,9 +99,12 @@ public class CalculationService {
     // Stage 5 — Records and repairs
     BigDecimal recordsMonthly = recordsHelper.calculateMonthly(recordsOpt.orElse(null), config);
 
+    // one_way_time_min is nullable: a travel record may carry only a distance. Absent time means
+    // no travel contribution, the same as having no travel record at all.
     BigDecimal roundTripMin =
         travelOpt
-            .map(t -> t.getOneWayTimeMin().multiply(BigDecimal.valueOf(2)))
+            .map(Travel::getOneWayTimeMin)
+            .map(t -> t.multiply(BigDecimal.valueOf(2)))
             .orElse(BigDecimal.ZERO);
 
     RepairCalculationHelper.RepairResult repairResult =

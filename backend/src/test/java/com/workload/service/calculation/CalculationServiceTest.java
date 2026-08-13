@@ -263,6 +263,38 @@ class CalculationServiceTest {
         .isGreaterThan(workbookValue);
   }
 
+  /**
+   * travel.one_way_time_min is nullable in the schema, so a record may carry only a distance. The
+   * engine must treat a missing time as zero travel rather than throwing — 3 objects in the source
+   * data are in exactly this state (distance recorded, time not).
+   */
+  @Test
+  void travelWithNullOneWayTime_treatedAsZero() {
+    Travel travelWithoutTime =
+        Travel.builder()
+            .id(UUID.randomUUID())
+            .distanceKm(new BigDecimal("12.5"))
+            .oneWayTimeMin(null)
+            .build();
+
+    when(assignmentRepo.findAllByObjectId(objectId)).thenReturn(List.of(buildOsAssignment()));
+    when(recordsRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(repairRepo.findAllByObjectId(objectId)).thenReturn(List.of());
+    when(travelRepo.findByObjectId(objectId)).thenReturn(Optional.of(travelWithoutTime));
+    when(summaryRepo.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(summaryRepo.save(any(Summary.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Summary result = calculationService.recalculate(objectId);
+
+    assertThat(result.getRoundTripMin())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualByComparingTo(BigDecimal.ZERO);
+    // OS work is still counted, so the object is not zero-guarded away.
+    assertThat(result.getOsMonthlyAvg())
+        .usingComparator(BigDecimal::compareTo)
+        .isGreaterThan(BigDecimal.ZERO);
+  }
+
   // --- Zero-guard tests (C-39) ---
 
   @Test
