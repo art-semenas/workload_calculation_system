@@ -135,7 +135,7 @@ com.workload.exception       Exception types + GlobalExceptionHandler
 
 The following tests must exist and pass before the calculation epic is complete:
 
-- `CalculationServiceTest`: PAC-01 reference value — `itogo_chislo_with_travel = 0.032327 ±0.000001` for the reference object
+- `CalculationServiceTest`: PAC-01 reference value — `itogo_chislo_with_travel = 0.032448 ±0.000001` for the reference object
 - `RepairCalculationTest`: all 8 threshold boundary cases for kvo (0, 3, 5, 6, 8, 10, 11, 17)
 - `EngineerWorkloadServiceTest`: workload split for 1, 2, and 3 co-engineers; load_ratio and status transitions
 - `AggregationServiceTest`: `branch_load = SUM(object_loads)` for a test dataset
@@ -233,4 +233,4 @@ These are the most business-critical rules. A mistake here produces wrong FTE nu
 - **Zero guard on ИТОГО**: if all work components are zero, `itogo_chislo = 0` (matches Excel IF-guard). PZV and travel alone do not generate a phantom FTE. See TOR C-39.
 - **`round_trip_min`** is always `one_way_time × 2`, computed server-side, never user-editable. The API rejects any attempt to set it directly (HTTP 422).
 - **All calculation constants** are read from `WorkloadConfig` at call time, not cached at startup. This ensures a config change in MVP takes effect immediately.
-- **Reference test value**: object "Архив г.Брест, ул.Московская, 202Д" with correct equipment must produce `itogo_chislo_with_travel = 0.032327 ±0.000001` (PAC-01). Use this to verify the calculation engine end-to-end.
+- **Reference test value**: object "Архив г.Брест, ул.Московская, 202Д" with correct equipment must produce `itogo_chislo_with_travel = 0.032448 ±0.000001` (PAC-01). Use this to verify the calculation engine end-to-end. The source workbook shows `0.032327` for this object because `ПС Расчет!AT` drops R1 — do **not** calibrate to the spreadsheet. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.4.

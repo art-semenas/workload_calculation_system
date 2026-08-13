@@ -373,7 +373,7 @@ export async function fetchSvodPage(
   return json.data
 }
 
-/** Returns the object_id for the PAC-01 reference object (itogo ≈ 0.032327 or name contains "Архив"). */
+/** Returns the object_id for the PAC-01 reference object (itogo ≈ 0.032448 or name contains "Архив"). */
 export async function fetchReferenceObjectId(
   request: APIRequestContext,
   token?: string
@@ -391,7 +391,7 @@ export async function fetchReferenceObjectId(
   if (byName) return byName.objectId
 
   const byValue = data.content.find(
-    (row) => Math.abs(row.itogoChisloWithTravel - 0.032327) < 0.000001
+    (row) => Math.abs(row.itogoChisloWithTravel - 0.032448) < 0.000001
   )
   return byValue?.objectId ?? null
 }

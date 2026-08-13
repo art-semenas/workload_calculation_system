@@ -141,7 +141,7 @@ After changes, verify the reference object still produces the expected value:
 
 **Object:** "Архив г.Брест, ул.Московская, 202Д" (with correct equipment assigned)
 
-**Expected:** `itogo_chislo_with_travel = 0.032327 ±0.000001`
+**Expected:** `itogo_chislo_with_travel = 0.032448 ±0.000001`
 
 **Test:** Run `CalculationServiceTest` and verify the PAC-01 assertion passes.
 

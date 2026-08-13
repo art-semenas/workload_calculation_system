@@ -389,7 +389,7 @@ This is the highest-coverage package. Write ALL tests before writing any impleme
 
 **Write `CalculationServiceTest` first:**
 
-- `PAC-01`: reference object "Архив г.Брест, ул.Московская, 202Д" — `itogo_chislo_with_travel = 0.032327 ±0.000001`
+- `PAC-01`: reference object "Архив г.Брест, ул.Московская, 202Д" — `itogo_chislo_with_travel = 0.032448 ±0.000001`
 - `zeroGuardTest`: object with no assignments + no records + no repairs → `itogo_chislo_with_travel = 0` (not phantom FTE from PZV/travel alone; C-39)
 - `recordsOnlyTest`: verifies `records_monthly = SUM(count × normative_minutes) / planning_period_months`
 - `osSystemTest`: single OS device, `r1_contrib = quantity_maintained × r1_minutes`

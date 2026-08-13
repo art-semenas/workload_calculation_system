@@ -32,11 +32,11 @@ Stage 4 — Monthly average per system
   monthly_avg[S] = (R1_annual[S] + R2_annual[S]) / 12
 
 Stage 5 — Records and repairs (§6.5, §6.6)
-  records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]  (§6.5)
+  records_monthly = records_6months / config[PRODUCTIVE_MONTHS]  (§6.5)
 
   For repairs (§6.6):
     repair_work_6months = SUM(count × time_minutes)
-    kvo = COUNT(repair types with count > 0)          ← distinct type count, NOT sum of quantities
+    kvo = SUM(count) over work types                  ← acts excluded; see §4.5
     effective_trips = threshold(kvo, ZERO_THRESHOLD, CAP)  ← 0 | kvo | CAP
     repair_travel_6months = effective_trips × round_trip_min
     repair_pzv_6months    = effective_trips × PZV_MINUTES
@@ -103,8 +103,18 @@ monthly_avg  = 488.2 / 12 = 40.683 min  ✓
 R1_per_visit = 10.52,  R2_per_visit = 73.0
 R1_annual    = 10.52 × 8 = 84.16
 R2_annual    = 73.0  × 4 = 292.0
-monthly_avg  = 365.0 / 12 = 30.417 min  ✓
+monthly_avg  = (84.16 + 292.0) / 12 = 376.16 / 12 = 31.347 min  ✓
 ```
+
+> **Do not calibrate ПС to the source workbook.** `ПС Расчет!AT` is
+> `SUM([Р2 за мес]:[Р2 за 4 раз в году])` — a range covering only the two R2 columns — so the
+> spreadsheet computes `73 + 292 = 365` and reports `30.417`, dropping R1 entirely while
+> double-counting an R2 cycle. Confirmed on all 2 833 numeric rows. The ОС sheet does this
+> correctly (`ОС Расчет!AL = [Р2 за 2 раз в году] + [Р1 за 10 раз в году]`); ПС does not.
+> Comparing the engine against `СВОД` will therefore show ПС running high on every object with R1
+> equipment — that is expected, not a regression. Guarded by
+> `CalculationServiceTest.psMonthlyAvg_includesR1_notJustR2`. See
+> `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.4.
 
 ### §6.4 Shared-Device Multi-System Example
 
@@ -120,8 +130,8 @@ Each `records_tasks` column stores the **quantity** (number of times that task w
 | ---------------------- | --- | ---------------------------- | ------------------ |
 | `access_requests`      | ×   | `RECORDS_ACCESS_MINUTES`     | 60                 |
 | `monitoring_requests`  | ×   | `RECORDS_MONITORING_MINUTES` | 180                |
-| `footage_requests`     | ×   | `RECORDS_FOOTAGE_MINUTES`    | 180                |
-| `backup_control`       | ×   | `RECORDS_BACKUP_MINUTES`     | 120                |
+| `footage_requests`     | ×   | `RECORDS_FOOTAGE_MINUTES`    | 20                 |
+| `backup_control`       | ×   | `RECORDS_BACKUP_MINUTES`     | 3.15               |
 | `security_admin`       | ×   | `RECORDS_ADMIN_MINUTES`      | 60                 |
 
 ```
@@ -132,24 +142,27 @@ records_6months =
   + backup_control      × config[RECORDS_BACKUP_MINUTES]
   + security_admin      × config[RECORDS_ADMIN_MINUTES]
 
-records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]
+records_monthly = records_6months / config[PRODUCTIVE_MONTHS]
 ```
 
-> **Note:** `records_6months` aggregates counts over a 6-month planning period. The divisor `config[PLANNING_PERIOD_MONTHS]` (default 6) converts the 6-month total to a monthly average. Using the config key rather than a hardcoded `6` ensures this divisor remains consistent with the period length if ever adjusted.
+> **Note:** `records_6months` aggregates counts over a 6-month planning period, but the divisor is `config[PRODUCTIVE_MONTHS]` (default **5**), not the period length. One month of the six is absorbed by leave and other non-productive time, so a 6-month total is spread over 5 productive months. This matches `Записи Расчет!L = K / 5` in the source workbook and puts records on the same basis as repairs (§6.6).
 
 ## Repair Formulas (§6.6)
 
 ### К-во ремонтов (Repair Count)
 
-**CRITICAL:** К-во ремонтов = COUNT of distinct repair types where count > 0 for the current period. This is NOT the sum of repair quantities.
+**CRITICAL:** К-во ремонтов = SUM of repair quantities over **work types only**. This is NOT a count of distinct types, and it excludes the 9 document types (акты).
 
 ```
-kvo = COUNT(object_repairs rows WHERE count > 0 AND period_id = current_period)
+kvo = SUM(object_repairs.count)
+      WHERE count > 0
+      AND   period_id = current_period
+      AND   repair_types.is_document = FALSE
 ```
 
-`kvo` counts **distinct repair types performed at least once** in the period — not the sum of quantities. This is the value tested against thresholds in the travel/PZV formulas.
+`kvo` is the **total number of repair operations performed** in the period. Document types still contribute to `repair_work_6months` below — only the trip estimate excludes them. This is the value tested against thresholds in the travel/PZV formulas.
 
-> **Example:** "Замена аккумулятора × 3" and "Замена извещателя × 5" → `kvo = 2`, not 8.
+> **Example:** "Замена аккумулятора × 3" and "Замена извещателя × 5" → `kvo = 8`, not 2.
 
 ### Repair Work Time
 
@@ -190,20 +203,20 @@ Both use `effective_trips` — not raw `kvo`, not `SUM(count)`.
 
 ```
 repair_no_travel_monthly   = repair_work_6months
-                             / config[REPAIR_PRODUCTIVE_MONTHS]
+                             / config[PRODUCTIVE_MONTHS]
 
 repair_with_travel_monthly = (repair_work_6months
                                + repair_travel_6months
                                + repair_pzv_6months)
-                             / config[REPAIR_PRODUCTIVE_MONTHS]
+                             / config[PRODUCTIVE_MONTHS]
 ```
 
-> Divisor is `REPAIR_PRODUCTIVE_MONTHS = 5`. See §13 C-12.
+> Divisor is `PRODUCTIVE_MONTHS = 5`. See §13 C-12.
 
 **Verified — Object "Архив г.Брест" (kvo = 8, within 5–10 band):**
 
 ```
-kvo = 8  (8 distinct types with count > 0)
+kvo = 1 + 3 + 3 + 1 = 8  (sum of work quantities; the 4 акты are excluded)
 round_trip_min = 20
 
 5 < kvo=8 ≤ 10  →  effective_trips = 8
@@ -280,10 +293,10 @@ itogo_chislo_no_travel =
 **Verified — Object "Архив г. Брест":**
 
 ```
-total_no_travel   = 20+20+40.683+30.417+0+0+72.2  = 183.3 min  ✓
-total_with_travel = 20+20+40.683+30.417+0+0+136.2 = 247.3 min  ✓
-183.3 / 60 / 142.8 × 1.12 = 0.023961  ✓
-247.3 / 60 / 142.8 × 1.12 = 0.032327  ✓
+total_no_travel   = 20+20+40.683+31.347+0+0+72.2  = 184.23 min  ✓
+total_with_travel = 20+20+40.683+31.347+0+0+136.2 = 248.23 min  ✓
+184.23 / 60 / 142.8 × 1.12 = 0.024082  ✓
+248.23 / 60 / 142.8 × 1.12 = 0.032448  ✓
 ```
 
 ## Engineer Workload Formulas (§6.12–§6.14)
@@ -400,15 +413,15 @@ Calculation constants are externalized and never hardcoded in application logic.
 | `PS_R2_VISITS_PER_YEAR`        | 4       | ПС full maintenance visits/year                                                                                                                                                                                   |
 | `VIDEO_R1_VISITS_PER_YEAR`     | 10      | Видео routine visits/year                                                                                                                                                                                         |
 | `VIDEO_R2_VISITS_PER_YEAR`     | 2       | Видео full maintenance visits/year                                                                                                                                                                                |
-| `PLANNING_PERIOD_MONTHS`       | 6       | Planning horizon (months); used to convert 6-month totals (records and repairs) to monthly averages in `records_monthly` (§6.5) and as the upper bound in the cross-key constraint for `REPAIR_PRODUCTIVE_MONTHS` |
-| `REPAIR_PRODUCTIVE_MONTHS`     | 5       | Divisor for repair monthly averaging                                                                                                                                                                              |
+| `PLANNING_PERIOD_MONTHS`       | 6       | Planning horizon (months) — the length of the period repair and records quantities are entered for. Not a divisor; it is the upper bound in the cross-key constraint for `PRODUCTIVE_MONTHS` |
+| `PRODUCTIVE_MONTHS`     | 5       | Divisor for repair AND records monthly averaging                                                                                                                                                                              |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | 5       | kvo ≤ this → zero travel and PZV overhead for repairs                                                                                                                                                             |
 | `REPAIR_TRAVEL_CAP`            | 10      | kvo above this → cap effective_trips at this value                                                                                                                                                                |
 | `ENGINEER_WARNING_THRESHOLD`   | 0.9     | Load ratio at which engineer status becomes "warning"                                                                                                                                                             |
 | `RECORDS_ACCESS_MINUTES`       | 60      | Normative minutes per access/disruption request (Записи)                                                                                                                                                          |
 | `RECORDS_MONITORING_MINUTES`   | 180     | Normative minutes per monitoring records request (Записи)                                                                                                                                                         |
-| `RECORDS_FOOTAGE_MINUTES`      | 180     | Normative minutes per video footage request (Записи)                                                                                                                                                              |
-| `RECORDS_BACKUP_MINUTES`       | 120     | Normative minutes per backup control instance (Записи)                                                                                                                                                            |
+| `RECORDS_FOOTAGE_MINUTES`      | 20      | Normative minutes per footage request served without a site visit (Записи)                                                                                                                                                              |
+| `RECORDS_BACKUP_MINUTES`       | 3.15    | Normative minutes per storage system per 21-working-day month (Записи). Source is `=0.15*21`; fractional, so BigDecimal not Integer                                                                                                                                                            |
 | `RECORDS_ADMIN_MINUTES`        | 60      | Normative minutes per security admin instance (Записи)                                                                                                                                                            |
 
 ### Config Validation Rules (§6.11.1) — MVP only
@@ -430,8 +443,8 @@ All `app_config` values are validated **on application startup** and **on every 
 | `PS_R2_VISITS_PER_YEAR`        | `>= 1`          | `CONFIG_PS_R2_VISITS_ZERO`                       | Same                                                                                                                                                                   |
 | `VIDEO_R1_VISITS_PER_YEAR`     | `>= 1`          | `CONFIG_VIDEO_R1_VISITS_ZERO`                    | Same                                                                                                                                                                   |
 | `VIDEO_R2_VISITS_PER_YEAR`     | `>= 1`          | `CONFIG_VIDEO_R2_VISITS_ZERO`                    | Same                                                                                                                                                                   |
-| `PLANNING_PERIOD_MONTHS`       | `>= 1`          | `CONFIG_PLANNING_PERIOD_MONTHS_ZERO`             | Planning period length (months) — divisor for both records and repairs monthly averaging; must be positive                                                             |
-| `REPAIR_PRODUCTIVE_MONTHS`     | `>= 1`          | `CONFIG_REPAIR_PRODUCTIVE_MONTHS_ZERO`           | Divisor in repair monthly formula — zero causes divide-by-zero                                                                                                         |
+| `PLANNING_PERIOD_MONTHS`       | `>= 1`          | `CONFIG_PLANNING_PERIOD_MONTHS_ZERO`             | Planning period length (months) — period length only, not a divisor; must be positive                                                                                  |
+| `PRODUCTIVE_MONTHS`     | `>= 1`          | `CONFIG_PRODUCTIVE_MONTHS_ZERO`           | Divisor in repair and records monthly formulas — zero causes divide-by-zero                                                                                                         |
 | `REPAIR_TRAVEL_ZERO_THRESHOLD` | `>= 0`          | `CONFIG_REPAIR_TRAVEL_ZERO_THRESHOLD_NEGATIVE`   | kvo threshold — negative is meaningless                                                                                                                                |
 | `REPAIR_TRAVEL_CAP`            | `>= 1`          | `CONFIG_REPAIR_TRAVEL_CAP_ZERO`                  | Cap on effective_trips — zero would eliminate all repair travel overhead                                                                                               |
 | `ENGINEER_WARNING_THRESHOLD`   | `> 0 AND < 1.0` | `CONFIG_ENGINEER_WARNING_THRESHOLD_OUT_OF_RANGE` | Load ratio is bounded [0, ∞); threshold at 1.0 or above means the warning band collapses to zero width and the "warning" state becomes unreachable before "overloaded" |
@@ -446,7 +459,7 @@ All `app_config` values are validated **on application startup** and **on every 
 | Rule                      | Constraint                                           | Violation code                              | Reason                                                                                                       |
 | ------------------------- | ---------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Repair threshold ordering | `REPAIR_TRAVEL_ZERO_THRESHOLD < REPAIR_TRAVEL_CAP`   | `CONFIG_REPAIR_THRESHOLDS_INVERTED`         | If ZERO_THRESHOLD ≥ CAP the three-band logic inverts: band 2 never fires; effective_trips jump from 0 to cap |
-| Repair period consistency | `REPAIR_PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` | `CONFIG_REPAIR_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from                                        |
+| Productive period consistency | `PRODUCTIVE_MONTHS <= PLANNING_PERIOD_MONTHS` | `CONFIG_PRODUCTIVE_EXCEEDS_PLANNING` | Productive months cannot exceed the planning horizon they derive from                                        |
 
 #### Startup behaviour
 

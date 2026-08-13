@@ -355,13 +355,13 @@ No catalog management pages, no periods page.
 
 | ID         | Criterion                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **PAC-01** | For a manually entered object matching "Архив г.Брест, ул.Московская, 202Д" with the correct equipment quantities, `itogo_chislo_with_travel = 0.032327 ±0.000001`.      |
-| **PAC-02** | For an engineer assigned as the sole responsible engineer for that object with `capacity_fte = 1.0`, `engineer_total_load = 0.032327 ±0.000001` and `status = "normal"`. |
+| **PAC-01** | For a manually entered object matching "Архив г.Брест, ул.Московская, 202Д" with the correct equipment quantities, `itogo_chislo_with_travel = 0.032448 ±0.000001`.      |
+| **PAC-02** | For an engineer assigned as the sole responsible engineer for that object with `capacity_fte = 1.0`, `engineer_total_load = 0.032448 ±0.000001` and `status = "normal"`. |
 | **PAC-03** | СВОД XLSX export, when opened in Excel, matches manually verified reference values within ±0.001.                                                                        |
 | **PAC-04** | Editing any equipment quantity in the UI and saving immediately updates the СВОД tab and the engineer's load ratio without page refresh.                                 |
 | **PAC-05** | СВОД table loads first 100 rows in under 3 seconds.                                                                                                                      |
 | **PAC-06** | Unauthenticated requests to any route redirect to `/login`.                                                                                                              |
-| **PAC-07** | When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032327 / 2 = 0.016163 ±0.000001`.                                 |
+| **PAC-07** | When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032448 / 2 = 0.016224 ±0.000001`.                                 |
 | **PAC-08** | Division dashboard shows correct required FTE total = SUM of `itogo_chislo_with_travel` for all objects in that division.                                                |
 | **PAC-09** | Health endpoint `GET /actuator/health` returns HTTP 200 with `{"status": "UP"}` (Spring Boot Actuator default) and includes database connectivity check.                 |
 

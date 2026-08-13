@@ -31,9 +31,9 @@
 
 **AC-18:** `GET /coverage/gaps?divisionId=X` returns all objects in division X that have zero rows in `object_engineers`. Verified against manual count from the object list.
 
-**PAC-02:** For an engineer assigned as the sole responsible engineer for the reference object with `capacityFte = 1.0`, `engineerTotalLoad = 0.032327 ±0.000001` and `status = "normal"`.
+**PAC-02:** For an engineer assigned as the sole responsible engineer for the reference object with `capacityFte = 1.0`, `engineerTotalLoad = 0.032448 ±0.000001` and `status = "normal"`.
 
-**PAC-07:** When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032327 / 2 = 0.016163 ±0.000001`.
+**PAC-07:** When a second engineer is assigned to the reference object, both engineers' `total_load` updates to `0.032448 / 2 = 0.016224 ±0.000001`.
 
 ## Database Tables Required
 

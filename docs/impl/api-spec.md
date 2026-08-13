@@ -968,8 +968,8 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD >= REPAIR_TRAVEL_CAP` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must be less than REPAIR_TRAVEL_CAP` |
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD < 0` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must not be negative` |
 | 422 | `REPAIR_TRAVEL_CAP < 1` **(MVP)** | `REPAIR_TRAVEL_CAP must be at least 1` |
-| 422 | `REPAIR_PRODUCTIVE_MONTHS < 1` **(MVP)** | `REPAIR_PRODUCTIVE_MONTHS must be at least 1` |
-| 422 | `REPAIR_PRODUCTIVE_MONTHS > PLANNING_PERIOD_MONTHS` **(MVP)** | `REPAIR_PRODUCTIVE_MONTHS must not exceed PLANNING_PERIOD_MONTHS` |
+| 422 | `PRODUCTIVE_MONTHS < 1` **(MVP)** | `PRODUCTIVE_MONTHS must be at least 1` |
+| 422 | `PRODUCTIVE_MONTHS > PLANNING_PERIOD_MONTHS` **(MVP)** | `PRODUCTIVE_MONTHS must not exceed PLANNING_PERIOD_MONTHS` |
 | 429 | Rate limit exceeded | `Too many requests. Please wait before retrying.` |
 | 500 | Unexpected server error | `An unexpected error occurred. Please try again later.` |
 

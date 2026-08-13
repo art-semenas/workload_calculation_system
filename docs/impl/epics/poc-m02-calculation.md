@@ -27,9 +27,9 @@
 - Band B (kvo ≤ 5): effective_trips = 0, repair_travel_6months = 0, repair_pzv_6months = 0
 - Band C (kvo > 10): For kvo=17, round_trip_min=20: effective_trips = 10 (capped), repair_travel_6months = 10 × 20 = 200
 
-**AC-26:** `PUT /objects/:id/records` with quantities for all five task types persists the values. `GET /objects/:id/records` returns the saved quantities. The `records_monthly` value in the object summary equals `SUM(task_quantity × task_normative_minutes) / config[PLANNING_PERIOD_MONTHS]` within ±0.001.
+**AC-26:** `PUT /objects/:id/records` with quantities for all five task types persists the values. `GET /objects/:id/records` returns the saved quantities. The `records_monthly` value in the object summary equals `SUM(task_quantity × task_normative_minutes) / config[PRODUCTIVE_MONTHS]` within ±0.001.
 
-**PAC-01:** For a manually entered object matching "Архив г.Брест, ул.Московская, 202Д" with the correct equipment quantities, `itogo_chislo_with_travel = 0.032327 ±0.000001`.
+**PAC-01:** For a manually entered object matching "Архив г.Брест, ул.Московская, 202Д" with the correct equipment quantities, `itogo_chislo_with_travel = 0.032448 ±0.000001`.
 
 **PAC-03:** СВОД XLSX export, when opened in Excel, matches manually verified reference values within ±0.001.
 
@@ -93,7 +93,7 @@ See docs/impl/calculation-engine.md for full formulas. Key stages:
 2. Per-system per-visit subtotals (SUM over assignments per system_type)
 3. Annual time via visit frequencies from config (e.g. OS_R1_VISITS_PER_YEAR=10)
 4. Monthly average per system: `(R1_annual + R2_annual) / 12`
-5. Records: `records_monthly = records_6months / config[PLANNING_PERIOD_MONTHS]`
+5. Records: `records_monthly = records_6months / config[PRODUCTIVE_MONTHS]`
 6. Repairs: three-band threshold formula (kvo ≤ 5 → 0 trips, 5 < kvo ≤ 10 → kvo trips, kvo > 10 → 10 trips)
 7. СВОД aggregation: `itogo_chislo = total_monthly_min / (config[MONTHLY_HOURS_FUND] × 60)`
 8. Zero guard: itogo = 0 when all work components are zero (prevents phantom FTE from PZV/travel on empty objects)
