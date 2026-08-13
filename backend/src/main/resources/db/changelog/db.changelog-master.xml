@@ -11,4 +11,5 @@
   <include file="db/changelog/changes/v1.0.3-schema-fix.xml"/>
   <include file="db/changelog/changes/v1.0.4-records-bigdecimal.xml"/>
   <include file="db/changelog/changes/v1.0.5-object-address.xml"/>
+  <include file="db/changelog/changes/v1.0.6-seed-org-data.sql"/>
 </databaseChangeLog>
