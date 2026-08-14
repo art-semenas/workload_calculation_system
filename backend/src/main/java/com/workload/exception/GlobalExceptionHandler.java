@@ -55,6 +55,19 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "Object not found")));
   }
 
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "User not found")));
+  }
+
+  @ExceptionHandler(InvalidRoleForEndpointException.class)
+  public ResponseEntity<ApiResponse<Void>> handleInvalidRoleForEndpoint(
+      InvalidRoleForEndpointException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
+  }
+
   @ExceptionHandler(EntityNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
