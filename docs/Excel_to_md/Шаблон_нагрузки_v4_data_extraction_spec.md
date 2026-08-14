@@ -257,6 +257,21 @@ Source: `Нормативы!A19:E20` (`Нормативы_Админ`) — the v
 | Контроль процесса резервного копирования одной СХД | `=0.15*21` → **3.15** | 3 | 2 645 |
 | Администрирование систем безопасности филиала | 60 | 14 | 163 |
 
+**What the first and third tasks actually distinguish (from the product owner — the names alone do
+not convey it):** both are "fetch video and hand it to a requester". The difference is *where the
+source is*.
+
+- `access_requests` (**60 min**) — the requester cannot view the recording remotely, so the security
+  department **at headquarters** pulls the video from a remote object, saves it locally and uploads
+  it to the requester. Source and requester are in **different regions** (e.g. Minsk requests
+  footage from Brest). The 60 minutes covers that remote transfer.
+- `footage_requests` (**20 min**) — the same job done **within one division** (Brest requests Brest
+  footage), so there is no cross-region transfer.
+
+The seeded data matches: Головной офис records 2 375 access and 0 footage, while the regions are
+mostly the reverse (Гомель: 17 access, 293 footage). Do not treat a zero footage count at HQ, or a
+large access count there, as suspicious — that is the expected shape.
+
 Note the fourth value is a live formula `0.15 × 21` (0.15 min/day × 21 working days), not a literal.
 See §8.3 — the application currently uses different numbers for two of these five.
 
@@ -621,18 +636,19 @@ actually do the work. Either the unit is genuinely understaffed — which is exa
 system exists to surface — or the per-request normatives overstate a centralised, batched workflow
 that they were written for at branch scale.
 
-**Hypothesis worth testing with the data owner: the volume may sit in the wrong column.**
+**A column-swap hypothesis was raised and refuted.** It looked as though the 2 375 might belong in
+`footage_requests` at 20 min, which would have given 2.046 FTE and matched the observed staffing.
+The product owner's explanation rules it out: the two tasks differ by *source location*, not by kind
+of work, and HQ handles precisely the cross-region case that `access_requests` prices at 60 min. The
+division split in the data confirms it (see §3.5). **The columns are used correctly and the 4.5295
+FTE stands as computed.**
 
-| Column | Task | Min | Value here |
-|---|---|---:|---:|
-| `access_requests` | Запросы в связи с **отсутствием (нарушением) доступа** к самостоятельному просмотру | 60 | **2 375** |
-| `footage_requests` | Запросы **по предоставлению записей** без выезда на объекты банка | 20 | **0** |
-
-"Providing video data to external organisations" matches *предоставление записей*, not *restoring
-self-service access* — and the object records zero footage requests despite that being its core
-function. Repricing that volume at the footage rate gives `(2375×20 + 124×180 + 2645×3.15)/5 + 20 =
-15 650 min/month` = **2.046 FTE**, which matches the observed 1–2 engineers. Three things line up:
-the task wording, the empty footage column, and the resulting headcount.
+So the open question is narrower and purely about calibration: `records_monthly = 34 630 min` is
+**577 h/month**, where one person supplies 142.8 h and two supply 285.6 h — the model asks for
+roughly **2× what two engineers can deliver**, or ~27.5 h per working day. Either the unit is
+genuinely that overloaded, or 60 min/request overstates a batched, repetitive workflow at this
+volume. Note also that the `/5` productive-months divisor (§8.2) accounts for 20% of the figure: on
+a calendar `/6` basis the object would be 3.77 FTE rather than 4.53.
 
 `backup_control = 2 645` contributes only 8 332 of 173 152 minutes (under 5%), so it barely moves
 the total either way.
