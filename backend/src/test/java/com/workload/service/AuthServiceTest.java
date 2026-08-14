@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import com.workload.dto.AuthTokens;
 import com.workload.dto.LoginRequest;
-import com.workload.dto.LoginResponse;
 import com.workload.entity.Role;
 import com.workload.entity.User;
 import com.workload.exception.InvalidCredentialsException;
@@ -45,11 +45,12 @@ class AuthServiceTest {
     when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
     when(jwtTokenProvider.generateToken(user)).thenReturn("jwt-token");
+    when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("refresh-token");
 
-    LoginResponse response =
-        authService.login(new LoginRequest("admin@workload.local", "password"));
+    AuthTokens tokens = authService.login(new LoginRequest("admin@workload.local", "password"));
 
-    assertThat(response.token()).isEqualTo("jwt-token");
+    assertThat(tokens.accessToken()).isEqualTo("jwt-token");
+    assertThat(tokens.refreshToken()).isEqualTo("refresh-token");
   }
 
   @Test

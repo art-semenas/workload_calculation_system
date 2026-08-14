@@ -1,7 +1,7 @@
 package com.workload.service;
 
+import com.workload.dto.AuthTokens;
 import com.workload.dto.LoginRequest;
-import com.workload.dto.LoginResponse;
 import com.workload.dto.UserDto;
 import com.workload.entity.User;
 import com.workload.exception.InvalidCredentialsException;
@@ -30,7 +30,7 @@ public class AuthService {
     this.userMapper = userMapper;
   }
 
-  public LoginResponse login(LoginRequest request) {
+  public AuthTokens login(LoginRequest request) {
     User user =
         userRepository
             .findByEmail(request.email())
@@ -41,9 +41,33 @@ public class AuthService {
       throw new InvalidCredentialsException();
     }
 
-    String token = jwtTokenProvider.generateToken(user);
-    UserDto userDto = userMapper.toDto(user);
-    return new LoginResponse(token, userDto);
+    return issueTokens(user);
+  }
+
+  /**
+   * Exchanges a refresh token for a fresh pair. The user is re-read from the database, so a
+   * deactivated account or a changed role takes effect here rather than lasting the full refresh
+   * lifetime.
+   */
+  public AuthTokens refresh(String refreshToken) {
+    if (!jwtTokenProvider.isValidRefreshToken(refreshToken)) {
+      throw new InvalidCredentialsException();
+    }
+
+    User user =
+        userRepository
+            .findByEmail(jwtTokenProvider.getEmailFromRefreshToken(refreshToken))
+            .filter(User::isActive)
+            .orElseThrow(InvalidCredentialsException::new);
+
+    return issueTokens(user);
+  }
+
+  private AuthTokens issueTokens(User user) {
+    return new AuthTokens(
+        jwtTokenProvider.generateToken(user),
+        jwtTokenProvider.generateRefreshToken(user),
+        userMapper.toDto(user));
   }
 
   public UserDto getMe(String email) {
