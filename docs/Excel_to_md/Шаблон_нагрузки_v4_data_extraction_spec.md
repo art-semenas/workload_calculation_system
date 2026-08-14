@@ -600,33 +600,42 @@ and the value is the live formula `=0.15*21`. So it is 0.15 min/day of backup mo
 21-working-day month — a **per storage system per month** rate, not per request like the other four.
 That is why 3.15 and 120 are not comparable as "the same number measured differently".
 
-**Data-quality flags for the data owner — neither resolved here.** Both concern seq 1377,
-`Операционная служба г.Минск пр. ДЗЕРЖИНСКОГО, 69`, which at **4.5295 FTE is the largest object in
-the estate** — 75% more than the next (2.5952) and 4.4% of the 103.24 FTE total.
+**Centralised records work at seq 1377 — confirmed real, but the headcount needs review.**
 
-*Backup count.* Only 3 objects report this task: two at `2`, and seq 1377 at **2 645**. The
-normative is per **one storage system** per 21-working-day month, so as a count of СХД 2 645 is not
-credible. It is plausible as a count of *check events* (~21/working day for a central operations
-service), but that is not the unit this normative multiplies. Under the live normative the disputed
-figure is worth 0.218 FTE — the object would fall to ~4.312 — so the impact is modest; under the
-rejected catalog value of 120 it would have been ~8.3 FTE for one object, which is what made §8.3
-matter.
-
-*Access requests — the larger question.* 82% of seq 1377's records load comes from
-`access_requests = 2 375` at 60 min each = 142 500 min/period ≈ 3.73 FTE on its own:
+Seq 1377 `Операционная служба г.Минск пр. ДЗЕРЖИНСКОГО, 69` is the **largest object in the estate
+at 4.5295 FTE**, 75% above the next, and it is *pure* records work — no equipment, no repairs, no
+travel:
 
 ```
-access      2375 × 60   = 142 500 min  (82%)
-monitoring   124 × 180  =  22 320 min  (13%)
-backup      2645 × 3.15 =   8 332 min  ( 5%)
-                          ────────────
-             6-mo total = 173 152 → /5 = 34 630 min/month
+os 0.00 | ps 0.00 | video 0.00 | records 34 630.35 | repair 0.00 | travel 0.00
 ```
 
-2 375 access-restoration requests in six months is ~19 per working day at one location. Plausible
-for a central service desk, but a 60-minute-per-request normative written for branch-scale volumes
-may be the wrong model at that scale — and it currently drives the single largest staffing figure in
-the calculation.
+Domain confirmation from the product owner: both large counts are genuine, not data-entry errors.
+Video-data requests from outside organisations are handled centrally at this one location, and the
+daily copying of video data from objects to main storage is likewise monitored in one place — in
+both cases by **1–2 engineers**.
+
+That makes this a calibration question rather than a data question. The engine assigns the object's
+sole engineer a `load_ratio` of **5.985 → OVERLOADED**, i.e. the model says ~6 FTE where 1–2 people
+actually do the work. Either the unit is genuinely understaffed — which is exactly the finding this
+system exists to surface — or the per-request normatives overstate a centralised, batched workflow
+that they were written for at branch scale.
+
+**Hypothesis worth testing with the data owner: the volume may sit in the wrong column.**
+
+| Column | Task | Min | Value here |
+|---|---|---:|---:|
+| `access_requests` | Запросы в связи с **отсутствием (нарушением) доступа** к самостоятельному просмотру | 60 | **2 375** |
+| `footage_requests` | Запросы **по предоставлению записей** без выезда на объекты банка | 20 | **0** |
+
+"Providing video data to external organisations" matches *предоставление записей*, not *restoring
+self-service access* — and the object records zero footage requests despite that being its core
+function. Repricing that volume at the footage rate gives `(2375×20 + 124×180 + 2645×3.15)/5 + 20 =
+15 650 min/month` = **2.046 FTE**, which matches the observed 1–2 engineers. Three things line up:
+the task wording, the empty footage column, and the resulting headcount.
+
+`backup_control = 2 645` contributes only 8 332 of 173 152 minutes (under 5%), so it barely moves
+the total either way.
 
 Both are data/normative questions rather than defects: the engine reproduces `Записи Расчет!K`
 exactly on all 2 784 comparable objects (§12), so it is faithfully computing what the cells say.
