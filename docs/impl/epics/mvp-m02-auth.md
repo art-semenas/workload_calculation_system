@@ -23,6 +23,7 @@ From docs/impl/db-schema.md:
 - `users` — full MVP schema including MVP-only columns:
   - `failed_login_count INTEGER NOT NULL DEFAULT 0` — brute-force protection counter (§21.3)
   - `locked_until TIMESTAMP NULL` — account lockout expiry (§21.3)
+  - `is_engineer BOOLEAN NOT NULL DEFAULT FALSE` — job function, independent of `role`. Without it, `role` conflates the permission tier with being an assignable engineer, so promoting an engineer to editor drops them out of `GET /engineers` and out of the assignment guard while their `object_engineers` rows keep dividing the object's FTE. Backfilled from `role = 'engineer'`; constrained so the engineer role implies the flag.
   - All PoC columns remain unchanged (no drop/rename)
 - All PoC tables unchanged — RBAC enforcement is added at the application layer
 
@@ -41,6 +42,7 @@ From docs/impl/api-spec.md:
 - `GET /admin/users/:id` — get user details. Admin only.
 - `PUT /admin/users/:id` — update user fields (name, email, role, divisionId). Admin only.
 - `PUT /admin/users/:id/activate` — activate placeholder account (sets `is_active = TRUE`, `requires_activation = FALSE`). Admin only.
+- `PUT /admin/users/:id/password` — issue or reset a password. Admin only. Required to make an activated placeholder usable: placeholders are created with an unusable credential, so activation alone cannot produce a login. Also the only password-reset path in MVP base. Self-service activation by emailed token is deliberately deferred — it needs mail infrastructure the stack does not yet have.
 - `DELETE /admin/users/:id` — deactivate user (sets `is_active = FALSE`). Admin only. Blocked if engineer has active object assignments (`409 ENGINEER_HAS_ACTIVE_ASSIGNMENTS`).
 
 ### Division / Branch deletes (MVP only — not available in PoC per S-04)
@@ -86,6 +88,8 @@ Key rules:
 - **engineer:** own objects — edit records/repairs for assigned objects in active period; view own workload only; `GET /engineers` returns only own row
 
 Editor division scoping: `users.division_id` restricts write operations to objects in that division. `home_division_id` on engineers is display-only — does not restrict cross-division assignment.
+
+Role vs. job function: the matrix above is the permission axis; `users.is_engineer` is the job function and varies independently. A team lead who still services objects is `role = 'editor', is_engineer = TRUE`. Consequently `GET /engineers` membership keys on the flag, the own-row-only filter keys on the role, and the "edit records/repairs on own objects" permission keys on the flag plus assignment.
 
 ## Account Lockout (§21.3)
 

@@ -344,6 +344,98 @@ class AdminUserControllerIT extends IntegrationTestBase {
         .body("data.requiresActivation", equalTo(false));
   }
 
+  // --- Engineer status is independent of the permission role ---
+
+  /**
+   * A team lead who still services objects needs editor rights and must stay an engineer: role is
+   * the permission tier, {@code is_engineer} is the job function.
+   */
+  @Test
+  void engineerPromotedToEditorStaysAnEngineer() {
+    String engineerId = createEngineer();
+    String email = engineerEmail(engineerId);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"" + email + "\", \"name\": \"Team Lead\", \"role\": \"editor\"}")
+        .when()
+        .put("/admin/users/{id}", engineerId)
+        .then()
+        .statusCode(200)
+        .body("data.role", equalTo("editor"))
+        .body("data.engineer", equalTo(true));
+
+    // Still listed as an engineer, still reachable on the engineer detail route.
+    given()
+        .header("Authorization", admin)
+        .when()
+        .get("/engineers")
+        .then()
+        .statusCode(200)
+        .body("data.findAll { it.id == '" + engineerId + "' }", hasSize(1));
+
+    given()
+        .header("Authorization", admin)
+        .when()
+        .get("/engineers/{id}", engineerId)
+        .then()
+        .statusCode(200)
+        .body("data.role", equalTo("editor"));
+
+    // …and still assignable to objects.
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"engineerId\": \"" + engineerId + "\"}")
+        .when()
+        .post("/objects/{id}/engineers", createObject())
+        .then()
+        .statusCode(201);
+  }
+
+  /** The engineer permission tier is only meaningful for someone who actually is an engineer. */
+  @Test
+  void nonEngineerCannotBeGivenTheEngineerRole() {
+    String id = createUser("not-an-engineer", "viewer");
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"n@workload.local\", \"name\": \"N\", \"role\": \"engineer\"}")
+        .when()
+        .put("/admin/users/{id}", id)
+        .then()
+        .statusCode(422);
+  }
+
+  /** Demotion is safe now: the flag outlives the role change, so assignments keep their owner. */
+  @Test
+  void engineerDemotedFromEditorBackToEngineerRole() {
+    String engineerId = createEngineer();
+    String email = engineerEmail(engineerId);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"" + email + "\", \"name\": \"Lead\", \"role\": \"editor\"}")
+        .when()
+        .put("/admin/users/{id}", engineerId)
+        .then()
+        .statusCode(200);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"" + email + "\", \"name\": \"Lead\", \"role\": \"engineer\"}")
+        .when()
+        .put("/admin/users/{id}", engineerId)
+        .then()
+        .statusCode(200)
+        .body("data.role", equalTo("engineer"))
+        .body("data.engineer", equalTo(true));
+  }
+
   // --- PUT /admin/users/:id/password ---
 
   /**
@@ -505,6 +597,10 @@ class AdminUserControllerIT extends IntegrationTestBase {
   }
 
   // --- helpers ---
+
+  private String engineerEmail(String engineerId) {
+    return userRepository.findById(UUID.fromString(engineerId)).orElseThrow().getEmail();
+  }
 
   private User lockAccount(String id) {
     User user = userRepository.findById(UUID.fromString(id)).orElseThrow();

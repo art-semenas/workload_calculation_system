@@ -80,7 +80,8 @@ public class RbacService {
     if (user.getRole() == Role.EDITOR && ownsDivisionOf(user, objectId)) {
       return;
     }
-    if (user.getRole() == Role.ENGINEER && isAssignedTo(user, objectId)) {
+    // Keyed on the job function: the person doing the work may also hold an editor or viewer role.
+    if (user.isEngineer() && isAssignedTo(user, objectId)) {
       return;
     }
     throw new AccessDeniedException("You may not edit data for this object");

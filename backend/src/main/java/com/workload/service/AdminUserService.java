@@ -91,7 +91,11 @@ public class AdminUserService {
   @Transactional
   public AdminUserDto update(UUID id, AdminUserUpdateRequest request) {
     User user = loadById(id);
-    if (request.role() == Role.ENGINEER && user.getRole() != Role.ENGINEER) {
+    // The engineer permission tier only makes sense for someone who is actually an engineer —
+    // it scopes them to their own row and their own objects. Engineer status itself is set by
+    // /engineers, which owns capacity; every other role change is free, and safe now that the
+    // is_engineer flag outlives it.
+    if (request.role() == Role.ENGINEER && !user.isEngineer()) {
       throw new InvalidRoleForEndpointException();
     }
     user.setEmail(request.email());
@@ -150,7 +154,7 @@ public class AdminUserService {
   @Transactional
   public void deactivate(UUID id) {
     User user = loadById(id);
-    if (user.getRole() == Role.ENGINEER && objectEngineerRepository.countByEngineerId(id) > 0) {
+    if (user.isEngineer() && objectEngineerRepository.countByEngineerId(id) > 0) {
       throw new EngineerHasActiveAssignmentsException(id.toString());
     }
     user.setActive(false);

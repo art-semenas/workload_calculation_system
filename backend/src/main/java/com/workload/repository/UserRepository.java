@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
   List<User> findAllByRole(Role role);
 
+  /** Engineers by job function, not permission tier — an engineer may hold any role. */
+  List<User> findAllByEngineerTrue();
+
   List<User> findAllByRoleAndActive(Role role, boolean active);
 
   Page<User> findAllByRole(Role role, Pageable pageable);

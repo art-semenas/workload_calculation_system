@@ -45,6 +45,8 @@ public class AuthenticationTestHelper {
             .name("RBAC " + role.getValue())
             .passwordHash(passwordEncoder.encode(TEST_PASSWORD))
             .role(role)
+            // ck_users_engineer_role: the engineer role requires the engineer flag.
+            .engineer(role == Role.ENGINEER)
             .divisionId(divisionId)
             .capacityFte(BigDecimal.ONE)
             .active(true)

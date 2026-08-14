@@ -71,6 +71,12 @@ class AdminUserServiceTest {
         .build();
   }
 
+  private User engineerUser(Role role) {
+    User user = user(role);
+    user.setEngineer(true);
+    return user;
+  }
+
   private User lockedUser() {
     User user = user(Role.VIEWER);
     user.setFailedLoginCount(5);
@@ -90,6 +96,7 @@ class AdminUserServiceTest {
         u.getEmployeeId(),
         u.isActive(),
         u.isRequiresActivation(),
+        u.isEngineer(),
         u.getLockedUntil(),
         u.getCreatedAt(),
         u.getUpdatedAt());
@@ -244,7 +251,7 @@ class AdminUserServiceTest {
   }
 
   @Test
-  void updateRejectsPromotionToEngineer() {
+  void updateRejectsEngineerRoleForNonEngineer() {
     User existing = user(Role.VIEWER);
     when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
 
@@ -259,7 +266,7 @@ class AdminUserServiceTest {
 
   @Test
   void updateKeepsExistingEngineerRole() {
-    User existing = user(Role.ENGINEER);
+    User existing = engineerUser(Role.ENGINEER);
     when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
     when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -269,6 +276,46 @@ class AdminUserServiceTest {
 
     assertThat(existing.getName()).isEqualTo("Eng");
     assertThat(existing.getRole()).isEqualTo(Role.ENGINEER);
+  }
+
+  /** Role is the permission tier; the engineer flag is the job function and survives the change. */
+  @Test
+  void updatePromotesEngineerToEditorKeepingEngineerStatus() {
+    User existing = engineerUser(Role.ENGINEER);
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        existing.getId(),
+        new AdminUserUpdateRequest("lead@test.com", "Lead", Role.EDITOR, UUID.randomUUID(), null));
+
+    assertThat(existing.getRole()).isEqualTo(Role.EDITOR);
+    assertThat(existing.isEngineer()).isTrue();
+  }
+
+  /** An engineer holding another role may be given the engineer permission tier back. */
+  @Test
+  void updateAllowsEngineerRoleForFlaggedEngineer() {
+    User existing = engineerUser(Role.EDITOR);
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        existing.getId(),
+        new AdminUserUpdateRequest("eng@test.com", "Eng", Role.ENGINEER, null, null));
+
+    assertThat(existing.getRole()).isEqualTo(Role.ENGINEER);
+  }
+
+  /** Deactivation is blocked by assignments regardless of which role the engineer holds. */
+  @Test
+  void deactivateEditorWhoIsAnEngineerWithAssignmentsBlocked() {
+    User lead = engineerUser(Role.EDITOR);
+    when(userRepository.findById(lead.getId())).thenReturn(Optional.of(lead));
+    when(objectEngineerRepository.countByEngineerId(lead.getId())).thenReturn(1);
+
+    assertThatThrownBy(() -> adminUserService.deactivate(lead.getId()))
+        .isInstanceOf(EngineerHasActiveAssignmentsException.class);
   }
 
   // --- setPassword ---
@@ -328,7 +375,7 @@ class AdminUserServiceTest {
 
   @Test
   void deactivateEngineerWithAssignmentsBlocked() {
-    User engineer = user(Role.ENGINEER);
+    User engineer = engineerUser(Role.ENGINEER);
     when(userRepository.findById(engineer.getId())).thenReturn(Optional.of(engineer));
     when(objectEngineerRepository.countByEngineerId(engineer.getId())).thenReturn(2);
 
@@ -339,7 +386,7 @@ class AdminUserServiceTest {
 
   @Test
   void deactivateEngineerWithoutAssignmentsAllowed() {
-    User engineer = user(Role.ENGINEER);
+    User engineer = engineerUser(Role.ENGINEER);
     when(userRepository.findById(engineer.getId())).thenReturn(Optional.of(engineer));
     when(objectEngineerRepository.countByEngineerId(engineer.getId())).thenReturn(0);
 

@@ -68,6 +68,7 @@ class EngineerServiceTest {
         .name("Test Engineer")
         .passwordHash("hash")
         .role(Role.ENGINEER)
+        .engineer(true)
         .capacityFte(capacityFte)
         .active(true)
         .requiresActivation(false)
@@ -93,6 +94,7 @@ class EngineerServiceTest {
     ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
     verify(userRepository).save(captor.capture());
     assertThat(captor.getValue().getRole()).isEqualTo(Role.ENGINEER);
+    assertThat(captor.getValue().isEngineer()).isTrue();
     assertThat(captor.getValue().isActive()).isTrue();
   }
 
@@ -136,14 +138,14 @@ class EngineerServiceTest {
   void findAll_filtersEngineersOnly() {
     UUID id = UUID.randomUUID();
     User eng = buildEngineer(id, new BigDecimal("1.0"));
-    when(userRepository.findAllByRole(Role.ENGINEER)).thenReturn(List.of(eng));
+    when(userRepository.findAllByEngineerTrue()).thenReturn(List.of(eng));
     when(engineerSummaryRepository.findByEngineerId(id)).thenReturn(Optional.empty());
     when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id));
 
     List<EngineerDto> result = engineerService.findAll(Optional.empty(), Optional.empty());
 
     assertThat(result).hasSize(1);
-    verify(userRepository).findAllByRole(Role.ENGINEER);
+    verify(userRepository).findAllByEngineerTrue();
   }
 
   @Test
@@ -156,7 +158,7 @@ class EngineerServiceTest {
         EngineerSummary.builder().id(UUID.randomUUID()).engineer(eng1).status("warning").build();
     EngineerSummary normalSum =
         EngineerSummary.builder().id(UUID.randomUUID()).engineer(eng2).status("normal").build();
-    when(userRepository.findAllByRole(Role.ENGINEER)).thenReturn(List.of(eng1, eng2));
+    when(userRepository.findAllByEngineerTrue()).thenReturn(List.of(eng1, eng2));
     when(engineerSummaryRepository.findByEngineerId(id1)).thenReturn(Optional.of(warningSum));
     when(engineerSummaryRepository.findByEngineerId(id2)).thenReturn(Optional.of(normalSum));
     when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id1));
@@ -199,7 +201,7 @@ class EngineerServiceTest {
             .createdAt(OffsetDateTime.now())
             .updatedAt(OffsetDateTime.now())
             .build();
-    when(userRepository.findAllByRole(Role.ENGINEER)).thenReturn(List.of(eng1, eng2));
+    when(userRepository.findAllByEngineerTrue()).thenReturn(List.of(eng1, eng2));
     when(engineerSummaryRepository.findByEngineerId(id1)).thenReturn(Optional.empty());
     when(engineerMapper.toDto(any(), any(), any())).thenReturn(stubDto(id1));
 

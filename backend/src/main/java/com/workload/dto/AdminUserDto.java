@@ -7,7 +7,8 @@ import java.util.UUID;
 
 /**
  * User representation for the admin management screen. Unlike {@link UserDto} (the caller's own
- * profile) it exposes account state an administrator has to act on — activation and lockout.
+ * profile) it exposes account state an administrator has to act on — activation, lockout, and
+ * whether the account is an engineer, which is independent of {@code role}.
  */
 public record AdminUserDto(
     UUID id,
@@ -20,6 +21,7 @@ public record AdminUserDto(
     String employeeId,
     boolean active,
     boolean requiresActivation,
+    boolean engineer,
     OffsetDateTime lockedUntil,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt) {}

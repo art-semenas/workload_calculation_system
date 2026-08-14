@@ -535,6 +535,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** List all engineers (paginated, filterable). When caller role = `engineer`, returns exactly one row (the calling user's own record).
 **Request body:** None.
+**Membership (MVP, M-02):** the list is `users.is_engineer = TRUE`, not `role = 'engineer'` — an engineer promoted to `editor` or `admin` is still an engineer and is still listed. The own-row-only filter keys on the caller's **role**, so an engineer who holds the editor role sees the full list.
 
 ---
 
@@ -900,7 +901,20 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 **Phase:** MVP only (M-02)
 **Description:** Update user fields. Admin only.
-**Request body:** `{ name, email, role, divisionId }`
+**Request body:** `{ name, email, role, divisionId, unlock? }`
+**Unlock:** `unlock: true` clears `locked_until` and `failed_login_count` (§21.3). It is opt-in — an ordinary edit leaves a locked account locked, so renaming an account cannot silently readmit it.
+**Errors:**
+- Returns HTTP 422 with message "Engineer accounts cannot be created through this endpoint" when `role = engineer` is set on an account that is not an engineer (`is_engineer = FALSE`). Engineer status is owned by `/engineers`, which sets `capacityFte`. Setting any other role on an engineer is allowed and does not remove them from `GET /engineers`.
+
+#### `PUT /admin/users/:id/password`
+
+**Phase:** MVP only (M-02)
+**Description:** Issue or reset a user's password. Admin only. This is the "provides or resets the password" step referenced under placeholder activation — a placeholder is created with an unusable credential, so activation alone leaves it unable to log in. Also releases any active lockout, since the lock guards a credential that no longer exists.
+**Request body:** `{ password }` — minimum 8 characters.
+**Response:** HTTP 204, no body.
+**Errors:**
+- Returns HTTP 404 with message "User not found".
+- Returns HTTP 422 on a password shorter than 8 characters.
 
 #### `PUT /admin/users/:id/activate`
 
@@ -963,7 +977,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 422 | Attempt to set `round_trip_min` directly | `Round trip time is auto-calculated and cannot be edited directly` |
 | 422 | Engineer is inactive | `Engineer is inactive: {id}` |
 | 422 | Target user is not an engineer | `User is not an engineer: {id}, role={role}` |
-| 422 | Attempted to create role `engineer` via `POST /admin/users` **(MVP)** | `Engineer accounts cannot be created through this endpoint` |
+| 422 | Attempted to create role `engineer` via `POST /admin/users`, or set it on a non-engineer via `PUT /admin/users/:id` **(MVP)** | `Engineer accounts cannot be created through this endpoint` |
 | 422 | One or more config key constraints violated (batch) **(MVP)** | `Configuration constraint violated: {detail}` |
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD >= REPAIR_TRAVEL_CAP` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must be less than REPAIR_TRAVEL_CAP` |
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD < 0` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must not be negative` |

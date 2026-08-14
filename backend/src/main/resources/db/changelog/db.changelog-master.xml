@@ -16,4 +16,5 @@
   <include file="db/changelog/changes/v1.0.8-fix-device-norms.xml"/>
   <include file="db/changelog/changes/v1.0.9-seed-operational-data.sql"/>
   <include file="db/changelog/changes/v1.1.0-mvp-m02-users.xml"/>
+  <include file="db/changelog/changes/v1.1.1-mvp-m02-engineer-flag.xml"/>
 </databaseChangeLog>

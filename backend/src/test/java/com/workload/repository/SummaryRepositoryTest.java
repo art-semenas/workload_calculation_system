@@ -183,6 +183,7 @@ class SummaryRepositoryTest {
             .name("Test Engineer")
             .passwordHash("hash")
             .role(Role.ENGINEER)
+            .engineer(true)
             .capacityFte(BigDecimal.ONE)
             .active(true)
             .requiresActivation(false)

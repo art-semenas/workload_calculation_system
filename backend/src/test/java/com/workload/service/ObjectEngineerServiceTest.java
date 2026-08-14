@@ -66,6 +66,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Test Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .build();
 
@@ -111,6 +112,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Inactive Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(false)
             .build();
 
@@ -150,6 +152,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Test Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .build();
 
@@ -173,6 +176,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Test Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .build();
 
@@ -201,6 +205,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Test Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .build();
 
@@ -252,6 +257,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Engineer 1")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .capacityFte(BigDecimal.ONE)
             .build();
@@ -261,6 +267,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId2)
             .name("Engineer 2")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .capacityFte(BigDecimal.ONE)
             .build();
@@ -334,6 +341,7 @@ class ObjectEngineerServiceTest {
             .id(engineerId)
             .name("Test Engineer")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .build();
 

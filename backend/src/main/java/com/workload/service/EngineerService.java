@@ -40,10 +40,12 @@ public class EngineerService {
   private final RbacService rbacService;
 
   public List<EngineerDto> findAll(Optional<String> status, Optional<UUID> homeDivisionId) {
-    List<User> engineers = userRepository.findAllByRole(Role.ENGINEER);
+    List<User> engineers = userRepository.findAllByEngineerTrue();
 
     // TOR §12: an engineer sees only their own row here — API-level filtering, not a denial, so the
-    // frontend can render the same table component with a single row.
+    // frontend can render the same table component with a single row. This keys on the *role*, not
+    // the engineer flag: an engineer who is also an editor has the editor's permission to see
+    // everyone.
     User current = rbacService.currentUser();
     if (current.getRole() == Role.ENGINEER) {
       engineers = engineers.stream().filter(e -> e.getId().equals(current.getId())).toList();
@@ -91,6 +93,7 @@ public class EngineerService {
             .name(request.name())
             .passwordHash(passwordEncoder.encode(request.password()))
             .role(Role.ENGINEER)
+            .engineer(true)
             .homeDivisionId(request.homeDivisionId())
             .capacityFte(request.capacityFte())
             .employeeId(request.employeeId())
@@ -142,7 +145,7 @@ public class EngineerService {
         userRepository
             .findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Engineer", id.toString()));
-    if (user.getRole() != Role.ENGINEER) {
+    if (!user.isEngineer()) {
       throw new EntityNotFoundException("Engineer", id.toString());
     }
     return user;
