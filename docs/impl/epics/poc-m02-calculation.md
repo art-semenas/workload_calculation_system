@@ -12,15 +12,21 @@
 
 ## Acceptance Criteria In Scope
 
-**AC-01:** Import of the reference dataset produces exactly 2,935 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows. _(Verification deferred to PoC demo with manually entered subset; full 2,935-row verification requires MVP M-01 import.)_
+**AC-01:** Import of the reference dataset produces exactly 2,934 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows.
 
-**AC-02:** All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `ps_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `itogo_chislo_no_travel`, `itogo_chislo_with_travel`, `r1_per_visit_total`, `r2_per_visit_total`.
+> **Count:** the `ОС` table spans `A1:S2935` — one header row plus **2 934** data rows, with `№` running 1…2934 without gaps. Earlier revisions of this document said 2,935, counting the header. The seed changesets `v1.0.6` / `v1.0.9` produce 2 934 objects. _(Verification deferred to PoC demo with manually entered subset; full 2,934-row verification requires MVP M-01 import.)_
+
+**AC-02:** All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `r1_per_visit_total`, `r2_per_visit_total`.
+
+> **`ps_monthly_avg` is excluded, and with it `itogo_chislo_no_travel` / `itogo_chislo_with_travel` on any object carrying ПС equipment.** `ПС Расчет!AT` is defective — it sums only the two R2 columns, dropping R1 and double-counting an R2 cycle (§6.3, changelog v2.28). The engine is deliberately correct here, so it will *not* match the workbook on 1 024 objects: higher on 581, lower on 443. **Do not "fix" the engine to satisfy this criterion.** Guarded by `CalculationServiceTest.psMonthlyAvg_includesR1_notJustR2`.
+>
+> Verified against the full dataset: over the 2 784 objects the workbook computes without errors, ОС, Видео, Записи, both Ремонт columns and Дорога each match on **2 784 / 2 784**. Every remaining `ИТОГО` deviation decomposes into the ПС defect plus the five hardcoded `СВОД!G` cells — nothing unexplained. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §12.
 
 **AC-07:** API ignores or rejects attempts to set `roundTripMin`, `is_stale`, or any `summaries` field directly. Returns HTTP 422 if attempted.
 
 **AC-09:** XLSX export of СВОД matches original template column structure and values within ±0.001.
 
-**AC-10:** СВОД page (first 100 rows, 2,935 objects imported) loads in under 3 seconds. _(PoC verifies with manually entered subset; full performance test at MVP after bulk import.)_
+**AC-10:** СВОД page (first 100 rows, 2,934 objects imported) loads in under 3 seconds. _(PoC verifies with manually entered subset; full performance test at MVP after bulk import.)_
 
 **AC-22:** All three threshold bands for the repair travel formula must be verified in the integration test suite (`CalculationServiceTest`):
 - Band A (5 < kvo ≤ 10): For kvo=8, round_trip_min=20, PZV=20, repair_work_6months=361: `repair_with_travel_monthly = (361 + 160 + 160) / 5 = 136.2 ±0.001`

@@ -2,9 +2,10 @@
 
 # Web Application: Security Systems Maintenance Workload Calculator
 
-**Version:** 2.28
+**Version:** 2.29
 **Based on:** Шаблон*нагрузки*з_v_4_00.xlsx
-**Date:** 2026-08-13
+**Date:** 2026-08-14
+**Changelog v2.29:** Three corrections found while checking readiness for MVP workstream C. (1) **Object count** — the `ОС` table spans `A1:S2935`, which is a header row plus **2 934** data rows (`№` runs 1…2934 without gaps); the document said 2,935 in 14 places, counting the header. Corrected here and in `poc-scope.md`, `api-spec.md` and the epic files (27 occurrences). AC-01 previously demanded "exactly 2,935 object records", which correct data would have failed. (2) **AC-02** — removed `ps_monthly_avg` from the verified-field list and added an explicit carve-out: v2.28 establishes that `ПС Расчет!AT` is defective, so the engine deliberately diverges on 1 024 objects and AC-02 as written contradicted it. The remaining components are confirmed matching 2 784/2 784. (3) **M-01 priority** — the "manual entry is not viable" rationale no longer holds now that the `demo-data` seed loads the full dataset; M-01 remains required as a production import path but is no longer the precondition for other MVP work, matching the `ws-c-09`/`ws-c-10` plan ordering.  
 **Changelog v2.28:** Recorded `ПС Расчет!AT` as a defect in the source workbook and corrected the PAC reference values that had inherited it. `ПС Расчет!AT = SUM([Р2 за мес]:[Р2 за 4 раз в году])` spans only the two R2 columns, so the spreadsheet drops R1 and double-counts an R2 cycle (confirmed on all 2 833 numeric rows). The engine's additive `(Р1×8 + Р2×4)/12` is correct and unchanged; a regression test `CalculationServiceTest.psMonthlyAvg_includesR1_notJustR2` now prevents anyone "fixing" it toward the spreadsheet. The workbook trades the R1 annual contribution for an extra R2 cycle, so the error is Р1×8 − Р2 за мес and its sign varies by object: the engine reads higher on 581 objects and lower on 443, and in aggregate the workbook **overstates** ПС by ~18 884 min/year (it adds Σ Р2 за мес = 192 550 where the correct formula adds Σ Р1×8 = 173 666). Consequence: for the reference object ПС monthly is 31.3467, not 30.4167, so **PAC-01 0.032327 → 0.032448**, **PAC-02 → 0.032448**, **PAC-07 → 0.016224**, and `itogo_chislo_no_travel` → 0.024082. The PAC-01 test fixtures were rebuilt from the object's real inventory (ОС R1=29.14/R2=98.4, ПС R1=10.52/R2=73.0) instead of synthetic `R2 = 0` contexts that reproduced the workbook figure by construction. Updated §6.3, §6.8, §14, §19.2, CONTRIBUTING.md, poc-scope.md, calculation-engine.md. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.4.  
 **Changelog v2.27:** Corrected two records normatives that had been taken from `Таблица3` — a 40-row table in the `Нормативы` sheet that no formula references and that also disagrees with the live device norms on 7 devices. The values the workbook actually uses come from `Нормативы_Админ`: `RECORDS_FOOTAGE_MINUTES` 180 → **20**, `RECORDS_BACKUP_MINUTES` 120 → **3.15** (source is the live formula `=0.15*21`, i.e. 0.15 min/day over a 21-working-day month, so this normative is per storage system per month, not per request). Verified: recomputing all 2 887 numeric `Записи` rows with these values reproduces the cached `SUM(Записи Расчет!K) = 510 064.35` exactly; the previous values overshot by 363 296 min/period ≈ 9.50 FTE. `recordsBackupMinutes` widened `Integer` → `BigDecimal`. The other three normatives (60/180/60) were already correct. Updated §6.5, §6.11, §6.11.1, `WorkloadConfig`, `RecordsCalculationHelper`, and all affected tests. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.3.  
 **Changelog v2.26:** Records monthly averaging now divides by productive months, not the planning period. `Записи Расчет!L = K / 5` in the source workbook — verified on all 245 non-zero rows — matching the repair path, which already used 5. Records monthly minutes were ~16.7% below the workbook. Renamed `REPAIR_PRODUCTIVE_MONTHS` → `PRODUCTIVE_MONTHS` (env var `WORKLOAD_CONFIG_PRODUCTIVE_MONTHS`) since it now governs both records and repairs; `PLANNING_PERIOD_MONTHS` remains the period length and is no longer a divisor anywhere. **Breaking config change** — deployments setting the old env var must rename it. Updated §4.4, §6.5, §6.11, §6.11.1, §14 (AC-20), `RecordsCalculationHelper`, `WorkloadConfig`, `RecordsCalculationTest`, `CalculationServiceTest`. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.2.  
@@ -71,7 +72,7 @@
 
 The system is a web-based replacement for the Excel workbook `Шаблон_нагрузки_з_v_4_00.xlsx`. It automates the calculation of **required maintenance staffing headcount** (нагрузка / численность) for technical maintenance (ТО) engineers responsible for servicing security and fire protection systems at bank branch facilities (objects).
 
-The source workbook currently covers **~2,935 objects** belonging to regional divisions (подразделения) of Belarusbank.
+The source workbook currently covers **~2,934 objects** belonging to regional divisions (подразделения) of Belarusbank.
 
 ---
 
@@ -79,7 +80,7 @@ The source workbook currently covers **~2,935 objects** belonging to regional di
 
 ### 2.1 Problem Statement
 
-The Excel template is large (2,935 rows × up to 47 columns per sheet), manual to update, error-prone in formula propagation, and difficult to share or version. The device catalog is hardcoded as fixed columns — adding a new device type requires schema changes and formula updates across multiple sheets.
+The Excel template is large (2,934 data rows × up to 47 columns per sheet), manual to update, error-prone in formula propagation, and difficult to share or version. The device catalog is hardcoded as fixed columns — adding a new device type requires schema changes and formula updates across multiple sheets.
 
 ### 2.2 Goals
 
@@ -1696,7 +1697,7 @@ _PoC: No stale rows — summaries recalculate synchronously on save (S-02)._
 
 - СВОД page (100 rows, paginated) loads in under 3 seconds.
 - Single object summary recalculation completes in under 200ms.
-- Bulk recalculation of all 2,935 objects completes within 60 seconds (background job).
+- Bulk recalculation of all 2,934 objects completes within 60 seconds (background job).
 - Device catalog assignment dropdown returns results in under 300ms for up to 1,000 device types.
 - Engineer detail page loads in under 2 seconds for an engineer with up to 500 assigned objects.
 - Engineer list page (all engineers, paginated 50/page) loads in under 2 seconds.
@@ -2339,7 +2340,7 @@ All API responses use a unified envelope format:
 
 #### Success Response
 ```json
-{ "data": { ... }, "meta": { "page": 1, "total": 2935, "per_page": 100 }, "error": null }
+{ "data": { ... }, "meta": { "page": 1, "total": 2934, "per_page": 100 }, "error": null }
 ```
 
 #### Error Response
@@ -2705,7 +2706,7 @@ The original Excel free-text field is replaced by `object_engineers` join rows. 
 
 ### C-33: Aggregations Are Never Cached in the Database
 
-Branch, division, and company-wide required FTE values are computed by live SQL aggregation over `summaries` at query time. No `branch_summaries`, `division_summaries`, or `company_summary` tables exist. With ~2,935 objects, a SUM over `summaries.itogo_chislo_with_travel` grouped by `division_id` completes in milliseconds with a proper index. Caching these aggregations would add invalidation complexity with no meaningful performance benefit.
+Branch, division, and company-wide required FTE values are computed by live SQL aggregation over `summaries` at query time. No `branch_summaries`, `division_summaries`, or `company_summary` tables exist. With ~2,934 objects, a SUM over `summaries.itogo_chislo_with_travel` grouped by `division_id` completes in milliseconds with a proper index. Caching these aggregations would add invalidation complexity with no meaningful performance benefit.
 
 ### C-34: Staffing Need Is Required FTE Only — No Capacity Comparison at Branch/Division Level
 
@@ -2713,7 +2714,9 @@ Branch, division, and company-wide required FTE values are computed by live SQL 
 
 ### C-35: Import Is the Highest-Priority MVP Item
 
-The PoC requires manual data entry. With 2,935 objects, manual entry is a demo-only shortcut — not a viable production workflow. JSON bulk import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
+The PoC requires manual data entry. With 2,934 objects, manual entry is a demo-only shortcut — not a viable production workflow. JSON bulk import (M-01) must be the first item delivered in MVP, before any other MVP feature, as it is the precondition for real users adopting the system.
+
+> **Priority revised (2026-08-14).** The rationale above — that manual entry of 2 934 objects blocks adoption — no longer holds: the full dataset is loaded by the `demo-data` seed changesets (`v1.0.6`, `v1.0.9`), so the system is usable and demonstrable with real data today. M-01 is still required, because Liquibase changesets are not a production import path and users need a repeatable way to load new periods, but it is no longer the precondition for everything else. This matches the workstream C plan ordering, which places import at `ws-c-09` / `ws-c-10` rather than first. Sequence M-01 on its own merits alongside the other MVP milestones.
 
 ### C-36: К-во ремонтов Is COUNT of Distinct Repair Types, Not SUM of Quantities
 
@@ -2757,11 +2760,17 @@ This approach avoids mass invalidation on what may be a routine administrative c
 
 ### AC-01: Data Completeness
 
-Import of the reference dataset (converted from `Шаблон_нагрузки_з_v_4_00.xlsx` to JSON) produces exactly 2,935 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows.
+Import of the reference dataset (converted from `Шаблон_нагрузки_з_v_4_00.xlsx` to JSON) produces exactly 2,934 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows.
+
+> **Count:** the `ОС` table spans `A1:S2935` — one header row plus **2 934** data rows, with `№` running 1…2934 without gaps. Earlier revisions of this document said 2,935, counting the header. The seed changesets `v1.0.6` / `v1.0.9` produce 2 934 objects.
 
 ### AC-02: Calculation Accuracy
 
-All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `ps_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `itogo_chislo_no_travel`, `itogo_chislo_with_travel`, `r1_per_visit_total`, `r2_per_visit_total`.
+All computed СВОД values match source XLSX "Расчет" sheet values within ±0.001. Verified fields: `os_monthly_avg`, `video_monthly_avg`, `records_monthly`, `repair_no_travel_monthly`, `repair_with_travel_monthly`, `total_no_travel_min`, `total_with_travel_min`, `r1_per_visit_total`, `r2_per_visit_total`.
+
+> **`ps_monthly_avg` is excluded, and with it `itogo_chislo_no_travel` / `itogo_chislo_with_travel` on any object carrying ПС equipment.** `ПС Расчет!AT` is defective — it sums only the two R2 columns, dropping R1 and double-counting an R2 cycle (§6.3, changelog v2.28). The engine is deliberately correct here, so it will *not* match the workbook on 1 024 objects: higher on 581, lower on 443. **Do not "fix" the engine to satisfy this criterion.** Guarded by `CalculationServiceTest.psMonthlyAvg_includesR1_notJustR2`.
+>
+> Verified against the full dataset: over the 2 784 objects the workbook computes without errors, ОС, Видео, Записи, both Ремонт columns and Дорога each match on **2 784 / 2 784**. Every remaining `ИТОГО` deviation decomposes into the ПС defect plus the five hardcoded `СВОД!G` cells — nothing unexplained. See `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §12.
 
 ### AC-03: Dynamic Normative Editability _(MVP — requires M-04 and M-06)_
 
@@ -2797,7 +2806,7 @@ XLSX export of СВОД matches original template column structure and values wi
 
 ### AC-10: Performance
 
-СВОД page (first 100 rows, 2,935 objects imported) loads in under 3 seconds. Bulk recalculation of all objects completes in under 60 seconds.
+СВОД page (first 100 rows, 2,934 objects imported) loads in under 3 seconds. Bulk recalculation of all objects completes in under 60 seconds.
 
 ### AC-11: Workflow Enforcement — Assign Before Physical Inventory Is Blocked
 
@@ -2947,7 +2956,7 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 
 | Feature                 | Notes                                                                                                                                                                                                                         |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,935. Full import is MVP (see S-06). |
+| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,934. Full import is MVP (see S-06). |
 | **Calculation engine**  | Full calculation: ОС, ПС, Видео, Записи, Ремонт, Дорога → ИТОГО Числ. All formulas from §6.                                                                                                                                   |
 | **СВОД table**          | Paginated table matching all 19 source columns.                                                                                                                                                                               |
 | **СВОД export to XLSX** | Export matching original template structure. Stakeholders verify spot-checked rows against source file.                                                                                                                       |
@@ -3011,9 +3020,9 @@ _Reversed in:_ M-07 (MVP)
 
 Full TOR: JSON bulk import of data converted from the source XLSX workbook.
 
-PoC: all data entered manually through the UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered, not all 2,935. Full import is the first MVP milestone.
+PoC: all data entered manually through the UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered, not all 2,934. Full import is the first MVP milestone.
 
-_Reversed in:_ M-01 (MVP) — this is the highest-priority MVP item since 2,935 rows of manual entry is not viable for production.
+_Reversed in:_ M-01 (MVP) — this is the highest-priority MVP item since 2,934 rows of manual entry is not viable for production.
 
 **S-07: No audit log**
 
@@ -3179,7 +3188,7 @@ No catalog management pages, no periods page.
 
 ### 15.7 PoC → MVP Migration Path
 
-Items are ordered by dependency. M-01 is the highest priority because manual entry of 2,935 objects is not viable for production use.
+Items are ordered by dependency. M-01 is the highest priority because manual entry of 2,934 objects is not viable for production use.
 
 | ID       | Item                                            | Depends on | Notes                                                                                        |
 | -------- | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
@@ -3222,7 +3231,7 @@ The PoC uses the **full production stack** defined in §9.1 — no throwaway sta
 | Component                    | PoC setting                                     | Notes                                                     |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------- |
 | React 18 + TypeScript + Vite | Full setup                                      | No shortcuts; strict TypeScript from start                |
-| Material UI                  | MUI DataGrid for СВОД table                     | Pagination and sorting built-in; handles 2,935 rows       |
+| Material UI                  | MUI DataGrid for СВОД table                     | Pagination and sorting built-in; handles 2,934 rows       |
 | TanStack Query               | Server state for all API calls                  | Stale-while-revalidate; automatic refetch after mutations |
 | Zustand                      | Minimal client state (auth token, current user) | No Redux for PoC                                          |
 | React Hook Form + Zod        | All data-entry forms                            | Equipment, repairs, records, travel, engineer assignment  |
@@ -3321,7 +3330,7 @@ Post-MVP consideration: if the engineer dashboard needs real-time push updates o
 
 ## 16. Aggregation Rules
 
-All branch, division, and company-wide metrics are **computed on the fly** from the `summaries` table. No aggregation results are stored in the database — queries run against fresh `summaries` rows every time. This is viable because the data volume is bounded (~2,935 objects) and the queries are simple SUM aggregations.
+All branch, division, and company-wide metrics are **computed on the fly** from the `summaries` table. No aggregation results are stored in the database — queries run against fresh `summaries` rows every time. This is viable because the data volume is bounded (~2,934 objects) and the queries are simple SUM aggregations.
 
 ---
 

@@ -15,7 +15,7 @@ PoC is **not** a stripped-down MVP. It is a focused validator. Some simplificati
 
 | Feature                 | Notes                                                                                                                                                                                                                         |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,935. Full import is MVP (see S-06). |
+| **Manual data entry**   | Create objects, enter equipment, repairs, records, travel via UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered manually — not all 2,934. Full import is MVP (see S-06). |
 | **Calculation engine**  | Full calculation: ОС, ПС, Видео, Записи, Ремонт, Дорога → ИТОГО Числ. All formulas from §6.                                                                                                                                   |
 | **СВОД table**          | Paginated table matching all 19 source columns.                                                                                                                                                                               |
 | **СВОД export to XLSX** | Export matching original template structure. Stakeholders verify spot-checked rows against source file.                                                                                                                       |
@@ -75,9 +75,11 @@ _Reversed in:_ M-07 (MVP)
 
 Full TOR: JSON bulk import of data converted from the source XLSX workbook.
 
-PoC: all data entered manually through the UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered, not all 2,935. Full import is the first MVP milestone.
+PoC: all data entered manually through the UI. For demo purposes, a representative subset of objects (~20–50 from different divisions) is entered, not all 2,934. Full import is the first MVP milestone.
 
-_Reversed in:_ M-01 (MVP) — this is the highest-priority MVP item since 2,935 rows of manual entry is not viable for production.
+_Reversed in:_ M-01 (MVP) — this is the highest-priority MVP item since 2,934 rows of manual entry is not viable for production.
+
+> **Priority revised (2026-08-14).** The rationale above — that manual entry of 2 934 objects blocks adoption — no longer holds: the full dataset is loaded by the `demo-data` seed changesets (`v1.0.6`, `v1.0.9`), so the system is usable and demonstrable with real data today. M-01 is still required, because Liquibase changesets are not a production import path and users need a repeatable way to load new periods, but it is no longer the precondition for everything else. This matches the workstream C plan ordering, which places import at `ws-c-09` / `ws-c-10` rather than first. Sequence M-01 on its own merits alongside the other MVP milestones.
 
 **S-07: No audit log**
 
@@ -111,7 +113,7 @@ _Reversed in:_ M-12 (MVP)
 
 ## Milestones
 
-Items are ordered by dependency. M-01 is the highest priority because manual entry of 2,935 objects is not viable for production use.
+Items are ordered by dependency. M-01 is the highest priority because manual entry of 2,934 objects is not viable for production use.
 
 | ID       | Item                                            | Depends on | Notes                                                                                        |
 | -------- | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |
@@ -260,7 +262,7 @@ The PoC uses the **full production stack** defined in §9.1 — no throwaway sta
 | Component                    | PoC setting                                     | Notes                                                     |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------- |
 | React 18 + TypeScript + Vite | Full setup                                      | No shortcuts; strict TypeScript from start                |
-| Material UI                  | MUI DataGrid for СВОД table                     | Pagination and sorting built-in; handles 2,935 rows       |
+| Material UI                  | MUI DataGrid for СВОД table                     | Pagination and sorting built-in; handles 2,934 rows       |
 | TanStack Query               | Server state for all API calls                  | Stale-while-revalidate; automatic refetch after mutations |
 | Zustand                      | Minimal client state (auth token, current user) | No Redux for PoC                                          |
 | React Hook Form + Zod        | All data-entry forms                            | Equipment, repairs, records, travel, engineer assignment  |

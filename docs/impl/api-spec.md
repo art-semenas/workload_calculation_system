@@ -17,7 +17,7 @@ All endpoints are prefixed `/api/v1` (as defined in §9 / §10.1).
 All endpoints share a common JSON envelope:
 
 ```json
-{ "data": { ... }, "meta": { "page": 1, "total": 2935, "perPage": 100 }, "error": null }
+{ "data": { ... }, "meta": { "page": 1, "total": 2934, "perPage": 100 }, "error": null }
 ```
 
 On error:

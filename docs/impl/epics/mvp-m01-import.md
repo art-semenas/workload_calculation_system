@@ -2,9 +2,11 @@
 
 **Milestone:** M-01 (from TOR §15.7)
 **Phase:** MVP (highest-priority MVP item)
-**What it delivers:** §11.1 two-step stateless JSON import flow, bulk object import (2,935 rows from converted XLSX), FR-01 import path (Division → Branch → Object dedup), engineer name resolution with placeholder account creation, bulk recalculation trigger post-import. Resolves S-06.
+**What it delivers:** §11.1 two-step stateless JSON import flow, bulk object import (2,934 rows from converted XLSX), FR-01 import path (Division → Branch → Object dedup), engineer name resolution with placeholder account creation, bulk recalculation trigger post-import. Resolves S-06.
 
-> **Priority note (TOR §15.7):** M-01 is the highest-priority MVP item. Manual entry of 2,935 objects is not viable for production use.
+> **Priority note (TOR §15.7):** M-01 is the highest-priority MVP item. Manual entry of 2,934 objects is not viable for production use.
+
+> **Priority revised (2026-08-14).** The rationale above — that manual entry of 2 934 objects blocks adoption — no longer holds: the full dataset is loaded by the `demo-data` seed changesets (`v1.0.6`, `v1.0.9`), so the system is usable and demonstrable with real data today. M-01 is still required, because Liquibase changesets are not a production import path and users need a repeatable way to load new periods, but it is no longer the precondition for everything else. This matches the workstream C plan ordering, which places import at `ws-c-09` / `ws-c-10` rather than first. Sequence M-01 on its own merits alongside the other MVP milestones.
 
 ## Functional Requirements Covered
 
@@ -16,7 +18,9 @@
 
 ## Acceptance Criteria In Scope
 
-**AC-01:** Import of the reference dataset (converted from `Шаблон_нагрузки_з_v_4_00.xlsx` to JSON) produces exactly 2,935 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows.
+**AC-01:** Import of the reference dataset (converted from `Шаблон_нагрузки_з_v_4_00.xlsx` to JSON) produces exactly 2,934 object records. All non-zero equipment values are represented as `object_system_assignments` rows with corresponding `object_devices` rows.
+
+> **Count:** the `ОС` table spans `A1:S2935` — one header row plus **2 934** data rows, with `№` running 1…2934 without gaps. Earlier revisions of this document said 2,935, counting the header. The seed changesets `v1.0.6` / `v1.0.9` produce 2 934 objects.
 
 **AC-21:** Import of the reference dataset must: (a) match engineer names to existing `users.name` records, (b) create placeholder accounts for unresolved names, (c) return a report listing matched engineers, created placeholders, and objects with no engineer name in the source. No object must be left without an `object_engineers` row after import (all get either a matched or placeholder account).
 

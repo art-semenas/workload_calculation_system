@@ -19,7 +19,7 @@
 
 **AC-20:** After updating a normative (`PUT /catalog/devices/:id/contexts/:cid`), all affected summaries must be marked `is_stale = 'TRUE'` but values in the СВОД must remain unchanged (showing stale indicator) until `POST /svod/recalculate` is called. Auto-recalculation must not occur. _(Requires M-04 and M-06.)_
 
-**AC-10:** Bulk recalculation of all objects completes in under 60 seconds (full 2,935-object dataset).
+**AC-10:** Bulk recalculation of all objects completes in under 60 seconds (full 2,934-object dataset).
 
 ## Database Tables Required
 
