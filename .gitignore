@@ -90,3 +90,7 @@ ds-bundle/
 .~lock.*#
 # stray root install
 /node_modules/
+
+# Source workbooks stay local: 4.5 MB binaries, and they are inputs to the seed
+# generators (docs/Excel_to_md/generate_*.py) rather than build artefacts.
+docs/*.xlsx
