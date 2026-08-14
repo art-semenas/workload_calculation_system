@@ -41,6 +41,7 @@ public class ObjectEngineerController {
   @GetMapping("/objects/{id}/engineers")
   public ResponseEntity<ApiResponse<List<EngineerShareDto>>> getEngineersForObject(
       @PathVariable UUID id) {
+    rbacService.requireCanReadObject(id);
     List<EngineerShareDto> engineers = objectEngineerService.getEngineersForObject(id);
     return ResponseEntity.ok(ApiResponse.success(engineers));
   }
@@ -69,6 +70,7 @@ public class ObjectEngineerController {
   @GetMapping("/engineers/{id}/objects")
   public ResponseEntity<ApiResponse<List<EngineerObjectDto>>> getObjectsForEngineer(
       @PathVariable UUID id) {
+    rbacService.requireCanReadEngineerData(id);
     List<EngineerObjectDto> objects = objectEngineerService.getObjectsForEngineer(id);
     return ResponseEntity.ok(ApiResponse.success(objects));
   }
@@ -92,6 +94,7 @@ public class ObjectEngineerController {
 
   @GetMapping("/engineers/{id}/summary")
   public ResponseEntity<ApiResponse<EngineerSummaryDto>> getEngineerSummary(@PathVariable UUID id) {
+    rbacService.requireCanReadEngineerData(id);
     return ResponseEntity.ok(ApiResponse.success(engineerSummaryService.getEngineerSummary(id)));
   }
 }

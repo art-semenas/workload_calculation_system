@@ -35,14 +35,15 @@ public class SvodService {
     this.objectEngineerRepository = objectEngineerRepository;
   }
 
+  /**
+   * @param engineerScopeId when non-null, restricts the СВОД to that engineer's assigned objects
+   *     (TOR §12). Applied in the query so the page and total describe the scoped set.
+   */
   @Transactional(readOnly = true)
-  public Page<SvodRowDto> getSvod(Pageable pageable, UUID divisionId) {
+  public Page<SvodRowDto> getSvod(Pageable pageable, UUID divisionId, UUID engineerScopeId) {
     // PoC: loads all summaries in memory for in-process pagination.
     // Replace with JPQL Page<Summary> query in MVP for DB-level pagination.
-    List<Summary> all =
-        divisionId != null
-            ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
-            : summaryRepository.findAllWithOrgHierarchy();
+    List<Summary> all = summaryRepository.findAllScoped(divisionId, engineerScopeId);
     List<SvodRowDto> rows =
         all.stream()
             .map(this::toSvodRowDto)
@@ -66,13 +67,12 @@ public class SvodService {
     return summaryMapper.toDto(summary);
   }
 
+  /** Same scoping as {@link #getSvod} — otherwise the export reads around the filter. */
   @Transactional(readOnly = true)
-  public List<SvodRowDto> getAllForExport(UUID divisionId) {
-    List<Summary> all =
-        divisionId != null
-            ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
-            : summaryRepository.findAllWithOrgHierarchy();
-    return all.stream().map(this::toSvodRowDto).toList();
+  public List<SvodRowDto> getAllForExport(UUID divisionId, UUID engineerScopeId) {
+    return summaryRepository.findAllScoped(divisionId, engineerScopeId).stream()
+        .map(this::toSvodRowDto)
+        .toList();
   }
 
   private SvodRowDto toSvodRowDto(Summary s) {

@@ -85,10 +85,10 @@ class ObjectServiceTest {
             null,
             OffsetDateTime.now(),
             OffsetDateTime.now());
-    when(objectRepository.findAllEnriched(null)).thenReturn(List.of(row));
+    when(objectRepository.findAllEnriched(null, null)).thenReturn(List.of(row));
     when(objectMapper.toDto(row)).thenReturn(dto);
 
-    List<ObjectDto> result = objectService.findAll(Optional.empty());
+    List<ObjectDto> result = objectService.findAll(Optional.empty(), Optional.empty());
 
     assertThat(result).hasSize(1);
     assertThat(result.get(0).name()).isEqualTo("Archive");
@@ -111,10 +111,10 @@ class ObjectServiceTest {
             null,
             OffsetDateTime.now(),
             OffsetDateTime.now());
-    when(objectRepository.findAllEnriched(divisionId)).thenReturn(List.of(row));
+    when(objectRepository.findAllEnriched(divisionId, null)).thenReturn(List.of(row));
     when(objectMapper.toDto(row)).thenReturn(dto);
 
-    List<ObjectDto> result = objectService.findAll(Optional.of(divisionId));
+    List<ObjectDto> result = objectService.findAll(Optional.of(divisionId), Optional.empty());
 
     assertThat(result).hasSize(1);
     assertThat(result.get(0).branchName()).isEqualTo("Branch1");

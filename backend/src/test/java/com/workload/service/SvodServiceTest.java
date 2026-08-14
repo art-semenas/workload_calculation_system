@@ -86,11 +86,11 @@ class SvodServiceTest {
   void getSvod_returnsPaginatedResults() {
     UUID objectId = UUID.randomUUID();
     Summary summary = buildSummary(objectId, "Object A", "Division 1", "Branch 1");
-    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of(summary));
+    when(summaryRepository.findAllScoped(null, null)).thenReturn(List.of(summary));
     when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
-    Page<SvodRowDto> result = svodService.getSvod(pageable, null);
+    Page<SvodRowDto> result = svodService.getSvod(pageable, null, null);
 
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent()).hasSize(1);
@@ -106,12 +106,11 @@ class SvodServiceTest {
     UUID divisionId = UUID.randomUUID();
     UUID objectId = UUID.randomUUID();
     Summary summary = buildSummary(objectId, "Object B", "Division 2", "Branch 2");
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId))
-        .thenReturn(List.of(summary));
+    when(summaryRepository.findAllScoped(divisionId, null)).thenReturn(List.of(summary));
     when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
-    Page<SvodRowDto> result = svodService.getSvod(pageable, divisionId);
+    Page<SvodRowDto> result = svodService.getSvod(pageable, divisionId, null);
 
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent().get(0).objectId()).isEqualTo(objectId);

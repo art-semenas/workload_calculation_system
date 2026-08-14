@@ -39,7 +39,9 @@ public class ObjectController {
   public ResponseEntity<ApiResponse<List<ObjectDto>>> getAll(
       @RequestParam(name = "division_id", required = false) UUID divisionId) {
     return ResponseEntity.ok(
-        ApiResponse.success(objectService.findAll(Optional.ofNullable(divisionId))));
+        ApiResponse.success(
+            objectService.findAll(
+                Optional.ofNullable(divisionId), rbacService.readScopeEngineerId())));
   }
 
   @PostMapping
@@ -52,6 +54,7 @@ public class ObjectController {
 
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<ObjectDto>> getById(@PathVariable UUID id) {
+    rbacService.requireCanReadObject(id);
     return ResponseEntity.ok(ApiResponse.success(objectService.findById(id)));
   }
 
@@ -71,6 +74,7 @@ public class ObjectController {
 
   @GetMapping("/{id}/summary")
   public ResponseEntity<ApiResponse<SummaryDto>> getObjectSummary(@PathVariable UUID id) {
+    rbacService.requireCanReadObject(id);
     SummaryDto summary = objectService.getSummary(id);
     return ResponseEntity.ok(ApiResponse.success(summary));
   }

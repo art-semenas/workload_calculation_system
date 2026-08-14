@@ -316,21 +316,21 @@ Note this is stricter than "cannot see unassigned objects": an engineer also can
 assigned to *someone else*. Membership is `object_engineers`, the same table
 `RbacService.requireCanEditObjectData` already consults.
 
-- [ ] **Step 1: Write failing tests** — an engineer assigned to one object gets exactly that object
+- [x] **Step 1: Write failing tests** — an engineer assigned to one object gets exactly that object
       from `GET /objects` and `GET /svod`, while admin/editor/viewer still get the full list. Assert
       **row counts**, not status codes; a denial-only assertion cannot detect a missing filter.
-- [ ] **Step 2: Run — expect FAIL** (lists currently return every row for every role)
-- [ ] **Step 3: Filter `GET /objects` and `GET /svod`** to the caller's assigned objects when the
+- [x] **Step 2: Run — expect FAIL** (lists currently return every row for every role)
+- [x] **Step 3: Filter `GET /objects` and `GET /svod`** to the caller's assigned objects when the
       role is `engineer`. Push the restriction into the repository query rather than filtering the
       result in memory — the seeded dataset is 2,934 objects and `/svod` is paginated, so
       post-filtering a page would return short pages and wrong totals.
-- [ ] **Step 4: Deny `GET /objects/{id}` and `GET /objects/{id}/summary`** for an object the
+- [x] **Step 4: Deny `GET /objects/{id}` and `GET /objects/{id}/summary`** for an object the
       engineer is not assigned to — 403, mirroring `GET /engineers/{id}`. Filtering the list
       achieves nothing while the detail route stays open.
-- [ ] **Step 5: Scope the СВОД XLSX export** to the same set, so the export cannot be used to read
+- [x] **Step 5: Scope the СВОД XLSX export** to the same set, so the export cannot be used to read
       around the filter.
-- [ ] **Step 6: Run tests — expect PASS**
-- [ ] **Step 7: Commit**
+- [x] **Step 6: Run tests — expect PASS**
+- [x] **Step 7: Commit**
 
 ```bash
 git commit -m "feat: scope object and SVOD reads to assigned objects for engineers (TOR §12)"
@@ -416,9 +416,10 @@ git push -u origin feature/mvp-m02-rbac-backend
 - [x] Account locks after 5 failed attempts, unlocks after 30 minutes
 - [x] RBAC enforced: admin unrestricted, editor own-division, engineer read-only, viewer read-only
 - [x] `GET /engineers` returns only own row for engineer role
-- [ ] `GET /objects` and `GET /svod` return only assigned objects for engineer role
-- [ ] `GET /objects/:id` returns 403 for an object the engineer is not assigned to
-- [ ] СВОД XLSX export is scoped to the same set for engineer role
+- [x] `GET /objects` and `GET /svod` return only assigned objects for engineer role
+- [x] `GET /objects/:id` returns 403 for an object the engineer is not assigned to
+- [x] СВОД XLSX export is scoped to the same set for engineer role
+- [x] Wider engineer read set closed: `/objects/:id/engineers`, `/engineers/:id/objects`, `/engineers/:id/summary`, `/aggregations/*`, `/coverage/gaps`
 - [x] `DELETE /divisions/:id` admin only, blocked if branches exist
 - [x] `DELETE /branches/:id` admin only, blocked if objects exist
 - [x] `/admin/users` CRUD endpoints (admin only)
@@ -428,9 +429,10 @@ git push -u origin feature/mvp-m02-rbac-backend
 
 ## Verification Notes (2026-08-14)
 
-Tasks 0–4 and 5–7 verified against the code on `feature/mvp-m02-rbac-backend`. **Task 4b is entirely
-unimplemented** — it was added to this plan in `2b44e8e`, after the Task 5–7 assignment, and no
-commit since touches object or СВОД read scoping.
+Tasks 0–4 and 5–7 verified against the code on `feature/mvp-m02-rbac-backend`. Task 4b was found
+entirely unimplemented at verification time and has since been implemented, together with the wider
+endpoint set listed below. All items in the checklist above are now closed; `mvn verify` runs 479
+tests green.
 
 Verified present:
 - Token lifetimes come from config: `jwt.expiration-ms` 900000 (15 min), `jwt.refresh-expiration-ms`
@@ -443,15 +445,20 @@ Verified present:
   `requireCanWriteInBranch` / `requireCanEditObjectData` on objects, equipment, records, repairs,
   travel and assignments.
 
-Verified absent (Task 4b, plus adjacent gaps in the same family):
-- `ObjectService.findAll` takes only a `divisionId`; no caller identity reaches the query.
-- `SvodService.getSvod` and `getAllForExport` are unscoped.
-- `GET /objects/{id}`, `GET /objects/{id}/summary` have no membership check.
-- **Beyond the Task 4b list**, these reads are also unscoped and leak the same data:
-  `GET /engineers/{id}/objects` and `GET /engineers/{id}/summary` (another engineer's dashboard —
-  TOR §12 forbids this explicitly), `GET /objects/{id}/engineers`, and the whole of
-  `/aggregations/*` and `/coverage/gaps` (company-wide totals). Consider widening Task 4b Step 4 to
-  cover them, since fixing only the object and СВОД routes leaves the same information reachable.
+Was absent, now implemented (Task 4b, plus the adjacent gaps in the same family):
+- `ObjectRepository.findAllEnriched` and `SummaryRepository.findAllScoped` take a nullable
+  `engineerId` and narrow via an `EXISTS` subquery over `object_engineers`. `EXISTS` rather than a
+  predicate on the existing `LEFT JOIN`, which would otherwise collapse `engineerCount` to 1.
+- `RbacService.readScopeEngineerId()` supplies that id — present only for the engineer role — and
+  `requireCanReadObject` / `requireCanReadEngineerData` guard the detail routes.
+- `/aggregations/*` and `/coverage/gaps` carry `@PreAuthorize("!hasRole('ENGINEER')")`: they are
+  organisation-wide rollups, and narrowing one to a single engineer's objects would produce a
+  different, misleading number rather than a filtered view.
+- Read scoping keys on the **role**, not `is_engineer`, so an engineer who also holds the editor or
+  admin role reads everything that role allows. `EngineerReadScopingIT` covers this explicitly.
+
+Coverage: `EngineerReadScopingIT` (19 tests) asserts row counts and membership rather than status
+codes alone, per the warning at the top of Task 4b.
 
 ## References
 

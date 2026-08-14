@@ -37,8 +37,14 @@ public class ObjectService {
   private final EngineerSummaryService engineerSummaryService;
   private final EntityManager entityManager;
 
-  public List<ObjectDto> findAll(Optional<UUID> divisionId) {
-    return objectRepository.findAllEnriched(divisionId.orElse(null)).stream()
+  /**
+   * @param engineerScopeId when present, restricts the list to that engineer's assigned objects
+   *     (TOR §12). Applied in the query, not to the result, so counts and pagination stay honest.
+   */
+  public List<ObjectDto> findAll(Optional<UUID> divisionId, Optional<UUID> engineerScopeId) {
+    return objectRepository
+        .findAllEnriched(divisionId.orElse(null), engineerScopeId.orElse(null))
+        .stream()
         .map(objectMapper::toDto)
         .toList();
   }

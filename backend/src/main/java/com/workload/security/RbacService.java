@@ -6,6 +6,7 @@ import com.workload.repository.BranchRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.ObjectRepository;
 import com.workload.repository.UserRepository;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -117,6 +118,46 @@ public class RbacService {
       return;
     }
     throw new AccessDeniedException("Division is outside your scope");
+  }
+
+  // -------------------------------------------------------------------------
+  // Read scoping (TOR §12): "They cannot view other engineers' rows, dashboards, or unassigned
+  // objects." These rules key on the *role* — the permission tier — not on the engineer flag, so
+  // an engineer who also holds the editor or admin role reads everything that role allows.
+  // -------------------------------------------------------------------------
+
+  /**
+   * The engineer id that list reads must be narrowed to, or empty when the caller may read
+   * everything. Callers pass it into the query rather than filtering afterwards: {@code /svod} is
+   * paginated, so post-filtering a page would return short pages and a wrong total.
+   */
+  public Optional<UUID> readScopeEngineerId() {
+    User user = currentUser();
+    return user.getRole() == Role.ENGINEER ? Optional.of(user.getId()) : Optional.empty();
+  }
+
+  /** Detail reads of a single object. Filtering the list is pointless if the detail stays open. */
+  public void requireCanReadObject(UUID objectId) {
+    User user = currentUser();
+    if (user.getRole() != Role.ENGINEER) {
+      return;
+    }
+    if (isAssignedTo(user, objectId)) {
+      return;
+    }
+    throw new AccessDeniedException("You may only view objects you are assigned to");
+  }
+
+  /** An engineer's own dashboard is theirs alone — objects, summary and load ratios. */
+  public void requireCanReadEngineerData(UUID engineerId) {
+    User user = currentUser();
+    if (user.getRole() != Role.ENGINEER) {
+      return;
+    }
+    if (user.getId().equals(engineerId)) {
+      return;
+    }
+    throw new AccessDeniedException("You may only view your own engineer data");
   }
 
   private boolean ownsDivisionOf(User user, UUID objectId) {

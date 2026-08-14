@@ -59,6 +59,9 @@ All existing PoC endpoints gain enforcement:
 - `POST /engineers`, `PUT /engineers/:id`, `DELETE /engineers/:id` — admin only
 - Engineer assignment endpoints — admin unrestricted; editor: own-division objects, any active engineer
 - `GET /engineers` — returns all rows for admin/editor/viewer; returns only own row for engineer role
+- `GET /objects`, `GET /svod`, `GET /svod/export/xlsx` — narrowed to assigned objects for engineer role; `GET /objects/:id`, `/summary` and `/engineers` return 403 for an unassigned object
+- `GET /engineers/:id/objects`, `GET /engineers/:id/summary` — own id only for engineer role
+- `/aggregations/*`, `/coverage/gaps` — 403 for engineer role (organisation-wide rollups, not own workload)
 - `GET /admin/users` — admin only
 
 ## UI Screens Required

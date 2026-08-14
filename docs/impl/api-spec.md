@@ -248,6 +248,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** List all objects (paginated, filterable).
 **Request body:** None.
+**Engineer scope (MVP, M-02):** when caller role = `engineer`, only objects they are assigned to are returned (TOR §12), including when `division_id` is supplied. The detail routes `GET /objects/:id`, `GET /objects/:id/summary` and `GET /objects/:id/engineers` return **403** for an object the engineer is not assigned to; `/aggregations/*` and `/coverage/gaps` return 403 for the engineer role outright, being organisation-wide rollups rather than own-workload views. `GET /engineers/:id/objects` and `GET /engineers/:id/summary` are restricted to the caller's own id.
 
 ---
 
@@ -519,6 +520,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** Get all engineer summaries (paginated, filterable).
 **Request body:** None.
+**Engineer scope (MVP, M-02):** when caller role = `engineer`, the result is narrowed to the objects they are assigned to (TOR §12). The narrowing is applied in the query, so `page` and `total` describe the scoped set. `GET /svod/export/xlsx` carries the same scope.
 
 ---
 
