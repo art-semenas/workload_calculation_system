@@ -27,7 +27,10 @@
       "Skill(superpowers:writing-plans)",
       "Skill(superpowers:writing-plans:*)",
       "Skill(superpowers:brainstorming)",
-      "Skill(superpowers:brainstorming:*)"
+      "Skill(superpowers:brainstorming:*)",
+      "Bash(node -e ' *)",
+      "Bash(gh pr *)",
+      "PowerShell(npm test -- --run src/test/errorMessages.test.ts 2>$null)"
     ]
   }
 }
