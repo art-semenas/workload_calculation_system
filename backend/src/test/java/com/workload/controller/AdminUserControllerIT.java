@@ -242,12 +242,9 @@ class AdminUserControllerIT extends IntegrationTestBase {
 
   /** Epic §"Account Lockout": an admin unlocks a locked account through this endpoint. */
   @Test
-  void updateUserClearsAccountLockout() {
+  void updateWithUnlockClearsAccountLockout() {
     String id = createUser("locked", "viewer");
-    User locked = userRepository.findById(UUID.fromString(id)).orElseThrow();
-    locked.setFailedLoginCount(5);
-    locked.setLockedUntil(OffsetDateTime.now().plusMinutes(30));
-    userRepository.save(locked);
+    User locked = lockAccount(id);
 
     given()
         .header("Authorization", admin)
@@ -255,7 +252,7 @@ class AdminUserControllerIT extends IntegrationTestBase {
         .body(
             "{\"email\": \""
                 + locked.getEmail()
-                + "\", \"name\": \"Still Locked?\", \"role\": \"viewer\"}")
+                + "\", \"name\": \"Unlocked\", \"role\": \"viewer\", \"unlock\": true}")
         .when()
         .put("/admin/users/{id}", id)
         .then()
@@ -265,6 +262,31 @@ class AdminUserControllerIT extends IntegrationTestBase {
     User reloaded = userRepository.findById(UUID.fromString(id)).orElseThrow();
     assertThat(reloaded.getLockedUntil()).isNull();
     assertThat(reloaded.getFailedLoginCount()).isZero();
+  }
+
+  /** Editing a locked account is not an unlock — the admin has to ask for it. */
+  @Test
+  void updateWithoutUnlockKeepsAccountLocked() {
+    String id = createUser("still-locked", "viewer");
+    User locked = lockAccount(id);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body(
+            "{\"email\": \""
+                + locked.getEmail()
+                + "\", \"name\": \"Renamed While Locked\", \"role\": \"viewer\"}")
+        .when()
+        .put("/admin/users/{id}", id)
+        .then()
+        .statusCode(200)
+        .body("data.name", equalTo("Renamed While Locked"))
+        .body("data.lockedUntil", notNullValue());
+
+    User reloaded = userRepository.findById(UUID.fromString(id)).orElseThrow();
+    assertThat(reloaded.getLockedUntil()).isNotNull();
+    assertThat(reloaded.getFailedLoginCount()).isEqualTo(5);
   }
 
   @Test
@@ -367,6 +389,13 @@ class AdminUserControllerIT extends IntegrationTestBase {
   }
 
   // --- helpers ---
+
+  private User lockAccount(String id) {
+    User user = userRepository.findById(UUID.fromString(id)).orElseThrow();
+    user.setFailedLoginCount(5);
+    user.setLockedUntil(OffsetDateTime.now().plusMinutes(30));
+    return userRepository.save(user);
+  }
 
   private String createBody(String prefix, String role) {
     return "{\"email\": \""

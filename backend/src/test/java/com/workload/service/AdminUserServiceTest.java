@@ -70,6 +70,13 @@ class AdminUserServiceTest {
         .build();
   }
 
+  private User lockedUser() {
+    User user = user(Role.VIEWER);
+    user.setFailedLoginCount(5);
+    user.setLockedUntil(OffsetDateTime.now().plusMinutes(30));
+    return user;
+  }
+
   private AdminUserDto dtoOf(User u) {
     return new AdminUserDto(
         u.getId(),
@@ -176,24 +183,63 @@ class AdminUserServiceTest {
   // --- update ---
 
   @Test
-  void updateChangesFieldsAndClearsLockout() {
+  void updateChangesFields() {
     User existing = user(Role.VIEWER);
-    existing.setFailedLoginCount(5);
-    existing.setLockedUntil(OffsetDateTime.now().plusMinutes(30));
     when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
     when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
     UUID divisionId = UUID.randomUUID();
     adminUserService.update(
         existing.getId(),
-        new AdminUserUpdateRequest("new@test.com", "New Name", Role.EDITOR, divisionId));
+        new AdminUserUpdateRequest("new@test.com", "New Name", Role.EDITOR, divisionId, null));
 
     assertThat(existing.getName()).isEqualTo("New Name");
     assertThat(existing.getEmail()).isEqualTo("new@test.com");
     assertThat(existing.getRole()).isEqualTo(Role.EDITOR);
     assertThat(existing.getDivisionId()).isEqualTo(divisionId);
+  }
+
+  @Test
+  void updateWithUnlockClearsLockout() {
+    User existing = lockedUser();
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        existing.getId(),
+        new AdminUserUpdateRequest("user@test.com", "User", Role.VIEWER, null, true));
+
     assertThat(existing.getLockedUntil()).isNull();
     assertThat(existing.getFailedLoginCount()).isZero();
+  }
+
+  /** An edit is not an unlock: a locked account stays locked unless the admin asks. */
+  @Test
+  void updateWithoutUnlockKeepsLockout() {
+    User existing = lockedUser();
+    OffsetDateTime lockedUntil = existing.getLockedUntil();
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        existing.getId(),
+        new AdminUserUpdateRequest("user@test.com", "Renamed", Role.VIEWER, null, null));
+
+    assertThat(existing.getLockedUntil()).isEqualTo(lockedUntil);
+    assertThat(existing.getFailedLoginCount()).isEqualTo(5);
+  }
+
+  @Test
+  void updateWithUnlockFalseKeepsLockout() {
+    User existing = lockedUser();
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        existing.getId(),
+        new AdminUserUpdateRequest("user@test.com", "User", Role.VIEWER, null, false));
+
+    assertThat(existing.getLockedUntil()).isNotNull();
   }
 
   @Test
@@ -205,7 +251,7 @@ class AdminUserServiceTest {
             () ->
                 adminUserService.update(
                     existing.getId(),
-                    new AdminUserUpdateRequest("v@test.com", "V", Role.ENGINEER, null)))
+                    new AdminUserUpdateRequest("v@test.com", "V", Role.ENGINEER, null, null)))
         .isInstanceOf(InvalidRoleForEndpointException.class);
     verify(userRepository, never()).save(any());
   }
@@ -217,7 +263,8 @@ class AdminUserServiceTest {
     when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
     adminUserService.update(
-        existing.getId(), new AdminUserUpdateRequest("eng@test.com", "Eng", Role.ENGINEER, null));
+        existing.getId(),
+        new AdminUserUpdateRequest("eng@test.com", "Eng", Role.ENGINEER, null, null));
 
     assertThat(existing.getName()).isEqualTo("Eng");
     assertThat(existing.getRole()).isEqualTo(Role.ENGINEER);

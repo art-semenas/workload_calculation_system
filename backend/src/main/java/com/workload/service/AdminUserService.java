@@ -97,13 +97,20 @@ public class AdminUserService {
     user.setName(request.name());
     user.setRole(request.role());
     user.setDivisionId(request.divisionId());
-    // Epic MVP M-02 §"Account Lockout": PUT is the administrator's unlock surface — an edited
-    // account leaves this endpoint unlocked and with a clean failure counter.
-    user.setFailedLoginCount(0);
-    user.setLockedUntil(null);
+    // Epic MVP M-02 §"Account Lockout": the administrator releases a lockout here, but only on
+    // request — an unrelated edit must not readmit an account that failed login five times.
+    boolean unlock = Boolean.TRUE.equals(request.unlock());
+    if (unlock) {
+      user.setFailedLoginCount(0);
+      user.setLockedUntil(null);
+    }
     user.setUpdatedAt(OffsetDateTime.now());
     user = userRepository.save(user);
-    log.info("Updated user: id={}, role={}", user.getId(), user.getRole().getValue());
+    log.info(
+        "Updated user: id={}, role={}, unlocked={}",
+        user.getId(),
+        user.getRole().getValue(),
+        unlock);
     return userMapper.toAdminDto(user);
   }
 
