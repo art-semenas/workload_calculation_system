@@ -56,6 +56,14 @@ public class User {
   @Column(name = "requires_activation", nullable = false)
   private boolean requiresActivation;
 
+  /** Consecutive failed login attempts; reset to 0 on success. MVP M-02, §21.3. */
+  @Column(name = "failed_login_count", nullable = false)
+  private int failedLoginCount;
+
+  /** Set when the lockout threshold is reached; null means not locked. MVP M-02, §21.3. */
+  @Column(name = "locked_until")
+  private OffsetDateTime lockedUntil;
+
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
 

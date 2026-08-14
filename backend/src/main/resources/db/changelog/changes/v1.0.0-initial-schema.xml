@@ -335,6 +335,7 @@
       </column>
       <!-- NOTE: failed_login_count and locked_until are MVP-only (M-02, §21.3) -->
       <!-- DO NOT add them here — see poc-scope.md MVP-only columns table -->
+      <!-- Added in v1.1.0-mvp-m02-users.xml when M-02 reversed S-04. Keep this changeset as-is. -->
       <column name="created_at" type="timestamptz" defaultValueComputed="now()">
         <constraints nullable="false"/>
       </column>

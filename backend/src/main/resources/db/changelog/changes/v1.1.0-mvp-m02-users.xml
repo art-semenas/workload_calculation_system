@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    MVP M-02 (§21.3): brute-force protection on login. Deliberately absent from the PoC schema —
+    v1.0.0-6 carries a comment forbidding these two columns while S-04 stands. Adding them here
+    reverses that, so the note in v1.0.0-initial-schema.xml is now historical.
+  -->
+  <changeSet id="v1.1.0-1" author="a.semenas">
+    <comment>Add failed_login_count and locked_until to users for account lockout</comment>
+
+    <addColumn tableName="users">
+      <column name="failed_login_count" type="INTEGER" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="locked_until" type="timestamptz"/>
+    </addColumn>
+
+    <rollback>
+      <dropColumn tableName="users" columnName="failed_login_count"/>
+      <dropColumn tableName="users" columnName="locked_until"/>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>
