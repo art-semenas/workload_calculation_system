@@ -5,7 +5,6 @@ import com.workload.constant.WorkloadStatus;
 import com.workload.dto.EngineerSummaryDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
-import com.workload.entity.Summary;
 import com.workload.entity.User;
 import com.workload.exception.EntityNotFoundException;
 import com.workload.exception.SummaryNotFoundException;
@@ -14,11 +13,11 @@ import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
+import com.workload.repository.projection.EngineerObjectLoad;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +53,10 @@ public class EngineerSummaryService {
             .findById(engineerId)
             .orElseThrow(() -> new EntityNotFoundException("Engineer", engineerId.toString()));
 
-    List<ObjectEngineer> assignments = objectEngineerRepository.findAllByEngineerId(engineerId);
+    // Single query: object loads and their shared-engineer counts. Previously two lookups per
+    // assignment, which made this N+1 in the size of the engineer's portfolio.
+    List<EngineerObjectLoad> loads =
+        objectEngineerRepository.findObjectLoadsByEngineerId(engineerId);
 
     BigDecimal totalLoad = BigDecimal.ZERO;
     BigDecimal osLoad = BigDecimal.ZERO;
@@ -62,35 +64,26 @@ public class EngineerSummaryService {
     BigDecimal videoLoad = BigDecimal.ZERO;
     BigDecimal recordsLoad = BigDecimal.ZERO;
     BigDecimal repairLoad = BigDecimal.ZERO;
-    int objectCount = assignments.size();
+    int objectCount = loads.size();
 
-    for (ObjectEngineer assignment : assignments) {
-      UUID objectId = assignment.getObject().getId();
-      int engineerCount = objectEngineerRepository.countByObjectId(objectId);
-
-      Optional<Summary> summaryOpt = summaryRepository.findByObjectId(objectId);
-      if (summaryOpt.isEmpty()) {
-        log.debug("No summary found for objectId={}, treating itogo as zero", objectId);
+    for (EngineerObjectLoad load : loads) {
+      if (load.itogoWithTravel() == null) {
+        log.debug("No summary found for objectId={}, treating itogo as zero", load.objectId());
       }
 
-      Summary summary = summaryOpt.orElseGet(Summary::new);
-      BigDecimal itogo =
-          summary.getItogoChisloWithTravel() != null
-              ? summary.getItogoChisloWithTravel()
-              : BigDecimal.ZERO;
-
-      BigDecimal countBd = BigDecimal.valueOf(engineerCount);
+      BigDecimal itogo = load.itogoWithTravel() != null ? load.itogoWithTravel() : BigDecimal.ZERO;
+      BigDecimal countBd = BigDecimal.valueOf(load.engineerCount());
 
       // §6.12.1 — object share
       BigDecimal objectShare = itogo.divide(countBd, SHARE_SCALE, RoundingMode.HALF_UP);
       totalLoad = totalLoad.add(objectShare);
 
       // §6.12.2 — per-component shares
-      osLoad = osLoad.add(componentShare(summary.getOsMonthlyAvg(), countBd));
-      psLoad = psLoad.add(componentShare(summary.getPsMonthlyAvg(), countBd));
-      videoLoad = videoLoad.add(componentShare(summary.getVideoMonthlyAvg(), countBd));
-      recordsLoad = recordsLoad.add(componentShare(summary.getRecordsMonthly(), countBd));
-      repairLoad = repairLoad.add(componentShare(summary.getRepairWithTravelMonthly(), countBd));
+      osLoad = osLoad.add(componentShare(load.osMonthly(), countBd));
+      psLoad = psLoad.add(componentShare(load.psMonthly(), countBd));
+      videoLoad = videoLoad.add(componentShare(load.videoMonthly(), countBd));
+      recordsLoad = recordsLoad.add(componentShare(load.recordsMonthly(), countBd));
+      repairLoad = repairLoad.add(componentShare(load.repairWithTravel(), countBd));
     }
 
     // §6.13 — load ratio and status

@@ -41,6 +41,17 @@ public class CalculationService {
 
   // PoC (S-02): recalculates synchronously. Replaced by background worker in MVP M-06.
   public Summary recalculate(UUID objectId) {
+    return recalculate(objectId, true);
+  }
+
+  /**
+   * Recalculates one object's summary, optionally cascading to the assigned engineers' summaries.
+   *
+   * <p>Pass {@code false} only for bulk passes that recalculate every engineer afterwards. The
+   * cascade re-aggregates each assigned engineer's entire portfolio, so doing it per object makes a
+   * full pass quadratic in portfolio size — see {@code CalculationStartupListener}.
+   */
+  public Summary recalculate(UUID objectId, boolean cascadeEngineerSummaries) {
     log.debug("Recalculating workload for object {}", objectId);
 
     // Stage 1 — Fetch data
@@ -195,7 +206,9 @@ public class CalculationService {
 
     Summary saved = summaryRepo.save(summary);
     // PoC (S-02): calls engineer summary recalculation synchronously after object summary update.
-    engineerSummaryService.recalculateAllForObject(objectId);
+    if (cascadeEngineerSummaries) {
+      engineerSummaryService.recalculateAllForObject(objectId);
+    }
     return saved;
   }
 

@@ -831,7 +831,33 @@ model of `CalculationService`, first validated against the engine's own output o
 it had completed: **0 mismatches across every component** at the 6-decimal precision `summaries`
 stores. The SQL model is a faithful proxy, not an independent reimplementation of the rules.
 
-> The per-object recalculation cost is worth noting on its own: startup recalculation slowed from
-> ~2.6 objects/s to ~0.5 objects/s as summaries accumulated, implying the engineer-summary refresh
-> re-reads every object for each engineer. At 2 934 objects that is roughly 90 minutes of startup.
-> Not a correctness problem, and out of scope here, but it will matter for PoC startup time.
+### 12.1 Recalculation performance — fixed
+
+The first full run exposed a quadratic cascade. `CalculationService.recalculate` refreshed every
+assigned engineer's summary, and `EngineerSummaryService.recalculate` re-aggregated that engineer's
+whole portfolio with **two queries per assignment** (`countByObjectId` + `findByObjectId`). So a full
+pass cost `2 × Σ(portfolio²)` — measured against the seeded data:
+
+| | Queries |
+|---|---:|
+| Per-object cascade with the N+1 | **313 644** |
+| Each engineer once, still N+1 | 4 984 |
+| Each engineer once, single aggregate query | **123** |
+
+Белоусов alone holds 251 objects (251² = 63 001), and the top 5 engineers accounted for 62% of the
+total. Startup also degraded from ~2.6 to ~0.5 objects/s as summaries filled in, because
+`findByObjectId` went from returning empty Optionals to hydrating entities.
+
+Two changes:
+
+- `CalculationService.recalculate(objectId, cascadeEngineerSummaries)` — the startup listener now
+  runs objects first, then each engineer exactly once. The single-argument form still cascades, so
+  the normal edit path is unchanged.
+- `ObjectEngineerRepository.findObjectLoadsByEngineerId` returns an `EngineerObjectLoad` projection
+  carrying the summary components and the shared-engineer count in one query, replacing the N+1.
+  This also fixes the **runtime** path: editing one of Белоусов's objects previously fired ~502
+  queries to refresh his summary.
+
+Measured end to end on the full seeded dataset: **2 934 objects and 123 engineers in 131.7 s**
+(22.3 objects/s), against roughly 90 minutes before. Results verified unchanged — all 2 934
+summaries agree with the validated SQL model on every component, and PAC-01 remains `0.032448`.

@@ -22,6 +22,7 @@ import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import com.workload.repository.UserRepository;
+import com.workload.repository.projection.EngineerObjectLoad;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -83,6 +84,19 @@ class EngineerWorkloadServiceTest {
   // -------------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------------
+
+  /** Projection row equivalent to the given summary, shared by {@code engineerCount} engineers. */
+  private EngineerObjectLoad load(UUID objectId, long engineerCount, Summary s) {
+    return new EngineerObjectLoad(
+        objectId,
+        engineerCount,
+        s.getItogoChisloWithTravel(),
+        s.getOsMonthlyAvg(),
+        s.getPsMonthlyAvg(),
+        s.getVideoMonthlyAvg(),
+        s.getRecordsMonthly(),
+        s.getRepairWithTravelMonthly());
+  }
 
   private User buildEngineer(UUID id, BigDecimal capacityFte) {
     return User.builder()
@@ -150,9 +164,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -185,9 +198,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(2);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 2, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -222,9 +234,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(3);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 3, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -271,12 +282,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId))
-        .thenReturn(List.of(assignment1, assignment2));
-    when(objectEngineerRepository.countByObjectId(objectId1)).thenReturn(1);
-    when(objectEngineerRepository.countByObjectId(objectId2)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId1)).thenReturn(Optional.of(summary1));
-    when(summaryRepository.findByObjectId(objectId2)).thenReturn(Optional.of(summary2));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId1, 1, summary1), load(objectId2, 1, summary2)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -322,12 +329,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId))
-        .thenReturn(List.of(assignment1, assignment2));
-    when(objectEngineerRepository.countByObjectId(objectId1)).thenReturn(2);
-    when(objectEngineerRepository.countByObjectId(objectId2)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId1)).thenReturn(Optional.of(summary1));
-    when(summaryRepository.findByObjectId(objectId2)).thenReturn(Optional.of(summary2));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId1, 2, summary1), load(objectId2, 1, summary2)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -364,9 +367,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -399,9 +401,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -434,9 +435,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -469,9 +469,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -504,9 +503,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -539,9 +537,8 @@ class EngineerWorkloadServiceTest {
             BigDecimal.ZERO);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -586,9 +583,8 @@ class EngineerWorkloadServiceTest {
             new BigDecimal("136.2"));
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -633,9 +629,8 @@ class EngineerWorkloadServiceTest {
             new BigDecimal("136.2"));
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(List.of(load(objectId, 1, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -668,7 +663,7 @@ class EngineerWorkloadServiceTest {
     User engineer = buildEngineer(engineerId, new BigDecimal("1.0"));
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of());
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId)).thenReturn(List.of());
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -717,12 +712,10 @@ class EngineerWorkloadServiceTest {
     // For each engineer's recalculate call:
     when(userRepository.findById(engineerId1)).thenReturn(Optional.of(engineer1));
     when(userRepository.findById(engineerId2)).thenReturn(Optional.of(engineer2));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId1))
-        .thenReturn(List.of(assignment1));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId2))
-        .thenReturn(List.of(assignment2));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(2);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.of(summary));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId1))
+        .thenReturn(List.of(load(objectId, 2, summary)));
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId2))
+        .thenReturn(List.of(load(objectId, 2, summary)));
     when(engineerSummaryRepository.findByEngineerId(engineerId1)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.findByEngineerId(engineerId2)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -823,9 +816,9 @@ class EngineerWorkloadServiceTest {
     ObjectEngineer assignment = buildAssignment(object, engineer);
 
     when(userRepository.findById(engineerId)).thenReturn(Optional.of(engineer));
-    when(objectEngineerRepository.findAllByEngineerId(engineerId)).thenReturn(List.of(assignment));
-    when(objectEngineerRepository.countByObjectId(objectId)).thenReturn(1);
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
+    when(objectEngineerRepository.findObjectLoadsByEngineerId(engineerId))
+        .thenReturn(
+            List.of(new EngineerObjectLoad(objectId, 1, null, null, null, null, null, null)));
     when(engineerSummaryRepository.findByEngineerId(engineerId)).thenReturn(Optional.empty());
     when(engineerSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

@@ -3,6 +3,8 @@ package com.workload.service.calculation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.workload.config.WorkloadConfig;
@@ -293,6 +295,30 @@ class CalculationServiceTest {
     assertThat(result.getOsMonthlyAvg())
         .usingComparator(BigDecimal::compareTo)
         .isGreaterThan(BigDecimal.ZERO);
+  }
+
+  /**
+   * Bulk recalculation must be able to skip the engineer-summary cascade. Cascading per object is
+   * quadratic: each object triggers a full re-aggregation of every assigned engineer's portfolio,
+   * so a full pass costs 2 × Σ(portfolio²) queries — 313 644 for the seeded dataset. The startup
+   * listener instead recalculates objects first, then each engineer once.
+   */
+  @Test
+  void recalculateWithoutCascade_skipsEngineerSummaries() {
+    stubPac01Mocks();
+
+    calculationService.recalculate(objectId, false);
+
+    verify(engineerSummaryService, never()).recalculateAllForObject(any());
+  }
+
+  @Test
+  void recalculateByDefault_cascadesToEngineerSummaries() {
+    stubPac01Mocks();
+
+    calculationService.recalculate(objectId);
+
+    verify(engineerSummaryService).recalculateAllForObject(objectId);
   }
 
   // --- Zero-guard tests (C-39) ---
