@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,7 @@ import com.workload.dto.BranchDto;
 import com.workload.dto.BranchUpdateRequest;
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
+import com.workload.exception.BranchHasObjectsException;
 import com.workload.exception.BranchNotFoundException;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.BranchMapper;
@@ -146,5 +148,36 @@ class BranchServiceTest {
     BranchDto result = branchService.update(branch.getId(), new BranchUpdateRequest("NewName"));
 
     assertThat(result.name()).isEqualTo("NewName");
+  }
+
+  @Test
+  void deleteRemovesEmptyBranch() {
+    UUID id = UUID.randomUUID();
+    when(branchRepository.existsById(id)).thenReturn(true);
+    when(objectRepository.countByBranchId(id)).thenReturn(0L);
+
+    branchService.delete(id);
+
+    verify(branchRepository).deleteById(id);
+  }
+
+  @Test
+  void deleteThrowsWhenBranchMissing() {
+    UUID id = UUID.randomUUID();
+    when(branchRepository.existsById(id)).thenReturn(false);
+
+    assertThatThrownBy(() -> branchService.delete(id)).isInstanceOf(BranchNotFoundException.class);
+  }
+
+  @Test
+  void deleteBlockedWhenBranchHasObjects() {
+    UUID id = UUID.randomUUID();
+    when(branchRepository.existsById(id)).thenReturn(true);
+    when(objectRepository.countByBranchId(id)).thenReturn(4L);
+
+    assertThatThrownBy(() -> branchService.delete(id))
+        .isInstanceOf(BranchHasObjectsException.class)
+        .hasMessage("Cannot delete: branch has 4 objects");
+    verify(branchRepository, never()).deleteById(id);
   }
 }

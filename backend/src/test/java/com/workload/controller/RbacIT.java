@@ -120,6 +120,43 @@ class RbacIT extends IntegrationTestBase {
   }
 
   @Test
+  void editorCannotDeleteDivision() {
+    String editor = authenticationTestHelper.loginAs(Role.EDITOR, divisionA);
+
+    given()
+        .header("Authorization", editor)
+        .when()
+        .delete("/divisions/" + divisionA)
+        .then()
+        .statusCode(403)
+        .body("error.code", equalTo(403))
+        .body("error.message", equalTo(FORBIDDEN));
+  }
+
+  @Test
+  void viewerCannotDeleteBranch() {
+    UUID branchId =
+        UUID.fromString(
+            given()
+                .header("Authorization", admin)
+                .contentType(ContentType.JSON)
+                .body("{\"name\": \"Branch " + UUID.randomUUID() + "\"}")
+                .when()
+                .post("/divisions/" + divisionB + "/branches")
+                .then()
+                .statusCode(201)
+                .extract()
+                .path("data.id"));
+
+    given()
+        .header("Authorization", viewer)
+        .when()
+        .delete("/branches/" + branchId)
+        .then()
+        .statusCode(403);
+  }
+
+  @Test
   void viewerCannotCreateEngineer() {
     given()
         .header("Authorization", viewer)

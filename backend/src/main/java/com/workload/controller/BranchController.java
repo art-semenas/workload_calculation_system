@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,5 +36,12 @@ public class BranchController {
   public ResponseEntity<ApiResponse<BranchDto>> update(
       @PathVariable UUID id, @Valid @RequestBody BranchUpdateRequest request) {
     return ResponseEntity.ok(ApiResponse.success(branchService.update(id, request)));
+  }
+
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    branchService.delete(id);
+    return ResponseEntity.noContent().build();
   }
 }

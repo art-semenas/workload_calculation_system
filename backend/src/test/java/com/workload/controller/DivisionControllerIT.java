@@ -284,4 +284,131 @@ class DivisionControllerIT extends IntegrationTestBase {
   void unauthenticatedRequestReturns401() {
     given().when().get("/divisions").then().statusCode(401);
   }
+
+  // --- MVP M-02: cascade-guarded deletes ---
+
+  @Test
+  void deleteEmptyDivisionReturns204() {
+    String divId = createDivision("DeletableDiv");
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/divisions/{id}", divId)
+        .then()
+        .statusCode(204);
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .get("/divisions/{id}", divId)
+        .then()
+        .statusCode(404);
+  }
+
+  @Test
+  void deleteDivisionWithBranchesReturns409() {
+    String divId = createDivision("DivWithBranch");
+    createBranch(divId, "Blocking Branch");
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/divisions/{id}", divId)
+        .then()
+        .statusCode(409)
+        .body("error.code", equalTo(409))
+        .body("error.message", equalTo("Cannot delete: division has 1 branches"));
+  }
+
+  @Test
+  void deleteUnknownDivisionReturns404() {
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/divisions/{id}", UUID.randomUUID())
+        .then()
+        .statusCode(404)
+        .body("error.message", equalTo("Division not found"));
+  }
+
+  @Test
+  void deleteEmptyBranchReturns204() {
+    String divId = createDivision("DivForBranchDelete");
+    String branchId = createBranch(divId, "Deletable Branch");
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/branches/{id}", branchId)
+        .then()
+        .statusCode(204);
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .get("/branches/{id}", branchId)
+        .then()
+        .statusCode(404);
+  }
+
+  @Test
+  void deleteBranchWithObjectsReturns409() {
+    String divId = createDivision("DivWithObject");
+    String branchId = createBranch(divId, "Branch With Object");
+    given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"branchId\": \"" + branchId + "\", \"name\": \"Blocking Object\"}")
+        .when()
+        .post("/objects")
+        .then()
+        .statusCode(201);
+
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/branches/{id}", branchId)
+        .then()
+        .statusCode(409)
+        .body("error.code", equalTo(409))
+        .body("error.message", equalTo("Cannot delete: branch has 1 objects"));
+  }
+
+  @Test
+  void deleteUnknownBranchReturns404() {
+    given()
+        .header("Authorization", bearerToken)
+        .when()
+        .delete("/branches/{id}", UUID.randomUUID())
+        .then()
+        .statusCode(404)
+        .body("error.message", equalTo("Branch not found"));
+  }
+
+  private String createDivision(String name) {
+    return given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"name\": \"" + name + " " + UUID.randomUUID() + "\"}")
+        .when()
+        .post("/divisions")
+        .then()
+        .statusCode(201)
+        .extract()
+        .path("data.id");
+  }
+
+  private String createBranch(String divisionId, String name) {
+    return given()
+        .header("Authorization", bearerToken)
+        .contentType(ContentType.JSON)
+        .body("{\"name\": \"" + name + " " + UUID.randomUUID() + "\"}")
+        .when()
+        .post("/divisions/{id}/branches", divisionId)
+        .then()
+        .statusCode(201)
+        .extract()
+        .path("data.id");
+  }
 }

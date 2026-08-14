@@ -63,6 +63,19 @@ public class GlobalExceptionHandler {
                 ApiError.of(HttpStatus.NOT_FOUND, getEntityNotFoundMessage(ex.getEntityType()))));
   }
 
+  @ExceptionHandler(DivisionHasBranchesException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDivisionHasBranches(
+      DivisionHasBranchesException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
+  }
+
+  @ExceptionHandler(BranchHasObjectsException.class)
+  public ResponseEntity<ApiResponse<Void>> handleBranchHasObjects(BranchHasObjectsException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
+  }
+
   @ExceptionHandler(EngineerHasActiveAssignmentsException.class)
   public ResponseEntity<ApiResponse<Void>> handleEngineerHasActiveAssignments(
       EngineerHasActiveAssignmentsException ex) {

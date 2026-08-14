@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +13,7 @@ import com.workload.dto.DivisionCreateRequest;
 import com.workload.dto.DivisionDto;
 import com.workload.dto.DivisionUpdateRequest;
 import com.workload.entity.Division;
+import com.workload.exception.DivisionHasBranchesException;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.DivisionMapper;
 import com.workload.repository.BranchRepository;
@@ -196,6 +198,38 @@ class DivisionServiceTest {
     DivisionDto result = divisionService.update(div.getId(), new DivisionUpdateRequest("NewName"));
 
     assertThat(result.name()).isEqualTo("NewName");
+  }
+
+  @Test
+  void deleteRemovesEmptyDivision() {
+    UUID id = UUID.randomUUID();
+    when(divisionRepository.existsById(id)).thenReturn(true);
+    when(branchRepository.countByDivisionId(id)).thenReturn(0L);
+
+    divisionService.delete(id);
+
+    verify(divisionRepository).deleteById(id);
+  }
+
+  @Test
+  void deleteThrowsWhenDivisionMissing() {
+    UUID id = UUID.randomUUID();
+    when(divisionRepository.existsById(id)).thenReturn(false);
+
+    assertThatThrownBy(() -> divisionService.delete(id))
+        .isInstanceOf(DivisionNotFoundException.class);
+  }
+
+  @Test
+  void deleteBlockedWhenDivisionHasBranches() {
+    UUID id = UUID.randomUUID();
+    when(divisionRepository.existsById(id)).thenReturn(true);
+    when(branchRepository.countByDivisionId(id)).thenReturn(2L);
+
+    assertThatThrownBy(() -> divisionService.delete(id))
+        .isInstanceOf(DivisionHasBranchesException.class)
+        .hasMessage("Cannot delete: division has 2 branches");
+    verify(divisionRepository, never()).deleteById(id);
   }
 
   @Test
