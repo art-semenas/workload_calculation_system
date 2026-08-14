@@ -162,6 +162,13 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid email or password")));
   }
 
+  @ExceptionHandler(AccountLockedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAccountLocked(AccountLockedException ex) {
+    // 401 like any other login failure: the caller is still unauthenticated.
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, ex.getMessage())));
+  }
+
   @ExceptionHandler(DeviceTypeInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleDeviceTypeInUse(DeviceTypeInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)

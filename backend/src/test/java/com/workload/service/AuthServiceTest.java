@@ -15,9 +15,9 @@ import com.workload.repository.UserRepository;
 import com.workload.security.JwtTokenProvider;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +29,24 @@ class AuthServiceTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private UserMapper userMapper;
-  @InjectMocks private AuthService authService;
+
+  private AuthService authService;
+
+  private static final int MAX_ATTEMPTS = 5;
+  private static final int LOCKOUT_MINUTES = 30;
+
+  @BeforeEach
+  void setUp() {
+    // Built by hand rather than @InjectMocks: the lockout policy arrives as two @Value ints.
+    authService =
+        new AuthService(
+            userRepository,
+            passwordEncoder,
+            jwtTokenProvider,
+            userMapper,
+            MAX_ATTEMPTS,
+            LOCKOUT_MINUTES);
+  }
 
   @Test
   void loginReturnsTokenForValidCredentials() {
