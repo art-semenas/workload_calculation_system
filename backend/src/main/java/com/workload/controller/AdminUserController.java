@@ -2,6 +2,7 @@ package com.workload.controller;
 
 import com.workload.dto.AdminUserCreateRequest;
 import com.workload.dto.AdminUserDto;
+import com.workload.dto.AdminUserPasswordRequest;
 import com.workload.dto.AdminUserUpdateRequest;
 import com.workload.dto.ApiResponse;
 import com.workload.entity.Role;
@@ -59,6 +60,14 @@ public class AdminUserController {
   public ResponseEntity<ApiResponse<AdminUserDto>> update(
       @PathVariable UUID id, @Valid @RequestBody AdminUserUpdateRequest request) {
     return ResponseEntity.ok(ApiResponse.success(adminUserService.update(id, request)));
+  }
+
+  /** 204 with no body on purpose: nothing about a credential belongs in a response. */
+  @PutMapping("/{id}/password")
+  public ResponseEntity<Void> setPassword(
+      @PathVariable UUID id, @Valid @RequestBody AdminUserPasswordRequest request) {
+    adminUserService.setPassword(id, request);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{id}/activate")

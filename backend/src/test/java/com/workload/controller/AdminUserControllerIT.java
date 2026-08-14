@@ -344,6 +344,122 @@ class AdminUserControllerIT extends IntegrationTestBase {
         .body("data.requiresActivation", equalTo(false));
   }
 
+  // --- PUT /admin/users/:id/password ---
+
+  /**
+   * The gap this endpoint closes: a placeholder account has no usable credential, so activation
+   * alone leaves it unloggable. Create → activate → set password → log in must work end to end.
+   */
+  @Test
+  void placeholderCanLogInAfterPasswordIsSet() {
+    String email = "claimed-" + UUID.randomUUID() + "@workload.local";
+    String id =
+        given()
+            .header("Authorization", admin)
+            .contentType(ContentType.JSON)
+            .body("{\"email\": \"" + email + "\", \"name\": \"Claimed\", \"role\": \"viewer\"}")
+            .when()
+            .post("/admin/users")
+            .then()
+            .statusCode(201)
+            .extract()
+            .path("data.id");
+
+    given()
+        .header("Authorization", admin)
+        .when()
+        .put("/admin/users/{id}/activate", id)
+        .then()
+        .statusCode(200);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"password\": \"issued-password\"}")
+        .when()
+        .put("/admin/users/{id}/password", id)
+        .then()
+        .statusCode(204);
+
+    given()
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"" + email + "\", \"password\": \"issued-password\"}")
+        .when()
+        .post("/auth/login")
+        .then()
+        .statusCode(200)
+        .body("data.token", notNullValue());
+  }
+
+  @Test
+  void setPasswordReleasesLockout() {
+    String id = createUser("reset-locked", "viewer");
+    User locked = lockAccount(id);
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"password\": \"brand-new-password\"}")
+        .when()
+        .put("/admin/users/{id}/password", id)
+        .then()
+        .statusCode(204);
+
+    User reloaded = userRepository.findById(UUID.fromString(id)).orElseThrow();
+    assertThat(reloaded.getLockedUntil()).isNull();
+    assertThat(reloaded.getFailedLoginCount()).isZero();
+
+    given()
+        .contentType(ContentType.JSON)
+        .body("{\"email\": \"" + locked.getEmail() + "\", \"password\": \"brand-new-password\"}")
+        .when()
+        .post("/auth/login")
+        .then()
+        .statusCode(200);
+  }
+
+  @Test
+  void setPasswordRejectsShortPassword() {
+    String id = createUser("short-password", "viewer");
+
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"password\": \"short\"}")
+        .when()
+        .put("/admin/users/{id}/password", id)
+        .then()
+        .statusCode(422)
+        .body("error.code", equalTo(422));
+  }
+
+  @Test
+  void viewerCannotSetAnotherUsersPassword() {
+    String id = createUser("password-target", "viewer");
+    String viewer = authenticationTestHelper.loginAs(Role.VIEWER);
+
+    given()
+        .header("Authorization", viewer)
+        .contentType(ContentType.JSON)
+        .body("{\"password\": \"hijacked-password\"}")
+        .when()
+        .put("/admin/users/{id}/password", id)
+        .then()
+        .statusCode(403);
+  }
+
+  @Test
+  void setPasswordForUnknownUserReturns404() {
+    given()
+        .header("Authorization", admin)
+        .contentType(ContentType.JSON)
+        .body("{\"password\": \"brand-new-password\"}")
+        .when()
+        .put("/admin/users/{id}/password", UUID.randomUUID())
+        .then()
+        .statusCode(404);
+  }
+
   // --- DELETE /admin/users/:id ---
 
   @Test

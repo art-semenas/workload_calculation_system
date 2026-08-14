@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.workload.dto.AdminUserCreateRequest;
 import com.workload.dto.AdminUserDto;
+import com.workload.dto.AdminUserPasswordRequest;
 import com.workload.dto.AdminUserUpdateRequest;
 import com.workload.entity.Role;
 import com.workload.entity.User;
@@ -268,6 +269,32 @@ class AdminUserServiceTest {
 
     assertThat(existing.getName()).isEqualTo("Eng");
     assertThat(existing.getRole()).isEqualTo(Role.ENGINEER);
+  }
+
+  // --- setPassword ---
+
+  @Test
+  void setPasswordEncodesAndClearsLockout() {
+    User existing = lockedUser();
+    when(userRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(passwordEncoder.encode("new-password")).thenReturn("new-hash");
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.setPassword(existing.getId(), new AdminUserPasswordRequest("new-password"));
+
+    assertThat(existing.getPasswordHash()).isEqualTo("new-hash");
+    assertThat(existing.getLockedUntil()).isNull();
+    assertThat(existing.getFailedLoginCount()).isZero();
+  }
+
+  @Test
+  void setPasswordUnknownUserThrows() {
+    UUID id = UUID.randomUUID();
+    when(userRepository.findById(id)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () -> adminUserService.setPassword(id, new AdminUserPasswordRequest("new-password")))
+        .isInstanceOf(UserNotFoundException.class);
   }
 
   // --- activate ---

@@ -2,6 +2,7 @@ package com.workload.service;
 
 import com.workload.dto.AdminUserCreateRequest;
 import com.workload.dto.AdminUserDto;
+import com.workload.dto.AdminUserPasswordRequest;
 import com.workload.dto.AdminUserUpdateRequest;
 import com.workload.entity.Role;
 import com.workload.entity.User;
@@ -112,6 +113,24 @@ public class AdminUserService {
         user.getRole().getValue(),
         unlock);
     return userMapper.toAdminDto(user);
+  }
+
+  /**
+   * Issues or resets a user's password. Placeholder accounts are created with an unusable hash, so
+   * without this an activated placeholder can never log in.
+   *
+   * <p>The lockout is released here — unlike an ordinary edit, which leaves it alone — because the
+   * lock guards a credential that no longer exists once the password is replaced.
+   */
+  @Transactional
+  public void setPassword(UUID id, AdminUserPasswordRequest request) {
+    User user = loadById(id);
+    user.setPasswordHash(passwordEncoder.encode(request.password()));
+    user.setFailedLoginCount(0);
+    user.setLockedUntil(null);
+    user.setUpdatedAt(OffsetDateTime.now());
+    userRepository.save(user);
+    log.info("Reset password for user: id={}", id);
   }
 
   @Transactional
