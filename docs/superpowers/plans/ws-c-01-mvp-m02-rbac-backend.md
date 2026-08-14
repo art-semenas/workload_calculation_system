@@ -225,7 +225,9 @@ git commit -m "feat: implement account lockout after 5 failed login attempts (TO
 | Equipment/records/repairs/travel write | ✓ | own division | own objects (records/repairs) | ✗ |
 | `POST /engineers`, `PUT/DELETE /engineers/:id` | ✓ | ✗ | ✗ | ✗ |
 | Engineer assignment writes | ✓ | own division | ✗ | ✗ |
-| `GET` (all reads) | ✓ | ✓ | ✓ (own row for `/engineers`) | ✓ |
+| `GET /engineers` | ✓ all | ✓ all | own row only | ✓ all |
+| `GET /objects`, `GET /svod`, exports | ✓ all | ✓ all | **own objects only** | ✓ all |
+| `GET` (everything else) | ✓ | ✓ | ✓ | ✓ |
 
 - [ ] **Step 1: Write failing AC-08 test**
 
@@ -283,6 +285,55 @@ The message must match `GlobalExceptionHandler.handleAccessDenied` so method-lev
 ```bash
 git add backend/src/main/java/com/workload/security/RbacService.java backend/src/main/java/com/workload/config/SecurityConfig.java backend/src/main/java/com/workload/controller/
 git commit -m "feat: enforce RBAC on all endpoints — admin/editor/engineer/viewer roles (TOR §12)"
+```
+
+---
+
+## Task 4b: Engineer read scoping — objects and СВОД
+
+> Added after Task 4 was implemented. The role table originally compressed all reads into one
+> row, which hid the fact that engineers are scoped on the object side too. Two of these rules
+> are **filters returning 200 with fewer rows**, not denials, so tests that only assert 403 will
+> pass while the rule is entirely unimplemented — which is how it was missed the first time.
+
+**Files:**
+- Modify: `backend/src/main/java/com/workload/service/ObjectService.java`
+- Modify: `backend/src/main/java/com/workload/service/SvodService.java`
+- Modify: `backend/src/main/java/com/workload/service/XlsxExportService.java` (or its caller)
+- Update: `backend/src/test/java/com/workload/controller/RbacIT.java`
+
+**Spec (TOR §12 permission matrix and Engineer scope note):**
+
+| Permission | Admin | Editor | Viewer | Engineer |
+|---|---|---|---|---|
+| View all objects / СВОД | ✅ | ✅ | ✅ | **Own objects only** |
+| Export XLSX / PDF | ✅ | ✅ | ✅ | **✅ (own objects)** |
+
+> "They can view their own `engineer_summaries` and the objects they are assigned to. They cannot
+> view other engineers' rows, dashboards, or unassigned objects." — TOR §12
+
+Note this is stricter than "cannot see unassigned objects": an engineer also cannot see objects
+assigned to *someone else*. Membership is `object_engineers`, the same table
+`RbacService.requireCanEditObjectData` already consults.
+
+- [ ] **Step 1: Write failing tests** — an engineer assigned to one object gets exactly that object
+      from `GET /objects` and `GET /svod`, while admin/editor/viewer still get the full list. Assert
+      **row counts**, not status codes; a denial-only assertion cannot detect a missing filter.
+- [ ] **Step 2: Run — expect FAIL** (lists currently return every row for every role)
+- [ ] **Step 3: Filter `GET /objects` and `GET /svod`** to the caller's assigned objects when the
+      role is `engineer`. Push the restriction into the repository query rather than filtering the
+      result in memory — the seeded dataset is 2,934 objects and `/svod` is paginated, so
+      post-filtering a page would return short pages and wrong totals.
+- [ ] **Step 4: Deny `GET /objects/{id}` and `GET /objects/{id}/summary`** for an object the
+      engineer is not assigned to — 403, mirroring `GET /engineers/{id}`. Filtering the list
+      achieves nothing while the detail route stays open.
+- [ ] **Step 5: Scope the СВОД XLSX export** to the same set, so the export cannot be used to read
+      around the filter.
+- [ ] **Step 6: Run tests — expect PASS**
+- [ ] **Step 7: Commit**
+
+```bash
+git commit -m "feat: scope object and SVOD reads to assigned objects for engineers (TOR §12)"
 ```
 
 ---
@@ -360,16 +411,19 @@ git push -u origin feature/mvp-m02-rbac-backend
 
 ## Final Scope Checklist
 
-- [ ] `failed_login_count` and `locked_until` columns migrated via Liquibase v1.1.0
-- [ ] JWT refresh token flow working (15min access + 7-day refresh in HTTP-only cookie)
-- [ ] Account locks after 5 failed attempts, unlocks after 30 minutes
-- [ ] RBAC enforced: admin unrestricted, editor own-division, engineer read-only, viewer read-only
-- [ ] `GET /engineers` returns only own row for engineer role
+- [x] `failed_login_count` and `locked_until` columns migrated via Liquibase v1.1.0
+- [x] JWT refresh token flow working (15min access + 7-day refresh in HTTP-only cookie)
+- [x] Account locks after 5 failed attempts, unlocks after 30 minutes
+- [x] RBAC enforced: admin unrestricted, editor own-division, engineer read-only, viewer read-only
+- [x] `GET /engineers` returns only own row for engineer role
+- [ ] `GET /objects` and `GET /svod` return only assigned objects for engineer role
+- [ ] `GET /objects/:id` returns 403 for an object the engineer is not assigned to
+- [ ] СВОД XLSX export is scoped to the same set for engineer role
 - [ ] `DELETE /divisions/:id` admin only, blocked if branches exist
 - [ ] `DELETE /branches/:id` admin only, blocked if objects exist
 - [ ] `/admin/users` CRUD endpoints (admin only)
 - [ ] `PUT /admin/users/:id/activate` activates placeholder accounts
-- [ ] AC-08 verified: editor gets 403 on other-division objects
+- [x] AC-08 verified: editor gets 403 on other-division objects
 - [ ] `mvn verify` passes
 
 ## References
