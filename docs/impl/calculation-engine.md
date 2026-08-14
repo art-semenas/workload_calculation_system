@@ -111,8 +111,10 @@ monthly_avg  = (84.16 + 292.0) / 12 = 376.16 / 12 = 31.347 min  ✓
 > spreadsheet computes `73 + 292 = 365` and reports `30.417`, dropping R1 entirely while
 > double-counting an R2 cycle. Confirmed on all 2 833 numeric rows. The ОС sheet does this
 > correctly (`ОС Расчет!AL = [Р2 за 2 раз в году] + [Р1 за 10 раз в году]`); ПС does not.
-> Comparing the engine against `СВОД` will therefore show ПС running high on every object with R1
-> equipment — that is expected, not a regression. Guarded by
+> Comparing the engine against `СВОД` will therefore show ПС differing on any object with ПС
+> equipment — **in both directions**, since the workbook trades the R1 annual contribution for an
+> extra R2 cycle. The engine reads higher on 581 objects and lower on 443; in aggregate the
+> workbook overstates ПС by ~18 884 min/year. That is expected, not a regression. Guarded by
 > `CalculationServiceTest.psMonthlyAvg_includesR1_notJustR2`. See
 > `docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md` §8.4.
 

@@ -631,8 +631,22 @@ Confirmed on all 2 833 numeric rows: `AT = Р2м + Р2×4` in every one; `AT ≠
 rows (the rest have zero R1). The reference object shows it plainly: `Р1×8 = 84.16`,
 `Р2×4 = 292`, `ИТОГО = 365 = 73 + 292`.
 
-So the workbook's fire-alarm figure both drops R1 *and* double-counts one R2 cycle. It understates
-ПС workload for every object with R1 equipment — around 173 666 minutes/year across the dataset.
+So the workbook's fire-alarm figure both drops R1 *and* double-counts one R2 cycle. In effect it
+substitutes one extra R2 cycle for the whole R1 annual contribution, so the error is
+`Р1×8 − Р2 за мес` and **its sign varies by object**:
+
+| | Objects |
+|---|---:|
+| Engine higher than workbook (`8×Р1 > Р2`) | 581 |
+| Engine **lower** than workbook (`8×Р1 < Р2`) | 443 |
+| Identical (no ПС equipment) | 1 809 |
+
+In aggregate the workbook **overstates** ПС: it adds `Σ Р2 за мес = 192 550` where the correct
+formula adds `Σ Р1×8 = 173 666`, a net overstatement of **18 884 min/year** across the estate.
+Because R2 minutes per device are far larger than R1 minutes, equipment-heavy objects are the ones
+where the workbook runs high. The extreme case is `Здание ГО г. Минск пр-т Дзержинского, 18`
+(seq 91): `Р1×8 = 7 247.76` against `Р2 за мес = 10 212.4`, so the workbook overstates by
+247.05 min/month and its `ИТОГО` reads 1.012046 where the engine correctly gives 0.979751.
 `CONTRIBUTING.md`'s "R1 and R2 are additive — R2 does not replace R1" is the correct domain rule, so
 the implementation is right and the workbook has a formula bug. Worth stating explicitly in the TOR
 so nobody later "fixes" the code to match the spreadsheet.
