@@ -600,11 +600,36 @@ and the value is the live formula `=0.15*21`. So it is 0.15 min/day of backup mo
 21-working-day month — a **per storage system per month** rate, not per request like the other four.
 That is why 3.15 and 120 are not comparable as "the same number measured differently".
 
-**Data-quality flag, not resolved here.** Only 3 objects have backup counts: two at `2`, and row 1378
-(Минское ОУ, Операционная служба) at **2 645**. Given the other two, 2 645 looks like a data-entry
-error rather than 2 645 storage systems. Under the live normative it costs 8 332 min/period; under
-the catalog value it would have been 317 400 min ≈ 6 full-time engineers for one object. Worth
-confirming with the data owner when the `Записи` seed is loaded (import step 9).
+**Data-quality flags for the data owner — neither resolved here.** Both concern seq 1377,
+`Операционная служба г.Минск пр. ДЗЕРЖИНСКОГО, 69`, which at **4.5295 FTE is the largest object in
+the estate** — 75% more than the next (2.5952) and 4.4% of the 103.24 FTE total.
+
+*Backup count.* Only 3 objects report this task: two at `2`, and seq 1377 at **2 645**. The
+normative is per **one storage system** per 21-working-day month, so as a count of СХД 2 645 is not
+credible. It is plausible as a count of *check events* (~21/working day for a central operations
+service), but that is not the unit this normative multiplies. Under the live normative the disputed
+figure is worth 0.218 FTE — the object would fall to ~4.312 — so the impact is modest; under the
+rejected catalog value of 120 it would have been ~8.3 FTE for one object, which is what made §8.3
+matter.
+
+*Access requests — the larger question.* 82% of seq 1377's records load comes from
+`access_requests = 2 375` at 60 min each = 142 500 min/period ≈ 3.73 FTE on its own:
+
+```
+access      2375 × 60   = 142 500 min  (82%)
+monitoring   124 × 180  =  22 320 min  (13%)
+backup      2645 × 3.15 =   8 332 min  ( 5%)
+                          ────────────
+             6-mo total = 173 152 → /5 = 34 630 min/month
+```
+
+2 375 access-restoration requests in six months is ~19 per working day at one location. Plausible
+for a central service desk, but a 60-minute-per-request normative written for branch-scale volumes
+may be the wrong model at that scale — and it currently drives the single largest staffing figure in
+the calculation.
+
+Both are data/normative questions rather than defects: the engine reproduces `Записи Расчет!K`
+exactly on all 2 784 comparable objects (§12), so it is faithfully computing what the cells say.
 
 ### 8.4 `ПС Расчет!AT` omits R1 entirely — **RESOLVED: engine is correct, workbook is defective**
 
