@@ -4,6 +4,7 @@ import com.workload.dto.ApiResponse;
 import com.workload.dto.TravelDto;
 import com.workload.dto.TravelUpdateRequest;
 import com.workload.exception.RoundTripNotEditableException;
+import com.workload.security.RbacService;
 import com.workload.service.TravelService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -20,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class TravelController {
 
   private final TravelService travelService;
+  private final RbacService rbacService;
 
-  public TravelController(TravelService travelService) {
+  public TravelController(TravelService travelService, RbacService rbacService) {
     this.travelService = travelService;
+    this.rbacService = rbacService;
   }
 
   @GetMapping
@@ -33,6 +36,7 @@ public class TravelController {
   @PutMapping
   public ResponseEntity<ApiResponse<TravelDto>> update(
       @PathVariable UUID objectId, @Valid @RequestBody TravelUpdateRequest request) {
+    rbacService.requireCanWriteObject(objectId);
     // round_trip_min is computed server-side and must never be set by clients (TOR §8.3)
     if (request.roundTripMin() != null) {
       throw new RoundTripNotEditableException();

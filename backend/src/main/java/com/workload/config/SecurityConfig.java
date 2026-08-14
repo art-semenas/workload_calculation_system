@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,9 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
   @Bean
@@ -26,7 +29,8 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       RateLimitFilter rateLimitFilter,
-      AuthenticationEntryPoint authenticationEntryPoint)
+      AuthenticationEntryPoint authenticationEntryPoint,
+      AccessDeniedHandler accessDeniedHandler)
       throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
@@ -34,7 +38,10 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(
-            exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
@@ -59,6 +66,25 @@ public class SecurityConfig {
       ApiResponse<Void> body =
           ApiResponse.error(
               ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid or expired authentication token"));
+      objectMapper.writeValue(response.getOutputStream(), body);
+    };
+  }
+
+  /**
+   * A 403 raised inside the filter chain never reaches {@code @RestControllerAdvice} — it is
+   * handled before the DispatcherServlet runs. Without this the response would skip the ApiResponse
+   * envelope. The message matches {@code GlobalExceptionHandler.handleAccessDenied} so filter-level
+   * and method-level denials are indistinguishable to the client.
+   */
+  @Bean
+  AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {
+    return (request, response, ex) -> {
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+      ApiResponse<Void> body =
+          ApiResponse.error(
+              ApiError.of(
+                  HttpStatus.FORBIDDEN, "You don't have permission to access this resource"));
       objectMapper.writeValue(response.getOutputStream(), body);
     };
   }

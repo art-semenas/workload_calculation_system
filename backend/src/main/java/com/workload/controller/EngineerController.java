@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,7 @@ public class EngineerController {
                 Optional.ofNullable(status), Optional.ofNullable(homeDivisionId))));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<ApiResponse<EngineerDto>> create(
       @Valid @RequestBody EngineerCreateRequest request) {
@@ -53,12 +55,14 @@ public class EngineerController {
     return ResponseEntity.ok(ApiResponse.success(engineerService.findById(id)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<EngineerDto>> update(
       @PathVariable UUID id, @Valid @RequestBody EngineerUpdateRequest request) {
     return ResponseEntity.ok(ApiResponse.success(engineerService.update(id, request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
     engineerService.deactivate(id);

@@ -7,6 +7,7 @@ import com.workload.service.BranchService;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,6 +30,7 @@ public class BranchController {
     return ResponseEntity.ok(ApiResponse.success(branchService.findById(id)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<BranchDto>> update(
       @PathVariable UUID id, @Valid @RequestBody BranchUpdateRequest request) {

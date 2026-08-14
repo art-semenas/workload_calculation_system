@@ -5,6 +5,7 @@ import com.workload.dto.ObjectCreateRequest;
 import com.workload.dto.ObjectDto;
 import com.workload.dto.ObjectUpdateRequest;
 import com.workload.dto.SummaryDto;
+import com.workload.security.RbacService;
 import com.workload.service.ObjectService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ObjectController {
 
   private final ObjectService objectService;
+  private final RbacService rbacService;
 
-  public ObjectController(ObjectService objectService) {
+  public ObjectController(ObjectService objectService, RbacService rbacService) {
     this.objectService = objectService;
+    this.rbacService = rbacService;
   }
 
   @GetMapping
@@ -42,6 +45,7 @@ public class ObjectController {
   @PostMapping
   public ResponseEntity<ApiResponse<ObjectDto>> create(
       @Valid @RequestBody ObjectCreateRequest request) {
+    rbacService.requireCanWriteInBranch(request.branchId());
     ObjectDto dto = objectService.create(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
   }
@@ -54,11 +58,13 @@ public class ObjectController {
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<ObjectDto>> update(
       @PathVariable UUID id, @Valid @RequestBody ObjectUpdateRequest request) {
+    rbacService.requireCanWriteObject(id);
     return ResponseEntity.ok(ApiResponse.success(objectService.update(id, request)));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    rbacService.requireCanWriteObject(id);
     objectService.delete(id);
     return ResponseEntity.noContent().build();
   }

@@ -3,6 +3,7 @@ package com.workload.controller;
 import com.workload.dto.ApiResponse;
 import com.workload.dto.RepairDto;
 import com.workload.dto.RepairUpdateRequest;
+import com.workload.security.RbacService;
 import com.workload.service.RepairService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -20,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RepairController {
 
   private final RepairService repairService;
+  private final RbacService rbacService;
 
-  public RepairController(RepairService repairService) {
+  public RepairController(RepairService repairService, RbacService rbacService) {
     this.repairService = repairService;
+    this.rbacService = rbacService;
   }
 
   @GetMapping
@@ -35,6 +38,7 @@ public class RepairController {
       @PathVariable UUID objectId,
       @PathVariable UUID repairTypeId,
       @Valid @RequestBody RepairUpdateRequest request) {
+    rbacService.requireCanEditObjectData(objectId);
     return ResponseEntity.ok(
         ApiResponse.success(repairService.update(objectId, repairTypeId, request)));
   }

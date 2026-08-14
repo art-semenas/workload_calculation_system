@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,7 @@ public class DivisionController {
     return ResponseEntity.ok(ApiResponse.success(divisionService.findAll()));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public ResponseEntity<ApiResponse<DivisionDto>> create(
       @Valid @RequestBody DivisionCreateRequest request) {
@@ -50,6 +52,7 @@ public class DivisionController {
     return ResponseEntity.ok(ApiResponse.success(divisionService.findById(id)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<DivisionDto>> update(
       @PathVariable UUID id, @Valid @RequestBody DivisionUpdateRequest request) {
@@ -61,6 +64,7 @@ public class DivisionController {
     return ResponseEntity.ok(ApiResponse.success(branchService.findByDivision(id)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/{id}/branches")
   public ResponseEntity<ApiResponse<BranchDto>> createBranch(
       @PathVariable UUID id, @Valid @RequestBody BranchCreateRequest request) {

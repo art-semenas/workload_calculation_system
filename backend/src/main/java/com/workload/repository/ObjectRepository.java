@@ -2,6 +2,7 @@ package com.workload.repository;
 
 import com.workload.entity.ObjectEntity;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,10 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
 
   @Query("SELECT o.id FROM ObjectEntity o")
   List<UUID> findAllIds();
+
+  /** Division of an object, for editor scoping. A projection avoids walking lazy associations. */
+  @Query("SELECT o.branch.division.id FROM ObjectEntity o WHERE o.id = :objectId")
+  Optional<UUID> findDivisionIdByObjectId(@Param("objectId") UUID objectId);
 
   // PoC (S-02): both aggregates rely on the Summary–ObjectEntity 1:1 constraint.
   //   - MAX(itogoChisloWithTravel): at most one Summary per object, so MAX == "the value".
