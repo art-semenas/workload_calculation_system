@@ -13,12 +13,14 @@ import com.workload.repository.DivisionRepository;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.UserRepository;
+import com.workload.security.RbacService;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +37,17 @@ public class EngineerService {
   private final EngineerSummaryService engineerSummaryService;
   private final EngineerMapper engineerMapper;
   private final PasswordEncoder passwordEncoder;
+  private final RbacService rbacService;
 
   public List<EngineerDto> findAll(Optional<String> status, Optional<UUID> homeDivisionId) {
     List<User> engineers = userRepository.findAllByRole(Role.ENGINEER);
+
+    // TOR §12: an engineer sees only their own row here — API-level filtering, not a denial, so the
+    // frontend can render the same table component with a single row.
+    User current = rbacService.currentUser();
+    if (current.getRole() == Role.ENGINEER) {
+      engineers = engineers.stream().filter(e -> e.getId().equals(current.getId())).toList();
+    }
 
     return engineers.stream()
         .filter(
@@ -61,6 +71,11 @@ public class EngineerService {
   }
 
   public EngineerDto findById(UUID id) {
+    // Filtering the list would achieve nothing if the detail route stayed open (TOR §12).
+    User current = rbacService.currentUser();
+    if (current.getRole() == Role.ENGINEER && !current.getId().equals(id)) {
+      throw new AccessDeniedException("You may only view your own engineer record");
+    }
     User user = loadEngineerById(id);
     EngineerSummary summary = engineerSummaryRepository.findByEngineerId(id).orElse(null);
     return buildDto(user, summary);

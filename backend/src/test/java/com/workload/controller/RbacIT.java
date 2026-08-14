@@ -266,6 +266,104 @@ class RbacIT extends IntegrationTestBase {
         .statusCode(403);
   }
 
+  // --- Engineer visibility (TOR §12): API-level filtering, not a denial ---
+
+  @Test
+  void engineerSeesOnlyOwnRowInEngineerList() {
+    String engineerToken = authenticationTestHelper.loginAs(Role.ENGINEER);
+    String ownEmail = emailOf(engineerToken);
+    // A second engineer that must not appear in the first one's list.
+    authenticationTestHelper.loginAs(Role.ENGINEER);
+
+    given()
+        .header("Authorization", engineerToken)
+        .when()
+        .get("/engineers")
+        .then()
+        .statusCode(200)
+        .body("data.size()", equalTo(1))
+        .body("data[0].email", equalTo(ownEmail));
+  }
+
+  @Test
+  void adminSeesAllEngineers() {
+    authenticationTestHelper.loginAs(Role.ENGINEER);
+
+    given()
+        .header("Authorization", admin)
+        .when()
+        .get("/engineers")
+        .then()
+        .statusCode(200)
+        .body("data.size()", org.hamcrest.Matchers.greaterThan(1));
+  }
+
+  @Test
+  void viewerSeesAllEngineers() {
+    authenticationTestHelper.loginAs(Role.ENGINEER);
+
+    given()
+        .header("Authorization", viewer)
+        .when()
+        .get("/engineers")
+        .then()
+        .statusCode(200)
+        .body("data.size()", org.hamcrest.Matchers.greaterThan(1));
+  }
+
+  /** Filtering the list would be pointless if the detail route stayed open. */
+  @Test
+  void engineerCannotReadAnotherEngineerRow() {
+    String otherToken = authenticationTestHelper.loginAs(Role.ENGINEER);
+    String otherId =
+        given()
+            .header("Authorization", otherToken)
+            .when()
+            .get("/engineers")
+            .then()
+            .statusCode(200)
+            .extract()
+            .path("data[0].id");
+
+    given()
+        .header("Authorization", engineer)
+        .when()
+        .get("/engineers/" + otherId)
+        .then()
+        .statusCode(403);
+  }
+
+  @Test
+  void engineerCanReadOwnRow() {
+    String ownId =
+        given()
+            .header("Authorization", engineer)
+            .when()
+            .get("/engineers")
+            .then()
+            .statusCode(200)
+            .extract()
+            .path("data[0].id");
+
+    given()
+        .header("Authorization", engineer)
+        .when()
+        .get("/engineers/" + ownId)
+        .then()
+        .statusCode(200);
+  }
+
+  private String emailOf(String bearerToken) {
+    return given()
+        .header("Authorization", bearerToken)
+        .when()
+        .get("/auth/me")
+        .then()
+        .statusCode(200)
+        .extract()
+        .path("data.email");
+  }
+
   /** Filter-level 403s must carry the same envelope as method-level ones. */
   @Test
   void forbiddenResponsesUseTheStandardEnvelope() {

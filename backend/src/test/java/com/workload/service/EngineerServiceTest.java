@@ -3,6 +3,7 @@ package com.workload.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,11 +21,13 @@ import com.workload.repository.DivisionRepository;
 import com.workload.repository.EngineerSummaryRepository;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.UserRepository;
+import com.workload.security.RbacService;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -43,8 +46,20 @@ class EngineerServiceTest {
   @Mock private EngineerSummaryService engineerSummaryService;
   @Mock private EngineerMapper engineerMapper;
   @Mock private PasswordEncoder passwordEncoder;
+  @Mock private RbacService rbacService;
 
   @InjectMocks private EngineerService engineerService;
+
+  /**
+   * These tests exercise the service's own filtering, not RBAC, so the caller is an admin — the
+   * role that sees every row. Engineer-scoped visibility is covered end to end in RbacIT.
+   */
+  @BeforeEach
+  void actAsAdmin() {
+    lenient()
+        .when(rbacService.currentUser())
+        .thenReturn(User.builder().id(UUID.randomUUID()).role(Role.ADMIN).build());
+  }
 
   private User buildEngineer(UUID id, BigDecimal capacityFte) {
     return User.builder()
