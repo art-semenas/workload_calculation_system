@@ -373,25 +373,35 @@ export async function fetchSvodPage(
   return json.data
 }
 
-/** Returns the object_id for the PAC-01 reference object (itogo ≈ 0.032448 or name contains "Архив"). */
+/**
+ * Returns the object_id for the PAC-01 reference object (name contains "Архив"/"Московская"/"202Д",
+ * or itogo ≈ 0.032448).
+ *
+ * Pages through the whole SVOD list rather than checking page 1. The list is sorted by FTE
+ * descending, and the reference object's 0.032448 puts it near the bottom of the seeded 2935
+ * objects — searching only the first page silently returned null and skipped the PAC-01 assertion.
+ */
 export async function fetchReferenceObjectId(
   request: APIRequestContext,
   token?: string
 ): Promise<string | null> {
   const adminToken = token ?? (await fetchAdminToken(request))
-  const data = await fetchSvodPage(request, adminToken)
-  if (!data) return null
 
-  const byName = data.content.find(
-    (row) =>
-      row.objectName.includes('Архив') ||
-      row.objectName.includes('Московская') ||
-      row.objectName.toLowerCase().includes('202д')
-  )
-  if (byName) return byName.objectId
+  // 'Архив' alone matches 11 seeded objects, so the name test needs both tokens. Verified against
+  // the seeded dataset: 'Архив'+'Московская', '202Д' and the FTE value each match exactly one row.
+  const matches = (row: { objectName: string; itogoChisloWithTravel: number }) =>
+    (row.objectName.includes('Архив') && row.objectName.includes('Московская')) ||
+    row.objectName.toLowerCase().includes('202д') ||
+    Math.abs(row.itogoChisloWithTravel - 0.032448) < 0.000001
 
-  const byValue = data.content.find(
-    (row) => Math.abs(row.itogoChisloWithTravel - 0.032448) < 0.000001
-  )
-  return byValue?.objectId ?? null
+  const size = 500
+  for (let page = 0; ; page += 1) {
+    const data = await fetchSvodPage(request, adminToken, page, size)
+    if (!data || data.content.length === 0) return null
+
+    const hit = data.content.find(matches)
+    if (hit) return hit.objectId
+
+    if (data.content.length < size) return null
+  }
 }

@@ -202,7 +202,7 @@ export default function DashboardPage() {
             <CircularProgress />
           </Box>
         ) : (
-          <Table>
+          <Table data-testid="top-objects-table">
             <TableHead>
               <TableRow>
                 <TableCell>Object</TableCell>

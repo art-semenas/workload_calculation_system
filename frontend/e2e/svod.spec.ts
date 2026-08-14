@@ -94,7 +94,10 @@ test.describe('Dashboard SVOD sections', () => {
 
     await expect(page.getByText(/\d+\.\d{6}/).first()).toBeVisible()
 
+    // Scoped to the Top objects table: the division table above it also renders 6-decimal FTE
+    // values, so an unscoped row locator picks up a division row and navigates to /divisions/.
     await page
+      .getByTestId('top-objects-table')
       .getByRole('row')
       .filter({ hasText: /\d+\.\d{6}/ })
       .first()
@@ -361,8 +364,10 @@ test.describe('Object Detail — Summary tab', () => {
     await expect(page.getByText(/no data/i)).toBeVisible()
   })
 
-  // Checklist 3.3 + 3.4 — reference object shows TOTAL Staffing = 0.032327
-  test('PAC-01 reference object shows 0.032327 TOTAL Staffing in the inline summary strip', async ({
+  // Checklist 3.3 + 3.4 — reference object shows TOTAL Staffing = 0.032448
+  // The workbook shows 0.032327 for this object because ПС Расчет!AT drops R1; the engine is
+  // correct. See docs/Excel_to_md/Шаблон_нагрузки_v4_data_extraction_spec.md §8.4.1.
+  test('PAC-01 reference object shows 0.032448 TOTAL Staffing in the inline summary strip', async ({
     page,
   }) => {
     test.skip(!referenceObjectId, 'Reference object not found in seeded data')
@@ -370,7 +375,7 @@ test.describe('Object Detail — Summary tab', () => {
     await loginAsAdmin(page)
     await page.goto(`/objects/${referenceObjectId}`)
 
-    await expect(page.getByText('0.032327')).toBeVisible()
+    await expect(page.getByText('0.032448')).toBeVisible()
   })
 
   // Checklist 3.5 — per-visit breakdown fields in FTE breakdown drawer
@@ -384,7 +389,11 @@ test.describe('Object Detail — Summary tab', () => {
 
     await page.getByRole('button', { name: /fte breakdown/i }).click()
 
-    await expect(page.getByText(/r1/i)).toBeVisible()
+    // Assert the actual per-visit fields rather than /r1/i, which matches five elements once the
+    // object has data (column header, three per-system rows and the total).
+    await expect(page.getByRole('columnheader', { name: 'R1' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'ОС R1' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'ПС R1' })).toBeVisible()
   })
 
   // Checklist 3.6 — per-visit breakdown section in drawer

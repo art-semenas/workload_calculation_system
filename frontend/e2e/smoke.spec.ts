@@ -173,6 +173,11 @@ test.describe('PoC M-01 smoke', () => {
     await loginAsAdmin(page)
     await page.goto('/objects')
 
+    // The list is paginated and holds the full seeded dataset, so filter to the smoke object's
+    // division first — otherwise its row is not on page 1.
+    await page.getByRole('combobox').first().click()
+    await page.getByRole('option', { name: smokeDivisionName }).click()
+
     await page.getByRole('row', { name: new RegExp(smokeObjectName) }).click()
     await expect(page).toHaveURL(new RegExp(`/objects/${smokeObjectId}`))
     await expect(page.getByRole('heading', { name: smokeObjectName })).toBeVisible()
