@@ -85,3 +85,8 @@ ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
 .design-sync/node_modules
+
+# LibreOffice lock files
+.~lock.*#
+# stray root install
+/node_modules/
