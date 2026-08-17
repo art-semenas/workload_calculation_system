@@ -30,6 +30,7 @@ public class RepairController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<RepairDto>>> getAll(@PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(repairService.getAll(objectId)));
   }
 

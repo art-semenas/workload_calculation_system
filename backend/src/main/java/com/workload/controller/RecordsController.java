@@ -29,6 +29,7 @@ public class RecordsController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<RecordsDto>> get(@PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(recordsService.get(objectId)));
   }
 

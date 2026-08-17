@@ -30,6 +30,7 @@ public class TravelController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<TravelDto>> get(@PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(travelService.get(objectId)));
   }
 

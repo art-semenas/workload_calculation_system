@@ -38,6 +38,7 @@ public class EquipmentController {
   @GetMapping("/devices")
   public ResponseEntity<ApiResponse<List<ObjectDeviceDto>>> getDevices(
       @PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(equipmentService.getDevices(objectId)));
   }
 
@@ -73,6 +74,7 @@ public class EquipmentController {
   @GetMapping("/assignments")
   public ResponseEntity<ApiResponse<List<AssignmentDto>>> getAssignments(
       @PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(equipmentService.getAssignments(objectId)));
   }
 

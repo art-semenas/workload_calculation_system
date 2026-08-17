@@ -173,6 +173,49 @@ class EngineerReadScopingIT extends IntegrationTestBase {
         .statusCode(200);
   }
 
+  /**
+   * The object's sub-resources carry the same data as the detail route, so they need the same
+   * guard. Writes on all five were already scoped; the reads were not, which left the detail 403
+   * bypassable one level down.
+   */
+  @Test
+  void engineerCannotReadForeignObjectSubResources() {
+    String[] subResources = {"records", "repairs", "travel", "devices", "assignments"};
+    for (String sub : subResources) {
+      given()
+          .header("Authorization", engineer)
+          .when()
+          .get("/objects/{id}/{sub}", foreignObject, sub)
+          .then()
+          .statusCode(403)
+          .body("error.code", equalTo(403));
+    }
+  }
+
+  /** …and the engineer must still reach them on the objects they are assigned to. */
+  @Test
+  void engineerReadsOwnObjectSubResources() {
+    String[] subResources = {"records", "repairs", "travel", "devices", "assignments"};
+    for (String sub : subResources) {
+      given()
+          .header("Authorization", engineer)
+          .when()
+          .get("/objects/{id}/{sub}", assignedObject, sub)
+          .then()
+          .statusCode(200);
+    }
+  }
+
+  @Test
+  void viewerStillReadsAnyObjectSubResources() {
+    given()
+        .header("Authorization", viewer)
+        .when()
+        .get("/objects/{id}/records", foreignObject)
+        .then()
+        .statusCode(200);
+  }
+
   // --- GET /svod ---
 
   @Test
