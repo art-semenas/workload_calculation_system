@@ -122,6 +122,44 @@ class AdminUserControllerIT extends IntegrationTestBase {
         .body("error.message", equalTo("Invalid value for parameter 'role'"));
   }
 
+  /**
+   * Out-of-range paging is a client mistake, not a server fault — 400, not a 500 from PageRequest.
+   */
+  @Test
+  void listUsersRejectsOutOfRangePaging() {
+    given()
+        .header("Authorization", admin)
+        .queryParam("size", 0)
+        .when()
+        .get("/admin/users")
+        .then()
+        .statusCode(400)
+        .body("error.code", equalTo(400))
+        .body("error.message", equalTo("Invalid value for parameter 'size'"));
+
+    given()
+        .header("Authorization", admin)
+        .queryParam("page", -1)
+        .when()
+        .get("/admin/users")
+        .then()
+        .statusCode(400)
+        .body("error.message", equalTo("Invalid value for parameter 'page'"));
+  }
+
+  /** An unbounded page size lets one request pull every user row into memory. */
+  @Test
+  void listUsersRejectsOversizedPage() {
+    given()
+        .header("Authorization", admin)
+        .queryParam("size", 5000)
+        .when()
+        .get("/admin/users")
+        .then()
+        .statusCode(400)
+        .body("error.message", equalTo("Invalid value for parameter 'size'"));
+  }
+
   // --- POST /admin/users ---
 
   @Test

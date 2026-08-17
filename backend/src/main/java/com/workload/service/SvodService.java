@@ -1,13 +1,10 @@
 package com.workload.service;
 
-import com.workload.dto.SummaryDto;
 import com.workload.dto.SvodRowDto;
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
-import com.workload.exception.ObjectNotFoundException;
-import com.workload.mapper.SummaryMapper;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import java.util.Comparator;
@@ -23,15 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class SvodService {
 
   private final SummaryRepository summaryRepository;
-  private final SummaryMapper summaryMapper;
   private final ObjectEngineerRepository objectEngineerRepository;
 
   public SvodService(
-      SummaryRepository summaryRepository,
-      SummaryMapper summaryMapper,
-      ObjectEngineerRepository objectEngineerRepository) {
+      SummaryRepository summaryRepository, ObjectEngineerRepository objectEngineerRepository) {
     this.summaryRepository = summaryRepository;
-    this.summaryMapper = summaryMapper;
     this.objectEngineerRepository = objectEngineerRepository;
   }
 
@@ -56,15 +49,6 @@ public class SvodService {
     int end = Math.min(start + pageable.getPageSize(), rows.size());
     List<SvodRowDto> page = start >= rows.size() ? List.of() : rows.subList(start, end);
     return new PageImpl<>(page, pageable, rows.size());
-  }
-
-  @Transactional(readOnly = true)
-  public SummaryDto getObjectSummary(UUID objectId) {
-    Summary summary =
-        summaryRepository
-            .findByObjectId(objectId)
-            .orElseThrow(() -> new ObjectNotFoundException(objectId.toString()));
-    return summaryMapper.toDto(summary);
   }
 
   /** Same scoping as {@link #getSvod} — otherwise the export reads around the filter. */

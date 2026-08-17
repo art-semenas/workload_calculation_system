@@ -71,14 +71,6 @@ public class JwtTokenProvider {
     return isValidTokenOfType(token, TYPE_REFRESH);
   }
 
-  public String getEmailFromRefreshToken(String token) {
-    return getEmail(token);
-  }
-
-  public long getRefreshExpirationSeconds() {
-    return refreshExpirationMs / 1000;
-  }
-
   private io.jsonwebtoken.JwtBuilder build(User user, long lifetimeMs, String tokenType) {
     Date now = new Date();
     return Jwts.builder()

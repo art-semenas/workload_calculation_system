@@ -54,13 +54,15 @@
   automatically; if the API is ever served from another origin, the Axios instance needs
   `withCredentials: true`.
 - `POST /auth/logout` clears the cookie and returns 204.
-- Lockout: HTTP **401** with `error.message` = `Account locked. Try again after HH:mm.`
+- Lockout: HTTP **401** with `error.message` = `Account locked. Try again in {n} minutes.` The wait
+  is a **duration**, not a clock time — the server can only format a clock time in its own zone
+  (UTC in the container), which is wrong for every other reader. Render it verbatim; do not reformat.
 
 ### `/admin/users` (admin only)
 
 | Route | Request | Response |
 |---|---|---|
-| `GET /admin/users` | `?page=&size=&role=&is_active=` | `ApiResponse<Page<AdminUserDto>>` |
+| `GET /admin/users` | `?page=&size=&role=&is_active=` (`page ≥ 0`, `1 ≤ size ≤ 200`) | `ApiResponse<Page<AdminUserDto>>` |
 | `POST /admin/users` | `{ email, name, role, divisionId?, password? }` | 201 + `AdminUserDto` |
 | `GET /admin/users/:id` | — | 200 + `AdminUserDto` |
 | `PUT /admin/users/:id` | `{ email, name, role, divisionId?, unlock? }` | 200 + `AdminUserDto` |
@@ -83,14 +85,17 @@
   `unlock: true` clears `locked_until` and `failed_login_count`.
 - Errors: 422 `Engineer accounts cannot be created through this endpoint` (creating `role=engineer`,
   or setting it on a user who is not an engineer); 409 `Engineer has active assignments: {id}` on
-  deactivate; 404 `User not found`.
+  deactivate; 409 `Cannot remove the last administrator` when a role change or deactivation would
+  leave no active admin; 404 `User not found`; 400 `Invalid value for parameter '{name}'` for
+  out-of-range paging.
 
 ### Engineer read scoping (TOR §12)
 
 **Filtered — HTTP 200 with fewer rows, no error to handle:** `GET /objects`, `GET /svod`,
 `GET /svod/export/xlsx`, `GET /engineers` (own row only).
 
-**Denied — HTTP 403:** `GET /objects/:id`, `/objects/:id/summary`, `/objects/:id/engineers` for an
+**Denied — HTTP 403:** `GET /objects/:id` and every one of its sub-resources —
+`/summary`, `/engineers`, `/records`, `/repairs`, `/travel`, `/devices`, `/assignments` — for an
 object the engineer is not assigned to; `GET /engineers/:id`, `/engineers/:id/objects`,
 `/engineers/:id/summary` for anyone other than themselves; **all** of `/aggregations/*` and
 `/coverage/gaps`.
@@ -294,7 +299,7 @@ below the form instead of the generic invalid-credentials error.
 ```tsx
 it('shows lockout message when account is locked', async () => {
   mockLoginApi.mockRejectedValue({
-    response: { status: 401, data: { error: { code: 401, message: 'Account locked. Try again after 14:32.' } } }
+    response: { status: 401, data: { error: { code: 401, message: 'Account locked. Try again in 27 minutes.' } } }
   })
   render(<LoginPage />)
   // fill email and password, submit

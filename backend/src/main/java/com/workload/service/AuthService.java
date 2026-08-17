@@ -103,7 +103,7 @@ public class AuthService {
 
     User user =
         userRepository
-            .findByEmail(jwtTokenProvider.getEmailFromRefreshToken(refreshToken))
+            .findByEmail(jwtTokenProvider.getEmail(refreshToken))
             .filter(User::isActive)
             .orElseThrow(InvalidCredentialsException::new);
 

@@ -75,6 +75,11 @@ public class SecurityConfig {
    * handled before the DispatcherServlet runs. Without this the response would skip the ApiResponse
    * envelope. The message matches {@code GlobalExceptionHandler.handleAccessDenied} so filter-level
    * and method-level denials are indistinguishable to the client.
+   *
+   * <p>No rule reaches it today: {@code authorizeHttpRequests} declares only {@code permitAll} and
+   * {@code authenticated}, and CSRF is disabled, so every denial comes from method security inside
+   * the servlet. It is kept because the first URL-level rule added here would otherwise silently
+   * return a Spring-default body, which the frontend's error parsing cannot read.
    */
   @Bean
   AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {

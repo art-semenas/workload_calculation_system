@@ -8,6 +8,8 @@ import com.workload.dto.ApiResponse;
 import com.workload.entity.Role;
 import com.workload.service.AdminUserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,14 +33,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
+@Validated
 public class AdminUserController {
+
+  /**
+   * Bounded so one request cannot pull the whole user table into memory. Without the bounds {@code
+   * PageRequest.of} throws {@link IllegalArgumentException} on {@code size=0}, which reaches the
+   * generic handler as a 500 — a client mistake reported as a server fault.
+   */
+  private static final int MAX_PAGE_SIZE = 200;
 
   private final AdminUserService adminUserService;
 
   @GetMapping
   public ResponseEntity<ApiResponse<Page<AdminUserDto>>> getAll(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "50") int size,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "50") @Min(1) @Max(MAX_PAGE_SIZE) int size,
       @RequestParam(required = false) Role role,
       @RequestParam(name = "is_active", required = false) Boolean active) {
     return ResponseEntity.ok(

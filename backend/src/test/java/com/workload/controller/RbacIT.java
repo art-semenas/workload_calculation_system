@@ -401,7 +401,13 @@ class RbacIT extends IntegrationTestBase {
         .path("data.email");
   }
 
-  /** Filter-level 403s must carry the same envelope as method-level ones. */
+  /**
+   * A method-security denial must carry the standard envelope. Note this exercises {@code
+   * GlobalExceptionHandler.handleAccessDenied}, not the {@code accessDeniedHandler} bean: the
+   * filter chain declares only {@code permitAll} and {@code authenticated}, so no URL rule can
+   * currently deny an authenticated request. The bean is retained for when one does, and carries
+   * the same message deliberately.
+   */
   @Test
   void forbiddenResponsesUseTheStandardEnvelope() {
     given()

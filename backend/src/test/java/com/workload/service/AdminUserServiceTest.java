@@ -16,6 +16,7 @@ import com.workload.entity.Role;
 import com.workload.entity.User;
 import com.workload.exception.EngineerHasActiveAssignmentsException;
 import com.workload.exception.InvalidRoleForEndpointException;
+import com.workload.exception.LastAdminException;
 import com.workload.exception.UserNotFoundException;
 import com.workload.mapper.UserMapper;
 import com.workload.repository.ObjectEngineerRepository;
@@ -106,14 +107,15 @@ class AdminUserServiceTest {
 
   @Test
   void findAllWithoutFiltersUsesUnfilteredQuery() {
-    when(userRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(user(Role.VIEWER))));
+    when(userRepository.findAllFiltered(null, null, pageable))
+        .thenReturn(new PageImpl<>(List.of(user(Role.VIEWER))));
 
     assertThat(adminUserService.findAll(null, null, pageable)).hasSize(1);
   }
 
   @Test
   void findAllByRoleOnly() {
-    when(userRepository.findAllByRole(Role.EDITOR, pageable))
+    when(userRepository.findAllFiltered(Role.EDITOR, null, pageable))
         .thenReturn(new PageImpl<>(List.of(user(Role.EDITOR))));
 
     assertThat(adminUserService.findAll(Role.EDITOR, null, pageable)).hasSize(1);
@@ -121,14 +123,15 @@ class AdminUserServiceTest {
 
   @Test
   void findAllByActiveOnly() {
-    when(userRepository.findAllByActive(false, pageable)).thenReturn(new PageImpl<>(List.of()));
+    when(userRepository.findAllFiltered(null, false, pageable))
+        .thenReturn(new PageImpl<>(List.of()));
 
     assertThat(adminUserService.findAll(null, false, pageable)).isEmpty();
   }
 
   @Test
   void findAllByRoleAndActive() {
-    when(userRepository.findAllByRoleAndActive(Role.VIEWER, true, pageable))
+    when(userRepository.findAllFiltered(Role.VIEWER, true, pageable))
         .thenReturn(new PageImpl<>(List.of(user(Role.VIEWER))));
 
     assertThat(adminUserService.findAll(Role.VIEWER, true, pageable)).hasSize(1);
@@ -316,6 +319,88 @@ class AdminUserServiceTest {
 
     assertThatThrownBy(() -> adminUserService.deactivate(lead.getId()))
         .isInstanceOf(EngineerHasActiveAssignmentsException.class);
+  }
+
+  // --- Last-admin protection ---
+
+  /**
+   * Losing the last admin is unrecoverable through the API: every admin-only route, including the
+   * one that would restore an admin, answers 403 from then on. Recovery needs direct SQL.
+   */
+  @Test
+  void updateCannotDemoteTheLastAdmin() {
+    User onlyAdmin = user(Role.ADMIN);
+    when(userRepository.findById(onlyAdmin.getId())).thenReturn(Optional.of(onlyAdmin));
+    when(userRepository.countByRoleAndActiveTrue(Role.ADMIN)).thenReturn(1L);
+
+    assertThatThrownBy(
+            () ->
+                adminUserService.update(
+                    onlyAdmin.getId(),
+                    new AdminUserUpdateRequest("a@test.com", "A", Role.EDITOR, null, null)))
+        .isInstanceOf(LastAdminException.class);
+    verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  void updateCanDemoteAnAdminWhenAnotherRemains() {
+    User admin = user(Role.ADMIN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(userRepository.countByRoleAndActiveTrue(Role.ADMIN)).thenReturn(2L);
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        admin.getId(), new AdminUserUpdateRequest("a@test.com", "A", Role.EDITOR, null, null));
+
+    assertThat(admin.getRole()).isEqualTo(Role.EDITOR);
+  }
+
+  /** Renaming the last admin is fine — only losing the role is not. */
+  @Test
+  void updateAllowsEditingTheLastAdminWithoutRoleChange() {
+    User onlyAdmin = user(Role.ADMIN);
+    when(userRepository.findById(onlyAdmin.getId())).thenReturn(Optional.of(onlyAdmin));
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    adminUserService.update(
+        onlyAdmin.getId(),
+        new AdminUserUpdateRequest("a@test.com", "Renamed", Role.ADMIN, null, null));
+
+    assertThat(onlyAdmin.getName()).isEqualTo("Renamed");
+  }
+
+  @Test
+  void deactivateCannotRemoveTheLastAdmin() {
+    User onlyAdmin = user(Role.ADMIN);
+    when(userRepository.findById(onlyAdmin.getId())).thenReturn(Optional.of(onlyAdmin));
+    when(userRepository.countByRoleAndActiveTrue(Role.ADMIN)).thenReturn(1L);
+
+    assertThatThrownBy(() -> adminUserService.deactivate(onlyAdmin.getId()))
+        .isInstanceOf(LastAdminException.class);
+    verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  void deactivateCanRemoveAnAdminWhenAnotherRemains() {
+    User admin = user(Role.ADMIN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(userRepository.countByRoleAndActiveTrue(Role.ADMIN)).thenReturn(2L);
+
+    adminUserService.deactivate(admin.getId());
+
+    assertThat(admin.isActive()).isFalse();
+  }
+
+  /** An already-inactive admin does not count, so removing them cannot be the last-admin case. */
+  @Test
+  void deactivateInactiveAdminIsNotBlocked() {
+    User admin = user(Role.ADMIN);
+    admin.setActive(false);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+
+    adminUserService.deactivate(admin.getId());
+
+    assertThat(admin.isActive()).isFalse();
   }
 
   // --- setPassword ---

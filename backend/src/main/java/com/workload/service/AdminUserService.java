@@ -8,6 +8,7 @@ import com.workload.entity.Role;
 import com.workload.entity.User;
 import com.workload.exception.EngineerHasActiveAssignmentsException;
 import com.workload.exception.InvalidRoleForEndpointException;
+import com.workload.exception.LastAdminException;
 import com.workload.exception.UserNotFoundException;
 import com.workload.mapper.UserMapper;
 import com.workload.repository.ObjectEngineerRepository;
@@ -40,17 +41,7 @@ public class AdminUserService {
 
   @Transactional(readOnly = true)
   public Page<AdminUserDto> findAll(Role role, Boolean active, Pageable pageable) {
-    Page<User> users;
-    if (role != null && active != null) {
-      users = userRepository.findAllByRoleAndActive(role, active, pageable);
-    } else if (role != null) {
-      users = userRepository.findAllByRole(role, pageable);
-    } else if (active != null) {
-      users = userRepository.findAllByActive(active, pageable);
-    } else {
-      users = userRepository.findAll(pageable);
-    }
-    return users.map(userMapper::toAdminDto);
+    return userRepository.findAllFiltered(role, active, pageable).map(userMapper::toAdminDto);
   }
 
   @Transactional(readOnly = true)
@@ -97,6 +88,9 @@ public class AdminUserService {
     // is_engineer flag outlives it.
     if (request.role() == Role.ENGINEER && !user.isEngineer()) {
       throw new InvalidRoleForEndpointException();
+    }
+    if (user.getRole() == Role.ADMIN && request.role() != Role.ADMIN) {
+      requireAnotherAdminRemains(user);
     }
     user.setEmail(request.email());
     user.setName(request.name());
@@ -157,6 +151,9 @@ public class AdminUserService {
     if (user.isEngineer() && objectEngineerRepository.countByEngineerId(id) > 0) {
       throw new EngineerHasActiveAssignmentsException(id.toString());
     }
+    if (user.getRole() == Role.ADMIN && user.isActive()) {
+      requireAnotherAdminRemains(user);
+    }
     user.setActive(false);
     user.setUpdatedAt(OffsetDateTime.now());
     userRepository.save(user);
@@ -165,5 +162,17 @@ public class AdminUserService {
 
   private User loadById(UUID id) {
     return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id.toString()));
+  }
+
+  /**
+   * Counts active admins other than the one being changed. Only reached when the change would
+   * actually cost an admin, so an ordinary edit of the last admin still goes through.
+   */
+  private void requireAnotherAdminRemains(User user) {
+    long activeAdmins = userRepository.countByRoleAndActiveTrue(Role.ADMIN);
+    if (activeAdmins <= 1) {
+      log.warn("Refused to remove the last administrator: id={}", user.getId());
+      throw new LastAdminException();
+    }
   }
 }

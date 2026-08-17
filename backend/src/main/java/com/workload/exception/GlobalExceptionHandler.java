@@ -2,6 +2,7 @@ package com.workload.exception;
 
 import com.workload.dto.ApiError;
 import com.workload.dto.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -85,6 +86,12 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(BranchHasObjectsException.class)
   public ResponseEntity<ApiResponse<Void>> handleBranchHasObjects(BranchHasObjectsException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
+  }
+
+  @ExceptionHandler(LastAdminException.class)
+  public ResponseEntity<ApiResponse<Void>> handleLastAdmin(LastAdminException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
@@ -266,6 +273,32 @@ public class GlobalExceptionHandler {
                 ApiError.of(
                     HttpStatus.BAD_REQUEST,
                     "Missing required parameter: " + ex.getParameterName())));
+  }
+
+  /**
+   * Bean Validation on a query parameter — {@code @Min}/{@code @Max} on a {@code @RequestParam} of
+   * a {@code @Validated} controller. Reported as 400 with the same wording as a type-conversion
+   * failure, because from the caller's side both are the same mistake: an unusable parameter value.
+   * The violation's property path is {@code method.parameter}, so the last node is the name.
+   */
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
+      ConstraintViolationException ex) {
+    String parameter =
+        ex.getConstraintViolations().stream()
+            .findFirst()
+            .map(violation -> lastPathNode(violation.getPropertyPath().toString()))
+            .orElse("request");
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            ApiResponse.error(
+                ApiError.of(
+                    HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + parameter + "'")));
+  }
+
+  private static String lastPathNode(String propertyPath) {
+    int lastDot = propertyPath.lastIndexOf('.');
+    return lastDot >= 0 ? propertyPath.substring(lastDot + 1) : propertyPath;
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)

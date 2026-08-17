@@ -3,6 +3,7 @@ package com.workload.controller;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 
 import com.workload.entity.Role;
 import com.workload.entity.User;
@@ -79,6 +80,24 @@ class AuthLockoutIT extends IntegrationTestBase {
 
     User locked = userRepository.findByEmail(email).orElseThrow();
     assertThat(locked.getLockedUntil()).isNotNull().isAfter(OffsetDateTime.now());
+  }
+
+  /**
+   * The retry time is stated as a duration, not a wall clock. A clock time formatted server-side
+   * lands in the server's zone (UTC in the container), so a user in UTC+3 was being told a time
+   * that had already passed. A duration is correct for every reader with no zone to reason about.
+   */
+  @Test
+  void lockoutMessageStatesTheWaitAsADuration() {
+    for (int i = 0; i < MAX_ATTEMPTS; i++) {
+      attemptLogin("wrong").then().statusCode(401);
+    }
+
+    attemptLogin(PASSWORD)
+        .then()
+        .statusCode(401)
+        .body("error.message", containsString("Account locked."))
+        .body("error.message", matchesPattern("Account locked\\. Try again in \\d+ minutes\\."));
   }
 
   @Test

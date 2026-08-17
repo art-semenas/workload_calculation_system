@@ -248,7 +248,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** List all objects (paginated, filterable).
 **Request body:** None.
-**Engineer scope (MVP, M-02):** when caller role = `engineer`, only objects they are assigned to are returned (TOR §12), including when `division_id` is supplied. The detail routes `GET /objects/:id`, `GET /objects/:id/summary` and `GET /objects/:id/engineers` return **403** for an object the engineer is not assigned to; `/aggregations/*` and `/coverage/gaps` return 403 for the engineer role outright, being organisation-wide rollups rather than own-workload views. `GET /engineers/:id/objects` and `GET /engineers/:id/summary` are restricted to the caller's own id.
+**Engineer scope (MVP, M-02):** when caller role = `engineer`, only objects they are assigned to are returned (TOR §12), including when `division_id` is supplied. `GET /objects/:id` and all of its sub-resources — `/summary`, `/engineers`, `/records`, `/repairs`, `/travel`, `/devices`, `/assignments` — return **403** for an object the engineer is not assigned to; `/aggregations/*` and `/coverage/gaps` return 403 for the engineer role outright, being organisation-wide rollups rather than own-workload views. `GET /engineers/:id/objects` and `GET /engineers/:id/summary` are restricted to the caller's own id.
 
 ---
 
@@ -951,9 +951,10 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 |---|---|---|
 | 400 | Malformed JSON request body | `Malformed request body` |
 | 400 | Required query parameter absent | `Missing required parameter: {name}` |
-| 400 | Path or query parameter fails type conversion | `Invalid value for parameter '{name}'` |
+| 400 | Path or query parameter fails type conversion, or falls outside its allowed range (e.g. `page < 0`, `size < 1`, `size` above the endpoint maximum) | `Invalid value for parameter '{name}'` |
 | 401 | Wrong email or password at login | `Invalid email or password` |
 | 401 | JWT missing, malformed, or expired on a protected endpoint | `Invalid or expired authentication token` |
+| 401 | Login attempted against a locked account **(MVP)** | `Account locked. Try again in {n} minutes.` — a duration, not a clock time: the server can only format a clock time in its own zone, which is wrong for every other reader |
 | 403 | Caller role is not permitted | `You don't have permission to access this resource` |
 | 404 | Unknown route | `Resource not found` |
 | 404 | Division not found | `Division not found` |
@@ -968,6 +969,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 409 | Cannot delete repair type: has recorded usage (count > 0) | `Repair type {id} has recorded usage with count > 0` |
 | 409 | Cannot delete device type: in use by object inventory | `Device type {id} is in use by object inventory` |
 | 409 | Engineer deactivation blocked; active assignments exist | `Engineer has active assignments: {id}` |
+| 409 | Demoting or deactivating the last active admin **(MVP)** | `Cannot remove the last administrator` |
 | 409 | Engineer already assigned to the object | `This engineer is already assigned to the object` |
 | 409 | Any other database constraint violation | `A database constraint was violated` |
 | 409 | Cannot delete division: it has branches **(MVP)** | `Cannot delete: division has {n} branches` |

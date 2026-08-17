@@ -106,20 +106,6 @@ public class RbacService {
     throw new AccessDeniedException("Branch is outside your division");
   }
 
-  /** Division of the object being created, for writes that have no object id yet. */
-  public void requireCanWriteInDivision(UUID divisionId) {
-    User user = currentUser();
-    if (user.getRole() == Role.ADMIN) {
-      return;
-    }
-    if (user.getRole() == Role.EDITOR
-        && divisionId != null
-        && divisionId.equals(user.getDivisionId())) {
-      return;
-    }
-    throw new AccessDeniedException("Division is outside your scope");
-  }
-
   // -------------------------------------------------------------------------
   // Read scoping (TOR §12): "They cannot view other engineers' rows, dashboards, or unassigned
   // objects." These rules key on the *role* — the permission tier — not on the engineer flag, so
