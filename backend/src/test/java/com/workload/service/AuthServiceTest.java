@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import com.workload.dto.AuthTokens;
 import com.workload.dto.LoginRequest;
-import com.workload.dto.LoginResponse;
 import com.workload.entity.Role;
 import com.workload.entity.User;
 import com.workload.exception.InvalidCredentialsException;
@@ -15,9 +15,9 @@ import com.workload.repository.UserRepository;
 import com.workload.security.JwtTokenProvider;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +29,24 @@ class AuthServiceTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private UserMapper userMapper;
-  @InjectMocks private AuthService authService;
+
+  private AuthService authService;
+
+  private static final int MAX_ATTEMPTS = 5;
+  private static final int LOCKOUT_MINUTES = 30;
+
+  @BeforeEach
+  void setUp() {
+    // Built by hand rather than @InjectMocks: the lockout policy arrives as two @Value ints.
+    authService =
+        new AuthService(
+            userRepository,
+            passwordEncoder,
+            jwtTokenProvider,
+            userMapper,
+            MAX_ATTEMPTS,
+            LOCKOUT_MINUTES);
+  }
 
   @Test
   void loginReturnsTokenForValidCredentials() {
@@ -45,11 +62,12 @@ class AuthServiceTest {
     when(userRepository.findByEmail("admin@workload.local")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
     when(jwtTokenProvider.generateToken(user)).thenReturn("jwt-token");
+    when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("refresh-token");
 
-    LoginResponse response =
-        authService.login(new LoginRequest("admin@workload.local", "password"));
+    AuthTokens tokens = authService.login(new LoginRequest("admin@workload.local", "password"));
 
-    assertThat(response.token()).isEqualTo("jwt-token");
+    assertThat(tokens.accessToken()).isEqualTo("jwt-token");
+    assertThat(tokens.refreshToken()).isEqualTo("refresh-token");
   }
 
   @Test

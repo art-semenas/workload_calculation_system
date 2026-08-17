@@ -248,6 +248,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** List all objects (paginated, filterable).
 **Request body:** None.
+**Engineer scope (MVP, M-02):** when caller role = `engineer`, only objects they are assigned to are returned (TOR §12), including when `division_id` is supplied. `GET /objects/:id` and all of its sub-resources — `/summary`, `/engineers`, `/records`, `/repairs`, `/travel`, `/devices`, `/assignments` — return **403** for an object the engineer is not assigned to; `/aggregations/*` and `/coverage/gaps` return 403 for the engineer role outright, being organisation-wide rollups rather than own-workload views. `GET /engineers/:id/objects` and `GET /engineers/:id/summary` are restricted to the caller's own id.
 
 ---
 
@@ -519,6 +520,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** Get all engineer summaries (paginated, filterable).
 **Request body:** None.
+**Engineer scope (MVP, M-02):** when caller role = `engineer`, the result is narrowed to the objects they are assigned to (TOR §12). The narrowing is applied in the query, so `page` and `total` describe the scoped set. `GET /svod/export/xlsx` carries the same scope.
 
 ---
 
@@ -535,6 +537,7 @@ On error:
 **Phase:** PoC + MVP
 **Description:** List all engineers (paginated, filterable). When caller role = `engineer`, returns exactly one row (the calling user's own record).
 **Request body:** None.
+**Membership (MVP, M-02):** the list is `users.is_engineer = TRUE`, not `role = 'engineer'` — an engineer promoted to `editor` or `admin` is still an engineer and is still listed. The own-row-only filter keys on the caller's **role**, so an engineer who holds the editor role sees the full list.
 
 ---
 
@@ -900,7 +903,20 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 
 **Phase:** MVP only (M-02)
 **Description:** Update user fields. Admin only.
-**Request body:** `{ name, email, role, divisionId }`
+**Request body:** `{ name, email, role, divisionId, unlock? }`
+**Unlock:** `unlock: true` clears `locked_until` and `failed_login_count` (§21.3). It is opt-in — an ordinary edit leaves a locked account locked, so renaming an account cannot silently readmit it.
+**Errors:**
+- Returns HTTP 422 with message "Engineer accounts cannot be created through this endpoint" when `role = engineer` is set on an account that is not an engineer (`is_engineer = FALSE`). Engineer status is owned by `/engineers`, which sets `capacityFte`. Setting any other role on an engineer is allowed and does not remove them from `GET /engineers`.
+
+#### `PUT /admin/users/:id/password`
+
+**Phase:** MVP only (M-02)
+**Description:** Issue or reset a user's password. Admin only. This is the "provides or resets the password" step referenced under placeholder activation — a placeholder is created with an unusable credential, so activation alone leaves it unable to log in. Also releases any active lockout, since the lock guards a credential that no longer exists.
+**Request body:** `{ password }` — minimum 8 characters.
+**Response:** HTTP 204, no body.
+**Errors:**
+- Returns HTTP 404 with message "User not found".
+- Returns HTTP 422 on a password shorter than 8 characters.
 
 #### `PUT /admin/users/:id/activate`
 
@@ -935,9 +951,10 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 |---|---|---|
 | 400 | Malformed JSON request body | `Malformed request body` |
 | 400 | Required query parameter absent | `Missing required parameter: {name}` |
-| 400 | Path or query parameter fails type conversion | `Invalid value for parameter '{name}'` |
+| 400 | Path or query parameter fails type conversion, or falls outside its allowed range (e.g. `page < 0`, `size < 1`, `size` above the endpoint maximum) | `Invalid value for parameter '{name}'` |
 | 401 | Wrong email or password at login | `Invalid email or password` |
 | 401 | JWT missing, malformed, or expired on a protected endpoint | `Invalid or expired authentication token` |
+| 401 | Login attempted against a locked account **(MVP)** | `Account locked. Try again in {n} minutes.` — a duration, not a clock time: the server can only format a clock time in its own zone, which is wrong for every other reader |
 | 403 | Caller role is not permitted | `You don't have permission to access this resource` |
 | 404 | Unknown route | `Resource not found` |
 | 404 | Division not found | `Division not found` |
@@ -952,6 +969,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 409 | Cannot delete repair type: has recorded usage (count > 0) | `Repair type {id} has recorded usage with count > 0` |
 | 409 | Cannot delete device type: in use by object inventory | `Device type {id} is in use by object inventory` |
 | 409 | Engineer deactivation blocked; active assignments exist | `Engineer has active assignments: {id}` |
+| 409 | Demoting or deactivating the last active admin **(MVP)** | `Cannot remove the last administrator` |
 | 409 | Engineer already assigned to the object | `This engineer is already assigned to the object` |
 | 409 | Any other database constraint violation | `A database constraint was violated` |
 | 409 | Cannot delete division: it has branches **(MVP)** | `Cannot delete: division has {n} branches` |
@@ -963,7 +981,7 @@ See §6.11.1 for complete per-key and cross-key constraint definitions.
 | 422 | Attempt to set `round_trip_min` directly | `Round trip time is auto-calculated and cannot be edited directly` |
 | 422 | Engineer is inactive | `Engineer is inactive: {id}` |
 | 422 | Target user is not an engineer | `User is not an engineer: {id}, role={role}` |
-| 422 | Attempted to create role `engineer` via `POST /admin/users` **(MVP)** | `Engineer accounts cannot be created through this endpoint` |
+| 422 | Attempted to create role `engineer` via `POST /admin/users`, or set it on a non-engineer via `PUT /admin/users/:id` **(MVP)** | `Engineer accounts cannot be created through this endpoint` |
 | 422 | One or more config key constraints violated (batch) **(MVP)** | `Configuration constraint violated: {detail}` |
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD >= REPAIR_TRAVEL_CAP` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must be less than REPAIR_TRAVEL_CAP` |
 | 422 | `REPAIR_TRAVEL_ZERO_THRESHOLD < 0` **(MVP)** | `REPAIR_TRAVEL_ZERO_THRESHOLD must not be negative` |

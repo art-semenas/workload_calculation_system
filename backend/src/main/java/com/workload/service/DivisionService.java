@@ -4,6 +4,7 @@ import com.workload.dto.DivisionCreateRequest;
 import com.workload.dto.DivisionDto;
 import com.workload.dto.DivisionUpdateRequest;
 import com.workload.entity.Division;
+import com.workload.exception.DivisionHasBranchesException;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.DivisionMapper;
 import com.workload.repository.BranchRepository;
@@ -19,10 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class DivisionService {
 
   private final DivisionRepository divisionRepository;
@@ -119,6 +122,23 @@ public class DivisionService {
     division.setUpdatedAt(OffsetDateTime.now());
     division = divisionRepository.save(division);
     return toDto(division);
+  }
+
+  /**
+   * MVP M-02: admin-only delete, guarded because {@code branches.division_id} is ON DELETE RESTRICT
+   * — the guard turns an opaque constraint violation into an actionable 409.
+   */
+  @Transactional
+  public void delete(UUID id) {
+    if (!divisionRepository.existsById(id)) {
+      throw new DivisionNotFoundException(id.toString());
+    }
+    long branchCount = branchRepository.countByDivisionId(id);
+    if (branchCount > 0) {
+      throw new DivisionHasBranchesException(branchCount);
+    }
+    divisionRepository.deleteById(id);
+    log.info("Deleted division: id={}", id);
   }
 
   // PoC (S-02): fires 5 point queries for a single division. Acceptable for create/update (called

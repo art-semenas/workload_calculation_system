@@ -1,7 +1,6 @@
 package com.workload.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.workload.dto.SvodRowDto;
@@ -9,14 +8,11 @@ import com.workload.entity.Branch;
 import com.workload.entity.Division;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
-import com.workload.exception.ObjectNotFoundException;
-import com.workload.mapper.SummaryMapper;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 class SvodServiceTest {
 
   @Mock private SummaryRepository summaryRepository;
-  @Mock private SummaryMapper summaryMapper;
   @Mock private ObjectEngineerRepository objectEngineerRepository;
 
   @InjectMocks private SvodService svodService;
@@ -86,11 +81,11 @@ class SvodServiceTest {
   void getSvod_returnsPaginatedResults() {
     UUID objectId = UUID.randomUUID();
     Summary summary = buildSummary(objectId, "Object A", "Division 1", "Branch 1");
-    when(summaryRepository.findAllWithOrgHierarchy()).thenReturn(List.of(summary));
+    when(summaryRepository.findAllScoped(null, null)).thenReturn(List.of(summary));
     when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
-    Page<SvodRowDto> result = svodService.getSvod(pageable, null);
+    Page<SvodRowDto> result = svodService.getSvod(pageable, null, null);
 
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent()).hasSize(1);
@@ -106,23 +101,13 @@ class SvodServiceTest {
     UUID divisionId = UUID.randomUUID();
     UUID objectId = UUID.randomUUID();
     Summary summary = buildSummary(objectId, "Object B", "Division 2", "Branch 2");
-    when(summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId))
-        .thenReturn(List.of(summary));
+    when(summaryRepository.findAllScoped(divisionId, null)).thenReturn(List.of(summary));
     when(objectEngineerRepository.findAllByObjectId(objectId)).thenReturn(List.of());
 
     Pageable pageable = PageRequest.of(0, 100);
-    Page<SvodRowDto> result = svodService.getSvod(pageable, divisionId);
+    Page<SvodRowDto> result = svodService.getSvod(pageable, divisionId, null);
 
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent().get(0).objectId()).isEqualTo(objectId);
-  }
-
-  @Test
-  void getObjectSummary_notFound_throws() {
-    UUID objectId = UUID.randomUUID();
-    when(summaryRepository.findByObjectId(objectId)).thenReturn(Optional.empty());
-
-    assertThatThrownBy(() -> svodService.getObjectSummary(objectId))
-        .isInstanceOf(ObjectNotFoundException.class);
   }
 }

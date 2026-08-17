@@ -2,6 +2,7 @@ package com.workload.repository;
 
 import com.workload.entity.ObjectEntity;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,10 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
 
   @Query("SELECT o.id FROM ObjectEntity o")
   List<UUID> findAllIds();
+
+  /** Division of an object, for editor scoping. A projection avoids walking lazy associations. */
+  @Query("SELECT o.branch.division.id FROM ObjectEntity o WHERE o.id = :objectId")
+  Optional<UUID> findDivisionIdByObjectId(@Param("objectId") UUID objectId);
 
   // PoC (S-02): both aggregates rely on the Summary–ObjectEntity 1:1 constraint.
   //   - MAX(itogoChisloWithTravel): at most one Summary per object, so MAX == "the value".
@@ -42,11 +47,18 @@ public interface ObjectRepository extends JpaRepository<ObjectEntity, UUID> {
       LEFT JOIN Summary s ON s.object.id = o.id
       LEFT JOIN ObjectEngineer oe ON oe.object.id = o.id
       WHERE (:divisionId IS NULL OR o.branch.division.id = :divisionId)
+        AND (:engineerId IS NULL
+             OR EXISTS (SELECT 1 FROM ObjectEngineer scope
+                        WHERE scope.object.id = o.id AND scope.engineer.id = :engineerId))
       GROUP BY o.id, o.branch.id, o.branch.name,
                o.branch.division.id, o.branch.division.name,
                o.name, o.importSeqNo, o.createdAt, o.updatedAt
       """)
-  List<ObjectEnrichedRow> findAllEnriched(@Param("divisionId") UUID divisionId);
+  // engineerId narrows the list to that engineer's assignments (TOR §12); null means unrestricted.
+  // It is an EXISTS rather than a predicate on the LEFT JOIN above, which would otherwise collapse
+  // engineerCount to 1 for every row.
+  List<ObjectEnrichedRow> findAllEnriched(
+      @Param("divisionId") UUID divisionId, @Param("engineerId") UUID engineerId);
 
   @Query(
       "SELECT o.branch.division.id as divisionId, COUNT(o) as count"

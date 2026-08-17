@@ -2,6 +2,7 @@ package com.workload.exception;
 
 import com.workload.dto.ApiError;
 import com.workload.dto.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -55,12 +56,44 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "Object not found")));
   }
 
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiResponse.error(ApiError.of(HttpStatus.NOT_FOUND, "User not found")));
+  }
+
+  @ExceptionHandler(InvalidRoleForEndpointException.class)
+  public ResponseEntity<ApiResponse<Void>> handleInvalidRoleForEndpoint(
+      InvalidRoleForEndpointException ex) {
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+        .body(ApiResponse.error(ApiError.validationError(ex.getMessage())));
+  }
+
   @ExceptionHandler(EntityNotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleEntityNotFound(EntityNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(
             ApiResponse.error(
                 ApiError.of(HttpStatus.NOT_FOUND, getEntityNotFoundMessage(ex.getEntityType()))));
+  }
+
+  @ExceptionHandler(DivisionHasBranchesException.class)
+  public ResponseEntity<ApiResponse<Void>> handleDivisionHasBranches(
+      DivisionHasBranchesException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
+  }
+
+  @ExceptionHandler(BranchHasObjectsException.class)
+  public ResponseEntity<ApiResponse<Void>> handleBranchHasObjects(BranchHasObjectsException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
+  }
+
+  @ExceptionHandler(LastAdminException.class)
+  public ResponseEntity<ApiResponse<Void>> handleLastAdmin(LastAdminException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.error(ApiError.conflict(ex.getMessage())));
   }
 
   @ExceptionHandler(EngineerHasActiveAssignmentsException.class)
@@ -162,6 +195,13 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, "Invalid email or password")));
   }
 
+  @ExceptionHandler(AccountLockedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAccountLocked(AccountLockedException ex) {
+    // 401 like any other login failure: the caller is still unauthenticated.
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(ApiResponse.error(ApiError.of(HttpStatus.UNAUTHORIZED, ex.getMessage())));
+  }
+
   @ExceptionHandler(DeviceTypeInUseException.class)
   public ResponseEntity<ApiResponse<Void>> handleDeviceTypeInUse(DeviceTypeInUseException ex) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -233,6 +273,32 @@ public class GlobalExceptionHandler {
                 ApiError.of(
                     HttpStatus.BAD_REQUEST,
                     "Missing required parameter: " + ex.getParameterName())));
+  }
+
+  /**
+   * Bean Validation on a query parameter — {@code @Min}/{@code @Max} on a {@code @RequestParam} of
+   * a {@code @Validated} controller. Reported as 400 with the same wording as a type-conversion
+   * failure, because from the caller's side both are the same mistake: an unusable parameter value.
+   * The violation's property path is {@code method.parameter}, so the last node is the name.
+   */
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
+      ConstraintViolationException ex) {
+    String parameter =
+        ex.getConstraintViolations().stream()
+            .findFirst()
+            .map(violation -> lastPathNode(violation.getPropertyPath().toString()))
+            .orElse("request");
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            ApiResponse.error(
+                ApiError.of(
+                    HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + parameter + "'")));
+  }
+
+  private static String lastPathNode(String propertyPath) {
+    int lastDot = propertyPath.lastIndexOf('.');
+    return lastDot >= 0 ? propertyPath.substring(lastDot + 1) : propertyPath;
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)

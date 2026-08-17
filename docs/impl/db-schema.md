@@ -189,8 +189,10 @@ division_id      UUID          FK → divisions.id NULL
                                -- scope restriction for editors; NULL = all divisions
 home_division_id UUID          FK → divisions.id NULL
                                -- display/filter home for engineers; no access restriction
+is_engineer           BOOLEAN       NOT NULL DEFAULT FALSE  -- MVP only: job function, independent of role (M-02)
+                                     CHECK (role <> 'engineer' OR is_engineer = TRUE)
 capacity_fte          DECIMAL(4,2)  NOT NULL DEFAULT 1.0
-                                     -- meaningful only for role='engineer'; ignored for others
+                                     -- meaningful only when is_engineer = TRUE; ignored for others
                                      CHECK (capacity_fte > 0)
 employee_id           VARCHAR(100)  NULL     -- optional HR identifier
 is_active             BOOLEAN       NOT NULL DEFAULT TRUE
@@ -208,6 +210,7 @@ updated_at            TIMESTAMP
 > `home_division_id` is the **display** home for engineers — used for grouping and filtering in reports and dashboards. Engineers can be assigned to objects in any division regardless of this value, and editors can assign any active engineer to objects in their own division.
 > `is_active` controls soft-delete for engineers (AD-18). Inactive engineers are hidden from assignment dropdowns but their historical data is preserved (C-24).
 > `requires_activation` flags placeholder accounts created during import (C-31). Admins activate them by setting a password.
+> `is_engineer` (MVP, M-02) is the job function; `role` is the permission tier. They vary independently, so an engineer promoted to `editor` or `admin` stays in `GET /engineers`, stays assignable, and keeps their workload share. `ck_users_engineer_role` constrains the other direction: `role = 'engineer'` is the self-scoped tier and is only valid for an account that is actually an engineer.
 
 ### `object_engineers` — Object-Engineer Assignments
 
@@ -359,6 +362,7 @@ Captures changes to `device_system_contexts`, `device_types`, `repair_types`, `a
 | ------- | -------------------- | ---------------------------------------- |
 | `users` | `failed_login_count` | Brute-force protection counter (§21.3)   |
 | `users` | `locked_until`       | Account lockout expiry timestamp (§21.3) |
+| `users` | `is_engineer`        | Job function, independent of `role` (M-02) |
 
 > **Note:** `users.is_active` is NOT an MVP addition. It is present in the PoC schema (TOR §15.4, S-04 note on AD-18). Filtering inactive engineers from assignment dropdowns must be implemented in PoC.
 

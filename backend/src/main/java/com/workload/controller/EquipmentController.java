@@ -7,6 +7,7 @@ import com.workload.dto.AssignmentUpdateRequest;
 import com.workload.dto.ObjectDeviceDto;
 import com.workload.dto.ObjectDeviceUpsertRequest;
 import com.workload.exception.RequestValidationException;
+import com.workload.security.RbacService;
 import com.workload.service.EquipmentService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,20 +28,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class EquipmentController {
 
   private final EquipmentService equipmentService;
+  private final RbacService rbacService;
 
-  public EquipmentController(EquipmentService equipmentService) {
+  public EquipmentController(EquipmentService equipmentService, RbacService rbacService) {
     this.equipmentService = equipmentService;
+    this.rbacService = rbacService;
   }
 
   @GetMapping("/devices")
   public ResponseEntity<ApiResponse<List<ObjectDeviceDto>>> getDevices(
       @PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(equipmentService.getDevices(objectId)));
   }
 
   @PostMapping("/devices")
   public ResponseEntity<ApiResponse<ObjectDeviceDto>> upsertDevice(
       @PathVariable UUID objectId, @Valid @RequestBody ObjectDeviceUpsertRequest request) {
+    rbacService.requireCanWriteObject(objectId);
     ObjectDeviceDto dto = equipmentService.upsertDevice(objectId, request);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
   }
@@ -50,6 +55,7 @@ public class EquipmentController {
       @PathVariable UUID objectId,
       @PathVariable UUID deviceTypeId,
       @Valid @RequestBody ObjectDeviceUpsertRequest request) {
+    rbacService.requireCanWriteObject(objectId);
     if (!deviceTypeId.equals(request.deviceTypeId())) {
       throw new RequestValidationException("deviceTypeId in body must match deviceTypeId in path");
     }
@@ -60,6 +66,7 @@ public class EquipmentController {
   @DeleteMapping("/devices/{deviceTypeId}")
   public ResponseEntity<Void> deleteDevice(
       @PathVariable UUID objectId, @PathVariable UUID deviceTypeId) {
+    rbacService.requireCanWriteObject(objectId);
     equipmentService.deleteDevice(objectId, deviceTypeId);
     return ResponseEntity.noContent().build();
   }
@@ -67,12 +74,14 @@ public class EquipmentController {
   @GetMapping("/assignments")
   public ResponseEntity<ApiResponse<List<AssignmentDto>>> getAssignments(
       @PathVariable UUID objectId) {
+    rbacService.requireCanReadObject(objectId);
     return ResponseEntity.ok(ApiResponse.success(equipmentService.getAssignments(objectId)));
   }
 
   @PostMapping("/assignments")
   public ResponseEntity<ApiResponse<AssignmentDto>> addAssignment(
       @PathVariable UUID objectId, @Valid @RequestBody AssignmentCreateRequest request) {
+    rbacService.requireCanWriteObject(objectId);
     AssignmentDto dto = equipmentService.addAssignment(objectId, request);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
   }
@@ -82,6 +91,7 @@ public class EquipmentController {
       @PathVariable UUID objectId,
       @PathVariable UUID assignmentId,
       @Valid @RequestBody AssignmentUpdateRequest request) {
+    rbacService.requireCanWriteObject(objectId);
     return ResponseEntity.ok(
         ApiResponse.success(equipmentService.updateAssignment(objectId, assignmentId, request)));
   }
@@ -89,6 +99,7 @@ public class EquipmentController {
   @DeleteMapping("/assignments/{assignmentId}")
   public ResponseEntity<Void> deleteAssignment(
       @PathVariable UUID objectId, @PathVariable UUID assignmentId) {
+    rbacService.requireCanWriteObject(objectId);
     equipmentService.deleteAssignment(objectId, assignmentId);
     return ResponseEntity.noContent().build();
   }

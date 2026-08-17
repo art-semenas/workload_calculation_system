@@ -1,13 +1,10 @@
 package com.workload.service;
 
-import com.workload.dto.SummaryDto;
 import com.workload.dto.SvodRowDto;
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
 import com.workload.entity.ObjectEntity;
 import com.workload.entity.Summary;
-import com.workload.exception.ObjectNotFoundException;
-import com.workload.mapper.SummaryMapper;
 import com.workload.repository.ObjectEngineerRepository;
 import com.workload.repository.SummaryRepository;
 import java.util.Comparator;
@@ -23,26 +20,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class SvodService {
 
   private final SummaryRepository summaryRepository;
-  private final SummaryMapper summaryMapper;
   private final ObjectEngineerRepository objectEngineerRepository;
 
   public SvodService(
-      SummaryRepository summaryRepository,
-      SummaryMapper summaryMapper,
-      ObjectEngineerRepository objectEngineerRepository) {
+      SummaryRepository summaryRepository, ObjectEngineerRepository objectEngineerRepository) {
     this.summaryRepository = summaryRepository;
-    this.summaryMapper = summaryMapper;
     this.objectEngineerRepository = objectEngineerRepository;
   }
 
+  /**
+   * @param engineerScopeId when non-null, restricts the СВОД to that engineer's assigned objects
+   *     (TOR §12). Applied in the query so the page and total describe the scoped set.
+   */
   @Transactional(readOnly = true)
-  public Page<SvodRowDto> getSvod(Pageable pageable, UUID divisionId) {
+  public Page<SvodRowDto> getSvod(Pageable pageable, UUID divisionId, UUID engineerScopeId) {
     // PoC: loads all summaries in memory for in-process pagination.
     // Replace with JPQL Page<Summary> query in MVP for DB-level pagination.
-    List<Summary> all =
-        divisionId != null
-            ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
-            : summaryRepository.findAllWithOrgHierarchy();
+    List<Summary> all = summaryRepository.findAllScoped(divisionId, engineerScopeId);
     List<SvodRowDto> rows =
         all.stream()
             .map(this::toSvodRowDto)
@@ -57,22 +51,12 @@ public class SvodService {
     return new PageImpl<>(page, pageable, rows.size());
   }
 
+  /** Same scoping as {@link #getSvod} — otherwise the export reads around the filter. */
   @Transactional(readOnly = true)
-  public SummaryDto getObjectSummary(UUID objectId) {
-    Summary summary =
-        summaryRepository
-            .findByObjectId(objectId)
-            .orElseThrow(() -> new ObjectNotFoundException(objectId.toString()));
-    return summaryMapper.toDto(summary);
-  }
-
-  @Transactional(readOnly = true)
-  public List<SvodRowDto> getAllForExport(UUID divisionId) {
-    List<Summary> all =
-        divisionId != null
-            ? summaryRepository.findAllByDivisionIdWithOrgHierarchy(divisionId)
-            : summaryRepository.findAllWithOrgHierarchy();
-    return all.stream().map(this::toSvodRowDto).toList();
+  public List<SvodRowDto> getAllForExport(UUID divisionId, UUID engineerScopeId) {
+    return summaryRepository.findAllScoped(divisionId, engineerScopeId).stream()
+        .map(this::toSvodRowDto)
+        .toList();
   }
 
   private SvodRowDto toSvodRowDto(Summary s) {

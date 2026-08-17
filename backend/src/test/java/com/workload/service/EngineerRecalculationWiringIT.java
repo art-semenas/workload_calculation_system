@@ -123,6 +123,7 @@ class EngineerRecalculationWiringIT {
             .name("Test Engineer " + tag)
             .passwordHash("hash")
             .role(Role.ENGINEER)
+            .engineer(true)
             .active(true)
             .requiresActivation(false)
             .capacityFte(BigDecimal.ONE)

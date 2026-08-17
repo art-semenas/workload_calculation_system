@@ -184,6 +184,7 @@ class ObjectEngineerRepositoryTest {
             .name(name)
             .passwordHash("hash")
             .role(Role.ENGINEER)
+            .engineer(true)
             .capacityFte(new BigDecimal("1.00"))
             .active(true)
             .requiresActivation(false)

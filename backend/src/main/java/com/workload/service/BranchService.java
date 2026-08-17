@@ -5,6 +5,7 @@ import com.workload.dto.BranchDto;
 import com.workload.dto.BranchUpdateRequest;
 import com.workload.entity.Branch;
 import com.workload.entity.Division;
+import com.workload.exception.BranchHasObjectsException;
 import com.workload.exception.BranchNotFoundException;
 import com.workload.exception.DivisionNotFoundException;
 import com.workload.mapper.BranchMapper;
@@ -14,9 +15,12 @@ import com.workload.repository.ObjectRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class BranchService {
 
   private final BranchRepository branchRepository;
@@ -73,6 +77,23 @@ public class BranchService {
     branch.setUpdatedAt(OffsetDateTime.now());
     branch = branchRepository.save(branch);
     return toDto(branch);
+  }
+
+  /**
+   * MVP M-02: admin-only delete, guarded because {@code objects.branch_id} is ON DELETE RESTRICT —
+   * the guard turns an opaque constraint violation into an actionable 409.
+   */
+  @Transactional
+  public void delete(UUID id) {
+    if (!branchRepository.existsById(id)) {
+      throw new BranchNotFoundException(id.toString());
+    }
+    long objectCount = objectRepository.countByBranchId(id);
+    if (objectCount > 0) {
+      throw new BranchHasObjectsException(objectCount);
+    }
+    branchRepository.deleteById(id);
+    log.info("Deleted branch: id={}", id);
   }
 
   private BranchDto toDto(Branch branch) {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,6 +52,7 @@ public class CatalogController {
     return ResponseEntity.ok(ApiResponse.success(catalogService.getContextsForDevice(id)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/devices")
   public ResponseEntity<ApiResponse<DeviceTypeDto>> createDeviceType(
       @Valid @RequestBody DeviceTypeCreateRequest request) {
@@ -58,18 +60,21 @@ public class CatalogController {
         .body(ApiResponse.success(catalogService.createDeviceType(request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/devices/{id}")
   public ResponseEntity<ApiResponse<DeviceTypeDto>> updateDeviceType(
       @PathVariable UUID id, @Valid @RequestBody DeviceTypeUpdateRequest request) {
     return ResponseEntity.ok(ApiResponse.success(catalogService.updateDeviceType(id, request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/devices/{id}")
   public ResponseEntity<Void> deleteDeviceType(@PathVariable UUID id) {
     catalogService.deleteDeviceType(id);
     return ResponseEntity.noContent().build();
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/devices/{deviceTypeId}/contexts")
   public ResponseEntity<ApiResponse<DeviceSystemContextDto>> createContext(
       @PathVariable UUID deviceTypeId,
@@ -78,6 +83,7 @@ public class CatalogController {
         .body(ApiResponse.success(catalogService.createContext(deviceTypeId, request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/devices/{deviceTypeId}/contexts/{contextId}")
   public ResponseEntity<ApiResponse<DeviceSystemContextDto>> updateContext(
       @PathVariable UUID deviceTypeId,
@@ -87,6 +93,7 @@ public class CatalogController {
         ApiResponse.success(catalogService.updateContext(deviceTypeId, contextId, request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/devices/{deviceTypeId}/contexts/{contextId}")
   public ResponseEntity<Void> deleteContext(
       @PathVariable UUID deviceTypeId, @PathVariable UUID contextId) {
@@ -99,6 +106,7 @@ public class CatalogController {
     return ResponseEntity.ok(ApiResponse.success(catalogService.getAllRepairTypes()));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/repairs")
   public ResponseEntity<ApiResponse<RepairTypeDto>> createRepairType(
       @Valid @RequestBody RepairTypeCreateRequest request) {
@@ -106,12 +114,14 @@ public class CatalogController {
         .body(ApiResponse.success(catalogService.createRepairType(request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping("/repairs/{id}")
   public ResponseEntity<ApiResponse<RepairTypeDto>> updateRepairType(
       @PathVariable UUID id, @Valid @RequestBody RepairTypeUpdateRequest request) {
     return ResponseEntity.ok(ApiResponse.success(catalogService.updateRepairType(id, request)));
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/repairs/{id}")
   public ResponseEntity<Void> deleteRepairType(@PathVariable UUID id) {
     catalogService.deleteRepairType(id);

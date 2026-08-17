@@ -33,7 +33,17 @@ management:
 # JWT secret — must be set via env var in production
 jwt:
   secret: ${JWT_SECRET}
-  expiration-ms: 86400000  # 24h in PoC; no refresh tokens (TOR §21.2, S-04)
+  # MVP M-02 (TOR §21.2): short-lived access token, long-lived refresh token in an HTTP-only cookie.
+  expiration-ms: ${JWT_EXPIRATION_MS:900000}            # 15 min
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7 days
+  # Set true wherever the app is served over HTTPS. False locally, where the PoC runs on http://.
+  refresh-cookie-secure: ${JWT_REFRESH_COOKIE_SECURE:false}
+
+# MVP M-02 (TOR §21.3): brute-force protection on login.
+security:
+  lockout:
+    max-attempts: ${SECURITY_LOCKOUT_MAX_ATTEMPTS:5}
+    duration-minutes: ${SECURITY_LOCKOUT_DURATION_MINUTES:30}
 
 # 19 workload config keys — all required at startup (TOR §6.11)
 # Spring maps WORKLOAD_CONFIG_<KEY> → workload.config.<key>

@@ -30,7 +30,7 @@ class RateLimitFilterTest {
         Bandwidth.builder().capacity(5).refillGreedy(5, Duration.ofMinutes(1)).build();
     Bandwidth authenticatedBandwidth =
         Bandwidth.builder().capacity(2).refillGreedy(2, Duration.ofMinutes(1)).build();
-    jwtTokenProvider = new JwtTokenProvider(SECRET, 86400000);
+    jwtTokenProvider = new JwtTokenProvider(SECRET, 86400000, 604800000);
     filter =
         new RateLimitFilter(
             unauthenticatedBandwidth, authenticatedBandwidth, objectMapper, jwtTokenProvider);

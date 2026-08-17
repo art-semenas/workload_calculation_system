@@ -53,8 +53,24 @@ public class User {
   @Column(name = "is_active", nullable = false)
   private boolean active;
 
+  /**
+   * Job function, independent of {@link #role}, which is the permission tier. An engineer promoted
+   * to editor or admin keeps this flag and so stays in {@code GET /engineers}, stays assignable,
+   * and keeps their share of every object they are on. MVP M-02, v1.1.1.
+   */
+  @Column(name = "is_engineer", nullable = false)
+  private boolean engineer;
+
   @Column(name = "requires_activation", nullable = false)
   private boolean requiresActivation;
+
+  /** Consecutive failed login attempts; reset to 0 on success. MVP M-02, §21.3. */
+  @Column(name = "failed_login_count", nullable = false)
+  private int failedLoginCount;
+
+  /** Set when the lockout threshold is reached; null means not locked. MVP M-02, §21.3. */
+  @Column(name = "locked_until")
+  private OffsetDateTime lockedUntil;
 
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;

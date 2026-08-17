@@ -200,6 +200,8 @@ users  (id, email, name, password_hash,
         created_at, updated_at)
         -- NOTE: failed_login_count and locked_until are NOT in PoC schema.
         -- They are added in MVP when account lockout is implemented (§21.3, M-02).
+        -- NOTE: is_engineer is NOT in PoC schema either. In PoC, role='engineer' is the
+        -- only way to be an engineer; MVP M-02 splits the job function off the role.
         -- The v1.0.0 Liquibase migration must NOT include these columns.
 
 object_engineers  (id, object_id, engineer_id, assigned_at, assigned_by UUID NULL)
@@ -227,6 +229,7 @@ The following columns are **excluded from PoC** and added in later MVP migration
 | ----------------------- | --------------------------------- | --------------------------------- |
 | `failed_login_count`    | `users`                           | M-02 (account lockout, §21.3)     |
 | `locked_until`          | `users`                           | M-02 (account lockout, §21.3)     |
+| `is_engineer`           | `users`                           | M-02 (job function split from role) |
 | `period_id`             | `records_tasks`, `object_repairs` | M-07 (planning periods, FR-12)    |
 | `is_stale`              | `summaries`, `engineer_summaries` | M-06 (staleness tracking)         |
 | `period_id`             | `summaries`                       | M-06 (active-period traceability) |

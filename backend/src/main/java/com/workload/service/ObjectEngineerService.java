@@ -7,7 +7,6 @@ import com.workload.dto.ObjectEngineerAssignmentDto;
 import com.workload.entity.EngineerSummary;
 import com.workload.entity.ObjectEngineer;
 import com.workload.entity.ObjectEntity;
-import com.workload.entity.Role;
 import com.workload.entity.Summary;
 import com.workload.entity.User;
 import com.workload.exception.AssignmentNotFoundException;
@@ -187,8 +186,8 @@ public class ObjectEngineerService {
                     new com.workload.exception.EntityNotFoundException(
                         "Engineer", engineerId.toString()));
 
-    // Validate engineer role
-    if (engineer.getRole() != Role.ENGINEER) {
+    // Assignable by job function, not permission tier — an engineer may hold any role.
+    if (!engineer.isEngineer()) {
       throw new InvalidEngineerRoleException(engineerId.toString(), engineer.getRole().getValue());
     }
 

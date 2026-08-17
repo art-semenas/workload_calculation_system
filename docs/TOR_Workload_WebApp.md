@@ -689,8 +689,11 @@ division_id      UUID          FK → divisions.id NULL
                                -- scope restriction for editors; NULL = all divisions
 home_division_id UUID          FK → divisions.id NULL
                                -- display/filter home for engineers; no access restriction
+is_engineer           BOOLEAN       NOT NULL DEFAULT FALSE  -- MVP: job function, independent of role (M-02)
+                                     -- TRUE = takes object assignments and workload share
+                                     CHECK (role <> 'engineer' OR is_engineer = TRUE)
 capacity_fte          DECIMAL(4,2)  NOT NULL DEFAULT 1.0
-                                     -- meaningful only for role='engineer'; ignored for others
+                                     -- meaningful only when is_engineer = TRUE; ignored for others
                                      CHECK (capacity_fte > 0)
 employee_id           VARCHAR(100)  NULL     -- optional HR identifier
 is_active             BOOLEAN       NOT NULL DEFAULT TRUE
@@ -708,6 +711,7 @@ updated_at            TIMESTAMP
 > `home_division_id` is the **display** home for engineers — used for grouping and filtering in reports and dashboards. Engineers can be assigned to objects in any division regardless of this value, and editors can assign any active engineer to objects in their own division.
 > `is_active` controls soft-delete for engineers (AD-18). Inactive engineers are hidden from assignment dropdowns but their historical data is preserved (C-24).
 > `requires_activation` flags placeholder accounts created during import (C-31). Admins activate them by setting a password.
+> `is_engineer` (MVP, M-02) separates the **job function** from the **permission tier** in `role`. An engineer who is promoted to `editor` or `admin` keeps `is_engineer = TRUE` and therefore stays in `GET /engineers`, stays assignable, and keeps their share of every object they are on. The reverse is constrained: `role = 'engineer'` — the self-scoped permission tier — is only valid for an account that is actually an engineer. Engineer status is set by `/engineers` (which owns `capacity_fte`), never by `/admin/users`.
 
 #### `object_engineers` — Object-Engineer Assignments
 
@@ -2547,7 +2551,7 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 | Edit equipment / assignments           | ✅    | ✅ (own div)                       | ❌     | ❌                 |
 | Edit records / repairs (active period) | ✅    | ✅ (own div)                       | ❌     | ✅ (own objects)   |
 | Edit travel data                       | ✅    | ✅ (own div)                       | ❌     | ❌                 |
-| Create / delete objects                | ✅    | ❌                                 | ❌     | ❌                 |
+| Create / delete objects                | ✅    | ✅ (own div)                       | ❌     | ❌                 |
 | Manage device catalog                  | ✅    | ❌                                 | ❌     | ❌                 |
 | Manage repair type catalog             | ✅    | ❌                                 | ❌     | ❌                 |
 | Edit app configuration constants       | ✅    | ❌                                 | ❌     | ❌                 |
@@ -2560,8 +2564,9 @@ Seed data (device types, system contexts, repair types) is loaded as a Liquibase
 | Assign / remove engineers to objects   | ✅    | ✅ (own div objects, any engineer) | ❌     | ❌                 |
 | View engineer list and load ratios     | ✅    | ✅ (all engineers)                 | ✅     | ✅ (own data only) |
 
-**Editor scope:** `division_id` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level.  
-**Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.
+**Editor scope:** `division_id` restricts write operations to **objects** in their assigned division. Editors can view and assign **any active engineer** to those objects (cross-division assignment is allowed). Enforced at the API level. Object **creation and deletion** are included in that scope — an editor owns the object lifecycle inside their division, and creation is scoped by the target branch's division so a branch in another division cannot be used as a way in. Only the organisational hierarchy above objects — divisions and branches — stays admin-only.  
+**Engineer scope:** Engineers access the `/engineers` route, but `GET /engineers` returns only their own row (API-level filtering by `user_id`). They can view their own `engineer_summaries` and the objects they are assigned to. They cannot view other engineers' rows, dashboards, or unassigned objects.  
+**Role vs. job function (MVP, M-02):** The table above is the **permission** axis. Being an engineer — holding capacity, taking object assignments, receiving a workload share — is a separate axis carried by `users.is_engineer` (§5.2). The two vary independently: a team lead who still services objects is `role = 'editor', is_engineer = TRUE`, and gets the editor row of this table while remaining a full engineer everywhere in `/engineers`, the assignment endpoints and СВОД. The Engineer column therefore describes `role = 'engineer'` — the self-scoped tier — not everyone who is an engineer. Two consequences: the "own row only" filter on `GET /engineers` keys on **role**, so an engineer-who-is-editor sees the whole list; the "edit records / repairs on own objects" permission keys on **`is_engineer` + assignment**, so it follows the person doing the work whatever role they hold.
 **Period lock:** Записи and Ремонт data is read-only for all roles once a period is deactivated. Only admin can create and activate a new period to enable data entry again.
 
 ---

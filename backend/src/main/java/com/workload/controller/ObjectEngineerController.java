@@ -7,6 +7,7 @@ import com.workload.dto.EngineerObjectDto;
 import com.workload.dto.EngineerShareDto;
 import com.workload.dto.EngineerSummaryDto;
 import com.workload.dto.ObjectEngineerAssignmentDto;
+import com.workload.security.RbacService;
 import com.workload.service.EngineerSummaryService;
 import com.workload.service.ObjectEngineerService;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class ObjectEngineerController {
 
   private final ObjectEngineerService objectEngineerService;
   private final EngineerSummaryService engineerSummaryService;
+  private final RbacService rbacService;
 
   // =========================================================================
   // Object-side endpoints
@@ -39,6 +41,7 @@ public class ObjectEngineerController {
   @GetMapping("/objects/{id}/engineers")
   public ResponseEntity<ApiResponse<List<EngineerShareDto>>> getEngineersForObject(
       @PathVariable UUID id) {
+    rbacService.requireCanReadObject(id);
     List<EngineerShareDto> engineers = objectEngineerService.getEngineersForObject(id);
     return ResponseEntity.ok(ApiResponse.success(engineers));
   }
@@ -46,6 +49,7 @@ public class ObjectEngineerController {
   @PostMapping("/objects/{id}/engineers")
   public ResponseEntity<ApiResponse<ObjectEngineerAssignmentDto>> assignEngineerToObject(
       @PathVariable UUID id, @Valid @RequestBody AssignEngineerToObjectRequest request) {
+    rbacService.requireCanWriteObject(id);
     ObjectEngineerAssignmentDto assignment =
         objectEngineerService.assignEngineerToObject(id, request.engineerId());
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(assignment));
@@ -54,6 +58,7 @@ public class ObjectEngineerController {
   @DeleteMapping("/objects/{id}/engineers/{eid}")
   public ResponseEntity<Void> removeEngineerFromObject(
       @PathVariable UUID id, @PathVariable("eid") UUID eid) {
+    rbacService.requireCanWriteObject(id);
     objectEngineerService.removeEngineerFromObject(id, eid);
     return ResponseEntity.noContent().build();
   }
@@ -65,6 +70,7 @@ public class ObjectEngineerController {
   @GetMapping("/engineers/{id}/objects")
   public ResponseEntity<ApiResponse<List<EngineerObjectDto>>> getObjectsForEngineer(
       @PathVariable UUID id) {
+    rbacService.requireCanReadEngineerData(id);
     List<EngineerObjectDto> objects = objectEngineerService.getObjectsForEngineer(id);
     return ResponseEntity.ok(ApiResponse.success(objects));
   }
@@ -72,6 +78,7 @@ public class ObjectEngineerController {
   @PostMapping("/engineers/{id}/objects")
   public ResponseEntity<ApiResponse<ObjectEngineerAssignmentDto>> assignObjectToEngineer(
       @PathVariable UUID id, @Valid @RequestBody AssignObjectToEngineerRequest request) {
+    rbacService.requireCanWriteObject(request.objectId());
     ObjectEngineerAssignmentDto assignment =
         objectEngineerService.assignEngineerToObject(request.objectId(), id);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(assignment));
@@ -80,12 +87,14 @@ public class ObjectEngineerController {
   @DeleteMapping("/engineers/{id}/objects/{oid}")
   public ResponseEntity<Void> removeObjectFromEngineer(
       @PathVariable UUID id, @PathVariable("oid") UUID oid) {
+    rbacService.requireCanWriteObject(oid);
     objectEngineerService.removeEngineerFromObject(oid, id);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/engineers/{id}/summary")
   public ResponseEntity<ApiResponse<EngineerSummaryDto>> getEngineerSummary(@PathVariable UUID id) {
+    rbacService.requireCanReadEngineerData(id);
     return ResponseEntity.ok(ApiResponse.success(engineerSummaryService.getEngineerSummary(id)));
   }
 }

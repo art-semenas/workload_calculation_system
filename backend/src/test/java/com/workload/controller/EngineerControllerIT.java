@@ -108,6 +108,9 @@ class EngineerControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(201);
 
+    // Engineer membership is the is_engineer flag, not the role — an engineer may hold the editor
+    // or admin role and must still be listed. So this asserts on who is in the list, not on roles:
+    // the new engineer is there, the seeded admin (who is not an engineer) is not.
     given()
         .header("Authorization", bearerToken)
         .when()
@@ -115,7 +118,10 @@ class EngineerControllerIT extends IntegrationTestBase {
         .then()
         .statusCode(200)
         .body("data", hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
-        .body("data.role", org.hamcrest.Matchers.everyItem(equalTo("engineer")));
+        .body("data.email", org.hamcrest.Matchers.hasItem("eng.list@test.com"))
+        .body(
+            "data.email",
+            org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("admin@workload.local")));
   }
 
   @Test

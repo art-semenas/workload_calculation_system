@@ -11,8 +11,9 @@ class JwtTokenProviderTest {
 
   private static final String SECRET = "test-secret-key-minimum-32-characters-long-for-hmac";
   private static final long EXPIRATION_MS = 86400000;
+  private static final long REFRESH_MS = 604800000L;
 
-  private final JwtTokenProvider provider = new JwtTokenProvider(SECRET, EXPIRATION_MS);
+  private final JwtTokenProvider provider = new JwtTokenProvider(SECRET, EXPIRATION_MS, REFRESH_MS);
 
   @Test
   void generateAndValidateToken() {
@@ -32,7 +33,7 @@ class JwtTokenProviderTest {
 
   @Test
   void expiredTokenReturnsFalse() {
-    JwtTokenProvider shortLived = new JwtTokenProvider(SECRET, -1000);
+    JwtTokenProvider shortLived = new JwtTokenProvider(SECRET, -1000, REFRESH_MS);
     User user =
         User.builder().id(UUID.randomUUID()).email("test@test.com").role(Role.ENGINEER).build();
 
